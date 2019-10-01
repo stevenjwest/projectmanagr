@@ -1,0 +1,132 @@
+---
+title: 'CP00~ TEMPLATE'
+author: "Steven J. West"
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+## INITIAL AIM:
+
+
+#### SUCCINCT_DESCRIPTION_OF_AIM
+
+
+## Background:
+
+detail_of_initial_aim_and_background_information
+
+cover_initial_map_or_plan_of_work
+
+
+#### Aims Summary:
+
+* bullet_list_of_aims_in_chronological_order
+    
+* bullet_list_of_aims_in_chronological_order
+
+
+## GOALS:
+
+
+### GOAL 1: Review
+
+Review_previous_knowledge
+
+Review the ...
+
+
+#### DELIVERABLE 1: Review
+
+
+* ##### TASK 1: Review of 
+
+
+* ##### TASK 2: Review of
+
+
+#### DELIVERABLE 2: Review
+
+
+* ##### TASK 1: Review of 
+
+
+* ##### TASK 2: Review of
+
+
+### GOAL 2: Plan:
+
+Plan_of_project_execution__layout_content_building_developing_deploying
+
+Plan ...
+
+
+#### DELIVERABLE 1: Plan of 
+
+
+* ##### TASK 1:  
+
+
+* ##### TASK 2:
+
+
+#### DELIVERABLE 2: Plan of 
+
+
+* ##### TASK 1:
+
+
+* ##### TASK 2:
+
+
+### GOAL 3: Develop_Build_Deploy
+
+Develop_Build_Deploy_project
+
+
+#### DELIVERABLE 1:
+
+
+* ##### TASK 1:
+
+
+* ##### TASK 2:
+
+
+#### DELIVERABLE 2:
+
+
+* ##### TASK 1:
+
+
+* ##### TASK 2:
+
+
+### GOAL 4: Develop_Build_Deploy
+
+Develop_Build_Deploy_project
+
+
+#### DELIVERABLE 1:
+
+
+* ##### TASK 1:
+
+
+* ##### TASK 2:
+
+
+#### DELIVERABLE 2:
+
+
+* ##### TASK 1:
+
+
+* ##### TASK 2:
+
+
+
