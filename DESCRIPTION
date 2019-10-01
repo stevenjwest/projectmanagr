@@ -1,13 +1,22 @@
 Package: projectmanagr
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Project Mangement Functions for Creating, Editing, Linking and Updating Project Management R Markdown Documents
+Version: 0.0.0.1000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Steven",
+           family = "West",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: What license it uses
+           email = "stevenjonwest@gmail.com")
+           comment = c(ORCID = "https://orcid.org/0000-0002-2413-0999"))
+Description: Provides functions for creating new Project Notes linked to a Project Document Goal, Deliverable, Task, as well as new 
+    SubNotes under a Compound Project Note, the ability to edit Project Document titles or locations whilst updating the linked documents, 
+    and the ability to link new Project Docs and Notes, as well as updating Project documentation summary content.
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 6.1.1
+Imports: 
+    shiny (>= 1.2.0),
+    miniUI (>= 0.1.1.1),
+    rstudioapi (>= 0.9.0),
+    shinyDirectoryInput,
+    R.utils
