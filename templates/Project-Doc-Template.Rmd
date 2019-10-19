@@ -1,5 +1,5 @@
 ---
-title: 'CP00~ TEMPLATE'
+title: '{{PREFIX}}~ {{TITLE}}'
 author: "Steven J. West"
 output:
   html_document:
@@ -10,123 +10,166 @@ output:
 ---
 
 
-## INITIAL AIM:
+
+# INITIAL AIM:
 
 
-#### SUCCINCT_DESCRIPTION_OF_AIM
+
+### SUCCINCT_DESCRIPTION_OF_AIM
 
 
-## Background:
+---
+
+
+
+# Background:
+
 
 detail_of_initial_aim_and_background_information
+
 
 cover_initial_map_or_plan_of_work
 
 
-#### Aims Summary:
+
+## Aims Summary:
+
 
 * bullet_list_of_aims_in_chronological_order
     
+
 * bullet_list_of_aims_in_chronological_order
 
 
-## GOALS:
+---
 
 
-### GOAL 1: Review
+
+# GOALS:
+
+
+---
+
+
+
+## GOAL 1: REVIEW / PLAN
+
 
 Review_previous_knowledge
 
-Review the ...
+Plan_project
 
 
-#### DELIVERABLE 1: Review
+---
 
 
-* ##### TASK 1: Review of 
+
+### DELIVERABLE 1: Review
 
 
-* ##### TASK 2: Review of
+
+#### TASK 1: Review of 
 
 
-#### DELIVERABLE 2: Review
+
+#### TASK 2: Review of
 
 
-* ##### TASK 1: Review of 
+---
 
 
-* ##### TASK 2: Review of
+
+### DELIVERABLE 2: Plan
 
 
-### GOAL 2: Plan:
 
-Plan_of_project_execution__layout_content_building_developing_deploying
-
-Plan ...
+#### TASK 1: Review of 
 
 
-#### DELIVERABLE 1: Plan of 
+
+#### TASK 2: Review of
 
 
-* ##### TASK 1:  
+---
 
 
-* ##### TASK 2:
+
+## GOAL 3: Develop_Build
 
 
-#### DELIVERABLE 2: Plan of 
+Develop_Build_project
 
 
-* ##### TASK 1:
+---
 
 
-* ##### TASK 2:
+
+### DELIVERABLE 1:
 
 
-### GOAL 3: Develop_Build_Deploy
+
+#### TASK 1:
+
+
+
+#### TASK 2:
+
+
+---
+
+
+
+### DELIVERABLE 2:
+
+
+
+#### TASK 1:
+
+
+
+#### TASK 2:
+
+
+---
+
+
+
+## GOAL 4: Deploy
+
 
 Develop_Build_Deploy_project
 
 
-#### DELIVERABLE 1:
+---
 
 
-* ##### TASK 1:
+
+### DELIVERABLE 1:
 
 
-* ##### TASK 2:
+
+#### TASK 1:
 
 
-#### DELIVERABLE 2:
+
+#### TASK 2:
 
 
-* ##### TASK 1:
+---
 
 
-* ##### TASK 2:
+### DELIVERABLE 2:
 
 
-### GOAL 4: Develop_Build_Deploy
 
-Develop_Build_Deploy_project
-
-
-#### DELIVERABLE 1:
+#### TASK 1:
 
 
-* ##### TASK 1:
+
+#### TASK 2:
 
 
-* ##### TASK 2:
 
-
-#### DELIVERABLE 2:
-
-
-* ##### TASK 1:
-
-
-* ##### TASK 2:
 
 
 
