@@ -55,8 +55,6 @@ cover_initial_map_or_plan_of_work
 ## GOAL 1: REVIEW / PLAN
 
 
-Review_previous_knowledge
-
 Plan_project
 
 
@@ -137,7 +135,7 @@ Develop_Build_project
 ## GOAL 4: Deploy
 
 
-Develop_Build_Deploy_project
+Deploy_project
 
 
 ---
