@@ -32,7 +32,8 @@ createProjectOrg <- function(fileSystemPath, programmeName, programmeTitle,
 
   # copy template files:
   # need to copy from the PACKAGE!
-  file.copy()
+  templateRmd <- paste( find.package("projectmanagr"), .Platform$file.sep, "templates", .Platform$file.sep, "Project-Doc-Template.Rmd", sep="")
+  file.copy(templateRmd, tempPath)
 
   # create files:
   orgFile = paste(orgPath, .Platform$file.sep, "index.Rmd", sep="")
