@@ -5,8 +5,8 @@ Authors@R:
     person(given = "Steven",
            family = "West",
            role = c("aut", "cre"),
-           email = "stevenjonwest@gmail.com")
-           comment = c(ORCID = "https://orcid.org/0000-0002-2413-0999")
+           email = "stevenjonwest@gmail.com",
+           comment = c(ORCID = "https://orcid.org/0000-0002-2413-0999") )
 Description: Provides functions for creating new Project Notes linked to a Project Document Goal, Deliverable, Task, as well as new 
     SubNotes under a Compound Project Note, the ability to edit Project Document titles or locations whilst updating the linked documents, 
     and the ability to link new Project Docs and Notes, as well as updating Project documentation summary content.
