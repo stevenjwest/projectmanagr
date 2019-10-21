@@ -11,31 +11,26 @@ createProjectOrg <- function(fileSystemPath, programmeName, programmeTitle,
                              programmePrefix, projectName, projectTitle,
                              orgName = "ORGANISATION", orgTitle = "ORGANISATION") {
 
-  # create the fileSystem layout:
+  ### CREATING THE ORGANISATION: ###
+
+    # create the fileSystem layout:
   orgPath = paste(fileSystemPath, .Platform$file.sep, orgName , sep="")
   dir.create( orgPath )
 
+  # templates Dir:
   tempPath = paste(orgPath, .Platform$file.sep, "templates" , sep="")
   dir.create( tempPath )
 
+  # hidden .config dir:
   confPath = paste(orgPath, .Platform$file.sep, ".config" , sep="")
   dir.create( confPath )
-
-  progPath = paste(orgPath, .Platform$file.sep, "01-", programmeName, sep="")
-  dir.create(progPath)
-
-  projsPath = paste(progPath, .Platform$file.sep, "PROJECTS", sep="")
-  dir.create(projsPath)
-
-  projPath = paste(projsPath, .Platform$file.sep, programmePrefix, "01", sep="")
-  dir.create(projPath)
 
   # copy template files:
   # need to copy from the PACKAGE!
   templateRmd <- paste( find.package("projectmanagr"), .Platform$file.sep, "templates", .Platform$file.sep, "Project-Doc-Template.Rmd", sep="")
   file.copy(templateRmd, tempPath)
 
-  # create files:
+  # create Rmd file:
   orgFile = paste(orgPath, .Platform$file.sep, "index.Rmd", sep="")
   done <- file.create(orgFile)
 
@@ -43,6 +38,22 @@ createProjectOrg <- function(fileSystemPath, programmeName, programmeTitle,
     stop( paste("Org file could not be created: ", orgFile, sep="") )
   }
 
+
+  ### CREATING A PROGRAMME: ###
+
+  # create Dir:
+  progPath = paste(orgPath, .Platform$file.sep, "01-", programmeName, sep="")
+  dir.create(progPath)
+
+  # create PROJECTS dir:
+  projsPath = paste(progPath, .Platform$file.sep, "PROJECTS", sep="")
+  dir.create(projsPath)
+
+  # create SOP dir:
+  sopPath = paste(progPath, .Platform$file.sep, "SOP", sep="")
+  dir.create(sopPath)
+
+  # create Rmd file:
   progFile = paste(progPath, .Platform$file.sep, "index.Rmd", sep="")
   done <- file.create(progFile)
 
@@ -50,6 +61,15 @@ createProjectOrg <- function(fileSystemPath, programmeName, programmeTitle,
     stop( paste("Programme file could not be created: ", progFile, sep="") )
   }
 
+
+
+  ### CREATING A PROJECT: ###
+
+  # create Dir:
+  projPath = paste(projsPath, .Platform$file.sep, programmePrefix, "01", sep="")
+  dir.create(projPath)
+
+  # create Rmd file:
   projFile = paste(progPath, .Platform$file.sep, "PROJECTS", .Platform$file.sep, programmePrefix, "01~_", projectName, ".Rmd", sep="")
   done <- file.create(projFile)
 
@@ -57,14 +77,18 @@ createProjectOrg <- function(fileSystemPath, programmeName, programmeTitle,
     stop( paste("Project file could not be created: ", projFile, sep="") )
   }
 
-  # write to the files:
+  # read project doc template:
+  templateFileConn <- file( paste( tempPath, .Platform$file.sep, "Project-Doc-Template.Rmd", sep="") )
+  templateContents <- readLines( templateFileConn )
+  close(templateFileConn)
 
-  fileConn<-file(projFile)
-  readLines(c("Hello","World"), fileConn)
-  close(fileConn)
+  # modify templateContents to include PREFIX and projectTitle
+  templateContents <- gsub("{{PREFIX}}", paste(programmePrefix, "01", sep=""), templateContents, fixed=TRUE)
+  templateContents <- gsub("{{TITLE}}", projectTitle, templateContents, fixed=TRUE)
 
-  fileConn<-file(projFile)
-  writeLines(c("Hello","World"), fileConn)
+  # write to projFile
+  fileConn <- file(projFile)
+  writeLines(templateContents, fileConn)
   close(fileConn)
 
 }
