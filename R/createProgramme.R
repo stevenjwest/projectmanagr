@@ -3,7 +3,7 @@
 #' Generates a new Programme at the top level of the Organisation.  If the
 #' fileSystemPath is not at the top of the Organisation, will traverse until
 #' it is found.  Automatically numbers the Programme.  User must supply
-#' the path, programmeName, programmeTitle and programmePrefix.
+#' the path, programmeName, programmeTitle and programmePrefix, project name and project title.
 #'
 #' @export
 createProgramme <- function(fileSystemPath, programmeName, programmeTitle,
