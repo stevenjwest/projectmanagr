@@ -61,6 +61,11 @@ createProjectOrg <- function(fileSystemPath, programmeName, programmeTitle,
     stop( paste("Programme file could not be created: ", progFile, sep="") )
   }
 
+  # Create a config file for this Programme:
+  programme <- list(programmeName, programmePrefix)
+  names(programme) <- c("programmeName", "programmePrefix")
+  yaml::write_yaml( yaml::as.yaml(programme), paste(confPath, .Platform$file.sep, programmeName, ".yaml", sep="") )
+
 
 
   ### CREATING A PROJECT: ###
