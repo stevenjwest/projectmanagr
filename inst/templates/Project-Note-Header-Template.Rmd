@@ -1,0 +1,45 @@
+---
+title: '{{PREFIX}}~ {{TITLE}}'
+author: '{{AUTHOR}}'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# Objectives:
+
+
+
+## [{{NOTE_PREFIX}}~ {{NOTE_TITLE}}]({{NOTE_LINK}})
+
+
+
+# [{{NOTE_GOAL_TITLE}}]({{NOTE_GOAL_LINK}})
+
+
+
+## [{{NOTE_DEL_TITLE}}]({{NOTE_DEL_LINK}})
+
+
+
+### [{{NOTE_TASK_TITLE}}]({{NOTE_TASK_LINK}})
+
+
+* overview
+
+
+------
+
+
+
+## Contents:
+
+
+
+
+

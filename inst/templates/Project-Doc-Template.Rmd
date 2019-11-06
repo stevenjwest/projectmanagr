@@ -1,6 +1,6 @@
 ---
 title: '{{PREFIX}}~ {{TITLE}}'
-author: "Steven J. West"
+author: '{{AUTHOR}}'
 output:
   html_document:
     theme: united

@@ -1,0 +1,409 @@
+---
+title: '{{PREFIX}}~ {{TITLE}}'
+author: '{{AUTHOR}}'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# Objectives:
+
+
+
+## [{{NOTE_PREFIX}}~ {{NOTE_TITLE}}]({{NOTE_LINK}})
+
+
+
+# [{{NOTE_GOAL_TITLE}}]({{NOTE_GOAL_LINK}})
+
+
+
+## [{{NOTE_DEL_TITLE}}]({{NOTE_DEL_LINK}})
+
+
+
+### [{{NOTE_TASK_TITLE}}]({{NOTE_TASK_LINK}})
+
+
+* overview
+
+
+------
+
+
+
+# Introduction
+
+
+
+
+---
+
+
+
+# PROTOCOL
+
+
+---
+
+
+
+## Material:
+
+
+
+
+
+```{r, import-meta-data, message=FALSE }
+# Import mouse meta data:
+mice <- read_csv("../../NRF/")
+mice %>% datatable(escape = FALSE)
+```
+
+
+```{r, import-material, message=FALSE, echo=FALSE, include=FALSE }
+# Import mouse meta data:
+material <- read_csv("../../NRF/")
+
+```
+
+```{r show_material_table, echo=FALSE }
+material %>% datatable(escape = FALSE) 
+```
+
+
+```{r, write-material }
+
+material[8,]
+
+# I am not sure how to EDIT and ADD lines to material, but need to basically take the line which says there are 22 Sections:
+
+#  974,SC-LUM-350[16],4PFA_20_24h;30SUC_4_24h;OCT_-80_16d;16GEL_37_4h;1PBS_4,
+
+# And convert it into two lines - one with the 6 sections taken for this exp, and one with hte remaining sections:
+
+#  974,SC-LUM-350[6],4PFA_20_24h;30SUC_4_24h;OCT_-80_16d;16GEL_37_4h;1PBS_4_14d,LAB~001-001
+#  974,SC-LUM-350[16],4PFA_20_24h;30SUC_4_24h;OCT_-80_16d;16GEL_37_4h;1PBS_4,
+
+#  I have just manually edited the file for now!
+
+
+# Some old code that may be useful in future:
+
+#material$`SC-LUM`[11] <- "LAB~516-001 X" # 14.1I
+#material$`SC-LUM`[9] <- "LAB~516-001 X" # 14.1E
+#material$`SC-LUM`[10] <- "LAB~516-001 X" # 8.2G
+
+#material$`SC-LUM`[25] <- "LAB~516-001" # 10.1E
+#material$`SC-LUM`[23] <- "LAB~516-001" # 10.1D
+
+#material$`SC-LUM`[17] <- "LAB~516-001" # 11.3C
+#material$`SC-LUM`[18] <- "LAB~516-001" # 11.3D
+
+# write_csv(material, "../../BMS/BMS~310/BMS~310~_material.csv")
+
+```
+
+
+---
+
+
+### GROUPS:
+
+
+Lay these out in a new TIBBLE!
+
+
+01:
+
+
+02:
+
+
+03:
+	
+		
+----		
+
+
+
+## Methods:
+
+
+
+### 1. Tissue Pre-Clearing:
+
+		
+* 1P pre-clearing: 
+
+  	+ Dehydrate in 1-propanol ONLY - 200ul vol:
+
+	    	- 50,75,90,95,100,100, 100%
+	    	
+	    	- In 15mL Falcon Tube.
+
+	  + 100% incubation 37C 
+	  
+	    	- 3DAYS.
+
+  	+ Rehydrate in PBS:
+
+	    	- 30, 50, 75, 90, 95, 100
+	    	
+	    	- Sections were kept in PBS 24Hr RT.
+
+	  + Move to PCR tubes 200ul in PBS - label
+			
+
+b. Wash:
+
+	  a. PBSTxAz NDS 
+
+	
+
+### 2. 1st Ab:
+
+
+|    Ab.          | conc.  |  time  |  temp  |   Vol              | groups |
+| --------------- | ------ | ------ | ------ | ------------------ | ------ |
+| ChAT(Gt)        | 1:100  |  4DAY  |	 37C   |  100ul per section |	02,03  |
+| pCREB(RbmAb)    | 1:500  |  4DAY  |	 37C   |  100ul             |	02,03  |
+
+
+Diluent: PBSTxAz NDS 
+
+		
+
+### 3. Wash PBSTxAz NDS:
+
+
+a. 1Hr
+
+b. 3DAY
+
+c. 1Hr
+		
+
+
+### 4. 2nd Ab:
+
+
+|    Ab.            | conc.  |  time  |  temp  |   Vol  | groups |
+| ----------------- | ------ | ------ | ------ | ------ | ------ |
+| Cy5(Rb, IgG)      | 1:400  |  4DAY  |	 37C   |  150ul |	01,02  |
+| Cy3(Gt, IgG)      | 1:400  |  4DAY  |	 37C   |  150ul |	01,02  |
+| YOYO1             | 1:200K |  4DAY  |  37C   |        | 01,02  |
+| NeuroTrace 530    | 1:50k  |  4DAY  |  37C   |        | 01,03  |
+
+
+Diluent: PBSTxAz NDS 
+
+
+
+### 5. Wash PBSTxAz NDS:
+
+
+a. 1Hr
+
+b. O/N
+
+c. 1Hr
+
+
+	
+### 6. FluoClearBABB Mounting:
+
+
+a. Dehydrate in 1-propanol containing 0.3% TEA
+
+	1. 30,50,75,90,95,100,100%
+
+
+b. Move tissue to well/slide & add BABB containing 0.3% TEA
+
+	1. Coverslip as appropriate.
+
+
+c. Wait for tissue to clear prior to imaging.
+
+		
+### 7. Confocal Imaging:
+
+
+* A x63wd 1um XYZ centre DRG:
+
+* B x63wd 1um XYZ DRG:
+		
+
+
+---
+
+
+
+# DATASET COLLECTION:
+
+
+Visual inspection and example images to be taken:
+
+
+* If any of the doulbe labelling has worked, will take datasets to practice analysis.
+
+
+
+## A_x63wd_zStack
+
+
+* Collection:
+
+	+ Take x63wd zSlice Tile Scan of VH Motor Neurones.
+
+	+ 1.0um XYZ voxel, 8bit depth
+
+	+ 1.0AU 
+
+	+ Adjust laser and gain for opt sampling.
+
+  + Includes pCREB/pERK and ChAT channels.
+
+  + Image taken throughout entire depth of tissue - 350um.
+
+
+*This was taken to see how the labelling survived throughout the Z stack, and to see how the signal looks at 1um XYZ resolution with 1.0AU pinhole*
+
+
+### B_x63wd_HiRes_zSlice
+
+
+* Collection:
+
+	+ Take x63wd zSlice Tile Scan of VH Motor Neurones.
+
+	+ 0.31um XY voxel, 8bit depth
+
+	+ 1.0AU 
+
+	+ Adjust laser and gain for opt sampling.
+
+  + Includes pCREB/pERK and ChAT channels.
+
+  + Image taken as single Z slice towards to top of the tissue.
+
+
+*This was taken to see in detail what the fluorescent labelling looked like*
+
+
+---
+
+
+
+# ANALYSIS:
+
+
+---
+
+
+Visual inspection and example images to be taken:
+
+
+* If any of the doulbe labelling has worked, will take datasets to practice analysis.
+
+
+---
+
+
+
+## 01 Assessment of z Depth labelling
+
+
+---
+
+
+
+#### Input:
+
+
+* A_x63wd_zStack
+
+
+
+#### Output:
+
+
+* 01_A_x63wd_zStack
+
+
+
+#### Processing:
+
+
+* Macro:
+
+
+---
+
+
+
+#### Re-Aligned Z Stack to XZ to explore the labelling intensity throughout Z Stack:
+
+
+---
+
+
+
+## 02 Assessment of Fluroescent Signal
+
+
+---
+
+
+
+#### Input:
+
+
+* B_x63wd_HiRes_zSlice
+
+
+
+#### Output:
+
+
+* 02_B_x63wd_HiRes_zSlice
+
+
+
+#### Processing:
+
+
+* Macro:
+
+
+---
+
+
+
+#### Inspection of Fluorescence Signal at High Resolution:
+
+
+---
+
+
+
+# Discussion:
+
+
+
+
+
+
+
+
+
+
+
+
+
