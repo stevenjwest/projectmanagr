@@ -10,7 +10,7 @@
 #' User must supply the path, project name and project title.
 #'
 #' @export
-createProject <- function( fileSystemPath, projectName, projectTitle, projectIndex=0 ) {
+createProjectDoc <- function( fileSystemPath, projectName, projectTitle, projectIndex=0 ) {
 
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
