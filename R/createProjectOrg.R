@@ -22,7 +22,7 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG",
     stop( cat("Organisation directory could not be created: ", orgFile, "\n") )
   }
 
-  cat( "made ORG dir: ",orgPath, "\n" )
+  cat( "Made ORG dir: ",orgPath, "\n" )
 
 
   # templates Dir:
@@ -33,7 +33,7 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG",
     stop( cat("Templates directory could not be created: ", tempPath, "\n") )
   }
 
-  cat( "made templates dir: ",tempPath, "\n" )
+  cat( "Made templates dir: ",tempPath, "\n" )
 
 
   # hidden .config dir:
@@ -44,7 +44,7 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG",
     stop( cat("Config directory could not be created: ", confPath, "\n") )
   }
 
-  cat( "made config dir: ", confPath, "\n" )
+  cat( "Made config dir: ", confPath, "\n" )
 
 
   # copy template files:
@@ -68,7 +68,7 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG",
     stop( cat("Org file could not be created: ", orgFile, "\n") )
   }
 
-  cat( "made config dir: ",confPath, "\n" )
+  cat( "Made config dir: ",confPath, "\n" )
 
 
 
@@ -82,7 +82,7 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG",
     stop( cat("Site directory could not be created: ", sitePath, "\n") )
   }
 
-  cat( "made SITE dir: ",sitePath )
+  cat( "Made SITE dir: ",sitePath )
 
 
 }
