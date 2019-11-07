@@ -7,10 +7,10 @@
 #' The project is automatically numbered, by reading the current projects and determining
 #' the next number in the sequence, as well as deriving the Programme Prefix.
 #'
-#' User must supply the path, project name and project title.
+#' User must supply the project name and project title. The default fileSystemPath is the working directory.
 #'
 #' @export
-createProjectDoc <- function( fileSystemPath, projectName, projectTitle, projectIndex=0 ) {
+createProjectDoc <- function(projectName, projectTitle, fileSystemPath=getwd(), projectIndex=0 ) {
 
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:

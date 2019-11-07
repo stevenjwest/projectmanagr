@@ -3,11 +3,12 @@
 #' Generates a new Programme at the top level of the Organisation.  If the
 #' fileSystemPath is not at the top of the Organisation, will traverse until
 #' it is found.  Automatically numbers the Programme.  User must supply
-#' the path, programmeName, programmeTitle and programmePrefix, project name and project title.
+#' the programmeName, programmeTitle and programmePrefix, project name and project title.
+#' The default fileSystemPath is the working directory.
 #'
 #' @export
-createProgramme <- function(fileSystemPath, programmeName, programmeTitle,
-                             programmePrefix, programmeIndex=0) {
+createProgramme <- function(programmeName, programmeTitle,
+                             programmePrefix, fileSystemPath=getwd(), programmeIndex=0) {
 
 
   # Check fileSystemPath is at the root of an ORGANISATION:
