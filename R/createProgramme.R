@@ -99,7 +99,7 @@ createProgramme <- function(fileSystemPath, programmeName, programmeTitle,
 
   # create SOP dir:
   sopPath = paste(progPath, .Platform$file.sep, "SOP", sep="")
-  dir.create(sopPath)
+  done <- dir.create(sopPath)
 
   if(!done) {
     stop( cat("SOP directory could not be created: ", sopPath, "\n") )
