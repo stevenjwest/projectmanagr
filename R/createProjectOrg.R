@@ -1,99 +1,83 @@
 #' Create a New Project Organisation
 #'
 #' Generates the layout for a new Project Organisation in the File System,
-#' and adds an initial Programme with an initial Project.
+#' including the content, in '00_ORG' directory by default, and the hugo
+#' site, in '00_SITE' by default.  The default location is the working directory.
 #'
-#' This will also initialise the config and templates for this Organisation.
-#'
+#' This will also initialise the config and templates directories for this Organisation,
+#' as well as copy several default templates for Project Docs and Notes.
 #'
 #' @export
-createProjectOrg <- function(fileSystemPath, programmeName, programmeTitle,
-                             programmePrefix, projectName, projectTitle,
-                             orgName = "ORGANISATION", orgTitle = "ORGANISATION") {
+createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG",
+                             orgTitle = "ORGANISATION", siteName = "00_SITE") {
+
 
   ### CREATING THE ORGANISATION: ###
 
     # create the fileSystem layout:
   orgPath = paste(fileSystemPath, .Platform$file.sep, orgName , sep="")
-  dir.create( orgPath )
+  done <- dir.create( orgPath )
+
+  if(!done) {
+    stop( cat("Organisation directory could not be created: ", orgFile, "\n") )
+  }
+
+  cat( "made ORG dir: ",orgPath, "\n" )
+
 
   # templates Dir:
   tempPath = paste(orgPath, .Platform$file.sep, "templates" , sep="")
-  dir.create( tempPath )
+  done <- dir.create( tempPath )
+
+  if(!done) {
+    stop( cat("Templates directory could not be created: ", orgFile,, "\n") )
+  }
+
+  cat( "made templates dir: ",tempPath, "\n" )
+
 
   # hidden .config dir:
   confPath = paste(orgPath, .Platform$file.sep, ".config" , sep="")
-  dir.create( confPath )
+  done <- dir.create( confPath )
+
+  if(!done) {
+    stop( cat("Config directory could not be created: ", orgFile, "\n") )
+  }
+
+  cat( "made config dir: ",confPath, "\n" )
+
 
   # copy template files:
-  # need to copy from the PACKAGE!
-  templateRmd <- paste( find.package("projectmanagr"), .Platform$file.sep, "templates", .Platform$file.sep, "Project-Doc-Template.Rmd", sep="")
-  file.copy(templateRmd, tempPath)
+    # need to copy from the PACKAGE!
+  templateDir <- paste( find.package("projectmanagr"), .Platform$file.sep, "templates", .Platform$file.sep, "Project-Doc-Template.Rmd", sep="")
+  templateRmds <- list.files(templateDir)
+  for(f in templateRmds) {
+    done <- file.copy(paste(templateDir, f, sep=""), tempPath)
+    if(!done) {
+      stop( cat("  Copied Template: ", f, "\n") )
+    }
+    cat( "Copied template: ",f, "\n" )
+  }
+
 
   # create Rmd file:
   orgFile = paste(orgPath, .Platform$file.sep, "index.Rmd", sep="")
   done <- file.create(orgFile)
 
   if(!done) {
-    stop( paste("Org file could not be created: ", orgFile, sep="") )
+    stop( cat("Org file could not be created: ", orgFile, "\n") )
   }
 
+  cat( "made config dir: ",confPath, "\n" )
 
-  ### CREATING A PROGRAMME: ###
+
+
+  ### CREATING THE HUGO SITE: ###
 
   # create Dir:
-  progPath = paste(orgPath, .Platform$file.sep, "01-", programmeName, sep="")
-  dir.create(progPath)
+  sitePath = paste(fileSystemPath, .Platform$file.sep, siteName , sep="")
+  dir.create( sitePath )
+  cat( "made SITE dir: ",sitePath )
 
-  # create PROJECTS dir:
-  projsPath = paste(progPath, .Platform$file.sep, "PROJECTS", sep="")
-  dir.create(projsPath)
-
-  # create SOP dir:
-  sopPath = paste(progPath, .Platform$file.sep, "SOP", sep="")
-  dir.create(sopPath)
-
-  # create Rmd file:
-  progFile = paste(progPath, .Platform$file.sep, "index.Rmd", sep="")
-  done <- file.create(progFile)
-
-  if(!done) {
-    stop( paste("Programme file could not be created: ", progFile, sep="") )
-  }
-
-  # Create a config file for this Programme:
-  programme <- list(programmeName, programmePrefix)
-  names(programme) <- c("programmeName", "programmePrefix")
-  yaml::write_yaml( yaml::as.yaml(programme), paste(confPath, .Platform$file.sep, programmeName, ".yaml", sep="") )
-
-
-
-  ### CREATING A PROJECT: ###
-
-  # create Dir:
-  projPath = paste(projsPath, .Platform$file.sep, programmePrefix, "01", sep="")
-  dir.create(projPath)
-
-  # create Rmd file:
-  projFile = paste(progPath, .Platform$file.sep, "PROJECTS", .Platform$file.sep, programmePrefix, "01~_", projectName, ".Rmd", sep="")
-  done <- file.create(projFile)
-
-  if(!done) {
-    stop( paste("Project file could not be created: ", projFile, sep="") )
-  }
-
-  # read project doc template:
-  templateFileConn <- file( paste( tempPath, .Platform$file.sep, "Project-Doc-Template.Rmd", sep="") )
-  templateContents <- readLines( templateFileConn )
-  close(templateFileConn)
-
-  # modify templateContents to include PREFIX and projectTitle
-  templateContents <- gsub("{{PREFIX}}", paste(programmePrefix, "01", sep=""), templateContents, fixed=TRUE)
-  templateContents <- gsub("{{TITLE}}", projectTitle, templateContents, fixed=TRUE)
-
-  # write to projFile
-  fileConn <- file(projFile)
-  writeLines(templateContents, fileConn)
-  close(fileConn)
 
 }
