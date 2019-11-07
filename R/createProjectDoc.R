@@ -21,7 +21,7 @@ createProjectDoc <- function( fileSystemPath, projectName, projectTitle, project
   tempPath = paste(orgPath, .Platform$file.sep, "templates" , sep="")
 
   if(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
-    stop( paste("fileSystemPath is not in a PROGRAMME Directory: ",fileSystemPath, sep="") )
+    stop( cat("fileSystemPath is not in a PROGRAMME Directory: ",fileSystemPath, "\n") )
   }
 
   # fileSystemPath is therefore in a PROGRAMME DIR
@@ -33,33 +33,57 @@ createProjectDoc <- function( fileSystemPath, projectName, projectTitle, project
     stop( paste("fileSystemPath PROGRAMME Directory does not contain a PROJECTS/ dir: ",fileSystemPath, sep="") )
   }
 
+
   # extract the PROGRAMME NAME from the fileSystemPath:
   programmeName <-substr(basename(fileSystemPath), gregexpr("-", basename(fileSystemPath) )[[1]][1]+1, nchar( basename(fileSystemPath) ) )
+
 
   # extract the programme prefix from its config file:
   programme <- yaml::yaml.load( yaml::read_yaml( paste(confPath, .Platform$file.sep, programmeName, ".yaml" , sep="") ) )
   programmePrefix <- programme$programmePrefix
 
+
   if(projectIndex < 1) { # if projectIndex is below 1 (default is 0), then try to identify what projectIndex should be by looking at DIR numbers:
 
     # read all DIRs in projsPath that start with prefix:
     directories <- dir(projsPath, recursive = FALSE, full.names = FALSE, pattern= paste(programmePrefix,"[0-9]{1,}[~]{1}[_]{1}", sep="")  )
+
     projectIndexes <- sapply( directories, function(x)
                   substr(x, gregexpr(programmePrefix, x)[[1]][1]+nchar(programmePrefix), gregexpr("~", x)[[1]][1]-1 )  )
+
     projectIndex <- sort( as.numeric(projectIndexes) )[length(projectIndexes)]
+
     projectIndex <- projectIndex+1 # add one to max projectIndex
+
+    if(length(projectIndex) == 0 ) {
+
+      projectIndex <- 1 #this ensures if there are NO directories that match the glob above, that the index is set to 1!
+
+    }
+
     # if projectIndex is only one digit, append "0" to front:
     if(projectIndex < 10 ) {
+
       projectIndex <- paste("0", projectIndex, sep="")
+
     } else {
+
       projectIndex <- paste("", projectIndex, sep="")
+
     }
+
   } else { # else, if projectIndex was set to be above 0, then use this number!
+
     if(projectIndex < 10 ) {
-      projectIndex <- paste("0", projectIndex, sep="")
+
+        projectIndex <- paste("0", projectIndex, sep="")
+
     } else {
+
       projectIndex <- paste("", projectIndex, sep="")
+
     }
+
   }
 
 
@@ -67,15 +91,25 @@ createProjectDoc <- function( fileSystemPath, projectName, projectTitle, project
 
   # create Dir:
   projPath = paste(projsPath, .Platform$file.sep, programmePrefix, projectIndex, sep="")
-  dir.create(projPath)
+  done <- dir.create(projPath)
+
+  if(!done) {
+    stop( cat("Project directory could not be created: ", projPath, "\n") )
+  }
+
+  cat( "Made Project dir: ",projPath, "\n" )
+
 
   # create Rmd file:
   projFile = paste(projsPath, .Platform$file.sep, programmePrefix, projectIndex, "~_", projectName, ".Rmd", sep="")
   done <- file.create(projFile)
 
   if(!done) {
-    stop( paste("Project file could not be created: ", projFile, sep="") )
+    stop( cat("Project file could not be created: ", projFile, "\n") )
   }
+
+  cat( "Made Project file: ",projFile, "\n" )
+
 
   # read project doc template:
   templateFileConn <- file( paste( tempPath, .Platform$file.sep, "Project-Doc-Template.Rmd", sep="") )
