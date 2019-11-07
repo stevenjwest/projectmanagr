@@ -30,7 +30,7 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG",
   done <- dir.create( tempPath )
 
   if(!done) {
-    stop( cat("Templates directory could not be created: ", orgFile,, "\n") )
+    stop( cat("Templates directory could not be created: ", tempPath, "\n") )
   }
 
   cat( "made templates dir: ",tempPath, "\n" )
@@ -41,10 +41,10 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG",
   done <- dir.create( confPath )
 
   if(!done) {
-    stop( cat("Config directory could not be created: ", orgFile, "\n") )
+    stop( cat("Config directory could not be created: ", confPath, "\n") )
   }
 
-  cat( "made config dir: ",confPath, "\n" )
+  cat( "made config dir: ", confPath, "\n" )
 
 
   # copy template files:
@@ -77,6 +77,11 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG",
   # create Dir:
   sitePath = paste(fileSystemPath, .Platform$file.sep, siteName , sep="")
   dir.create( sitePath )
+
+  if(!done) {
+    stop( cat("Site directory could not be created: ", sitePath, "\n") )
+  }
+
   cat( "made SITE dir: ",sitePath )
 
 
