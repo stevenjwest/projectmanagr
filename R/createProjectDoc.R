@@ -10,7 +10,7 @@
 #' User must supply the project name and project title. The default fileSystemPath is the working directory.
 #'
 #' @export
-createProjectDoc <- function(projectName, projectTitle, fileSystemPath=getwd(), projectIndex=0 ) {
+createProjectDoc <- function(projectName, projectTitle, fileSystemPath=getwd(), projDocTemplate="Project-Doc-Template.Rmd", projectIndex=0 ) {
 
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
@@ -112,7 +112,7 @@ createProjectDoc <- function(projectName, projectTitle, fileSystemPath=getwd(), 
 
 
   # read project doc template:
-  templateFileConn <- file( paste( tempPath, .Platform$file.sep, "Project-Doc-Template.Rmd", sep="") )
+  templateFileConn <- file( paste( tempPath, .Platform$file.sep, projDocTemplate, sep="") )
   templateContents <- readLines( templateFileConn )
   close(templateFileConn)
 
