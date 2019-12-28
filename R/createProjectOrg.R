@@ -1,11 +1,16 @@
 #' Create a New Project Organisation
 #'
 #' Generates the layout for a new Project Organisation in the File System,
-#' including the content, in '00_ORG' directory by default, and the hugo
-#' site, in '00_SITE' by default.  The default location is the working directory.
+#' including the content, in '00_ORG' directory by default.  The default location is the working directory.
 #'
-#' This will also initialise the config and templates directories for this Organisation,
-#' as well as copy several default templates for Project Docs and Notes.
+#' This will also initialise the config/ and templates/ directories for this Organisation.  The config/
+#' directory will contain the status.yml and settings.yml files.  status.yml will contain data on the
+#' Organisation's status (programmes, projects and project work in progress, update times, etc).  settings.yml
+#' will contain the settings needed for various projectmanagr functions.
+#'
+#' The templates/ directory contains several default templates for Project Docs and Notes.
+#'
+#' A directory is also created to store the compiled html site from the Organisation - site/
 #'
 #' @export
 createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG", orgTitle = "ORGANISATION") {
@@ -59,6 +64,40 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG", orgTitl
 
   cat( "Made config dir: ", confPath, "\n" )
 
+  # Create config files:
+  # a settings.yml file and a status.yml file
+  # settings.yml contains user-defined defaults for operations
+  # status.yml contains a list of incomplete projects and notes, for each programme
+
+  # COPY default settings.yml file from the package:
+  settingsFile = paste(confPath, .Platform$file.sep, "settings.yml", sep="") # location to copy file to
+  settingsPackageFile <- paste( find.package("projectmanagr"), .Platform$file.sep, "config", .Platform$file.sep, "settings.yml", sep="")
+
+  done <- file.copy(settingsPackageFile, settingsFile)
+    if(!done) {
+      stop( cat("Settings file could not be copied: ", settingsPackageFile, " ", settingsFile, "\n") )
+    }
+  cat( "Copied settings file: ", settingsFile, "\n" )
+
+
+  # create status.yml file - need to create it here to get the mtime for this file
+  statusFile = paste(confPath, .Platform$file.sep, "status.yml", sep="")
+  done <- file.create(statusFile)
+
+  if(!done) {
+    stop( cat("Status file could not be created: ", statusFile, "\n") )
+  }
+
+  cat( "Made status file: ", statusFile, "\n" )
+
+
+  # Create initial content for status.yml file - data on the Org, plus UPDATE datetime:
+  updateTime <- file.info(statusFile)[,5] # retrieve mtime for file, save this time to yaml by converting to a character:
+  org <- list(orgPath, orgName, orgTitle, as.character(updateTime) )
+  names(org) <- c("orgPath", "orgName", "orgTitle", "updateTime")
+  yaml::write_yaml( yaml::as.yaml(org), statusFile )
+
+
 
   # templates Dir:
   tempPath = paste(orgPath, .Platform$file.sep, "templates" , sep="")
@@ -91,6 +130,6 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG", orgTitl
     stop( cat("Org file could not be created: ", orgFile, "\n") )
   }
 
-  cat( "Made config dir: ",confPath, "\n" )
+  cat( "Made Org file: ",orgFile, "\n" )
 
 }
