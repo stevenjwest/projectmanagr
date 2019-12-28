@@ -60,26 +60,31 @@ output:
 
 
 ```{r, import-meta-data, message=FALSE }
+
 # Import mouse meta data:
-mice <- read_csv("../../NRF/")
-mice %>% datatable(escape = FALSE)
+#mice <- read_csv("../../NRF/")
+#mice %>% datatable(escape = FALSE)
+
 ```
 
 
 ```{r, import-material, message=FALSE, echo=FALSE, include=FALSE }
+
 # Import mouse meta data:
-material <- read_csv("../../NRF/")
+#material <- read_csv("../../NRF/")
 
 ```
 
 ```{r show_material_table, echo=FALSE }
-material %>% datatable(escape = FALSE) 
+
+#material %>% datatable(escape = FALSE) 
+
 ```
 
 
 ```{r, write-material }
 
-material[8,]
+#material[8,]
 
 # I am not sure how to EDIT and ADD lines to material, but need to basically take the line which says there are 22 Sections:
 
