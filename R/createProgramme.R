@@ -2,19 +2,24 @@
 #'
 #' Generates a new Programme at the top level of the Organisation.  If the
 #' fileSystemPath is not at the top of the Organisation, will traverse until
-#' it is found.  Automatically numbers the Programme.  User must supply
-#' the programmeName, programmeTitle and programmePrefix, project name and project title.
-#' The default fileSystemPath is the working directory.
+#' it is found.  User must supply the programmeName and programmePrefix.  The
+#' programmeName must NOT contain a space, an optional programmeTitle (which
+#' if not supplied will default to the programmeName, replacing "_" & "-" with
+#' " ").  The default fileSystemPath is the working directory.
+#'
 #'
 #' @export
-createProgramme <- function(programmeName, programmeTitle,
-                             programmePrefix, fileSystemPath=getwd(), programmeIndex=0) {
+createProgramme <- function(programmeName, programmePrefix, programmeTitle="", fileSystemPath=getwd() ) {
 
+  # check programmeName contains NO SPACES:
+  if( grepl("\\s+", programmeName) ) {
+    stop( cat("programmeName contains a SPACE: ",programmeName, "\n") )
+  }
 
   # Check fileSystemPath is at the root of an ORGANISATION:
 
   # look for the .config/ and templates/ dirs:
-  confPath = paste(fileSystemPath, .Platform$file.sep, ".config" , sep="")
+  confPath = paste(fileSystemPath, .Platform$file.sep, "config" , sep="")
   tempPath = paste(fileSystemPath, .Platform$file.sep, "templates" , sep="")
 
   while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
@@ -22,62 +27,17 @@ createProgramme <- function(programmeName, programmeTitle,
     if(nchar(fileSystemPath) <=1) {
       stop( cat("Could not identify ORGANISATION in fileSystemPath: ",fileSystemPath, "\n") )
     }
-    confPath = paste(fileSystemPath, .Platform$file.sep, ".config" , sep="")
+    confPath = paste(fileSystemPath, .Platform$file.sep, "config" , sep="")
     tempPath = paste(fileSystemPath, .Platform$file.sep, "templates", sep="")
   }
 
   # now fileSystemPath should contain the path to the ORG ROOT DIR
 
 
-  # read all DIRs in fileSystemPath:
-
-  if(programmeIndex < 1 ) { # if programmeIndex is below 1 (default is 0),
-                            # then try to identify what programmeIndex should be by looking at DIR numbers:
-
-    directories <- dir(fileSystemPath, recursive = FALSE, full.names = FALSE, pattern="*[0-9]{1-6}[-]{1}")
-
-    programmeIndexes <- sapply( directories, function(x) substr(x, 0, gregexpr("-", x)[[1]][1]-1) )
-
-    programmeIndex <- sort( as.numeric(programmeIndexes) )[length(programmeIndexes)]
-
-    programmeIndex <- programmeIndex+1
-
-    if(length(programmeIndex) == 0 ) {
-
-      programmeIndex <- 1 #this ensures if there are NO directories that match the glob above, that the index is set to 1!
-
-    }
-
-    # if programmeIndex is only one digit, append "0" to front:
-    if(programmeIndex < 10 ) {
-
-      programmeIndex <- paste("0", programmeIndex, sep="")
-
-    } else {
-
-      programmeIndex <- paste("", programmeIndex, sep="")
-
-    }
-
-  } else { # else, if programmeIndex was set to be above 0, then use this number!
-
-    if(programmeIndex < 10 ) {
-
-      programmeIndex <- paste("0", programmeIndex, sep="")
-
-    } else {
-
-      programmeIndex <- paste("", programmeIndex, sep="")
-
-    }
-
-  }
-
-
   ### CREATING A PROGRAMME: ###
 
   # create Dir:
-  progPath = paste(fileSystemPath, .Platform$file.sep, programmeIndex, "-", programmeName, sep="")
+  progPath = paste(fileSystemPath, .Platform$file.sep, programmeName, sep="")
   done <- dir.create(progPath)
 
   if(!done) {
@@ -114,17 +74,32 @@ createProgramme <- function(programmeName, programmeTitle,
   done <- file.create(progFile)
 
   if(!done) {
-    stop( cat("Programme index.md file could not be created: ", progFile, "\n") )
+    stop( cat("Programme index.Rmd file could not be created: ", progFile, "\n") )
   }
 
-  cat( "  Made Programme index.md file: ",progFile, "\n" )
+  # TODO need to actually FILL the index.Rmd file!
+
+  # Check programmeTitle, and if blank, fill with programmeName, replacing all "_" and "-" with spaces
+  if( nchar(programmeTitle) == 0 ) {
+    programmeTitle = gsub("-", " ", gsub("_", " ", programmeName) )
+  }
 
 
-  # Create a config file for this Programme:
-  programme <- list(programmeName, programmePrefix)
-  names(programme) <- c("programmeName", "programmePrefix")
-  yaml::write_yaml( yaml::as.yaml(programme), paste(confPath, .Platform$file.sep, programmeName, ".yaml", sep="") )
+  # Write to the status.yml file:  IS THIS NEEDED?  The Programme is NOT UPDATEABLE!  But may need to RETRIEVE information on it!
 
-  cat( "  made Programme index.md file: ",progFile, "\n" )
+  # Read the status.yml file first into a LIST:
+  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
+  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+
+  # add the programmePrefix under the programmeName in the "PROGRAMMES" section of the status.yml List:
+  prog <- list(programmePrefix)
+  names(prog) <- c("programmePrefix")
+  status[["PROGRAMMES"]][[programmeName]] <- prog
+  # can retrieve the programmePrefix with call to:  status[["PROGRAMMES"]][[programmeName]][["programmePrefix"]]
+
+  # Write status list to the statusFile:
+  yaml::write_yaml( yaml::as.yaml(status), statusFile )
+
+  cat( "  Written PROGRAMME to Status.yml file: ",statusFile, "\n" )
 
 }
