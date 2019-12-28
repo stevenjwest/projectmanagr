@@ -147,4 +147,21 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   close(fileConn)
 
 
+  # Write PROJECT to the status.yml file:
+
+  # add programmeName, programmePrefix, projectIndex under the FULL projectName (including prefix, index and name)
+    # in the "PROJECTS" section of the status.yml List:
+  prog <- list(programmeName, programmePrefix, projectIndex )
+  names(prog) <- c("programmeName", "programmePrefix", "projectIndex")
+  status[["PROJECTS"]][[ paste(programmePrefix, projectIndex, "~_", projectName, sep="") ]] <- prog
+  # can retrieve the programmePrefix with call to:
+    # status[["PROJECTS"]][[projectName]][["programmeName"]]
+    # status[["PROJECTS"]][[projectName]][["projectPrefix"]]
+
+  # Write status list to the statusFile:
+  yaml::write_yaml( yaml::as.yaml(status), statusFile )
+
+  cat( "  Written PROJECT to Status.yml file: ",statusFile, "\n" )
+
+
 }
