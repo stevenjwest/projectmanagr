@@ -1,0 +1,5 @@
+|
+  RunUpdateOnStartup: yes
+  RunCompileWithUpdate: yes
+  Author: AUTHOR
+  htmlDocTheme: united
