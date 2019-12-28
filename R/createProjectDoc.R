@@ -1,23 +1,30 @@
 #' Create a New Project
 #'
 #' Generates a new Project inside a Programme in an Organisation.  The fileSystemPath
-#' must be either in the Programme directory, which is the sub-Dir to the root ORGANISATION
+#' must be in the Programme directory, which is the sub-Dir to the root ORGANISATION
 #' dir.
 #'
 #' The project is automatically numbered, by reading the current projects and determining
 #' the next number in the sequence, as well as deriving the Programme Prefix.
 #'
-#' User must supply the project name and project title. The default fileSystemPath is the working directory.
+#' User must supply the project name, which must contain NO SPACES, and optionally a project
+#' title.  If no title is provided, the Title is derived from the project name, replacing any
+#' "_" & "-" with " ". The default fileSystemPath is the working directory.
 #'
 #' @export
-createProjectDoc <- function(projectName, projectTitle, fileSystemPath=getwd(), projDocTemplate="Project-Doc-Template.Rmd", projectIndex=0 ) {
+createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(),
+                             projDocTemplate="Project-Doc-Template.Rmd", projectIndex=0 ) {
 
+  # check projectName contains NO SPACES:
+  if( grepl("\\s+", projectName) ) {
+    stop( cat("projectName contains a SPACE: ", projectName, "\n") )
+  }
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
   orgPath <- dirname(fileSystemPath)
 
-  # look for the .config/ and templates/ dirs:
-  confPath = paste(orgPath, .Platform$file.sep, ".config" , sep="")
+  # look for the config/ and templates/ dirs:
+  confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
   tempPath = paste(orgPath, .Platform$file.sep, "templates" , sep="")
 
   if(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
@@ -35,15 +42,17 @@ createProjectDoc <- function(projectName, projectTitle, fileSystemPath=getwd(), 
 
 
   # extract the PROGRAMME NAME from the fileSystemPath:
-  programmeName <-substr(basename(fileSystemPath), gregexpr("-", basename(fileSystemPath) )[[1]][1]+1, nchar( basename(fileSystemPath) ) )
+  programmeName <-basename(fileSystemPath)
 
 
   # extract the programme prefix from its config file:
-  programme <- yaml::yaml.load( yaml::read_yaml( paste(confPath, .Platform$file.sep, programmeName, ".yaml" , sep="") ) )
-  programmePrefix <- programme$programmePrefix
+  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
+  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  programmePrefix <- status[["PROGRAMMES"]][[programmeName]][["programmePrefix"]]
 
 
-  if(projectIndex < 1) { # if projectIndex is below 1 (default is 0), then try to identify what projectIndex should be by looking at DIR numbers:
+  if(projectIndex < 1) { # if projectIndex is below 1 (default is 0), then try to identify what projectIndex should be
+                         # by looking at DIR numbers:
 
     # read all DIRs in projsPath that start with prefix:
     directories <- dir(projsPath, recursive = FALSE, full.names = FALSE, pattern= paste(programmePrefix,"[0-9]{1,}[~]{1}[_]{1}", sep="")  )
@@ -116,13 +125,26 @@ createProjectDoc <- function(projectName, projectTitle, fileSystemPath=getwd(), 
   templateContents <- readLines( templateFileConn )
   close(templateFileConn)
 
+  # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
+  if( nchar(projectTitle)==0 ) {
+    projectTitle = gsub("-", " ", gsub("_", " ", projectName) )
+  }
+
+
+  # extract the Author value from the settings.yml file:
+  settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  authorValue <- settings[["Author"]]
+
   # modify templateContents to include PREFIX and projectTitle
-  templateContents <- gsub("{{PREFIX}}", paste(programmePrefix, "01", sep=""), templateContents, fixed=TRUE)
+  templateContents <- gsub("{{PREFIX}}", paste(programmePrefix, projectIndex, sep=""), templateContents, fixed=TRUE)
   templateContents <- gsub("{{TITLE}}", projectTitle, templateContents, fixed=TRUE)
+  templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
 
   # write to projFile
   fileConn <- file(projFile)
   writeLines(templateContents, fileConn)
   close(fileConn)
+
 
 }
