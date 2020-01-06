@@ -4,6 +4,6 @@
 #'
 #' @name projectmanagr
 #' @docType package
-#' @import shiny miniUI rstudioapi
+#' @import shiny miniUI rstudioapi shinyFiles
 NULL
 
