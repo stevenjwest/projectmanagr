@@ -13,7 +13,7 @@
 #' A directory is also created to store the compiled html site from the Organisation - site/
 #'
 #' @export
-createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG", orgTitle = "ORGANISATION") {
+createProjectOrg <- function(orgName = "00_ORG", orgTitle = "ORGANISATION", fileSystemPath=getwd() ) {
 
 
   ### CREATING THE ORGANISATION: ###
@@ -99,8 +99,8 @@ createProjectOrg <- function(fileSystemPath=getwd(), orgName = "00_ORG", orgTitl
 
 
 
-  # templates Dir:
-  tempPath = paste(orgPath, .Platform$file.sep, "templates" , sep="")
+  # templates Dir - INSIDE the config DIR (these templates are part of the projectmanagr config!):
+  tempPath = paste(confPath, .Platform$file.sep, "templates" , sep="")
   done <- dir.create( tempPath )
 
   if(!done) {
