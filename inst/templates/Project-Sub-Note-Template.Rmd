@@ -11,34 +11,22 @@ output:
 
 
 
-# Objectives:
+# OBJECTIVES:
 
 
 
-{{PROJECT_DOC_LINK}}
-
-
-
-{{PROJECT_DOC_LINK_GOAL}}
-
-
-
-{{PROJECT_DOC_LINK_DEL}}
-
-
-
-{{PROJECT_DOC_LINK_TASK}}
-
-
-* overview
-
-
+{{OBJECTIVES}}
 ------
 
 
 
-## Contents:
+## GROUP CONTENTS:
 
+
+{{HEADER_NOTE_LINK}}
+
+
+---------
 
 
 
