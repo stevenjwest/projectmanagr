@@ -21,24 +21,13 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   }
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
-  orgPath <- dirname(fileSystemPath)
+  orgPath <- checkProgDir(fileSystemPath)
 
-  # look for the config/ and templates/ dirs:
-  confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
-  tempPath = paste(orgPath, .Platform$file.sep, "templates" , sep="")
-
-  if(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
-    stop( cat("fileSystemPath is not in a PROGRAMME Directory: ",fileSystemPath, "\n") )
+  if(  orgPath == ""  ) {
+    stop( cat("fileSystemPath is not in a PROGRAMME Directory: ", fileSystemPath, "\n") )
   }
 
   # fileSystemPath is therefore in a PROGRAMME DIR
-
-  # also check if the PROJECTS/ dir is in the current DIR, and if not, exit:
-  projsPath = paste(fileSystemPath, .Platform$file.sep, "PROJECTS" , sep="")
-
-  if(  !( file.exists(projsPath) )  ) {
-    stop( paste("fileSystemPath PROGRAMME Directory does not contain a PROJECTS/ dir: ",fileSystemPath, sep="") )
-  }
 
 
   # extract the PROGRAMME NAME from the fileSystemPath:
@@ -117,7 +106,7 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
     stop( cat("Project file could not be created: ", projFile, "\n") )
   }
 
-  cat( "Made Project file: ",projFile, "\n" )
+  cat( "Made Project file: ", projFile, "\n" )
 
 
   # read project doc template:
@@ -146,14 +135,20 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   writeLines(templateContents, fileConn)
   close(fileConn)
 
+  cat( "  Written template to Project file: ", projFile, "\n" )
+
 
   # Write PROJECT to the status.yml file:
 
+  # Read the status.yml file first into a LIST:
+  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
+  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+
   # add programmeName, programmePrefix, projectIndex under the FULL projectName (including prefix, index and name)
     # in the "PROJECTS" section of the status.yml List:
-  prog <- list(programmeName, programmePrefix, projectIndex )
-  names(prog) <- c("programmeName", "programmePrefix", "projectIndex")
-  status[["PROJECTS"]][[ paste(programmePrefix, projectIndex, "~_", projectName, sep="") ]] <- prog
+  attrs <- list(programmeName, programmePrefix, projectIndex, as.character(file.info(projFile)[,5]) )
+  names(attrs) <- c("programmeName", "programmePrefix", "projectIndex", "creationTime")
+  status[["PROJECTS"]][[ paste(programmePrefix, projectIndex, "~_", projectName, sep="") ]] <- attrs
   # can retrieve the programmePrefix with call to:
     # status[["PROJECTS"]][[projectName]][["programmeName"]]
     # status[["PROJECTS"]][[projectName]][["projectPrefix"]]
@@ -161,7 +156,7 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   # Write status list to the statusFile:
   yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
-  cat( "  Written PROJECT to Status.yml file: ",statusFile, "\n" )
+  cat( "  Written PROJECT to Status.yml file: ", statusFile, "\n" )
 
 
 }
