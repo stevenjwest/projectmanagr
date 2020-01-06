@@ -21,7 +21,7 @@
 #' all _ and - with SPACES.
 #'
 #' projNoteTemplate - template to use, as found in the `config/templates/` directory.  Default is
-#' "Project-Note-Simple-Template.Rmd"
+#' "Project-Note-Template.Rmd"
 #'
 #' @export
 addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, selection,
@@ -110,7 +110,7 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, 
   # NB Need to convert the .Rmd links to .html when WRITING the Organisation to a html site!
 
   DocName <- basename(projectDocPath)
-  DocName <- gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4))
+  DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
 
   DocTitleLink <- paste( "## [", DocName, "](", DocLink, ")", sep="" )
 
@@ -167,7 +167,7 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, 
   # create the projectNoteLink:
   NoteLink <- R.utils::getRelativePath(projNotePath, relativeTo=projectDocPath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  projectNoteLink <- paste("[", projectNotePrefix, "~ ", projectNoteTitle, "](", NoteLink, ")",  sep="")
+  projectNoteLink <- paste("**[", projectNotePrefix, "~ ", projectNoteTitle, "](", NoteLink, ")**",  sep="")
   #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
   # create the Vector, including Whitespace and Summary information:
