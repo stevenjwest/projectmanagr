@@ -24,7 +24,7 @@ addinCreateProgramme <- function() {
 
         fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
-        fillRow(  textInput("programmePrefix", "Programme Prefix:", value = "PRO", width="100%")  ),
+        fillRow(  textInput("programmePrefix", "Programme Prefix:", value = "", width="100%")  ),
 
         fillRow(   span( textOutput("warningPrefix"), style="color:red")  ),
 
@@ -98,18 +98,18 @@ addinCreateProgramme <- function() {
       if(input$programmeName == "") {
         # set the warningName TextOutput:
         output$warningName <- renderText({
-          "PROVIDE PROGRAMME NAME"
+          "*** PROVIDE PROGRAMME NAME ***"
         })
       }
       else if(input$programmePrefix == "") {
         # set the warningPrefix TextOutput:
         output$warningPrefix <- renderText({
-          "PROVIDE PROGRAMME PREFIX"
+          "*** PROVIDE PROGRAMME PREFIX ***"
         })
       }
       else if(global$datapath == "") {
         output$warningDirectory <- renderText({
-          "DIR PATH NOT VALID ORGANISATION"
+          "*** DIR PATH NOT VALID ORGANISATION ***"
         })
       }
       else {
