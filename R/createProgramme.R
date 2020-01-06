@@ -20,7 +20,7 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
 
   # look for the .config/ and templates/ dirs:
   confPath = paste(fileSystemPath, .Platform$file.sep, "config" , sep="")
-  tempPath = paste(fileSystemPath, .Platform$file.sep, "templates" , sep="")
+  tempPath = paste(confPath, .Platform$file.sep, "templates" , sep="")
 
   while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
     fileSystemPath <- dirname(fileSystemPath)
@@ -28,7 +28,7 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
       stop( cat("Could not identify ORGANISATION in fileSystemPath: ",fileSystemPath, "\n") )
     }
     confPath = paste(fileSystemPath, .Platform$file.sep, "config" , sep="")
-    tempPath = paste(fileSystemPath, .Platform$file.sep, "templates", sep="")
+    tempPath = paste(confPath, .Platform$file.sep, "templates", sep="")
   }
 
   # now fileSystemPath should contain the path to the ORG ROOT DIR
@@ -92,14 +92,14 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
   # add the programmePrefix under the programmeName in the "PROGRAMMES" section of the status.yml List:
-  prog <- list(programmePrefix)
-  names(prog) <- c("programmePrefix")
-  status[["PROGRAMMES"]][[programmeName]] <- prog
+  attrs <- list(programmePrefix, as.character(file.info(progFile)[,5]) )
+  names(attrs) <- c("programmePrefix", "creationTime")
+  status[["PROGRAMMES"]][[programmeName]] <- attrs
   # can retrieve the programmePrefix with call to:  status[["PROGRAMMES"]][[programmeName]][["programmePrefix"]]
 
   # Write status list to the statusFile:
   yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
-  cat( "  Written PROGRAMME to Status.yml file: ",statusFile, "\n" )
+  cat( "  Written PROGRAMME to Status.yml file: ", statusFile, "\n" )
 
 }
