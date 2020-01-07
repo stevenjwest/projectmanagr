@@ -34,7 +34,7 @@ addinCreateProjectOrg <- function() {
 
     server <- function(input, output, session) {
 
-      global <- reactiveValues(datapath = getwd())
+      global <- reactiveValues(datapath = normalizePath("~") )
 
       shinyDirChoose(
         input,

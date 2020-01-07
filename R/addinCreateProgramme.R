@@ -49,7 +49,7 @@ addinCreateProgramme <- function() {
 
 
     # compute Dir selection:
-    global <- reactiveValues(datapath = findOrgDir( getwd() )  ) # this sets initial val to current working DIR
+    global <- reactiveValues(datapath = findOrgDir( normalizePath("~") )  ) # this sets initial val to HOME DIR
 
     # allows selection of Dir, with Volume set to HOME Dir
     shinyDirChoose(
