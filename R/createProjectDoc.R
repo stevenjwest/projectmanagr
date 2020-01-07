@@ -21,17 +21,28 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   }
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
-  orgPath <- checkProgDir(fileSystemPath)
+  progPath <- checkProgDir(fileSystemPath)
 
-  if(  orgPath == ""  ) {
+  if(  progPath == ""  ) {
+    # the search reached the root of the filesystem without finding the Organisation files,
+    # therefore, fileSystemPath is not inside a PROGRAMME sub-dir!
     stop( cat("fileSystemPath is not in a PROGRAMME Directory: ", fileSystemPath, "\n") )
   }
+
+  # get the orgPath from fileSystemPath - confirmed above to sit in an organisation!
+  orgPath <- findOrgDir(fileSystemPath)
+  # set confPath + tempPath:
+  confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
+  tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
 
   # fileSystemPath is therefore in a PROGRAMME DIR
 
 
   # extract the PROGRAMME NAME from the fileSystemPath:
-  programmeName <-basename(fileSystemPath)
+  programmeName <-basename(progPath)
+
+  # define the projects path - PROJECTS/ dir in progPath
+  projsPath <- paste( progPath, .Platform$file.sep, "PROJECTS", sep="")
 
 
   # extract the programme prefix from its config file:
