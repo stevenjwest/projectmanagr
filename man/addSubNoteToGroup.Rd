@@ -5,7 +5,7 @@
 \title{Add a New Sub Note to a Project Group}
 \usage{
 addSubNoteToGroup(subNoteName, subNotePrefix, subNoteDir, selection,
-  subNoteTitle = "", subNoteTemp = "Project-Note-Sub-Template.Rmd")
+  subNoteTitle = "", subNoteTemp = "Project-Sub-Note-Template.Rmd")
 }
 \description{
 This Function adds a Sub Project Note to a Project Group:
@@ -34,5 +34,5 @@ subNoteTitle - OPTIONAL title for the Project Note.  Default is to use subNoteNa
 all _ and - with SPACES.
 
 subNoteTemp - OPTIONAL template to use, as found in the `templates/` directory.  Default is
-"Project-Note-Simple-Template.Rmd"
+"Project-Sub-Note-Template.Rmd"
 }

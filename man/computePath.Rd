@@ -11,11 +11,29 @@ Relative Path is used to adjust the fullPath, and returns a fullPath
 that is directed to the relativePath location.
 }
 \details{
-Example
+Examples
+
+01:
 
 fullPath <- "/Users/user/00_ORG/01-PROGRAMME/PROJECTS/P01/P01~001~_Project_Doc.Rmd"
 
 relPath <- "../../LAB/LAB01-00~_Exp_01.Rmd"
 
 Output: /Users/user/00_ORG/01-PROGRAMME/LAB/LAB01-00~_Exp_01.Rmd
+
+02:
+
+fullPath <- "/Users/user/00_ORG/01-PROGRAMME/PROJECTS/P01/P01~001~_Project_Doc.Rmd"
+
+relPath <- "../../LAB"
+
+Output: /Users/user/00_ORG/01-PROGRAMME/LAB
+
+03:
+
+fullPath <- "/Users/user/00_ORG/01-PROGRAMME/PROJECTS/P01/P01~001~_Project_Doc.Rmd"
+
+relPath <- "../../LAB/"
+
+Output: /Users/user/00_ORG/01-PROGRAMME/LAB/
 }

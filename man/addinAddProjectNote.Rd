@@ -11,6 +11,14 @@ Generates a Shiny Gadget for adding a new Project Note inside
 a Project Doc.
 }
 \details{
+The User must select a Task or Project Header Note Link in a
+Project Document.  If a Project Task is selected, the User
+can build a new Project Note - either a Simple Note or a Group
+Note (Header plus one SubNote).  If a Project Header Note Link
+is selected, the User can ADD a new SubNote to this Group Note.
+
+
+
 User selects a destination in
 the file system (MUST be a Programme Dir), Project name, and
 Project title (for the html page).

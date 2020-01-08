@@ -19,7 +19,7 @@ projectNoteName - the name of the Project HEADER Note, a Title with all SPACES r
 with - or _.
 
 projectNotePrefix - the whole projectNotePrefix, including identifier and Major
-Numbering, separated by ~.
+Numbering, separated by ~.  NB Do NOT add the Minor Numbering - this is added automatically!
 
 projectNoteDir - the directory where the Project Note will be stored.  This
 may be a Project Directory, or another Directory specified by the User.  MUST be a sub-directory

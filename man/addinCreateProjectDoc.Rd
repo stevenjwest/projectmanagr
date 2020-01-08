@@ -8,11 +8,13 @@ addinCreateProjectDoc()
 }
 \description{
 Generates a Shiny Gadget for creating a new Project Doc inside
-a Programme.  User selects a destination in
-the file system (MUST be a Programme Dir), Project name, and
-Project title (for the html page).
+a Programme.
 }
 \details{
+User selects a destination in
+the file system (MUST be a Programme Dir), Project name, and
+Project title (for the html page).
+
 Stipulates any errors in the input, and can only be completed
 when these errors have been resolved.
 }
