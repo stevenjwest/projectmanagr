@@ -1,7 +1,9 @@
 #' Create a New Project Document
 #'
 #' Generates a Shiny Gadget for creating a new Project Doc inside
-#' a Programme.  User selects a destination in
+#' a Programme.
+#'
+#' User selects a destination in
 #' the file system (MUST be a Programme Dir), Project name, and
 #' Project title (for the html page).
 #'
@@ -49,7 +51,7 @@ addinCreateProjectDoc <- function() {
 
 
     # compute Dir selection:
-    global <- reactiveValues(datapath = checkProgDir( getwd() )  ) # this sets initial val to current working DIR
+    global <- reactiveValues(datapath = checkProgDir( normalizePath("~") )  ) # this sets initial val to current working DIR
 
     # allows selection of Dir, with Volume set to HOME Dir
     shinyDirChoose(
