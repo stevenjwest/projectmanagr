@@ -1,19 +1,19 @@
-Name: Create New Organisation
+Name: Create Organisation
 Description: Initialise a New Project Organisation.
 Binding: addinCreateProjectOrg
 Interactive: true
 
-Name: Create New Programme
+Name: Create Programme
 Description: Create a New Programme in a Project Organisation.
 Binding: addinCreateProgramme
 Interactive: true
 
-Name: Create New Project Document
+Name: Create Project Document
 Description: Create a New Project Document in a Programme.
 Binding: addinCreateProjectDoc
 Interactive: true
 
-Name: Add New Project Note
+Name: Add Project Note
 Description: Add a New Project Note to a Project Document.
 Binding: addinAddProjectNote
 Interactive: true
