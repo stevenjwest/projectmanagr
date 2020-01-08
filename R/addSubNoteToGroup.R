@@ -267,7 +267,7 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   noteType <- list( "SUBNOTE" ) # noteType is single - no subNotes will be added
   attrs <- list(projectName, goalNum, delNum, taskNum, as.character(file.info(subNotePath)[,5]), noteType )
   names(attrs) <- c("projectName", "goalNum", "delNum", "taskNum", "creationTime", "noteType")
-  status[["PROJECT_NOTES"]][[ headerName ]][["GROUP"]] <- attrs
+  status[["PROJECT_NOTES"]][[ headerName ]][[paste(subNotePrefix, "~_", subNoteName, sep="")]] <- attrs
   # can retrieve data with call to:
   # status[["PROJECT_NOTES"]][[headerName]][["GROUP"]][["projectName"]]
   # status[["PROJECT_NOTES"]][[headerName]][["GROUP"]][["goalNum"]]
