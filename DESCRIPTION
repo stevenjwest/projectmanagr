@@ -18,5 +18,4 @@ Imports:
     shiny (>= 1.2.0),
     miniUI (>= 0.1.1.1),
     rstudioapi (>= 0.9.0),
-    shinyDirectoryInput,
     R.utils
