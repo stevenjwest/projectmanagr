@@ -77,20 +77,20 @@ cursorSelection <- function() {
 
   # identify if the selected line is selecting a HEADER NOTE
     # if a HEADER NOTE is selected, the line will contain the string "-00~"
-    # if a SUBNOTE is selected, the line will contain the string "* **["
-  if( grepl("-00~", lineContent) || grepl("* **[", lineContent) ) {
+    # if a SUBNOTE is selected, the line will contain the string "* ["
+  if( grepl("-00~", lineContent, fixed = TRUE) || grepl("* [", lineContent, fixed = TRUE) ) {
 
     addingSubNote <- TRUE
 
     # find the headerNote:
-    if( grepl("-00~", lineContent) ) {
+    if( grepl("-00~", lineContent, fixed = TRUE) ) {
       headerNoteLink <- lineContent
       headerNoteLineNumber <- line
     }
     else {
       for(l in line:1) {
         lineContent <- original[ l ]
-        if( grepl("-00~", lineContent) ) {
+        if( grepl("-00~", lineContent, fixed = TRUE) ) {
           headerNoteLink <- lineContent
           headerNoteLineNumber <- l
           break

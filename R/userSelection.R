@@ -86,7 +86,7 @@ userSelection <- function(projectDocPath, line) {
   # identify if the selected line is selecting a HEADER NOTE
   # if a HEADER NOTE is selected, the line will contain the string "-00~"
   # if a SUBNOTE is selected, the line will contain the string "* **["
-  if( grepl("-00~", lineContent, fixed=TRUE) || grepl("* **[", lineContent, fixed=TRUE) ) {
+  if( grepl("-00~", lineContent, fixed=TRUE) || grepl("* [", lineContent, fixed=TRUE) ) {
 
     addingSubNote <- TRUE
 
