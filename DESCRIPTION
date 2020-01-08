@@ -18,4 +18,5 @@ Imports:
     shiny (>= 1.2.0),
     miniUI (>= 0.1.1.1),
     rstudioapi (>= 0.9.0),
+    shinyFiles (>= 0.7.5),
     R.utils
