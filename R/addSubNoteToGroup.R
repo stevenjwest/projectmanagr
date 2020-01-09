@@ -264,9 +264,14 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   # add projectName, goalNum, delNum, taskNum under the FULL subNoteName (including prefix, index and name)
   # in the "PROJECT_NOTES" section of the status.yml List:
   projectName <- substring(basename(projectDocPath), first=1, last=(nchar(basename(projectDocPath))-4)  )
-  noteType <- list( "SUBNOTE" ) # noteType is single - no subNotes will be added
-  attrs <- list(projectName, goalNum, delNum, taskNum, as.character(file.info(subNotePath)[,5]), noteType )
-  names(attrs) <- c("projectName", "goalNum", "delNum", "taskNum", "creationTime", "noteType")
+  noteType <- c( "SUBNOTE" ) # noteType is single - no subNotes will be added
+  # add the Project Doc GOAL/DEL/TASK in a list of objectives - so more can be added later
+  objs <- list(projectName, goalNum, delNum, taskNum)
+  names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
+  obj <- list(objs)
+  names(obj) <- c("1")
+  attrs <- list(obj, as.character(file.info(headerNotePath)[,5]), noteType )
+  names(attrs) <- c("OBJECTIVES", "creationTime", "noteType")
   status[["PROJECT_NOTES"]][[ headerName ]][[paste(subNotePrefix, "~_", subNoteName, sep="")]] <- attrs
   # can retrieve data with call to:
   # status[["PROJECT_NOTES"]][[headerName]][["GROUP"]][["projectName"]]
