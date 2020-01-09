@@ -216,7 +216,11 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
 
   # add projectName, goalNum, delNum, taskNum under the FULL projectNoteName (including prefix, index and name)
   # in the "PROJECT_NOTES" section of the status.yml List:
-  projectName <- substring(basename(projectDocPath), first=1, last=(nchar(basename(projectDocPath))-4)  )
+  # extract FULLY QUALIFIED PROJECT DOC NAME - including the Programme, "PROJECTS/" and the ProjectDoc Name:
+  projectName <- paste(
+    basename(dirname(dirname(projectDocPath))), .Platform$file.sep,
+    basename(dirname(projectDocPath)), .Platform$file.sep,
+    substring(basename(projectDocPath), first=1, last=(nchar(basename(projectDocPath))-4)  ), sep="")
   noteType <- c( "GROUP" ) # noteType is group - subNotes will be added
   # add the Project Doc GOAL/DEL/TASK in a list of objectives - so more can be added later
   objs <- list(projectName, goalNum, delNum, taskNum)
