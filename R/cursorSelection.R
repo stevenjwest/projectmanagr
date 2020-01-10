@@ -64,6 +64,9 @@ cursorSelection <- function() {
 
   context <- rstudioapi::getActiveDocumentContext()
 
+  # first ENSURE the current file is saved:
+  rstudioapi::documentSave(context$id)
+
   original <- context$contents
 
   cursor <- rstudioapi::primary_selection(context)
