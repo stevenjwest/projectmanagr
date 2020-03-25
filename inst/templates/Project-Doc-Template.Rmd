@@ -15,7 +15,7 @@ output:
 
 
 
-### SUCCINCT_DESCRIPTION_OF_AIM
+### SUCCINCTLY_DESCRIBE_AIM
 
 
 ---
@@ -25,20 +25,20 @@ output:
 # Background:
 
 
-detail_of_initial_aim_and_background_information
+detail_of_initial_aim_and_background_information_MOTIVATION
 
 
-cover_initial_map_or_plan_of_work
+REVIEW_PLAN_OF_WORK_AND_TASKS_TO_ACHIEVE_AIM
 
 
 
-## Aims Summary:
+## Project Summary:
 
 
-* bullet_list_of_aims_in_chronological_order
+* bullet_list_of_tasks_in_chronological_order
     
 
-* bullet_list_of_aims_in_chronological_order
+* bullet_list_of_tasks_in_chronological_order
 
 
 ---
@@ -52,61 +52,30 @@ cover_initial_map_or_plan_of_work
 
 
 
-## GOAL 1: REVIEW / PLAN
+## GOAL 1: REVIEW_DEVELOP_BUILD
 
 
-Plan_project
-
-
----
-
-
-
-### DELIVERABLE 1: Review
-
-
-
-#### TASK 1: Review of 
-
-
-
-#### TASK 2: Review of
+Review_Develop_Build_project_PLAN
 
 
 ---
 
 
 
-### DELIVERABLE 2: Plan
+### DELIVERABLE 1: 
 
 
-
-#### TASK 1: Review of 
-
-
-
-#### TASK 2: Review of
+DELIVERABLE_AIMS
 
 
 ---
-
-
-
-## GOAL 3: Develop_Build
-
-
-Develop_Build_project
-
-
----
-
-
-
-### DELIVERABLE 1:
 
 
 
 #### TASK 1:
+
+
+---
 
 
 
@@ -120,8 +89,17 @@ Develop_Build_project
 ### DELIVERABLE 2:
 
 
+DELIVERABLE_AIMS
+
+
+---
+
+
 
 #### TASK 1:
+
+
+---
 
 
 
@@ -132,10 +110,10 @@ Develop_Build_project
 
 
 
-## GOAL 4: Deploy
+## GOAL 2: DEPLOY_DISSEMINATE
 
 
-Deploy_project
+Deploy_disseminate_project
 
 
 ---
@@ -145,8 +123,17 @@ Deploy_project
 ### DELIVERABLE 1:
 
 
+DELIVERABLE_AIMS
+
+
+---
+
+
 
 #### TASK 1:
+
+
+---
 
 
 
@@ -159,12 +146,24 @@ Deploy_project
 ### DELIVERABLE 2:
 
 
+DELIVERABLE_AIMS
+
+
+---
+
+
 
 #### TASK 1:
 
 
+---
+
+
 
 #### TASK 2:
+
+
+---
 
 
 
