@@ -13,7 +13,7 @@ Goal/Del/Task TO a Project Note (Single, SubNote, or a whole
 Group of Notes), or a Destination Project Doc.
 }
 \details{
-The User must select a Task in  the Source Project Document.
+The User must select a Task in the Source Project Document.
 A link will then be made to a User selected Project Note or
 Project Doc in the file system.
 

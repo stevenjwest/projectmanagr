@@ -16,8 +16,8 @@ information - lines of Task/Del/Goal, SOURCE projectDoc path, content of selecti
 or userSelection().}
 }
 \description{
-This Function adds a new Link from one Project Doc (source) to another Project Doc (destination).  The link is made to a Project
-Doc GOAL/DEL/TASK, and this GOAL/DEL/TASK is added to the Project Docs' OBJECTIVES.  If the Project Doc
-does not contain ANY objectives (by default they do not), an Objectives Section is added to the start of
+This Function adds a new Link from one Project Doc (source) to another Project Doc (destination).  The link is made to a
+SOURCE Project Doc GOAL/DEL/TASK, and this GOAL/DEL/TASK is added to the DESTINATIONS Project Docs' OBJECTIVES.  If the
+Project Doc does not contain ANY objectives (by default they do not), an Objectives Section is added to the start of
 the Document.
 }
