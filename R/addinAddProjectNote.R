@@ -31,6 +31,7 @@ addinAddProjectNote <- function() {
 
 
   # If no project Task is selected, present ERROR MESSAGE:
+
   if( selection[[1]] == "FALSE" ) {
 
     ui <- miniPage(
@@ -53,10 +54,23 @@ addinAddProjectNote <- function() {
   }
   else {
 
+    # compute the goal/del/task NUM and TITLE:
+    goalNum <- as.integer(  substring(selection[["goal"]],  first=9, last=(regexpr(":", selection[["goal"]])-1) )  )
+    taskNum <- as.integer(  substring(selection[["task"]],  first=11, last=(regexpr(":", selection[["task"]])-1) )  )
+    delNum <- as.integer(  substring(selection[["deliverable"]],  first=17, last=(regexpr(":", selection[["deliverable"]])-1) )  )
+
+    taskTitle <- substring(selection[["task"]],  first=(regexpr(":", selection[["task"]])+2 ) )
+    delTitle <- substring(selection[["deliverable"]],  first=(regexpr(":", selection[["deliverable"]])+2 ) )
+    goalTitle <- substring(selection[["goal"]],  first=(regexpr(":", selection[["goal"]])+2 ) )
+
+
     # if selection[["addingSubNote"]] is TRUE, then just want to ADD A SUBNOTE:
-    # addSubNoteToGroup()
+        # addSubNoteToGroup()
 
     if( selection[["addingSubNote"]] == TRUE ) {
+
+
+      ### CREATE GADGET ###
 
       ui <- miniPage(
 
@@ -67,6 +81,18 @@ addinAddProjectNote <- function() {
           fillCol(
 
             fillRow( h5("Add a new Sub Note to a Project Note Group.") ),
+
+            fillRow(
+              helpText(  h3(  paste("GOAL", goalNum), align="center" )   ),
+              helpText(  h3(  paste("DELIVERABLE", delNum), align="center" )   ),
+              helpText(  h3(  paste("TASK", taskNum) ), align="center"   )
+            ),
+
+            fillRow(
+              helpText( p(goalTitle, align="center") ),
+              helpText( p(delTitle, align="center") ),
+              helpText( p(taskTitle, align="center") )
+            ),
 
             fillRow(  textInput("projectNoteName", "Sub Note Name:", width="100%")  ),
 
@@ -81,8 +107,13 @@ addinAddProjectNote <- function() {
             fillRow(   textOutput("projectNotePath")  )
 
           )
+
         )
+
       )
+
+
+      ### ENCODE BEHAVIOUR ###
 
       server <- function(input, output, session) {
 
@@ -184,7 +215,7 @@ addinAddProjectNote <- function() {
                                                    last=nchar(selection[["headerNoteLink"]])-3 )
                                        )
 
-              headerDirPath <- substring(headerNotePath, first=1, last=(regexpr("~_", selection[["headerNoteLink"]], fixed=TRUE) -4 ))
+              headerDirPath <- substring(headerNotePath, first=1, last=(regexpr("~_", headerNotePath, fixed=TRUE) -1 ))
 
               nextSubNotePrefix <- getNextGroupPrefix(headerDirPath)
 
@@ -196,6 +227,8 @@ addinAddProjectNote <- function() {
                                       subNoteTitle = input$projectNoteTitle,
                                       subNoteTemp="Project-Sub-Note-Template.Rmd")
 
+              rstudioapi::navigateToFile( paste( headerDirPath, .Platform$file.sep, nextSubNotePrefix, "~_", input$projectNoteName, ".Rmd", sep="") )
+
             # Close Gadget after computations are complete:
             stopApp()
 
@@ -206,22 +239,23 @@ addinAddProjectNote <- function() {
       }
 
 
-      viewer <- dialogViewer("Create New Project Document", width = 1000, height = 800)
+      ### VIEW GADGET ###
+
+      viewer <- dialogViewer("Create New Project Document", width = 1000, height = 1000)
 
       runGadget(ui, server, viewer = viewer)
 
     }
 
 
-
-
-
-
-
     else {
 
+
       # else if selection[["addingSubNote"]] is FALSE, want to add a new Note - either SINGLE or GROUP:
-      # addProjectNote()    OR    addProjectNoteGroup()
+          # addProjectNote()    OR    addProjectNoteGroup()
+
+
+      ### CREATE GADGET ###
 
       ui <- miniPage(
 
@@ -233,15 +267,27 @@ addinAddProjectNote <- function() {
 
             fillRow( h5("Add a new Project Note to a Project Document.") ),
 
-            fillRow(  textInput("projectNoteName", "Project Note Name:", value = "Note_Name", width="100%")  ),
+            fillRow(
+              helpText(  h3(  paste("GOAL", goalNum), align="center" )   ),
+              helpText(  h3(  paste("DELIVERABLE", delNum), align="center" )   ),
+              helpText(  h3(  paste("TASK", taskNum) ), align="center"   )
+            ),
+
+            fillRow(
+              helpText( p(goalTitle, align="center") ),
+              helpText( p(delTitle, align="center") ),
+              helpText( p(taskTitle, align="center") )
+            ),
+
+            fillRow(  textInput("projectNoteName", "Project Note Name:", value = "Note_Name")  ),
 
             fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
-            fillRow(  textInput("projectNoteTitle", "Project Note Title:", value = "Note Name", width="100%")  ),
-
-            fillRow( flex = c(7, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Parent Directory")  ),
+            fillRow(  textInput("projectNoteTitle", "Project Note Title:", value = "Note Name")  ),
 
             fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
+
+            fillRow( flex = c(7, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Parent Directory")  ),
 
             fillRow(   textOutput("projectNotePath")  ),
 
@@ -249,17 +295,24 @@ addinAddProjectNote <- function() {
                           choices = list("Single" = 1, "Group" = 2),
                           selected = 1)  ),
 
-            fillRow(  textInput("subNoteName", "Project SubNote Name:", width="100%")  ),
+            fillRow( br() ),
+
+            fillRow(  textInput("subNoteName", "Project SubNote Name:")  ),
 
             fillRow(   span( textOutput("warningSubName"), style="color:red")  ),
 
-            fillRow(  textInput("subNoteTitle", "Project SubNote Title:", width="100%")  ),
+            fillRow(  textInput("subNoteTitle", "Project SubNote Title:")  ),
 
             fillRow(   textOutput("subNotePath")  )
 
           )
+
         )
+
       )
+
+
+      ### ENCODE BEHAVIOUR ###
 
       server <- function(input, output, session) {
 
@@ -270,7 +323,7 @@ addinAddProjectNote <- function() {
 
         })
 
-        # update subNoteTitle when projectNoteName is changed:
+        # update subNoteTitle when subNoteName is changed:
         observe({
 
           updateTextInput(session, "subNoteTitle", value = gsub("-", " ", gsub("_", " ", input$subNoteName) )  )
@@ -296,7 +349,7 @@ addinAddProjectNote <- function() {
                        input$dir
                      },
                      handlerExpr = {
-                       if (!"path" %in% names(dir())) return()
+                       if (!"path" %in% names(dir())) return() # check the path element exists in dir
                        home <- normalizePath("~")
                        global$datapath <-
                          file.path(home, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
@@ -472,22 +525,26 @@ addinAddProjectNote <- function() {
               if(input$prefixType == "1") {
               # If SINGLE note is Selected, addProjectNote():
               # call projectmanagr::addProjectNote:
+                nextNotePrefix <- getNextSimplePrefix(global$datapath)
                 projectmanagr::addProjectNote(
                                            projectNoteName = input$projectNoteName,
-                                           projectNotePrefix = getNextSimplePrefix(global$datapath),
+                                           projectNotePrefix = nextNotePrefix,
                                            projectNoteDir = global$datapath,
                                            selection = selection,
                                            projectNoteTitle = input$projectNoteTitle,
                                            projNoteTemplate="Project-Note-Template.Rmd"
                                 )
-
+                rstudioapi::navigateToFile( paste( global$datapath, .Platform$file.sep,
+                                                   nextNotePrefix, "~_",
+                                                   input$projectNoteName, ".Rmd", sep=""))
               }
 
               else {
-              # If GROUP note is Selected, addProjectNoteGroup():
-              projectmanagr::addProjectNoteGroup(
+                # If GROUP note is Selected, addProjectNoteGroup():
+                nextNotePrefix <- getNextSimplePrefix(global$datapath)
+                projectmanagr::addProjectNoteGroup(
                                                projectNoteName = input$projectNoteName,
-                                               projectNotePrefix = getNextSimplePrefix(global$datapath),
+                                               projectNotePrefix = nextNotePrefix,
                                                projectNoteDir = global$datapath,
                                                selection = selection,
                                                subNoteName = input$subNoteName,
@@ -496,8 +553,13 @@ addinAddProjectNote <- function() {
                                                projNoteTemplate="Project-Header-Note-Template.Rmd",
                                                subNoteTemplate="Project-Sub-Note-Template.Rmd"
                              )
-
+                rstudioapi::navigateToFile( paste(
+                          paste( global$datapath, .Platform$file.sep,
+                                 paste(nextNotePrefix, "-00", sep=""), sep=""),
+                          .Platform$file.sep, paste(nextNotePrefix, "-001", sep=""),
+                          "~_", input$subNoteName, ".Rmd", sep="") )
               }
+
 
 
             # Close Gadget after computations are complete:
@@ -510,7 +572,9 @@ addinAddProjectNote <- function() {
       }
 
 
-      viewer <- dialogViewer("Create New Project Note", width = 1000, height = 800)
+      ### VIEW GADGET ###
+
+      viewer <- dialogViewer("Create New Project Note", width = 1000, height = 1000)
 
       runGadget(ui, server, viewer = viewer)
 
