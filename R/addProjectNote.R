@@ -3,33 +3,37 @@
 #' This Function adds a single Project Note - consisting of one Note and
 #' its corresponding Directory.
 #'
-#' projectNoteName - the name of the Project Note, a Title with all SPACES replaced
+#' @param projectNoteName - the name of the Project Note, a Title with all SPACES replaced
 #' with - or _.
 #'
-#' projectNotePrefix - the whole projectNotePrefix, including identifier and Major
+#' @param projectNotePrefix - the whole projectNotePrefix, including identifier and Major
 #' Numbering, separated by ~.
 #'
-#' projectNoteDir - the directory where the Project Note will be stored.  This
+#' @param projectNoteDir - the directory where the Project Note will be stored.  This
 #' may be a Project Directory, or another Directory specified by the User.  MUST be a sub-directory
 #' or lower inside a PROGRAMME Directory.
 #'
-#' selection - List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
+#' @param selection - List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
 #' information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
 #' or userSelection().
 #'
-#' projectNoteTitle - OPTIONAL title for the Project Note.  Default is to use projectNoteName and replace
+#' @param projectNoteTitle - OPTIONAL title for the Project Note.  Default is to use projectNoteName and replace
 #' all _ and - with SPACES.
 #'
-#' projNoteTemplate - template to use, as found in the `config/templates/` directory.  Default is
+#' @param projNoteTemplate - template to use, as found in the `config/templates/` directory.  Default is
 #' "Project-Note-Template.Rmd"
 #'
 #' @export
 addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, selection,
                                   projectNoteTitle="", projNoteTemplate="Project-Note-Template.Rmd"  ) {
 
+  # TODO - ADD SUPPORT FOR SELECTING DESTINATION FOR PROJECT NOTE DATA!
+
+  cat( "\nprojectmanagr::addProjectNote():\n" )
+
   # Check projectNoteName contains NO SPACES:
   if( grepl("\\s+", projectNoteName) ) {
-    stop( cat("projectNoteName contains a SPACE: ", projectNoteName, "\n") )
+    stop( cat("  projectNoteName contains a SPACE: ", projectNoteName, "\n") )
   }
 
   # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
@@ -49,7 +53,7 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, 
   if(orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, projectNoteDir is not inside a PROGRAMME sub-dir!
-    stop( cat("projectNoteDir is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir, "\n") )
+    stop( cat("  projectNoteDir is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir, "\n") )
   }
   # now, orgPath should be the root dir of the organisation
 
@@ -58,8 +62,18 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, 
   tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
 
 
-  # Create DIR for the Project Note (using its PREFIX as its name):
-  dir.create( paste( projectNoteDir, .Platform$file.sep, projectNotePrefix, sep="") )
+  # Create SYMLINK to DIR for the Project Note (using its PREFIX as its name):
+
+  noteDirPath = paste( projectNoteDir, .Platform$file.sep, projectNotePrefix, sep="")
+  done <- dir.create( noteDirPath )
+
+  if(!done) {
+    stop( cat("  Project Note directory could not be created: ", noteDirPath, "\n") )
+  }
+
+  cat( "  Made Project Note dir: ", noteDirPath, "\n" )
+
+
 
   # read Simple project note template:
   templateFileConn <- file( paste( tempPath, .Platform$file.sep, projNoteTemplate, sep="") )
@@ -71,10 +85,10 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, 
   done <- file.create( projNotePath )
 
   if(!done) {
-    stop( cat("Project Note could not be created: ", projNotePath, "\n") )
+    stop( cat("  Project Note could not be created: ", projNotePath, "\n") )
   }
 
-  cat( "Made Project Note: ", projNotePath, "\n" )
+  cat( "  Made Project Note: ", projNotePath, "\n" )
 
 
   # extract the Author value from the settings.yml file:
@@ -155,6 +169,7 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, 
   writeLines(templateContents, fileConn)
   close(fileConn)
 
+  cat( "  Written Goal Del Task to Project Note file: ", basename(projNotePath), "\n" )
 
 
   ### INSERT LINK FROM PROJECT NOTE INTO PROJECT DOC:
@@ -186,7 +201,7 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, 
   writeLines(projDocContents, projDocFileConn)
   close(projDocFileConn)
 
-  cat( "  Written Project Note Link to Project file: ", basename(projectDocPath), "\n" )
+  cat( "  Written Project Note Link to Project Doc: ", basename(projectDocPath), "\n" )
 
 
 
@@ -209,7 +224,7 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, 
   names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
   obj <- list(objs)
   names(obj) <- c("1")
-  attrs <- list(obj, as.character(file.info(headerNotePath)[,5]), noteType )
+  attrs <- list(obj, as.character(file.info(projNotePath)[,5]), noteType )
   names(attrs) <- c("OBJECTIVES", "creationTime", "noteType")
   status[["PROJECT_NOTES"]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]] <- attrs
   # can retrieve the programmePrefix with call to:
