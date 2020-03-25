@@ -33,7 +33,6 @@ checkProgSubDir <- function( fileSystemPath ) {
     tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
   }
 
-
   fileSystemPath
 
 }

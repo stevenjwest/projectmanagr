@@ -16,6 +16,8 @@
 createProjectOrg <- function(orgName = "00_ORG", orgTitle = "ORGANISATION", fileSystemPath=getwd() ) {
 
 
+  cat( "\nprojectmanagr::createProjectOrg():\n" )
+
   ### CREATING THE ORGANISATION: ###
 
     # create the fileSystem layout:
@@ -23,10 +25,10 @@ createProjectOrg <- function(orgName = "00_ORG", orgTitle = "ORGANISATION", file
   done <- dir.create( orgPath )
 
   if(!done) {
-    stop( cat("Organisation directory could not be created: ", orgFile, "\n") )
+    stop( cat(  "Organisation directory could not be created: ", orgFile, "\n") )
   }
 
-  cat( "Made ORG dir: ",orgPath, "\n" )
+  cat( "  Made ORG dir: ",orgPath, "\n" )
 
 
 
@@ -42,10 +44,42 @@ createProjectOrg <- function(orgName = "00_ORG", orgTitle = "ORGANISATION", file
   done <- dir.create( sitePath )
 
   if(!done) {
-    stop( cat("Site directory could not be created: ", sitePath, "\n") )
+    stop( cat("  Site directory could not be created: ", sitePath, "\n") )
   }
 
-  cat( "Made site dir: ", sitePath, "\n" )
+  cat( "  Made site dir: ", sitePath, "\n" )
+
+
+  ### CREATE THE VOLUMES DIRECTORY ###
+
+  # This will contain any Server or Volume Mounts, typically as symlinks, which can then be used to form symlinks to
+  # Experiment Note Directories
+
+  # volumes dir:
+  volumesPath = paste(orgPath, .Platform$file.sep, "volumes" , sep="")
+  done <- dir.create( volumesPath )
+
+  if(!done) {
+    stop( cat("  Volumes directory could not be created: ", volumesPath, "\n") )
+  }
+
+  cat( "  Made volumes dir: ", volumesPath, "\n" )
+
+
+  ### CREATE INITIAL DATA STORAGE DIR IN VOLUMES DIRECTORY ###
+
+  # The most basic data storage will be simply a directory called data that is local to the current machine.
+  # Users can add further volumes in the volumes directory
+
+  # volumes/data sub-dir:
+  volumesDataPath = paste(orgPath, .Platform$file.sep, "volumes", .Platform$file.sep, "data" , sep="")
+  done <- dir.create( volumesDataPath )
+
+  if(!done) {
+    stop( cat("  Volumes Data sub-directory could not be created: ", volumesDataPath, "\n") )
+  }
+
+  cat( "  Made volumes data sub-dir: ", volumesDataPath, "\n" )
 
 
   ### CREATE CONFIG DIRECTORY ###
@@ -59,10 +93,10 @@ createProjectOrg <- function(orgName = "00_ORG", orgTitle = "ORGANISATION", file
   done <- dir.create( confPath )
 
   if(!done) {
-    stop( cat("Config directory could not be created: ", confPath, "\n") )
+    stop( cat("  Config directory could not be created: ", confPath, "\n") )
   }
 
-  cat( "Made config dir: ", confPath, "\n" )
+  cat( "  Made config dir: ", confPath, "\n" )
 
   # Create config files:
   # a settings.yml file and a status.yml file
@@ -75,9 +109,9 @@ createProjectOrg <- function(orgName = "00_ORG", orgTitle = "ORGANISATION", file
 
   done <- file.copy(settingsPackageFile, settingsFile)
     if(!done) {
-      stop( cat("Settings file could not be copied: ", settingsPackageFile, " ", settingsFile, "\n") )
+      stop( cat("  Settings file could not be copied: ", settingsPackageFile, " ", settingsFile, "\n") )
     }
-  cat( "Copied settings file: ", settingsFile, "\n" )
+  cat( "  Copied settings file: ", settingsFile, "\n" )
 
 
   # create status.yml file - need to create it here to get the mtime for this file
@@ -85,10 +119,10 @@ createProjectOrg <- function(orgName = "00_ORG", orgTitle = "ORGANISATION", file
   done <- file.create(statusFile)
 
   if(!done) {
-    stop( cat("Status file could not be created: ", statusFile, "\n") )
+    stop( cat("  Status file could not be created: ", statusFile, "\n") )
   }
 
-  cat( "Made status file: ", statusFile, "\n" )
+  cat( "  Made status file: ", statusFile, "\n" )
 
 
   # Create initial content for status.yml file - data on the Org, plus UPDATE datetime:
@@ -104,10 +138,10 @@ createProjectOrg <- function(orgName = "00_ORG", orgTitle = "ORGANISATION", file
   done <- dir.create( tempPath )
 
   if(!done) {
-    stop( cat("Templates directory could not be created: ", tempPath, "\n") )
+    stop( cat("  Templates directory could not be created: ", tempPath, "\n") )
   }
 
-  cat( "Made templates dir: ",tempPath, "\n" )
+  cat( "  Made templates dir: ",tempPath, "\n" )
 
   # copy template files:
     # need to copy from the PACKAGE!
@@ -118,7 +152,7 @@ createProjectOrg <- function(orgName = "00_ORG", orgTitle = "ORGANISATION", file
     if(!done) {
       stop( cat("  Copied Template: ", f, "\n") )
     }
-    cat( "Copied template: ",f, "\n" )
+    cat( "  Copied template: ",f, "\n" )
   }
 
 
@@ -127,9 +161,9 @@ createProjectOrg <- function(orgName = "00_ORG", orgTitle = "ORGANISATION", file
   done <- file.create(orgFile)
 
   if(!done) {
-    stop( cat("Org file could not be created: ", orgFile, "\n") )
+    stop( cat("  Org file could not be created: ", orgFile, "\n") )
   }
 
-  cat( "Made Org file: ",orgFile, "\n" )
+  cat( "  Made Org file: ",orgFile, "\n" )
 
 }

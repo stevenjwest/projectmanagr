@@ -15,9 +15,11 @@
 createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(),
                              projDocTemplate="Project-Doc-Template.Rmd", projectIndex=0 ) {
 
+  cat( "\nprojectmanagr::createProjectDoc():\n" )
+
   # check projectName contains NO SPACES:
   if( grepl("\\s+", projectName) ) {
-    stop( cat("projectName contains a SPACE: ", projectName, "\n") )
+    stop( cat("  projectName contains a SPACE: ", projectName, "\n") )
   }
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
@@ -26,7 +28,7 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   if(  progPath == ""  ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, fileSystemPath is not inside a PROGRAMME sub-dir!
-    stop( cat("fileSystemPath is not in a PROGRAMME Directory: ", fileSystemPath, "\n") )
+    stop( cat("  fileSystemPath is not in a PROGRAMME Directory: ", fileSystemPath, "\n") )
   }
 
   # get the orgPath from fileSystemPath - confirmed above to sit in an organisation!
@@ -103,10 +105,10 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   done <- dir.create(projPath)
 
   if(!done) {
-    stop( cat("Project directory could not be created: ", projPath, "\n") )
+    stop( cat("  Project directory could not be created: ", projPath, "\n") )
   }
 
-  cat( "Made Project dir: ",projPath, "\n" )
+  cat( "  Made Project dir: ",projPath, "\n" )
 
 
   # create Rmd file:
@@ -114,10 +116,10 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   done <- file.create(projFile)
 
   if(!done) {
-    stop( cat("Project file could not be created: ", projFile, "\n") )
+    stop( cat("  Project file could not be created: ", projFile, "\n") )
   }
 
-  cat( "Made Project file: ", projFile, "\n" )
+  cat( "  Made Project file: ", projFile, "\n" )
 
 
   # read project doc template:

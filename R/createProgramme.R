@@ -11,9 +11,11 @@
 #' @export
 createProgramme <- function(programmeName, programmePrefix, programmeTitle="", fileSystemPath=getwd() ) {
 
+  cat( "\nprojectmanagr::createProgramme():\n" )
+
   # check programmeName contains NO SPACES:
   if( grepl("\\s+", programmeName) ) {
-    stop( cat("programmeName contains a SPACE: ",programmeName, "\n") )
+    stop( cat("  programmeName contains a SPACE: ",programmeName, "\n") )
   }
 
   # Check fileSystemPath is at the root of an ORGANISATION:
@@ -25,7 +27,7 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
     fileSystemPath <- dirname(fileSystemPath)
     if(nchar(fileSystemPath) <=1) {
-      stop( cat("Could not identify ORGANISATION in fileSystemPath: ",fileSystemPath, "\n") )
+      stop( cat("  Could not identify ORGANISATION in fileSystemPath: ",fileSystemPath, "\n") )
     }
     confPath = paste(fileSystemPath, .Platform$file.sep, "config" , sep="")
     tempPath = paste(confPath, .Platform$file.sep, "templates", sep="")
@@ -41,10 +43,10 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   done <- dir.create(progPath)
 
   if(!done) {
-    stop( cat("Programme directory could not be created: ", progPath, "\n") )
+    stop( cat("  Programme directory could not be created: ", progPath, "\n") )
   }
 
-  cat( "Made Programme dir: ",progPath, "\n" )
+  cat( "  Made Programme dir: ",progPath, "\n" )
 
 
   # create PROJECTS dir:
@@ -52,7 +54,7 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   done <- dir.create(projsPath)
 
   if(!done) {
-    stop( cat("PROJECTS directory could not be created: ", projsPath, "\n") )
+    stop( cat("  PROJECTS directory could not be created: ", projsPath, "\n") )
   }
 
   cat( "  Made PROJECTS dir: ",projsPath, "\n" )
@@ -63,7 +65,7 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   done <- dir.create(sopPath)
 
   if(!done) {
-    stop( cat("SOP directory could not be created: ", sopPath, "\n") )
+    stop( cat("  SOP directory could not be created: ", sopPath, "\n") )
   }
 
   cat( "  Made SOP dir: ",sopPath, "\n" )
@@ -74,7 +76,7 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   done <- file.create(progFile)
 
   if(!done) {
-    stop( cat("Programme index.Rmd file could not be created: ", progFile, "\n") )
+    stop( cat("  Programme index.Rmd file could not be created: ", progFile, "\n") )
   }
 
   # TODO need to actually FILL the index.Rmd file!

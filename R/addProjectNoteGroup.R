@@ -38,9 +38,11 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
                                   projNoteTemplate="Project-Header-Note-Template.Rmd",
                                   subNoteTemplate="Project-Sub-Note-Template.Rmd" ) {
 
+  cat( "\nprojectmanagr::addProjectNoteGroup():\n" )
+
   # Check projectNoteName contains NO SPACES:
   if( grepl("\\s+", projectNoteName) ) {
-    stop( cat("projectNoteName contains a SPACE: ", projectNoteName, "\n") )
+    stop( cat("  projectNoteName contains a SPACE: ", projectNoteName, "\n") )
   }
 
   # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
@@ -60,7 +62,7 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   if(orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, projectNoteDir is not inside a PROGRAMME sub-dir!
-    stop( cat("projectNoteDir is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir, "\n") )
+    stop( cat("  projectNoteDir is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir, "\n") )
   }
   # now, orgPath should be the root dir of the organisation
 
@@ -89,10 +91,10 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   done <- file.create( headerNotePath )
 
   if(!done) {
-    stop( cat("Project Header Note could not be created: ", headerNotePath, "\n") )
+    stop( cat("  Project Header Note could not be created: ", headerNotePath, "\n") )
   }
 
-  cat( "Made Project Header Note: ", headerNotePath, "\n" )
+  cat( "  Made Project Header Note: ", headerNotePath, "\n" )
 
 
   # extract the Author value from the settings.yml file:
@@ -173,6 +175,7 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   writeLines(templateContents, fileConn)
   close(fileConn)
 
+  cat( "  Written Goal Del Task to Header Note file: ", basename(headerNotePath), "\n" )
 
 
   ### INSERT LINK FROM PROJECT NOTE INTO PROJECT DOC:

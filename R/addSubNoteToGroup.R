@@ -32,9 +32,11 @@
 addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection,
                             subNoteTitle="", subNoteTemp="Project-Sub-Note-Template.Rmd"  ) {
 
+  cat( "\nprojectmanagr::addSubNoteToGroup():\n" )
+
   # Check subNoteName contains NO SPACES:
   if( grepl("\\s+", subNoteName) ) {
-    stop( cat("subNoteName contains a SPACE: ", subNoteName, "\n") )
+    stop( cat("  subNoteName contains a SPACE: ", subNoteName, "\n") )
   }
 
   # Check subNoteTitle, and if blank, fill with subNoteName, replacing all "_" and "-" with spaces
@@ -54,7 +56,7 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   if(orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, subNoteDir is not inside a PROGRAMME sub-dir!
-    stop( cat("subNoteDir is not in a sub-dir of a PROGRAMME Directory: ", subNoteDir, "\n") )
+    stop( cat("  subNoteDir is not in a sub-dir of a PROGRAMME Directory: ", subNoteDir, "\n") )
   }
   # now, orgPath should be the root dir of the organisation
 
@@ -64,7 +66,13 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
 
 
   # Create DIR for the Sub Note (using its PREFIX as its name):
-  dir.create( paste( subNoteDir, .Platform$file.sep, subNotePrefix, sep="") )
+  done <- dir.create( paste( subNoteDir, .Platform$file.sep, subNotePrefix, sep="") )
+
+  if(!done) {
+    stop( cat("  Project Sub Note Dir could not be created: ", paste( subNoteDir, .Platform$file.sep, subNotePrefix, sep=""), "\n") )
+  }
+
+  cat( "  Made Project Sub Note Dir: ", paste( subNoteDir, .Platform$file.sep, subNotePrefix, sep=""), "\n" )
 
   # read Simple project note template:
   templateFileConn <- file( paste( tempPath, .Platform$file.sep, subNoteTemp, sep="") )
@@ -76,10 +84,10 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   done <- file.create( subNotePath )
 
   if(!done) {
-    stop( cat("Project Sub Note could not be created: ", subNotePath, "\n") )
+    stop( cat("  Project Sub Note could not be created: ", subNotePath, "\n") )
   }
 
-  cat( "Made Project Sub Note: ", subNotePath, "\n" )
+  cat( "  Made Project Sub Note: ", subNotePath, "\n" )
 
 
   # extract the Author value from the settings.yml file:
@@ -188,6 +196,8 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   writeLines(templateContents, fileConn)
   close(fileConn)
 
+  cat( "  Written Goal Del Task to Sub Note file: ", basename(subNotePath), "\n" )
+
 
 
   ### INSERT LINK FROM PROJECT SUB NOTE INTO PROJECT DOC:
@@ -219,7 +229,7 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   writeLines(projDocContents, projDocFileConn)
   close(projDocFileConn)
 
-  cat( "  Written Project Sub Note Link to Project Doc file: ", basename(projectDocPath), "\n" )
+  cat( "  Written Project Sub Note Link to Project Doc: ", basename(projectDocPath), "\n" )
 
 
 
@@ -274,7 +284,7 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
   obj <- list(objs)
   names(obj) <- c("1")
-  attrs <- list(obj, as.character(file.info(headerNotePath)[,5]), noteType )
+  attrs <- list(obj, as.character(file.info(subNotePath)[,5]), noteType )
   names(attrs) <- c("OBJECTIVES", "creationTime", "noteType")
   status[["PROJECT_NOTES"]][[ headerName ]][[paste(subNotePrefix, "~_", subNoteName, sep="")]] <- attrs
   # can retrieve data with call to:
