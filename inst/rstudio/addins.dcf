@@ -8,7 +8,7 @@ Description: Create a New Programme in a Project Organisation.
 Binding: addinCreateProgramme
 Interactive: true
 
-Name: Create Project Document
+Name: Create Project
 Description: Create a New Project Document in a Programme.
 Binding: addinCreateProjectDoc
 Interactive: true
@@ -16,5 +16,10 @@ Interactive: true
 Name: Add Project Note
 Description: Add a New Project Note to a Project Document.
 Binding: addinAddProjectNote
+Interactive: true
+
+Name: Add Project Link
+Description: Add a New Project Link to a Project Document.
+Binding: addinAddProjectLink
 Interactive: true
 
