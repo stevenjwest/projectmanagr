@@ -206,37 +206,37 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNoteDir, 
 
 
   # Write PROJECT NOTE to the status.yml file:
+  # NO LONGER USING STATUS.YML TO HOLD DATA ON ALL DOCS AND NOTES
 
   # Read the status.yml file first into a LIST:
-  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  #statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
+  #status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
   # add projectName, goalNum, delNum, taskNum under the FULL projectNoteName (including prefix, index and name)
   # in the "PROJECT_NOTES" section of the status.yml List:
   # extract FULLY QUALIFIED PROJECT DOC NAME - including the Programme, "PROJECTS/" and the ProjectDoc Name:
-  projectName <- paste(
-                  basename(dirname(dirname(projectDocPath))), .Platform$file.sep,
-                  basename(dirname(projectDocPath)), .Platform$file.sep,
-                  substring(basename(projectDocPath), first=1, last=(nchar(basename(projectDocPath))-4)  ), sep="")
-  noteType <- c( "SINGLE" ) # noteType is single - no subNotes will be added
+  #projectName <- paste(
+  #                basename(dirname(dirname(projectDocPath))), .Platform$file.sep,
+  #                basename(dirname(projectDocPath)), .Platform$file.sep,
+  #                substring(basename(projectDocPath), first=1, last=(nchar(basename(projectDocPath))-4)  ), sep="")
+  #noteType <- c( "SINGLE" ) # noteType is single - no subNotes will be added
   # add the Project Doc GOAL/DEL/TASK in a list of objectives - so more can be added later
-  objs <- list(projectName, goalNum, delNum, taskNum)
-  names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
-  obj <- list(objs)
-  names(obj) <- c("1")
-  attrs <- list(obj, as.character(file.info(projNotePath)[,5]), noteType )
-  names(attrs) <- c("OBJECTIVES", "creationTime", "noteType")
-  status[["PROJECT_NOTES"]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]] <- attrs
+  #objs <- list(projectName, goalNum, delNum, taskNum)
+  #names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
+  #obj <- list(objs)
+  #names(obj) <- c("1")
+  #attrs <- list(obj, as.character(file.info(projNotePath)[,5]), noteType )
+  #names(attrs) <- c("OBJECTIVES", "creationTime", "noteType")
+  #status[["PROJECT_NOTES"]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]] <- attrs
   # can retrieve the programmePrefix with call to:
   # status[["PROJECT_NOTES"]][[projectNoteName]][["projectName"]]
   # status[["PROJECT_NOTES"]][[projectNoteName]][["goalNum"]]
   # etc.
 
   # Write status list to the statusFile:
-  yaml::write_yaml( yaml::as.yaml(status), statusFile )
+  #yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
-  cat( "  Written PROJECT to Status.yml file: ", statusFile, "\n" )
-
+  #cat( "  Written PROJECT to Status.yml file: ", statusFile, "\n" )
 
 
 }

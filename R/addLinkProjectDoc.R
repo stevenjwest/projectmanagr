@@ -184,10 +184,11 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
 
 
   # Write new Objectives of Destination Project Doc to the status.yml file:
+  # NO LONGER USING STATUS.YML TO HOLD DATA ON ALL DOCS AND NOTES
 
   # Read the status.yml file first into a LIST:
-  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  #statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
+  #status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
   # Then, FIND the projectName [paste(projectNotePrefix, "~_", projectNoteName, sep="") ] under PROJECT_NOTES
   # And then ADD to the objectives list of the Project Note entry:
@@ -196,29 +197,29 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
 
   # the projectName denotes the path to the Project DOCUMENT ->
   # extract FULLY QUALIFIED PROJECT DOC NAME - from root of ORG - including the Programme, "PROJECTS/" and the ProjectDoc Name:
-  projectName <- paste(
-    basename(dirname(dirname(sourceProjectDocPath))), .Platform$file.sep,
-    basename(dirname(sourceProjectDocPath)), .Platform$file.sep,
-    substring(basename(sourceProjectDocPath), first=1, last=(nchar(basename(sourceProjectDocPath))-4)  ), sep="")
+  #projectName <- paste(
+  #  basename(dirname(dirname(sourceProjectDocPath))), .Platform$file.sep,
+  #  basename(dirname(sourceProjectDocPath)), .Platform$file.sep,
+  #  substring(basename(sourceProjectDocPath), first=1, last=(nchar(basename(sourceProjectDocPath))-4)  ), sep="")
 
-   destProjectDocName <- substring(destProjectDocTitle, 1, nchar(destProjectDocTitle)-4)
+   #destProjectDocName <- substring(destProjectDocTitle, 1, nchar(destProjectDocTitle)-4)
 
   # HEADER NOTE:
 
   # form the Objectives List:
   # projectName is the name of the Project DOC!
-  objs <- list(projectName, goalNum, delNum, taskNum)
-  names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
+  #objs <- list(projectName, goalNum, delNum, taskNum)
+  #names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
 
   # assign this OBJECTIVE to the NEXT available index:
-  nextIndex <- as.character(length(status[["PROJECTS"]][[ destProjectDocName ]][["OBJECTIVES"]])+1)
+  #nextIndex <- as.character(length(status[["PROJECTS"]][[ destProjectDocName ]][["OBJECTIVES"]])+1)
   # insert into the status list:
-  status[["PROJECTS"]][[ destProjectDocName ]][["OBJECTIVES"]][[nextIndex]]<- objs
+  #status[["PROJECTS"]][[ destProjectDocName ]][["OBJECTIVES"]][[nextIndex]]<- objs
 
   # Write status list to the statusFile:
-  yaml::write_yaml( yaml::as.yaml(status), statusFile )
+  #yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
-  cat( "  Written PROJECT DOC OBJECTIVE to Status.yml file: ", statusFile, "\n" )
+  #cat( "  Written PROJECT DOC OBJECTIVE to Status.yml file: ", statusFile, "\n" )
 
 
 }

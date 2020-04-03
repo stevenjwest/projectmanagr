@@ -163,10 +163,11 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
 
 
   # Write PROJECT NOTE to the status.yml file:
+  # NO LONGER USING STATUS.YML TO HOLD DATA ON ALL DOCS AND NOTES
 
   # Read the status.yml file first into a LIST:
-  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  #statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
+  #status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
   # Then, FIND the projectName [paste(projectNotePrefix, "~_", projectNoteName, sep="") ] under PROJECT_NOTES
   # And then ADD to the objectives list of the Project Note entry:
@@ -175,76 +176,76 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
 
   # the projectName denotes the path to the Project DOCUMENT ->
   # extract FULLY QUALIFIED PROJECT DOC NAME - from root of ORG - including the Programme, "PROJECTS/" and the ProjectDoc Name:
-  projectName <- paste(
-    basename(dirname(dirname(projectDocPath))), .Platform$file.sep,
-    basename(dirname(projectDocPath)), .Platform$file.sep,
-    substring(basename(projectDocPath), first=1, last=(nchar(basename(projectDocPath))-4)  ), sep="")
+  #projectName <- paste(
+  #  basename(dirname(dirname(projectDocPath))), .Platform$file.sep,
+  #  basename(dirname(projectDocPath)), .Platform$file.sep,
+  #  substring(basename(projectDocPath), first=1, last=(nchar(basename(projectDocPath))-4)  ), sep="")
 
-  projectNoteName <- substring(projectNoteTitle, 1, nchar(projectNoteTitle)-4)
+  #projectNoteName <- substring(projectNoteTitle, 1, nchar(projectNoteTitle)-4)
 
   # First, determine if the note is SIMPLE, HEADER, or SUBNOTE from the Prefix:
-  if( regexpr("-", projectNotePrefix) == -1 ) {
+  #if( regexpr("-", projectNotePrefix) == -1 ) {
     # SIMPLE NOTE:
 
     # form the Objectives List:
     # projectName is the name of the Project DOC!
-    objs <- list(projectName, goalNum, delNum, taskNum)
-    names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
+   # objs <- list(projectName, goalNum, delNum, taskNum)
+  #  names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
 
     # assign this OBJECTIVE to the NEXT available index:
-    nextIndex <- as.character(length(status[["PROJECT_NOTES"]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]][["OBJECTIVES"]])+1)
+   # nextIndex <- as.character(length(status[["PROJECT_NOTES"]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]][["OBJECTIVES"]])+1)
     # insert into the status list:
-    status[["PROJECT_NOTES"]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]][["OBJECTIVES"]][[nextIndex]]<- objs
+  #  status[["PROJECT_NOTES"]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]][["OBJECTIVES"]][[nextIndex]]<- objs
 
     # Write status list to the statusFile:
-    yaml::write_yaml( yaml::as.yaml(status), statusFile )
+   # yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
-    cat( "  Written PROJECT DOC OBJECTIVE to Status.yml file: ", statusFile, "\n" )
+    #cat( "  Written PROJECT DOC OBJECTIVE to Status.yml file: ", statusFile, "\n" )
 
-  }
-  else {
+#  }
+#  else {
 
-    if( substring(projectNotePrefix, regexpr("-", projectNotePrefix)+1) == "00" ) {
+ #   if( substring(projectNotePrefix, regexpr("-", projectNotePrefix)+1) == "00" ) {
       # HEADER NOTE:
       # here need to assign the Objectives to the Header note and EVERY SubNote
       # Will do this in another Function - addLinkProjectGroup()
       # so leave this are BLANK
 
-    }
+#    }
 
-    else {
+#    else {
       # SUBNOTE:
 
       # here need to add the objectives from the ProjectDoc to the SubNote, inside its HeaderNote:
 
       # form the Objectives List:
-      objs <- list(projectName, goalNum, delNum, taskNum)
-      names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
+      #objs <- list(projectName, goalNum, delNum, taskNum)
+      #names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
 
       # to identify the correct path in `status.yml` will need to compute the HEADER NOTE Prefix and title:
-      line <- computeLineIndex("------", projNoteContents)
+      #line <- computeLineIndex("------", projNoteContents)
 
-      headerNoteLink <- computeNextLinkLine(line, projNoteContents)
+      #headerNoteLink <- computeNextLinkLine(line, projNoteContents)
 
       # headerNoteLink now has a line such as: ## [CP01~002 00~ New HEADER Note](../CP01~002-00~_New_HEADER_Note.Rmd)
       # Compute the Prefix and the Title - everything in the last (), after the last / and before the end ".Rmd"
-      headerNoteRelLink <- substring(headerNoteLink, regexpr("](", headerNoteLink, fixed=TRUE)+2, regexpr(".Rmd", headerNoteLink, fixed=TRUE)-1)
+      #headerNoteRelLink <- substring(headerNoteLink, regexpr("](", headerNoteLink, fixed=TRUE)+2, regexpr(".Rmd", headerNoteLink, fixed=TRUE)-1)
 
-      headerNoteFileName <- substring( headerNoteRelLink, regexpr("\\/[^\\/]*$", headerNoteRelLink)+1 )
+      #headerNoteFileName <- substring( headerNoteRelLink, regexpr("\\/[^\\/]*$", headerNoteRelLink)+1 )
 
-      cat("headerNoteFileName: ", headerNoteFileName)
+      #cat("headerNoteFileName: ", headerNoteFileName)
 
       # assign this OBJECTIVE to the NEXT available index:
-      nextIndex <- as.character(length(status[["PROJECT_NOTES"]][[headerNoteFileName]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]][["OBJECTIVES"]])+1)
+      #nextIndex <- as.character(length(status[["PROJECT_NOTES"]][[headerNoteFileName]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]][["OBJECTIVES"]])+1)
       # insert into the status list - headernote then subnote names:
-      status[["PROJECT_NOTES"]][[headerNoteFileName]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]][["OBJECTIVES"]][[nextIndex]]<- objs
+     # status[["PROJECT_NOTES"]][[headerNoteFileName]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]][["OBJECTIVES"]][[nextIndex]]<- objs
 
       # Write status list to the statusFile:
-      yaml::write_yaml( yaml::as.yaml(status), statusFile )
+      #yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
-      cat( "  Written PROJECT DOC OBJECTIVE to Status.yml file: ", statusFile, "\n" )
+      #cat( "  Written PROJECT DOC OBJECTIVE to Status.yml file: ", statusFile, "\n" )
 
-    }
-  }
+    #}
+  #}
 
 }

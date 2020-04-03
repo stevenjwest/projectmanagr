@@ -152,24 +152,25 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
 
 
   # Write PROJECT to the status.yml file:
+  # NO LONGER USING STATUS.YML TO HOLD DATA ON ALL DOCS AND NOTES
 
   # Read the status.yml file first into a LIST:
-  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  #statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
+  #status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
   # add programmeName, programmePrefix, projectIndex under the FULL projectName (including prefix, index and name)
     # in the "PROJECTS" section of the status.yml List:
-  attrs <- list(programmeName, programmePrefix, projectIndex, as.character(file.info(projFile)[,5]) )
-  names(attrs) <- c("programmeName", "programmePrefix", "projectIndex", "creationTime")
-  status[["PROJECTS"]][[ paste(programmePrefix, projectIndex, "~_", projectName, sep="") ]] <- attrs
+  #attrs <- list(programmeName, programmePrefix, projectIndex, as.character(file.info(projFile)[,5]) )
+  #names(attrs) <- c("programmeName", "programmePrefix", "projectIndex", "creationTime")
+  #status[["PROJECTS"]][[ paste(programmePrefix, projectIndex, "~_", projectName, sep="") ]] <- attrs
   # can retrieve the programmePrefix with call to:
     # status[["PROJECTS"]][[projectName]][["programmeName"]]
     # status[["PROJECTS"]][[projectName]][["projectPrefix"]]
 
   # Write status list to the statusFile:
-  yaml::write_yaml( yaml::as.yaml(status), statusFile )
+  #yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
-  cat( "  Written PROJECT to Status.yml file: ", statusFile, "\n" )
+  #cat( "  Written PROJECT to Status.yml file: ", statusFile, "\n" )
 
 
 }

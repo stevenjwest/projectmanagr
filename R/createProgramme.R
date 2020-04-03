@@ -87,21 +87,23 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   }
 
 
-  # Write to the status.yml file:  IS THIS NEEDED?  The Programme is NOT UPDATEABLE!  But may need to RETRIEVE information on it!
+  # Write to the status.yml file:  IS THIS NEEDED?
+  # The Programme is NOT UPDATEABLE!  But may need to RETRIEVE information on it!
+  # SURELY CAN RETRIEVE THIS FROM THE PROGRAMME ITSELF?  COMMENT OUT FOR NOW:
 
   # Read the status.yml file first into a LIST:
-  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  #statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
+  #status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
   # add the programmePrefix under the programmeName in the "PROGRAMMES" section of the status.yml List:
-  attrs <- list(programmePrefix, as.character(file.info(progFile)[,5]) )
-  names(attrs) <- c("programmePrefix", "creationTime")
-  status[["PROGRAMMES"]][[programmeName]] <- attrs
+  #attrs <- list(programmePrefix, as.character(file.info(progFile)[,5]) )
+  #names(attrs) <- c("programmePrefix", "creationTime")
+  #status[["PROGRAMMES"]][[programmeName]] <- attrs
   # can retrieve the programmePrefix with call to:  status[["PROGRAMMES"]][[programmeName]][["programmePrefix"]]
 
   # Write status list to the statusFile:
-  yaml::write_yaml( yaml::as.yaml(status), statusFile )
+  #yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
-  cat( "  Written PROGRAMME to Status.yml file: ", statusFile, "\n" )
+  #cat( "  Written PROGRAMME to Status.yml file: ", statusFile, "\n" )
 
 }
