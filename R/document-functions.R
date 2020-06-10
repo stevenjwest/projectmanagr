@@ -25,6 +25,120 @@ computeLineIndex <- function(line, contents) {
 }
 
 
+#' Grep Line Index
+#'
+#' Returns the index of the first PARTIAL MATCH (using grep) of line in contents,
+#' if not found returns -1.
+#'
+#' @param line a String to be found
+#' @param contents a vector of strings, the index of the first instance of line in
+#' this vector is returned.
+#'
+#'
+grepLineIndex <- function(line, contents) {
+
+  returnVal <- -1
+  # look through contents to find an index that matches line:
+  for( l in 1:length(contents) ) {
+
+    if( grepl(line, contents[l]) ) {
+      returnVal <- l
+      break
+    }
+
+  }
+
+  returnVal
+
+}
+
+
+#' Grep Line Index from initialIndex
+#'
+#' Returns the index of the first PARTIAL MATCH (using grep) of line in contents,
+#' from initialIndex, if not found returns -1.
+#'
+#' @param line a String to be found
+#' @param contents a vector of strings, the index of the first instance of line in
+#' this vector is returned.
+#'
+#'
+grepLineIndexFrom <- function(line, contents, initialIndex) {
+
+  returnVal <- -1
+  # look through contents to find an index that matches line:
+  for( l in initialIndex:length(contents) ) {
+
+    if( grepl(line, contents[l]) ) {
+      returnVal <- l
+      break
+    }
+
+  }
+
+  returnVal
+
+}
+
+
+#' Compute Last Line Index
+#'
+#' Returns the index of the LAST Line in contents that contains any content ("[A-z,0-9]")
+#'
+#' contents - a vector of strings, the index of the first instance of line in this vector is returned.
+#'
+#'
+computeLastLineIndex <- function(contents) {
+
+  returnVal <- 1
+
+  # start at the END of contents:
+  for( l in length(contents):1 ) {
+
+    if( grepl("[A-z,0-9]", contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
+
+      returnVal <- (l+1) # return the NEXT LINE after the line which contains content
+      break
+
+    }
+
+  }
+
+  returnVal
+
+}
+
+
+#' Compute Previous Line Index
+#'
+#' Returns the index of the Previous Line in contents that contains any content ("[A-z,0-9]"), looking back
+#' from lineIndex to 1.
+#'
+#' @param lineIndex the index to start looking back from.
+#' @param contents a vector of strings, the index of the first instance of line in this vector is returned.
+#'
+#'
+computePreviousLineIndex <- function(lineIndex, contents) {
+
+  returnVal <- 1
+
+  # start at the END of contents:
+  for( l in lineIndex:1 ) {
+
+    if( grepl("[A-z,0-9]", contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
+
+      returnVal <- (l+1) # return the NEXT LINE after the line which contains content
+      break
+
+    }
+
+  }
+
+  returnVal
+
+}
+
+
 #' Compute next Header line
 #'
 #' Returns the first blank line after the last content in Header Note contents.
@@ -51,8 +165,117 @@ computeNextHeaderLine <- function(headerContents) {
 
 }
 
+#' Get Project Note Doc Link List
+#'
+#' Returns a list of VECTORS:
+#'
+#'  list[[i]] : A VECTOR that includes the Project Doc ABSOLUTE Link, GOAL Num, DEL Num, TASK Num.
+#'
+#'  list[[i]][1] : Project Doc ABSOLUTE Link
+#'
+#'  list[[i]][2] : Project Doc GOAL - number plus title
+#'
+#'  list[[i]][3] : Project Doc DELIVERABLE - number plus title
+#'
+#'  list[[i]][4] : Project Doc TASK - number plus title
+#'
+#'  length( list ) returns the number of Project Doc links in the returned list.
+#'
+#'  @param projectNoteContents Character vector containing the contents of a Project Note, which includes links to
+#'  at least one ProjectDoc, separated by "----", and ended with "------".
+#'
+#'  @param projectNotePath the FULL PATH to the project note, from which the contents is derived.
+#'
+#'
+getProjectNoteDocLinkList <- function(projectNoteContents, projectNotePath) {
 
-#' Copmute Next Line
+  # instantiate a list to store links
+  linkList <- list()
+
+  # start indices at 1:
+  linkIndex <- 1
+  goaldeltaskIndex <- 1
+
+  # look through projectNoteContents up to line "------" - which marks the end of the Project Doc
+    # links
+  for( l in 1:grep("------", projectNoteContents) ) {
+
+    # check for Project Doc link, plus GOAL, DEL, TASK
+    # First will encounter Project Doc Link, then GOAL, DEL, TASK
+
+    # however, check for GOAL DEL TASK first, as DEL has same signature as Project Doc Link
+      # NOTE the ProjectDoc Link will ALWAYS come first though!
+    if(substring(projectNoteContents[l], first=1, last=7) == "# [GOAL") {
+
+          linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "## ", substring(projectNoteContents[l],
+                                                               first=4,
+                                                               last=regexpr("]", projectNoteContents[l])-1 ) )
+
+          goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+
+          }
+
+    else if(substring(projectNoteContents[l], first=1, last=15) == "## [DELIVERABLE") {
+
+          linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "### ", substring(projectNoteContents[l],
+                                                               first=5,
+                                                               last=regexpr("]", projectNoteContents[l])-1 ) )
+
+          goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+
+          }
+
+    else if(substring(projectNoteContents[l], first=1, last=9) == "### [TASK") {
+
+          linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "#### ", substring(projectNoteContents[l],
+                                                               first=6,
+                                                               last=regexpr("]", projectNoteContents[l])-1 ) )
+
+          goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+
+          }
+
+    else if( substring(projectNoteContents[l], first=1, last=4) == "## [" ) { # this must be ProjectDocLink
+
+          # projectNoteContents[l] is a line that contains Project Doc link in ()
+          # extract this Relative Link, and add to list to return:
+            # AUTOMATICALLY uses [1] as the vector reference (and creates an error if referencing it!)
+            # SO do not use goaldeltaskIndex:
+          projDocRelLink <- substring(projectNoteContents[l],
+                                             first=regexpr("\\(", projectNoteContents[l])+1,
+                                             last=regexpr("\\)", projectNoteContents[l])-1 )
+
+          linkList[[linkIndex]] <- computePath(projectNotePath, projDocRelLink)
+
+          goaldeltaskIndex <- goaldeltaskIndex +1 # STILL increment this index
+
+    }
+
+    else if( substring(projectNoteContents[l], first=1, last=4) == "----" ) {
+        #increment linkIndex when divider BETWEEN ProjectDoc links is seen:
+        linkIndex <- linkIndex + 1
+        # and reset the goaldeltaskIndex
+        goaldeltaskIndex <- 1
+    }
+
+  }
+
+  #return the linkList
+  linkList
+
+}
+
+
+#' Find Goal/Del/Task Line Index in Project Doc
+#'
+#' Identify the line index of a goal/del/task, given the goalNum, delNum, taskNum.
+#'
+findProjectDocGoalDelTaskLineIndex <- function(projectDocContents, goalNum, delNum, taskNum) {
+
+}
+
+
+#' Compute Next Line
 #'
 #' Returns the first blank line after the last content under a Task
 #' in a Project Document,
@@ -63,7 +286,7 @@ computeNextLine <- function(line, projDocContents) {
   # look through projDocContents FROM line, and identify the line that begins ### or ---
   for( l in (line+1):length(projDocContents) ) {
 
-    if( substring(projDocContents[l], first=1, last=3) =="###" || substring(projDocContents[l], first=1, last=3) =="---" ) {
+    if( substring(projDocContents[l], first=1, last=2) =="##" || substring(projDocContents[l], first=1, last=3) =="###" || substring(projDocContents[l], first=1, last=3) =="---" ) {
 
       val <- l
       break
@@ -88,6 +311,46 @@ computeNextLine <- function(line, projDocContents) {
   returnVal
 
 }
+
+
+
+#' Compute Next Line Header
+#'
+#' Returns the first blank line after the last Project SubNote in a Project Group, under a Task
+#' in a Project Document.
+#'
+#'
+computeNextLineHeader <- function(line, projDocContents) {
+
+  # look through projDocContents FROM line, and identify the line that begins ### or ---
+  for( l in (line+1):length(projDocContents) ) {
+
+    if( substring(projDocContents[l], first=1, last=2) =="##" || substring(projDocContents[l], first=1, last=3) =="###" || substring(projDocContents[l], first=1, last=3) =="---" || substring(projDocContents[l], first=1, last=3) =="**[" ) {
+
+      val <- l
+      break
+    }
+    else {
+      val <- l
+    }
+  }
+
+  # next, look from val-1 BACK to line, and identify the first line
+  for( lb in (val-1):(line) ) {
+
+    if( grepl("[A-z,0-9]", projDocContents[lb]) ) { # returns TRUE if line CONTAINS any letter or number
+
+      returnVal <- (lb+1) # return the NEXT LINE after the line which contains content
+      break
+
+    }
+
+  }
+
+  returnVal
+
+}
+
 
 
 #' Compute Next Link Line
@@ -584,3 +847,85 @@ replaceAndInsertVector <- function( pattern, values, x ) {
   c(x[1:(index-1)], values, x[(index+1):length(x)])
 
 }
+
+
+
+#' Get RStudio Open Document IDs
+#'
+#' Returns a list of IDs for all open RStudio Documents, and their paths.
+#'
+#' fileList[[i]][1] - RStudio Document ID
+#'
+#' fileList[[i]][2] - RStudio Document Absolute Path.
+#'
+#'
+getRStudioOpenDocIDs <- function() {
+
+  #cat( "\nprojectmanagr::getRstudioDocIDs():\n" )
+
+  # first, check if ~/.rstudio-desktop/sources exists
+  if( file.exists("~/.rstudio-desktop/sources") ) {
+
+    # check if a DIR exists which STARTS WITH "s-" (remainder is unique RStudio session ID)
+    if ( file.exists(  Sys.glob("~/.rstudio-desktop/sources/s-*")  )  ) {
+
+      # get file list
+      fileIDs <- list.files(  Sys.glob("~/.rstudio-desktop/sources/s-*")  )
+      # look in the "s-*" DIR for every file that does NOT end in "-contents"
+      fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("-contents",x,value=FALSE))) == 0]
+      # nor have name "lock_file"
+      fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("lock_file",x,value=FALSE))) == 0]
+
+      # convert to full path:
+      filePath <- paste0(Sys.glob("~/.rstudio-desktop/sources/s-*"), .Platform$file.sep, fileIDs)
+
+      # inside remaining files, if saved to disk, will be a line starting 'path" : "[path_to_file]",'
+      # if not saved to disk, will contain the line '"path" : null,'
+      # Extract the value of path for each entry in filePath:
+      fileList <- list()
+      for (i in 1:length(filePath) ) {
+
+        # put path into fileList
+        fileList[[i]] <- fileIDs[i]
+
+        # open file
+        FileConn <- file( filePath[i] )
+        lines <- readLines( FileConn, warn = FALSE )
+        close(FileConn)
+
+        # extract path string:
+        pathLine <- lines[grepl("    \"path\"*", lines)]
+
+        if( grepl("\"path\" : null,", pathLine) ) {
+          # path is null - file has not been saved - store "null" in fileList:
+          fileList[[i]][2] <- "null"
+        }
+        else {
+
+          # copy path into fileList - second index
+          fileList[[i]][2] <- substring(pathLine, 15, nchar(pathLine)-2)
+        }
+
+      }
+
+    }
+    else {
+
+      #cat("  ~/.rstudio-desktop does not exist\n")
+      stop( cat("No Active RStudio Session\n") )
+
+    }
+  }
+  else {
+
+    #cat("  ~/.rstudio-desktop does not exist\n")
+    stop( cat("No Active RStudio Session\n") )
+
+  }
+
+  # return fileList:
+  fileList
+
+
+}
+
