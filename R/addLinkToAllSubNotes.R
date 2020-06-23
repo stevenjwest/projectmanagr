@@ -11,12 +11,20 @@
 #'   information - lines of Task/Del/Goal, projectDoc path, content of selection line.  See cursorSelection()
 #'   or userSelection().  The selection MUST be made on the line containing the link to the headerNote!
 #'
-addLinkToAllSubNotes <- function( headerNotePath, selection ) {
+#'  @param summaryBullet contains the bullet to insert as initial summary when adding a link.
+#'
+addLinkToAllSubNotes <- function( headerNotePath, selection, summaryBullet ) {
 
-  # cat( "\nprojectmanagr::addLinkToAllSubNotes():\n" )
+  #cat( "\nprojectmanagr::addLinkToAllSubNotes():\n" )
 
   # set projectDocPath
   projectDocPath <- selection[["projectDocPath"]]
+
+  #cat( "    projectDocPath:", projectDocPath, "\n" )
+
+  # Find programme DIR from projectDocPath:
+  progPath <- findProgDir(projectDocPath)
+
 
   #  Determine headerNote PREFIX and TITLE:
   projectNotePrefix <- substring( basename(headerNotePath), first=1, last=regexpr("~_", basename(headerNotePath), fixed=TRUE)-1 )
@@ -32,19 +40,23 @@ addLinkToAllSubNotes <- function( headerNotePath, selection ) {
   if(orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, headerNoteDir is not inside a PROGRAMME sub-dir!  STOP:
-    stop( cat("  headerNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir, "\n") )
+    stop( paste0("  headerNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir) )
   }
   # now, orgPath should be the root dir of the organisation
 
   # Check headerNotePrefix IS a HEADER NOTE (ending with "-00"):
   if( regexpr("-", projectNotePrefix) == -1 || substring(projectNotePrefix, regexpr("-", projectNotePrefix)+1) != "00" ) {
     # Single OR SUB NOTE:  This method is not designed to deal with these Notes - STOP:
-    stop( cat("  headerNotePath is to a Single Note or Sub Note of a Group Project Note: ", headerNotePath, " Use addLinkProjectNote() Function.\n") )
+    stop( paste0("  headerNotePath is to a Single Note or Sub Note of a Group Project Note: ", headerNotePath, " Use addLinkProjectNote() Function.") )
   }
 
 
   # set confPath:
   confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
+
+
+  # Use current time as initial summary bullet - use to write to SUMMARY:
+  #summaryBullet <- paste0("* ", as.character( Sys.time() ) ) # now pass this in from header note - addLinkProjectGroup
 
 
   # Identify each Sub Note:
@@ -54,6 +66,8 @@ addLinkToAllSubNotes <- function( headerNotePath, selection ) {
   for(i in 1:length(subNotes) ) {
 
     headerNotePath <- subNotes[i]
+
+    cat("SubNote: ", i, " name: ", headerNotePath, "\n")
 
     subNotePrefix <- substring( basename(headerNotePath), first=1, last=regexpr("~_", basename(headerNotePath), fixed=TRUE)-1 )
     subNoteTitle <- substring( basename(headerNotePath), first=regexpr("~_", basename(headerNotePath), fixed=TRUE)+2 ) # still contains .Rmd!
@@ -119,7 +133,7 @@ addLinkToAllSubNotes <- function( headerNotePath, selection ) {
                           GoalTitleLink,"","","",
                           DelTitleLink,"","","",
                           TaskTitleLink,"","",
-                          "* overview","","")
+                          summaryBullet,"","")
 
     # insert objectivesContents into the first line that matches the string "------"
     # "------" (6 x '-') denotes the END of the objectives section
@@ -151,11 +165,12 @@ addLinkToAllSubNotes <- function( headerNotePath, selection ) {
     # create the projectNoteLink:
     NoteLink <- R.utils::getRelativePath(headerNotePath, relativeTo=projectDocPath)
     NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-    projectNoteLink <- paste("* [", subNotePrefix, "~ ", subNoteName, "](", NoteLink, ")",  sep="")
+    projectNoteLink <- paste("*[", subNotePrefix, "~ ", subNoteName, "](", NoteLink, ")*",  sep="")
     #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
     # create the Vector, including Whitespace and Summary information:
-    projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "    + Summary", "" )
+    projectNoteLinkVector <- c( "", "", "", projectNoteLink, "",
+                                summaryBullet, "" )
 
     # compute place to insert the project note link:
     # get the line selected in the projectDoc - [["originalLine"]]
@@ -171,6 +186,46 @@ addLinkToAllSubNotes <- function( headerNotePath, selection ) {
     close(projDocFileConn)
 
     cat( "    Written Sub Note Link to Project Doc: ", basename(projectDocPath), "\n" )
+
+
+
+    ### WRITE PROJECT NOTE TO PROGRAMME INDEX FILE:  NOT USED
+
+    # read Programme Index File:
+    #progIndexPath = paste(progPath, .Platform$file.sep, basename(progPath), "_index.Rmd", sep="")
+    #progIndexFileConn <- file( progIndexPath )
+    #progIndexContents <- readLines( progIndexFileConn )
+    #close(progIndexFileConn)
+
+
+    # create the projIndexLink:
+    #NoteLink <- R.utils::getRelativePath(headerNotePath, relativeTo=progIndexPath)
+    #NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+    #projIndexLink <- paste("* [", subNoteTitle, "](", NoteLink, ")",  sep="")
+
+    # create the Vector, including Whitespace and Summary information:
+    #projIndexLinkVector <- c( "", "", "", projIndexLink, "" )
+
+    # compute place to insert the project doc link:
+    # First get the line index containing containing the projectDoc Name
+    #lineProg <- grepLineIndex(basename(projectDocPath), progIndexContents)
+
+    # Then get the NEXT line that starts with ##
+    #lineProg <- computeNextLine(lineProg, progIndexContents)
+
+    # Insert projIndexLinkVector to progIndexContents:
+    #progIndexContents <- c(progIndexContents[1:(lineProg-1)], projIndexLinkVector, progIndexContents[(lineProg+1):length(progIndexContents)])
+
+
+    # write to progIndexPath
+    #progIndexFileConn <- file( progIndexPath )
+    #writeLines(progIndexContents, progIndexFileConn)
+    #close(progIndexFileConn)
+
+    #cat( "  Written Project Note to Programme File: ", basename(progIndexPath), "\n" )
+
+
+
 
 
 

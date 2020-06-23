@@ -4,37 +4,30 @@
 #' Note, and one SubNote INSIDE the Header Note Dir.  This can be expanded
 #' by adding further SubNotes - useful for Optimisation and Experimental Repeats.
 #'
-#' projectNoteName - the name of the Project HEADER Note, a Title with all SPACES replaced
+#' @param projectNoteName The name of the Project HEADER Note, a Title with all SPACES replaced
 #' with - or _.
-#'
-#' projectNotePrefix - the whole projectNotePrefix, including identifier and Major
+#' @param projectNotePrefix The whole projectNotePrefix, including identifier and Major
 #' Numbering, separated by ~.  NB Do NOT add the Minor Numbering - this is added automatically!
-#'
-#' projectNoteDir - the directory where the Project Note will be stored.  This
+#' @param projectNoteDir The directory where the Project Note will be stored.  This
 #' may be a Project Directory, or another Directory specified by the User.  MUST be a sub-directory
 #' or lower inside a PROGRAMME Directory.
-#'
-#' selection - List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
+#' @param selection List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
 #' information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
 #' or userSelection().
-#'
-#' subNoteName - the First SubNote name.
-#'
-#' projectNoteTitle - OPTIONAL title for the Project HEADER Note.  Default is to use projectNoteName and replace
+#' @param subNoteName The First SubNote name.
+#' @param volume The volume where the sub-notes data will be stored.  "local" by default.
+#' @param projectNoteTitle OPTIONAL title for the Project HEADER Note.  Default is to use projectNoteName and replace
 #' all _ and - with SPACES.
-#'
-#' subNoteTitle - OPTIONAL title for the Project Sub Note.  Default is to use subNoteName and replace
+#' @param subNoteTitle OPTIONAL title for the Project Sub Note.  Default is to use subNoteName and replace
 #' all _ and - with SPACES.
-#'
-#' projNoteTemplate - template to use, as found in the `config/templates/` directory.  Default is
+#' @param projNoteTemplate Template to use, as found in the `config/templates/` directory.  Default is
 #' "Project-Header-Note-Template.Rmd"
-#'
-#' subNoteTemplate - template to use, as found in the `config/templates/` directory.  Default is
+#' @param subNoteTemplate Template to use, as found in the `config/templates/` directory.  Default is
 #' "Project-Sub-Note-Template.Rmd"
 #'
 #' @export
 addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNoteDir, selection,
-                                  subNoteName, projectNoteTitle="", subNoteTitle="",
+                                  subNoteName, volume = "local", projectNoteTitle="", subNoteTitle="",
                                   projNoteTemplate="Project-Header-Note-Template.Rmd",
                                   subNoteTemplate="Project-Sub-Note-Template.Rmd" ) {
 
@@ -42,16 +35,24 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
 
   # Check projectNoteName contains NO SPACES:
   if( grepl("\\s+", projectNoteName) ) {
-    stop( cat("  projectNoteName contains a SPACE: ", projectNoteName, "\n") )
+    stop( paste0("  projectNoteName contains a SPACE: ", projectNoteName) )
+  }
+
+  # Check projectNotePrefix contains NO SPACES:
+  if( grepl("\\s+", projectNotePrefix) ) {
+    stop( paste0("  projectNotePrefix contains a SPACE: ", projectNotePrefix) )
   }
 
   # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
   if( nchar(projectNoteTitle)==0 ) {
-    projectNoteTitle = gsub("-", " ", gsub("_", " ", projectNoteName) )
+    projectNoteTitle <- gsub("-", " ", gsub("_", " ", projectNoteName) )
   }
 
   # set projectDocPath
   projectDocPath <- selection[["projectDocPath"]]
+
+  # Find programme DIR in projectDocPath:
+  progPath <- findProgDir(projectDocPath)
 
   # Check projectNoteDir is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
   # run dirname TWICE as want to ensure projectNoteDir is a sub-dir in a Programme!
@@ -62,7 +63,7 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   if(orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, projectNoteDir is not inside a PROGRAMME sub-dir!
-    stop( cat("  projectNoteDir is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir, "\n") )
+    stop( paste0("  projectNoteDir is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir) )
   }
   # now, orgPath should be the root dir of the organisation
 
@@ -79,7 +80,15 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
 
 
   # Create DIR for the Project Note (using its PREFIX as its name):
-  dir.create( headerNoteDir )
+  # Do NOT make this as a SYMLINK - as Project Sub-Notes will be inside this!
+  done <- dir.create( headerNoteDir )
+
+  if(!done) {
+    stop( paste0("  Header Note directory could not be created: ", headerNoteDir) )
+  }
+
+  cat( "  Made Project Header dir: ", headerNoteDir, "\n" )
+
 
   # read Simple project note template:
   templateFileConn <- file( paste( tempPath, .Platform$file.sep, projNoteTemplate, sep="") )
@@ -91,10 +100,13 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   done <- file.create( headerNotePath )
 
   if(!done) {
-    stop( cat("  Project Header Note could not be created: ", headerNotePath, "\n") )
+    stop( paste0("  Project Header Note could not be created: ", headerNotePath) )
   }
 
   cat( "  Made Project Header Note: ", headerNotePath, "\n" )
+
+  # get creation time - use to write to SUMMARY:
+  summaryBullet <- paste0("* ", as.character(file.info(headerNotePath)[,5]) )
 
 
   # extract the Author value from the settings.yml file:
@@ -169,6 +181,9 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   templateContents <- gsub("{{PROJECT_DOC_LINK_DEL}}", DelTitleLink, templateContents, fixed=TRUE)
   templateContents <- gsub("{{PROJECT_DOC_LINK_TASK}}", TaskTitleLink, templateContents, fixed=TRUE)
 
+  # insert the summaryBullet into SUMMARY_INFO field:
+  templateContents <- gsub("{{SUMMARY_INFO}}", summaryBullet, templateContents, fixed=TRUE)
+
 
   # write to projFile
   fileConn <- file(headerNotePath)
@@ -209,6 +224,42 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
 
   cat( "  Written Project Header Note Link to Project Doc: ", projectDocPath," at line: ", line, "\n" )
 
+
+
+  ### WRITE HEADER NOTE TO PROGRAMME INDEX FILE:  NOT USED
+
+  # read Programme Index File:
+  #progIndexPath = paste(progPath, .Platform$file.sep, basename(progPath), "_index.Rmd", sep="")
+  #progIndexFileConn <- file( progIndexPath )
+  #progIndexContents <- readLines( progIndexFileConn )
+  #close(progIndexFileConn)
+
+
+  # create the projIndexLink:
+  #NoteLink <- R.utils::getRelativePath(headerNotePath, relativeTo=progIndexPath)
+  #NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  #projIndexLink <- paste("**[", projectNoteTitle, "](", NoteLink, ")**",  sep="")
+
+  # create the Vector, including Whitespace and Summary information:
+  #projIndexLinkVector <- c( "", "", "", projIndexLink, "" )
+
+  # compute place to insert the project doc link:
+    # First get the line index containing containing the programmeName
+  #line <- grepLineIndex(basename(projectDocPath), progIndexContents)
+
+  # Then get the NEXT line that starts with ##
+  #line <- computeNextLine(line, progIndexContents)
+
+  # Insert projIndexLinkVector to progIndexContents:
+  #progIndexContents <- c(progIndexContents[1:(line-1)], projIndexLinkVector, progIndexContents[(line+1):length(progIndexContents)])
+
+
+  # write to progIndexPath
+  #progIndexFileConn <- file( progIndexPath )
+  #writeLines(progIndexContents, progIndexFileConn)
+  #close(progIndexFileConn)
+
+  #cat( "  Written Project Note to Programme File: ", basename(progIndexPath), "\n" )
 
 
   # Write PROJECT NOTE to the status.yml file:
@@ -252,9 +303,9 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   subNotePrefix <- paste(projectNotePrefix, "-001", sep="")
 
   # RE-MAKE the selection object - select the line in ProjectDoc where the HEADER link is inserted!
-  selection <- projectmanagr::userSelection(projectDocPath, (line+3) )
+  selection <- projectmanagr::userSelection(  projectDocPath, grepLineIndexFrom( headerNotePrefix, projDocContents, (line-1) )  )
 
   # now run addSubNoteToGroup using subNotePrefix and new selection:
-  addSubNoteToGroup( subNoteName, subNotePrefix, headerNoteDir, selection, subNoteTemp=subNoteTemplate )
+  addSubNoteToGroup( subNoteName, subNotePrefix, headerNoteDir, selection, volume = volume, subNoteTemp = subNoteTemplate )
 
 }

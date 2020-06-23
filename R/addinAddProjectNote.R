@@ -9,8 +9,6 @@
 #' Note (Header plus one SubNote).  If a Project Header Note Link
 #' is selected, the User can ADD a new SubNote to this Group Note.
 #'
-#'
-#'
 #' User selects a destination in
 #' the file system (MUST be a Programme Dir), Project name, and
 #' Project title (for the html page).
@@ -29,6 +27,16 @@ addinAddProjectNote <- function() {
       # TASK or within bounds of a TASK - addProjectNote() OR addProjectNoteGroup()
   selection <- cursorSelection()
 
+  # get the orgPath, volPath and volumes:
+  orgPath <- findOrgDir(selection[["projectDocPath"]])
+  volPath <- paste0(orgPath, .Platform$file.sep, "volumes")
+  volumes <- list.dirs(volPath, full.names = FALSE, recursive = FALSE)
+
+  # order volumes to put local first:
+  volsorder <- c("local")
+  volumes <- volumes[order(match(volumes, volsorder))]
+
+  volumes <- as.list(volumes)
 
   # If no project Task is selected, present ERROR MESSAGE:
 
@@ -93,6 +101,9 @@ addinAddProjectNote <- function() {
               helpText( p(delTitle, align="center") ),
               helpText( p(taskTitle, align="center") )
             ),
+
+            fillRow( selectInput("select", "Select Volume:",
+                                 choices = volumes, selected = volumes[1]) ),
 
             fillRow(  textInput("projectNoteName", "Sub Note Name:", width="100%")  ),
 
@@ -224,6 +235,7 @@ addinAddProjectNote <- function() {
                                       subNotePrefix = nextSubNotePrefix,
                                       subNoteDir = headerDirPath,
                                       selection = selection,
+                                      volume = input$select,
                                       subNoteTitle = input$projectNoteTitle,
                                       subNoteTemp="Project-Sub-Note-Template.Rmd")
 
@@ -279,11 +291,12 @@ addinAddProjectNote <- function() {
               helpText( p(taskTitle, align="center") )
             ),
 
-            fillRow(  textInput("projectNoteName", "Project Note Name:", value = "Note_Name")  ),
+            fillRow( selectInput("select", "Select Volume:",
+                                 choices = volumes, selected = volumes[1]) ),
 
             fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
-            fillRow(  textInput("projectNoteTitle", "Project Note Title:", value = "Note Name")  ),
+            fillRow(  textInput("projectNoteName", "Project Note Name:", value = "Note_Name"), textInput("projectNoteTitle", "Project Note Title:", value = "Note Name")   ),
 
             fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
 
@@ -529,8 +542,9 @@ addinAddProjectNote <- function() {
                 projectmanagr::addProjectNote(
                                            projectNoteName = input$projectNoteName,
                                            projectNotePrefix = nextNotePrefix,
-                                           projectNoteDir = global$datapath,
+                                           projectNotePath = global$datapath,
                                            selection = selection,
+                                           volume = input$select,
                                            projectNoteTitle = input$projectNoteTitle,
                                            projNoteTemplate="Project-Note-Template.Rmd"
                                 )
@@ -548,6 +562,7 @@ addinAddProjectNote <- function() {
                                                projectNoteDir = global$datapath,
                                                selection = selection,
                                                subNoteName = input$subNoteName,
+                                               volume = input$select,
                                                projectNoteTitle = input$projectNoteTitle,
                                                subNoteTitle = input$subNoteTitle,
                                                projNoteTemplate="Project-Header-Note-Template.Rmd",

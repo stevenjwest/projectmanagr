@@ -1,6 +1,6 @@
 Package: projectmanagr
 Title: Project Mangement Functions for Creating, Editing, Linking and Updating Project Management R Markdown Documents
-Version: 0.0.1.0000
+Version: 0.1.0.0000
 Authors@R: 
     person(given = "Steven",
            family = "West",

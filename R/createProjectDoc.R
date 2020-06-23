@@ -11,6 +11,15 @@
 #' title.  If no title is provided, the Title is derived from the project name, replacing any
 #' "_" & "-" with " ". The default fileSystemPath is the working directory.
 #'
+#' @param projectName Name of Project - must NOT contain a space.
+#' @param projectTitle Title of project - typically the projectName with "_" & "-" replaced with spaces.
+#' @param fileSystemPath Path to insert the Project into.  This must be a Programme dir, one level below the
+#' organisation, and containing a PROJECTS/ directory.  The Project will be placed into the PROJECTS/ directory.
+#' If none found, the method will end without making a Project
+#' @param projDocTemplate Rmd template used to create the Project Doc - default is "Project-Doc-Template.Rmd"
+#' @param projectIndex If 0, the function will determine the projectIndex by searching the PROJECTS/ directory.
+#' Otherwise, the projectIndex is used to number the Project in its Prefix.
+#'
 #' @export
 createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(),
                              projDocTemplate="Project-Doc-Template.Rmd", projectIndex=0 ) {
@@ -19,7 +28,7 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
 
   # check projectName contains NO SPACES:
   if( grepl("\\s+", projectName) ) {
-    stop( cat("  projectName contains a SPACE: ", projectName, "\n") )
+    stop( paste0("  projectName contains a SPACE: ", projectName) )
   }
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
@@ -28,7 +37,7 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   if(  progPath == ""  ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, fileSystemPath is not inside a PROGRAMME sub-dir!
-    stop( cat("  fileSystemPath is not in a PROGRAMME Directory: ", fileSystemPath, "\n") )
+    stop( paste0("  fileSystemPath is not in a PROGRAMME Directory: ", fileSystemPath) )
   }
 
   # get the orgPath from fileSystemPath - confirmed above to sit in an organisation!
@@ -105,7 +114,7 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   done <- dir.create(projPath)
 
   if(!done) {
-    stop( cat("  Project directory could not be created: ", projPath, "\n") )
+    stop( paste0("  Project directory could not be created: ", projPath) )
   }
 
   cat( "  Made Project dir: ",projPath, "\n" )
@@ -116,7 +125,7 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   done <- file.create(projFile)
 
   if(!done) {
-    stop( cat("  Project file could not be created: ", projFile, "\n") )
+    stop( paste0("  Project file could not be created: ", projFile) )
   }
 
   cat( "  Made Project file: ", projFile, "\n" )
@@ -171,6 +180,81 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   #yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
   #cat( "  Written PROJECT to Status.yml file: ", statusFile, "\n" )
+
+
+  ### WRITE PROJECT DOC TO ORGANISATION INDEX FILE:
+
+  # read Organisation Index File: orgName in status
+  orgIndexPath = paste(orgPath, .Platform$file.sep, status[["orgName"]], "_index.Rmd", sep="")
+  orgIndexFileConn <- file( orgIndexPath )
+  orgIndexContents <- readLines( orgIndexFileConn )
+  close(orgIndexFileConn)
+
+
+  # create the projIndexLink:
+  NoteLink <- R.utils::getRelativePath(projFile, relativeTo=orgIndexPath)
+  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  projIndexLink <- paste("* [", projectTitle, "](", NoteLink, ")",  sep="")
+
+  # create the Vector, including Whitespace and Summary information:
+  projIndexLinkVector <- c( "", "", "", projIndexLink, "" )
+
+  # compute place to insert the project doc link:
+  # First get the line index containing containing the programmeName
+  line <- grepLineIndex(programmeName, orgIndexContents)
+
+  # Then get the NEXT line that starts with ##
+  line <- computeNextLine(line, orgIndexContents)
+
+  # Insert projIndexLinkVector to orgIndexContents:
+  orgIndexContents <- c(orgIndexContents[1:(line-1)], projIndexLinkVector, orgIndexContents[(line+1):length(orgIndexContents)])
+
+
+  # write to orgIndexPath
+  orgIndexFileConn <- file( orgIndexPath )
+  writeLines(orgIndexContents, orgIndexFileConn)
+  close(orgIndexFileConn)
+
+  cat( "  Written Project Doc to Org File: ", basename(orgIndexPath), "\n" )
+
+
+
+  ### WRITE PROJECT DOC TO PROGRAMME INDEX FILE:
+
+  # read Programme Index File:
+  progIndexPath = paste(progPath, .Platform$file.sep, programmeName, "_index.Rmd", sep="")
+  progIndexFileConn <- file( progIndexPath )
+  progIndexContents <- readLines( progIndexFileConn )
+  close(progIndexFileConn)
+
+  # create the projIndexLink:
+  NoteLink <- R.utils::getRelativePath(projFile, relativeTo=progIndexPath)
+  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  projIndexLink <- paste("* [", projectTitle, "](", NoteLink, ")",  sep="")
+
+  # create the Vector, including Whitespace and Summary information:
+  projIndexLinkVector <- c( "", "", "", "---", "", "", "", paste("## ",projectTitle, sep=""), "", "", projIndexLink, "" )
+  #projIndexLinkVector <- c( "", "", "", projIndexLink, "" )
+
+  # compute place to insert the project doc link:
+  # First get the line index containing containing the header "------"
+    # This is at the END of the # Projects section.
+  line <- grepLineIndex("------", progIndexContents)
+
+  # Then find the PREVIOUS line that has ANY content, and return the index +1:
+  line <- computePreviousLineIndex(line, progIndexContents)
+
+  # Insert projIndexLinkVector to progIndexContents:
+  progIndexContents <- c(progIndexContents[1:(line-1)], projIndexLinkVector, progIndexContents[(line+1):length(progIndexContents)])
+
+
+  # write to progIndexPath
+  progIndexFileConn <- file( progIndexPath )
+  writeLines(progIndexContents, progIndexFileConn)
+  close(progIndexFileConn)
+
+  cat( "  Written Project Doc to Programme File: ", basename(progIndexPath), "\n" )
+
 
 
 }

@@ -1,51 +1,60 @@
 #' Add a New Sub Note to a Project Group
 #'
-#' This Function adds a Sub Project Note to a Project Group:
+#' This Function adds a Sub Project Note to a Project Group: The subNote is placed into the Project
+#' Group Directory, links to the subNote are added to the project doc(s) and the project group header
+#' note, and the subnote is written to any Programme Index files necessary, under the project doc(s).
 #'
-#' - The subNote is placed into the Project Group Directory
-#'
-#' - Links to the subNote are added to the project doc and the project group header
-#' note.
-#'
-#'
-#' subNoteName - the name of the Project Sub Note, a Title with all SPACES replaced
+#' @param subNoteName The name of the Project Sub Note, a Title with all SPACES replaced
 #' with - or _.
-#'
-#' subNotePrefix - the whole subNotePrefix, including identifier and Major
+#' @param subNotePrefix The whole subNotePrefix, including identifier and Major
 #' Numbering, separated by ~, and finally the Minor Numbering system (or subNote numbering),
-#' separated by -.
-#'
-#' subNoteDir - the directory where the Sub Note will be stored.  This will be the Project Group
-#' Note Directory.
-#'
-#' selection - List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
-#' information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
-#' or userSelection().
-#'
-#' subNoteTitle - OPTIONAL title for the Project Note.  Default is to use subNoteName and replace
+#' separated by -.  User needs to define this.
+#' @param subNoteDir The directory where the Sub Note will be stored.  This will be the Project Group
+#' Note Directory.  Must be an ABSOLUTE path!
+#' @param selection List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
+#' information - lines of Task/Del/Goal, projectDoc path content of selection line.  Mainly for validating the
+#' input (its not actually used in this function!  But the selection is used in RStudio Addins to determine whether
+#' to run addSubNoteToGroup, addProjectNote, or addProjectNoteGroup - may omit?).  See `cursorSelection()` or
+#' `userSelection()`.  Selection MUST be on a HeaderNote!
+#' @param volume The name of the volume where the sub-notes data will be stored.  Must be a directory inside the
+#' `volumes/` directory in the Project Organisation.  "local" by default.
+#' @param subNoteTitle OPTIONAL title for the Project Note.  Default is to use subNoteName and replace
 #' all _ and - with SPACES.
-#'
-#' subNoteTemp - OPTIONAL template to use, as found in the `templates/` directory.  Default is
-#' "Project-Sub-Note-Template.Rmd"
+#' @param subNoteTemp OPTIONAL template to use, as found in the `config/templates/` directory of the Organisation.
+#' Default is `Project-Sub-Note-Template.Rmd`
 #'
 #' @export
-addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection,
+addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection, volume = "local",
                             subNoteTitle="", subNoteTemp="Project-Sub-Note-Template.Rmd"  ) {
+
 
   cat( "\nprojectmanagr::addSubNoteToGroup():\n" )
 
+
+  ####################
+  ### CHECK INPUT
+  ####################
+
   # Check subNoteName contains NO SPACES:
   if( grepl("\\s+", subNoteName) ) {
-    stop( cat("  subNoteName contains a SPACE: ", subNoteName, "\n") )
+    stop( paste0("  subNoteName contains a SPACE: ", subNoteName) )
+  }
+
+  # Check subNotePrefix contains NO SPACES:
+  if( grepl("\\s+", subNotePrefix) ) {
+    stop( paste0("  subNotePrefix contains a SPACE: ", subNotePrefix) )
   }
 
   # Check subNoteTitle, and if blank, fill with subNoteName, replacing all "_" and "-" with spaces
   if( nchar(subNoteTitle) == 0 ) {
-    subNoteTitle = gsub("-", " ", gsub("_", " ", subNoteName) )
+    subNoteTitle <- gsub("-", " ", gsub("_", " ", subNoteName) )
   }
 
-  # set projectDocPath
-  projectDocPath <- selection[["projectDocPath"]]
+
+  #################################
+  ### FIND ORG PATH AND RESOURCES
+  #################################
+
 
   # Check subNoteDir is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
   # run dirname TWICE as want to ensure subNoteDir is a sub-dir in a Programme!
@@ -56,38 +65,86 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   if(orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, subNoteDir is not inside a PROGRAMME sub-dir!
-    stop( cat("  subNoteDir is not in a sub-dir of a PROGRAMME Directory: ", subNoteDir, "\n") )
+    stop( paste0("  subNoteDir is not in a sub-dir of a PROGRAMME Directory: ", subNoteDir) )
   }
   # now, orgPath should be the root dir of the organisation
 
   # set confPath + tempPath:
-  confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
-  tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  tempPath <- paste0(confPath, .Platform$file.sep, "templates" )
+  # set volume path:
+  volPath <- paste0( orgPath, .Platform$file.sep, "volumes", .Platform$file.sep, volume )
 
-
-  # Create DIR for the Sub Note (using its PREFIX as its name):
-  done <- dir.create( paste( subNoteDir, .Platform$file.sep, subNotePrefix, sep="") )
-
-  if(!done) {
-    stop( cat("  Project Sub Note Dir could not be created: ", paste( subNoteDir, .Platform$file.sep, subNotePrefix, sep=""), "\n") )
+  if( file.exists(volPath) == FALSE ) {
+    stop( paste0("  volume does not exist: ", volPath) )
   }
 
-  cat( "  Made Project Sub Note Dir: ", paste( subNoteDir, .Platform$file.sep, subNotePrefix, sep=""), "\n" )
 
-  # read Simple project note template:
+
+  ##########################
+  ### CREATE SYMLINK TO DIR for Project Sub Note (using its PREFIX as its name):
+  ##########################
+
+  # first make the Note DIR on the volume - traversing the SAME path as from the root of the projectmanagr org:
+
+  subNoteDir <- normalizePath(subNoteDir)
+
+  projDirOrgPath <- paste0( substr(subNoteDir,
+                                   nchar(findOrgDir(subNoteDir))+2,
+                                   nchar(subNoteDir) ),
+                            .Platform$file.sep,
+                            subNotePrefix )
+
+  noteDirPath = paste( volPath, .Platform$file.sep, projDirOrgPath, sep="")
+  done <- dir.create( noteDirPath, recursive = TRUE )
+
+  if(!done) {
+    stop( paste0("  Project Note directory could not be created on volume: ", noteDirPath) )
+  }
+
+  cat( "  Made Project Note dir on volume: ", noteDirPath, "\n" )
+
+
+  # THEN make the symlink to this, putting the symlink in the projectNotePath:
+  noteDirSymPath = paste0( subNoteDir, .Platform$file.sep, subNotePrefix )
+  symLink <- R.utils::getRelativePath(noteDirPath, relativeTo=noteDirSymPath)
+  symLink <- substring(symLink, first=4, last=nchar(symLink)) # remove first `../`
+
+  done <- file.symlink( symLink, noteDirSymPath )
+
+  if(!done) {
+    file.remove(noteDirPath) # remove the file
+    stop( paste0("  Project Note symlink could not be made to volume: ", noteDirSymPath, " ", noteDirPath) )
+  }
+
+  cat( "  Made Project Note symlink: ", noteDirSymPath, "\n" )
+
+
+  #####################################
+  ### WRITE SubNote Template to File:
+  #####################################
+
+  # read SubNote template:
   templateFileConn <- file( paste( tempPath, .Platform$file.sep, subNoteTemp, sep="") )
   templateContents <- readLines( templateFileConn )
   close(templateFileConn)
 
+
   # Create the new RMD DOCUMENT:
   subNotePath <- paste( subNoteDir, .Platform$file.sep, subNotePrefix, "~_", subNoteName, ".Rmd", sep="")
-  done <- file.create( subNotePath )
+  done <- file.create( subNotePath ) # just check the path is legal..
 
   if(!done) {
-    stop( cat("  Project Sub Note could not be created: ", subNotePath, "\n") )
+    file.remove(noteDirPath) # remove the file
+    file.remove(noteDirSymPath) # remove the symlink
+    stop( paste0("  Project Sub Note could not be created: ", subNotePath) )
   }
 
   cat( "  Made Project Sub Note: ", subNotePath, "\n" )
+
+
+  # get creation time - use to write to SUMMARY:
+  summaryBullet <- paste0("* ", as.character(file.info(subNotePath)[,5]) )
 
 
   # extract the Author value from the settings.yml file:
@@ -99,6 +156,9 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   templateContents <- gsub("{{PREFIX}}", subNotePrefix, templateContents, fixed=TRUE)
   templateContents <- gsub("{{TITLE}}", subNoteTitle, templateContents, fixed=TRUE)
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
+
+  # add DATA STORAGE location
+  templateContents <- gsub("{{DATA_STORAGE}}", symLink, templateContents, fixed=TRUE)
 
 
   # replace the {{OBJECTIVES}} part of the template with the Objectives Template:
@@ -112,58 +172,10 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   templateContents <- replaceAndInsertVector("{{OBJECTIVES}}", objectives, templateContents)
 
 
+  ### INSERT Project Doc Links:
 
-  # compute Project Source Doc RELATIVE LINK:
-  DocLink <- R.utils::getRelativePath(projectDocPath, relativeTo=subNotePath)
-  DocLink <- substring(DocLink, first=4, last=nchar(DocLink)) # remove first `../`
-  # DocLink <- paste( substring(DocLink, first=1, last=nchar(DocLink)-4), "/", sep="")
-  # for now have left links as ".Rmd", but this needs to be ".html", or "/" in a rendered website!
-  # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!
-
-  # NB Need to convert the .Rmd links to .html when WRITING the Organisation to a html site!
-
-  DocName <- basename(projectDocPath)
-  DocName <- gsub( "-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
-
-  DocTitleLink <- paste( "## [", DocName, "](", DocLink, ")", sep="" )
-
-
-  # GOAL:
-
-  goal <- substring(selection[["goal"]], first=4)
-  goalTitle <- substring(goal,  first=(regexpr(":", goal)+2 ) )
-  goalNum <- as.integer(  substring(goal,  first=5, last=(regexpr(":", goal)-1) )  )
-
-  goalTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal) ) ), ")", sep="" )
-
-  GoalTitleLink <- paste("# [", goal, "](", DocLink, goalTag, sep="")
-
-
-  # DEL:
-
-  del <- substring(selection[["deliverable"]], first=5)
-  delTitle <- substring(del,  first=(regexpr(":", del)+2 ) )
-  delNum <- as.integer(  substring(del,  first=12, last=(regexpr(":", del)-1) )  )
-
-  delTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del) ) ), ")", sep="" )
-
-  DelTitleLink <- paste("## [", del, "](", DocLink, delTag, sep="")
-
-
-  # TASK:
-
-  task <- substring(selection[["task"]], first=6)
-  taskTitle <- substring(task,  first=(regexpr(":", task)+2 ) )
-  taskNum <- as.integer(  substring(task,  first=5, last=(regexpr(":", task)-1) )  )
-
-  taskTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task) ) ), ")", sep="" )
-
-  TaskTitleLink <- paste("### [", task, "](", DocLink, taskTag, sep="")
-
-
-  # HEADER
-
-  # Want to add a RELATIVE LINK to the HEADER NOTE here
+  # There may be more than one, so first retrieve all ProjectDoc links from headerNote:
+    # any new SubNote should inherit all Project Doc links from its parent -> header note
 
   # first, derive the Header RMD file and path:
   headerList <- list.files(dirname(subNoteDir), pattern = basename(subNoteDir) )
@@ -171,6 +183,21 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   headerName <- substring(headerName, first=1, last=nchar(headerName)-4)
   headerPath <- paste(dirname(subNoteDir), .Platform$file.sep, headerName, ".Rmd", sep="")
 
+  # read header note:
+  headerNoteFileConn <- file( headerPath )
+  headerNoteContents <- readLines( headerNoteFileConn )
+  close(headerNoteFileConn)
+
+  # get list of project docs from the header note:
+  projDocList <- getProjectNoteDocLinkList(headerNoteContents, headerPath)
+
+  # add Project Doc links to the current subnote contents (templateContents):
+  templateContents <- addLinks( templateContents, subNotePath, projDocList )
+
+
+
+  ### WRITE HEADER LINK
+  # Want to add a RELATIVE LINK to the HEADER NOTE here
 
   # define the headerTitle:
   headerTitle <- gsub( "-", " ",  gsub("_", " ", headerName )  )
@@ -181,55 +208,27 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
 
   headerTitleLink <- paste( "## [", headerTitle, "](", headerLink, ")", sep="" )
 
-
-  templateContents <- gsub("{{PROJECT_DOC_LINK}}", DocTitleLink, templateContents, fixed=TRUE)
-
-  templateContents <- gsub("{{PROJECT_DOC_LINK_GOAL}}", GoalTitleLink, templateContents, fixed=TRUE)
-  templateContents <- gsub("{{PROJECT_DOC_LINK_DEL}}", DelTitleLink, templateContents, fixed=TRUE)
-  templateContents <- gsub("{{PROJECT_DOC_LINK_TASK}}", TaskTitleLink, templateContents, fixed=TRUE)
-
   templateContents <- gsub("{{HEADER_NOTE_LINK}}", headerTitleLink, templateContents, fixed=TRUE)
 
+  cat( "    Written Header Link to Sub Note file: ", basename(subNotePath), "\n" )
 
-  # write to projFile
+
+
+  # write subNote file to disk:
   fileConn <- file(subNotePath)
   writeLines(templateContents, fileConn)
   close(fileConn)
 
-  cat( "  Written Goal Del Task to Sub Note file: ", basename(subNotePath), "\n" )
+  cat( "  Written Sub Note to disk: ", basename(subNotePath), "\n" )
 
 
 
-  ### INSERT LINK FROM PROJECT SUB NOTE INTO PROJECT DOC:
+  ### INSERT LINK FROM PROJECT SUB NOTE INTO PROJECT DOC(S) ONLY
 
-  # read Project Doc:
-  projDocFileConn <- file( projectDocPath )
-  projDocContents <- readLines( projDocFileConn )
-  close(projDocFileConn)
+    # No Longer writing to Programmes - Programmes just contains a list of Projects
+    # Should use the Pomodoro TODO Sheet to keep track of Tasks!
 
-  # create the projectNoteLink:
-  NoteLink <- R.utils::getRelativePath(subNotePath, relativeTo=projectDocPath)
-  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  projectNoteLink <- paste("* [", subNotePrefix, "~ ", subNoteTitle, "](", NoteLink, ")",  sep="")
-  #* [LAB~003-001~ THF MeOH/DCM Clearing Tau Labelling](../LAB/LAB~001-00~_thf_meoh_dcm_clearing_tau_labelling.Rmd)
-
-  # create the Vector, including Whitespace and Summary information:
-  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "    + Summary", "" )
-
-  # compute place to insert the project note link:
-  # get the line selected in the projectDoc - [["originalLineNumber"]]
-  line <- computeNextSubNoteLine(selection[["originalLineNumber"]], projDocContents)
-
-  # Insert projectNoteLinkVector to projDocContents:
-  projDocContents <- c(projDocContents[1:(line-1)], projectNoteLinkVector, projDocContents[(line+1):length(projDocContents)])
-
-
-  # write to projFile
-  projDocFileConn <- file( projectDocPath )
-  writeLines(projDocContents, projDocFileConn)
-  close(projDocFileConn)
-
-  cat( "  Written Project Sub Note Link to Project Doc: ", basename(projectDocPath), "\n" )
+  addSubNoteLinkToDocs(projDocList, subNotePath, headerPath)
 
 
 

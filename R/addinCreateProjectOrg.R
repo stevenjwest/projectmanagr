@@ -26,6 +26,10 @@ addinCreateProjectOrg <- function() {
 
           fillRow(   span( textOutput("warning2"), style="color:red")  ),
 
+          fillRow(  textInput("authorName", "Author Name:", value = "", width="100%")  ),
+
+          fillRow(   span( textOutput("warning3"), style="color:red")  ),
+
           fillRow( flex = c(7, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Organisation Parent Directory")  )
 
         )
@@ -75,10 +79,17 @@ addinCreateProjectOrg <- function() {
             "PROVIDE ORGANISATION TITLE"
           })
         }
+        else if(input$authorName == "") {
+          # set the warning TextOutput:
+          output$warning3 <- renderText({
+            "PROVIDE AUTHOR NAME"
+          })
+        }
         else {
 
           # call projectmanagr::createProjectOrg:
-          projectmanagr::createProjectOrg( orgName = input$organisationName,
+          projectmanagr::createProjectOrg( authorValue = input$authorName,
+                                           orgName = input$organisationName,
                                            orgTitle = input$organisationTitle,
                                            fileSystemPath = global$datapath )
 

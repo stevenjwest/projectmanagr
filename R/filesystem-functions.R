@@ -114,6 +114,44 @@ checkProgSubDir <- function( fileSystemPath ) {
 
 }
 
+
+#' Find Programme Dir
+#'
+#' Searches fileSystemPath's parent directories to identify
+#' a Programme directory.  This is identified by
+#' finding a 'PROJECTS/' directory and a 'templates' directory.
+#'
+#' If a Programme path is identified, it is returned, otherwise
+#' the function returns a BLANK string "".
+#'
+#'
+findProgDir <- function( fileSystemPath ) {
+
+  # Check fileSystemPath is in a PROGRAMME:
+
+  # look for the PROJECTS/ and templates/ dirs:
+  projPath <- paste(fileSystemPath, .Platform$file.sep, "PROJECTS" , sep="")
+  tempPath <- paste(fileSystemPath, .Platform$file.sep, "templates" , sep="")
+
+  fileSystemPath2 <- "/" # use this as placeholder of PREVIOUS fileSystemPath
+                         # if fileSystemPath == fileSystemPath2, then have not found projects or template!
+
+  while(  !( file.exists(projPath) && file.exists(tempPath) )  ) {
+    fileSystemPath2 <- fileSystemPath # save in placeholder
+    fileSystemPath <- dirname(fileSystemPath)
+    if( fileSystemPath2 == fileSystemPath ) { # break if reached filesystem root
+      fileSystemPath <- ""
+      break
+    }
+    projPath <- paste(fileSystemPath, .Platform$file.sep, "PROJECTS" , sep="")
+    tempPath <- paste(fileSystemPath, .Platform$file.sep, "templates", sep="")
+  }
+
+  fileSystemPath
+
+}
+
+
 #' Find Organisation Dir
 #'
 #' Searches fileSystemPath's parent directories to identify
@@ -123,12 +161,13 @@ checkProgSubDir <- function( fileSystemPath ) {
 #' If an Organisation path is identified, it is returned, otherwise
 #' the function returns a BLANK string "".
 #'
+#' @param fileSystemPath an absolute path in the filesystem - should be within an Organisation.
 #'
 findOrgDir <- function( fileSystemPath ) {
 
   # Check fileSystemPath is at the root of an ORGANISATION:
 
-  # look for the .config/ and templates/ dirs:
+  # look for the config/ and templates/ dirs:
   confPath <- paste(fileSystemPath, .Platform$file.sep, "config" , sep="")
   tempPath <- paste(confPath, .Platform$file.sep, "templates" , sep="")
 
@@ -482,7 +521,7 @@ listSubNotePaths <- function( headerNotePath ) {
   # Check headerNotePrefix IS a HEADER NOTE (ending with "-00"):
   if( regexpr("-", projectNotePrefix) == -1 || substring(projectNotePrefix, regexpr("-", projectNotePrefix)+1) != "00" ) {
     # Single OR SUB NOTE:  This method is not designed to deal with these Notes - STOP:
-    stop( cat("  headerNotePath is to a Single Note or Sub Note of a Group Project Note: ", headerNotePath, " Use addLinkProjectNote() Function.\n") )
+    stop( paste0("  headerNotePath is to a Single Note or Sub Note of a Group Project Note: ", headerNotePath, " Use addLinkProjectNote() Function.") )
   }
 
   # get headerNoteDir
@@ -586,5 +625,26 @@ computeSubNotePath <- function( headerNotePath, subNoteName ) {
 
 
 }
+
+
+#' Volumes Add Programme
+#'
+#' Add Programme DIR named programmeName to each data dir in volumes/ in the given orgPath
+#'
+volumesAddProgramme <- function(orgPath, programmeName) {
+
+  volPath <- paste(orgPath, .Platform$file.sep, "volumes", .Platform$file.sep, sep="")
+
+  dirs <- list.dirs(path=paste(orgPath, .Platform$file.sep, "volumes", sep=""), full.names=TRUE, recursive=FALSE)
+
+    lapply(dirs, function(x) {
+
+        dir.create(paste(dirs, .Platform$file.sep, programmeName, sep="") )
+
+      })
+
+}
+
+
 
 

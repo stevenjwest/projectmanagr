@@ -8,6 +8,20 @@ createProjectDoc(projectName, projectTitle = "",
   fileSystemPath = getwd(),
   projDocTemplate = "Project-Doc-Template.Rmd", projectIndex = 0)
 }
+\arguments{
+\item{projectName}{Name of Project - must NOT contain a space.}
+
+\item{projectTitle}{Title of project - typically the projectName with "_" & "-" replaced with spaces.}
+
+\item{fileSystemPath}{Path to insert the Project into.  This must be a Programme dir, one level below the
+organisation, and containing a PROJECTS/ directory.  The Project will be placed into the PROJECTS/ directory.
+If none found, the method will end without making a Project}
+
+\item{projDocTemplate}{Rmd template used to create the Project Doc - default is "Project-Doc-Template.Rmd"}
+
+\item{projectIndex}{If 0, the function will determine the projectIndex by searching the PROJECTS/ directory.
+Otherwise, the projectIndex is used to number the Project in its Prefix.}
+}
 \description{
 Generates a new Project inside a Programme in an Organisation.  The fileSystemPath
 must be in the Programme directory, which is the sub-Dir to the root ORGANISATION

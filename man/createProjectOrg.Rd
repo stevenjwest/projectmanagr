@@ -4,20 +4,27 @@
 \alias{createProjectOrg}
 \title{Create a New Project Organisation}
 \usage{
-createProjectOrg(orgName = "00_ORG", orgTitle = "ORGANISATION",
-  fileSystemPath = getwd())
+createProjectOrg(authorValue, orgName = "00_ORG",
+  orgTitle = "00 ORGANISATION", fileSystemPath = getwd(),
+  orgTemplate = "Org-Template.Rmd")
+}
+\arguments{
+\item{authorValue}{name of author of this organisation - written into the yaml header of each Rmd file.}
+
+\item{orgName}{defines the directory name of the Organisation. Default is "00_ORG",}
+
+\item{orgTitle}{defines the title of the Organisation, in its document.  Default is "ORGANISATION",}
+
+\item{fileSystemPath}{defines where the organisation directory is written, Defaultis the working directory}
+
+\item{orgTemplate}{defines the template to use from the projectmanagr package.  Default is "Org-Template.Rmd".}
 }
 \description{
-Generates the layout for a new Project Organisation in the File System,
-including the content, in '00_ORG' directory by default.  The default location is the working directory.
+Generates the layout for a new Project Organisation in the File System.
 }
 \details{
-This will also initialise the config/ and templates/ directories for this Organisation.  The config/
-directory will contain the status.yml and settings.yml files.  status.yml will contain data on the
-Organisation's status (programmes, projects and project work in progress, update times, etc).  settings.yml
-will contain the settings needed for various projectmanagr functions.
-
-The templates/ directory contains several default templates for Project Docs and Notes.
-
-A directory is also created to store the compiled html site from the Organisation - site/
+The function generates the organisation directory and its initial contents:  config/ direcotry with the
+config files and templates/ directory containing component templates.  The site/ directory, which will
+contain the generated html site.  The volumes/ directory, with an initial local/ directory, that will
+hold all volumes for managing data storage.
 }

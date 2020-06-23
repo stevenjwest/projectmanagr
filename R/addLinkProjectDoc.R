@@ -33,7 +33,7 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
 
   if( basename(projPath) != "PROJECTS") {
     # destProjectDocPath is not in the PROJECTS DIR - so cannot be a ProjectDoc - STOP:
-    stop( cat("  projectDocPath is not in a sub-dir of a PROGRAMME Directory: ", destProjectDocPath, "\n") )
+    stop( paste0("  projectDocPath is not in a sub-dir of a PROGRAMME Directory: ", destProjectDocPath) )
   }
 
   orgPath <- dirname( projPath )
@@ -43,13 +43,18 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
   if(orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, headerNoteDir is not inside a PROGRAMME sub-dir!  STOP:
-    stop( cat("  projectDocPath is not in a sub-dir of a PROGRAMME Directory: ", destProjectDocPath, "\n") )
+    stop( paste0("  projectDocPath is not in a sub-dir of a PROGRAMME Directory: ", destProjectDocPath) )
   }
     # now, orgPath should be the root dir of the organisation
 
 
   # set confPath:
   confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
+
+
+  # Use current time as initial summary bullet - use to write to SUMMARY:
+  summaryBullet <- paste0("* ", as.character(Sys.time()) )
+
 
   # read DESTINATION Project Doc:
   destProjDocFileConn <- file( destProjectDocPath )
@@ -122,7 +127,7 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
                             GoalTitleLink,"","","",
                             DelTitleLink,"","","",
                             TaskTitleLink,"","",
-                            "* overview","","",
+                            summaryBullet,"","",
                             "------")
 
     # Insert projectNoteLinkVector to destProjDocContents:
@@ -135,7 +140,7 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
                             GoalTitleLink,"","","",
                             DelTitleLink,"","","",
                             TaskTitleLink,"","",
-                            "* overview","","")
+                            summaryBullet,"","")
 
     # Insert projectNoteLinkVector to destProjDocContents:
     destProjDocContents <- c(destProjDocContents[1:(line-1)], objectivesContents, destProjDocContents[(line):length(destProjDocContents)])
@@ -164,7 +169,8 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
   projectNoteLink <- paste("**[", destProjectDocTitle, "](", NoteLink, ")**",  sep="")
 
   # create the Vector, including Whitespace and Summary information:
-  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", "* Summary", "")
+  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "",
+                              summaryBullet, "")
 
   # compute place to insert the project note link:
   # get the line selected in the projectDoc - [["originalLine"]]

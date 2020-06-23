@@ -5,7 +5,6 @@
 #'
 #' @param projectNotePath The path to the Project Note.  This MUST be a sub-directory or lower inside a
 #'   PROGRAMME Directory.
-#'
 #' @param selection List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
 #'   information - lines of Task/Del/Goal, projectDoc path, content of selection line.  See cursorSelection()
 #'   or userSelection().
@@ -15,10 +14,18 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
 
   cat( "\nprojectmanagr::addLinkProjectNote():\n" )
 
+  # confirm projectNotePath is a valid path - contains "~_"
+  if( !grepl("~_", projectNotePath) ) {
+    stop( paste0("  projectNotePath is not valid - no '~_' separator: ", projectNotePath) )
+  }
+
   # set projectDocPath
   projectDocPath <- selection[["projectDocPath"]]
 
-  #  Determine projectNote PREFIX and TITLE:
+  # Find programme DIR from projectDocPath:
+  progPath <- findProgDir(projectDocPath)
+
+  # Determine projectNote PREFIX and TITLE:
   projectNotePrefix <- substring( basename(projectNotePath), first=1, last=regexpr("~_", basename(projectNotePath), fixed=TRUE)-1 )
   projectNoteTitle <- substring( basename(projectNotePath), first=regexpr("~_", basename(projectNotePath), fixed=TRUE)+2 )
   # Remove - and _ and remove file suffix:
@@ -34,19 +41,23 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   if(orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, projectNoteDir is not inside a PROGRAMME sub-dir!  STOP:
-    stop( cat("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir, "\n") )
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir) )
   }
     # now, orgPath should be the root dir of the organisation
 
   # Check projectNotePrefix is NOT a HEADER NOTE (ending with "-00"):
   if( regexpr("-", projectNotePrefix) != -1 && substring(projectNotePrefix, regexpr("-", projectNotePrefix)+1) == "00" ) {
     # HEADER NOTE:  This method is not designed to deal with Header Notes - STOP:
-    stop( cat("  projectNotePath is to a Header Note of a Group Project Note: ", projectNotePath, " Use addLinkProjectGroup() Function.\n") )
+    stop( paste0("  projectNotePath is to a Header Note of a Group Project Note: ", projectNotePath, " Use addLinkProjectGroup() Function.") )
   }
 
 
   # set confPath:
   confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
+
+  # Use current time as initial summary bullet - use to write to SUMMARY:
+  summaryBullet <- paste0("* ", as.character(Sys.time()) )
+
 
   # read Project Note:
   projNoteFileConn <- file( projectNotePath )
@@ -107,7 +118,7 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
                           GoalTitleLink,"","","",
                           DelTitleLink,"","","",
                           TaskTitleLink,"","",
-                          "* overview","","")
+                          summaryBullet,"","")
 
   # insert objectivesContents into the first line that matches the string "------"
       # "------" (6 x '-') denotes the END of the objectives section
@@ -131,6 +142,9 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
 
 
 
+  ### INSERT LINK FROM PROJECT NOTE INTO PROJECT DOC:
+
+
   # read Project Doc:
   projDocFileConn <- file( projectDocPath )
   projDocContents <- readLines( projDocFileConn )
@@ -143,7 +157,8 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
   # create the Vector, including Whitespace and Summary information:
-  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", "* Summary", "" )
+  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "",
+                              summaryBullet, "" )
 
   # compute place to insert the project note link:
   # get the line selected in the projectDoc - [["originalLine"]]
@@ -159,6 +174,44 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   close(projDocFileConn)
 
   cat( "  Written Project Note Link to Project Doc: ", basename(projectDocPath), "\n" )
+
+
+
+  ### WRITE PROJECT NOTE TO PROGRAMME INDEX FILE:  NOT USED
+
+  # read Programme Index File:
+  #progIndexPath = paste(progPath, .Platform$file.sep, basename(progPath), "_index.Rmd", sep="")
+  #progIndexFileConn <- file( progIndexPath )
+  #progIndexContents <- readLines( progIndexFileConn )
+  #close(progIndexFileConn)
+
+
+  # create the projIndexLink:
+  #NoteLink <- R.utils::getRelativePath(projectNotePath, relativeTo=progIndexPath)
+  #NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  #projIndexLink <- paste("* [", projectNoteTitle, "](", NoteLink, ")",  sep="")
+
+  # create the Vector, including Whitespace and Summary information:
+  #projIndexLinkVector <- c( "", "", "", projIndexLink, "" )
+
+  # compute place to insert the project doc link:
+    # First get the line index containing containing the projectDoc Name
+  #line <- grepLineIndex(basename(projectDocPath), progIndexContents)
+
+  # Then get the NEXT line that starts with ##
+  #line <- computeNextLine(line, progIndexContents)
+
+  # Insert projIndexLinkVector to progIndexContents:
+  #progIndexContents <- c(progIndexContents[1:(line-1)], projIndexLinkVector, progIndexContents[(line+1):length(progIndexContents)])
+
+
+  # write to progIndexPath
+  #progIndexFileConn <- file( progIndexPath )
+  #writeLines(progIndexContents, progIndexFileConn)
+  #close(progIndexFileConn)
+
+  #cat( "  Written Project Note to Programme File: ", basename(progIndexPath), "\n" )
+
 
 
 

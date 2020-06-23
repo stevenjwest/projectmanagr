@@ -4,15 +4,17 @@
 \alias{addLinkToAllSubNotes}
 \title{Add a New Link from a Project Doc Goal/Del/Task to a Group of Project Notes}
 \usage{
-addLinkToAllSubNotes(headerNotePath, selection)
+addLinkToAllSubNotes(headerNotePath, selection, summaryBullet)
 }
 \arguments{
 \item{headerNotePath}{The path to the Header Note.  This MUST be in a sub-directory or lower inside a
 PROGRAMME Directory.  This MUST be an ABSOLUTE PATH.}
 
 \item{selection}{List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
-information - lines of Task/Del/Goal, projectDoc path, content of selection line.  See cursorSelection()
-or userSelection().  The selection MUST be made on the line containing the link to the headerNote!}
+  information - lines of Task/Del/Goal, projectDoc path, content of selection line.  See cursorSelection()
+  or userSelection().  The selection MUST be made on the line containing the link to the headerNote!
+
+ @param summaryBullet contains the bullet to insert as initial summary when adding a link.}
 }
 \description{
 This Function adds a new Link from an Existing Group of Project Notes (including the Header Note and

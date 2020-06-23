@@ -4,29 +4,31 @@
 \alias{addProjectNote}
 \title{Add a New Project Note}
 \usage{
-addProjectNote(projectNoteName, projectNotePrefix, projectNoteDir,
-  selection, projectNoteTitle = "",
+addProjectNote(projectNoteName, projectNotePrefix, projectNotePath,
+  selection, volume = "local", projectNoteTitle = "",
   projNoteTemplate = "Project-Note-Template.Rmd")
 }
 \arguments{
-\item{projectNoteName}{- the name of the Project Note, a Title with all SPACES replaced
+\item{projectNoteName}{The name of the Project Note, a Title with all SPACES replaced
 with - or _.}
 
-\item{projectNotePrefix}{- the whole projectNotePrefix, including identifier and Major
+\item{projectNotePrefix}{The whole projectNotePrefix, including identifier and Major
 Numbering, separated by ~.}
 
-\item{projectNoteDir}{- the directory where the Project Note will be stored.  This
+\item{projectNotePath}{The directory where the Project Note will be stored.  This
 may be a Project Directory, or another Directory specified by the User.  MUST be a sub-directory
 or lower inside a PROGRAMME Directory.}
 
-\item{selection}{- List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
+\item{selection}{List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
 information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
 or userSelection().}
 
-\item{projectNoteTitle}{- OPTIONAL title for the Project Note.  Default is to use projectNoteName and replace
+\item{volume}{The volume to store the Project Note Directory in.}
+
+\item{projectNoteTitle}{OPTIONAL title for the Project Note.  Default is to use projectNoteName and replace
 all _ and - with SPACES.}
 
-\item{projNoteTemplate}{- template to use, as found in the `config/templates/` directory.  Default is
+\item{projNoteTemplate}{Template to use, as found in the `config/templates/` directory.  Default is
 "Project-Note-Template.Rmd"}
 }
 \description{

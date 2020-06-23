@@ -1,0 +1,180 @@
+---
+title: '{{PREFIX}}~ {{TITLE}}'
+author: '{{AUTHOR}}'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# INITIAL AIM:
+
+
+
+### SUCCINCTLY_DESCRIBE_AIM
+
+
+---
+
+
+
+# Introduction:
+
+
+Area_to_review_overview
+
+
+List_of_sources
+
+
+Review_ORGANISATION_of_knowledge_FORMULATE_PLAN_TO_ORGANISE_PROJECT_NOTES_AS_SECTIONS
+
+
+
+---
+
+
+
+## Objective Summary:
+
+
+* REVIEW_Body_Of_Knowledge:
+    
+    + GOAL_SECTION
+    
+    + GOAL_SECTION
+
+
+---
+
+
+
+# GOALS:
+
+
+---
+
+
+
+## GOAL 1: SECTION
+
+
+SECTION_DESCRIBE_PLAN_HERE
+
+
+---
+
+
+
+### DELIVERABLE 1: 
+
+
+DELIVERABLE_AIMS
+
+
+---
+
+
+
+#### TASK 1:
+
+
+---
+
+
+
+#### TASK 2:
+
+
+---
+
+
+
+### DELIVERABLE 2:
+
+
+DELIVERABLE_AIMS
+
+
+---
+
+
+
+#### TASK 1:
+
+
+---
+
+
+
+#### TASK 2:
+
+
+---
+
+
+
+## GOAL 2: SECTION
+
+
+SECTION_DESCRIBE_PLAN_HERE
+
+
+---
+
+
+
+### DELIVERABLE 1:
+
+
+DELIVERABLE_AIMS
+
+
+---
+
+
+
+#### TASK 1:
+
+
+---
+
+
+
+#### TASK 2:
+
+
+---
+
+
+### DELIVERABLE 2:
+
+
+DELIVERABLE_AIMS
+
+
+---
+
+
+
+#### TASK 1:
+
+
+---
+
+
+
+#### TASK 2:
+
+
+---
+
+
+
+
+
+

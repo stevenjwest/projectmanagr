@@ -1,25 +1,39 @@
-Name: Create Organisation
+Name: ProjectManagr: Create Organisation
 Description: Initialise a New Project Organisation.
 Binding: addinCreateProjectOrg
 Interactive: true
 
-Name: Create Programme
+Name: ProjectManagr: Create Programme
 Description: Create a New Programme in a Project Organisation.
 Binding: addinCreateProgramme
 Interactive: true
 
-Name: Create Project
+Name: ProjectManagr: Create Project
 Description: Create a New Project Document in a Programme.
 Binding: addinCreateProjectDoc
 Interactive: true
 
-Name: Add Project Note
+Name: ProjectManagr: Add Project Note
 Description: Add a New Project Note to a Project Document.
 Binding: addinAddProjectNote
 Interactive: true
 
-Name: Add Project Link
+Name: ProjectManagr: Add Project Link
 Description: Add a New Project Link to a Project Document.
 Binding: addinAddProjectLink
 Interactive: true
 
+Name: ProjectManagr: Add Hyper Link
+Description: Add a New Hyper Link between the Active Document and another open document.
+Binding: addinAddHyperLink
+Interactive: true
+
+Name: ProjectManagr: Set WD Active Doc
+Description: Set the working directory to the active doc's parent directory.
+Binding: setwdActiveDoc
+Interactive: false
+
+Name: ProjectManagr: Update
+Description: Updates all recently edited Project Notes' summary information in linked Project Docs.
+Binding: updateProjectOrg
+Interactive: false

@@ -5,41 +5,44 @@
 \title{Add a New Group of Project Notes}
 \usage{
 addProjectNoteGroup(projectNoteName, projectNotePrefix, projectNoteDir,
-  selection, subNoteName, projectNoteTitle = "", subNoteTitle = "",
+  selection, subNoteName, volume = "local", projectNoteTitle = "",
+  subNoteTitle = "",
   projNoteTemplate = "Project-Header-Note-Template.Rmd",
   subNoteTemplate = "Project-Sub-Note-Template.Rmd")
+}
+\arguments{
+\item{projectNoteName}{The name of the Project HEADER Note, a Title with all SPACES replaced
+with - or _.}
+
+\item{projectNotePrefix}{The whole projectNotePrefix, including identifier and Major
+Numbering, separated by ~.  NB Do NOT add the Minor Numbering - this is added automatically!}
+
+\item{projectNoteDir}{The directory where the Project Note will be stored.  This
+may be a Project Directory, or another Directory specified by the User.  MUST be a sub-directory
+or lower inside a PROGRAMME Directory.}
+
+\item{selection}{List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
+information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
+or userSelection().}
+
+\item{subNoteName}{The First SubNote name.}
+
+\item{volume}{The volume where the sub-notes data will be stored.  "local" by default.}
+
+\item{projectNoteTitle}{OPTIONAL title for the Project HEADER Note.  Default is to use projectNoteName and replace
+all _ and - with SPACES.}
+
+\item{subNoteTitle}{OPTIONAL title for the Project Sub Note.  Default is to use subNoteName and replace
+all _ and - with SPACES.}
+
+\item{projNoteTemplate}{Template to use, as found in the `config/templates/` directory.  Default is
+"Project-Header-Note-Template.Rmd"}
+
+\item{subNoteTemplate}{Template to use, as found in the `config/templates/` directory.  Default is
+"Project-Sub-Note-Template.Rmd"}
 }
 \description{
 This Function adds a Project Note Group - consisting of one Header
 Note, and one SubNote INSIDE the Header Note Dir.  This can be expanded
 by adding further SubNotes - useful for Optimisation and Experimental Repeats.
-}
-\details{
-projectNoteName - the name of the Project HEADER Note, a Title with all SPACES replaced
-with - or _.
-
-projectNotePrefix - the whole projectNotePrefix, including identifier and Major
-Numbering, separated by ~.  NB Do NOT add the Minor Numbering - this is added automatically!
-
-projectNoteDir - the directory where the Project Note will be stored.  This
-may be a Project Directory, or another Directory specified by the User.  MUST be a sub-directory
-or lower inside a PROGRAMME Directory.
-
-selection - List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
-information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
-or userSelection().
-
-subNoteName - the First SubNote name.
-
-projectNoteTitle - OPTIONAL title for the Project HEADER Note.  Default is to use projectNoteName and replace
-all _ and - with SPACES.
-
-subNoteTitle - OPTIONAL title for the Project Sub Note.  Default is to use subNoteName and replace
-all _ and - with SPACES.
-
-projNoteTemplate - template to use, as found in the `config/templates/` directory.  Default is
-"Project-Header-Note-Template.Rmd"
-
-subNoteTemplate - template to use, as found in the `config/templates/` directory.  Default is
-"Project-Sub-Note-Template.Rmd"
 }
