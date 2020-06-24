@@ -14,6 +14,12 @@
 #' @export
 addinCreateProjectDoc <- function() {
 
+  wd <- getwd()
+
+  if( basename(wd)=="PROJECTS" ) {
+    wd <- dirname(wd) # get the PROGRAMME directory if WD is in the PROJECTS DIR
+  }
+
   ui <- miniPage(
 
     gadgetTitleBar("Create New Project Document"),
@@ -51,7 +57,7 @@ addinCreateProjectDoc <- function() {
 
 
     # compute Dir selection:
-    global <- reactiveValues(datapath = checkProgDir( normalizePath("~") )  ) # this sets initial val to current working DIR
+    global <- reactiveValues(datapath = checkProgDir( normalizePath(wd) )  ) # this sets initial val to wd - current WD or the PROGRAMME if in the PROEJCTS DIR
 
     # allows selection of Dir, with Volume set to HOME Dir
     shinyDirChoose(
