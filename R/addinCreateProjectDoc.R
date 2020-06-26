@@ -14,11 +14,16 @@
 #' @export
 addinCreateProjectDoc <- function() {
 
+  # set wd - set to parent if its the PROJECTS DIR:
   wd <- getwd()
 
   if( basename(wd)=="PROJECTS" ) {
     wd <- dirname(wd) # get the PROGRAMME directory if WD is in the PROJECTS DIR
   }
+
+
+  # set templates:
+  templates <- c("", "REVIEW", "DEV")
 
   ui <- miniPage(
 
@@ -40,7 +45,12 @@ addinCreateProjectDoc <- function() {
 
         fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
 
-        fillRow(   textOutput("projectPathOutput")  )
+        fillRow(   textOutput("projectPathOutput")  ),
+
+        fillRow( selectInput("select", "Select Template:",
+                             choices = templates, selected = templates[1]) ),
+
+        fillRow(   span( textOutput("warningTemplate"), style="color:red")  )
 
       )
     )
@@ -162,14 +172,30 @@ addinCreateProjectDoc <- function() {
           "*** DIR PATH NOT VALID PROGRAMME ***"
         })
       }
+      else if(input$select == "") {
+        output$warningTemplate <- renderText({
+          "*** SELECT A TEMPLATE ***"
+        })
+      }
       else {
 
-        # call projectmanagr::createProjectDoc:
-        projectmanagr::createProjectDoc(projectName = input$projectName,
-                                        projectTitle = input$projectTitle,
-                                        fileSystemPath = global$datapath,
-                                        projDocTemplate = "Project-Doc-Template.Rmd",
-                                        projectIndex = 0 )
+        if(input$select == "REVIEW") {
+          # call projectmanagr::createProjectDoc:
+          projectmanagr::createProjectDoc(projectName = input$projectName,
+                                          projectTitle = input$projectTitle,
+                                          fileSystemPath = global$datapath,
+                                          projDocTemplate = "Project-Doc-Template-REVIEW.Rmd",
+                                          projectIndex = 0 )
+
+        }
+        else if(input$select == "DEV") {
+          # call projectmanagr::createProjectDoc:
+          projectmanagr::createProjectDoc(projectName = input$projectName,
+                                          projectTitle = input$projectTitle,
+                                          fileSystemPath = global$datapath,
+                                          projDocTemplate = "Project-Doc-Template-DEV.Rmd",
+                                          projectIndex = 0 )
+        }
 
         # Close Gadget after 'done' is clicked.
         stopApp()
