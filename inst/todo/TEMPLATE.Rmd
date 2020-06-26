@@ -1,0 +1,244 @@
+---
+title: '2020--'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# POMODORO DEEP DIVE - ADMIN
+
+
+* Check MESSAGES: Emails, Slack, Whatsapp, Messages, Twitter, social media, etc.  
+
+    + HANDLE ANYTHING: if less than 2 min, DO - Otherwise, Add to *SCHEDULED TASKS*
+
+
+* Check CONTENT: Web Browser TABS, Notes: Sort into PROJECTS as appropriate. 
+
+
+* Check PREVIOUS TO DO Sheet:  Any Items to Move Over?
+
+
+*PLAN Day (/Week):*
+
+* Check Calendar - Fit Pomodoros around Events, Meetings, Lab Work
+
+* Check ProjectManagr: PROGRAMMES and PROJECTS - *What should be WORKED ON today?* - Project Notes
+
+    + Move Project Notes into SCHEDULED TASKS
+
+
+---
+
+
+
+# TASKS:
+
+
+* PRIORITISED List of OBJECTIVES TO DO:
+
+    + Add OBJECTIVES in PRIOIRTY ORDER - PROJECT NOTES or TODOs that come up throughout the Day:
+    
+        - COPY any incomplete OBJECTIVES from Previous TODO List.
+        
+        - FORM LINK to Project Notes - use projectmanagr addHyperLink (ctrl + M, H)
+
+    + WHEN OBJECTIVE REACHED :  Estimate pomodoros needed `{{ E: [num] }}`, Write Task Description.
+
+    + As POMODOROS are COMPLETED :  Write summary on what was done, count pomodoro.
+    
+    + As OBJECTIVE COMPLETED :  Write actual number of pomodoros `{{ A: [num] }}`
+
+
+---
+
+
+
+## ADMIN : Check MESSAGES - check CONTENT - check previous TODO -  PLAN DAY (In Objectives)
+
+
+    {{ E: 1 }}
+
+
+MSG TODO :  tasks_completed_from_msg_check
+
+
+CONTENT :  summary_content_notes
+
+
+PREVIOUS TODO :  summary_tasks_from_previous_todo
+
+
+    {{ A: 1 }}
+
+
+
+## NOTE_LINK : Description_of_Objective
+
+
+    {{ E: 1 }}
+
+
+P1_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 1 }}
+
+
+P2_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 2 }}
+
+
+
+    {{ A: 2 }}
+
+
+
+## NOTE_LINK : Description_of_Objective
+
+
+    {{ E: 1 }}
+
+
+P1_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 1 }}
+
+
+P2_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 2 }}
+
+
+
+    {{ A: 2 }}
+
+
+
+## NOTE_LINK : Description_of_Objective
+
+
+    {{ E: 1 }}
+
+
+P1_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 1 }}
+
+
+P2_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 2 }}
+
+
+
+    {{ A: 2 }}
+
+
+
+## NOTE_LINK : Description_of_Objective
+
+
+    {{ E: 1 }}
+
+
+P1_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 1 }}
+
+
+P2_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 2 }}
+
+
+
+    {{ A: 2 }}
+
+
+
+## NOTE_LINK : Description_of_Objective
+
+
+    {{ E: 1 }}
+
+
+P1_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 1 }}
+
+
+P2_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 2 }}
+
+
+
+    {{ A: 2 }}
+
+
+
+## NOTE_LINK : Description_of_Objective
+
+
+    {{ E: 1 }}
+
+
+P1_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 1 }}
+
+
+P2_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 2 }}
+
+
+
+    {{ A: 2 }}
+
+
+
+## NOTE_LINK : Description_of_Objective
+
+
+    {{ E: 1 }}
+
+
+P1_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 1 }}
+
+
+P2_description_of_task : step_complete_1 - step_complete_2 - step_complete_3
+
+
+    {{ 2 }}
+
+
+
+    {{ A: 2 }}
+
+
+
+
+
+

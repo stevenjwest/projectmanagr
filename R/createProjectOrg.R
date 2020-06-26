@@ -88,6 +88,31 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
 
 
 
+  ### CREATE POMODORO TODO DIRECTORY ###
+
+  # site dir:
+  todoPath = paste(orgPath, .Platform$file.sep, "todo" , sep="")
+  done <- dir.create( todoPath )
+
+  if(!done) {
+    stop( paste0("  ToDo directory could not be created: ", todoPath) )
+  }
+
+  cat( "  Made ToDo dir: ", todoPath, "\n" )
+
+  # copy template todo file:
+    # need to copy from the PACKAGE!
+  todoDir <- paste( find.package("projectmanagr"), .Platform$file.sep, "todo", .Platform$file.sep, sep="")
+  todoRmds <- list.files(todoDir)
+  for(f in todoRmds) {
+    done <- file.copy( paste(todoDir, f, sep=""), todoPath)
+    if(!done) {
+      stop( paste0("  Could Not copy Template: ", f) )
+    }
+    cat( "  Copied template: ", f, "\n" )
+  }
+
+
   ### CREATE CONFIG DIRECTORY ###
 
 
