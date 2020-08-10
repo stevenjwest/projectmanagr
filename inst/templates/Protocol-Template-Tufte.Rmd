@@ -1,0 +1,184 @@
+---
+title: "{{TITLE}}"
+subtitle: ""
+author: "{{AUTHOR}}"
+date: "`r Sys.Date()`"
+output:
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+bibliography: skeleton.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+library(tufte)
+# invalidate cache when the tufte version changes
+knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+```
+
+
+# PROJECT NOTE: 
+
+
+{{PROJECT_NOTE_LINK}}
+
+
+------
+
+
+
+# PROTOCOL SUMMARY
+
+
+Protocol_introduction_In_clear_and_concise_language_what_does_the_protocol_aim_to_achieve
+
+
+sidenotes_implementation^[text_between_square_brackets]
+
+
+---
+
+
+
+# PROTOCOL BACKGROUND
+
+
+links to important previous work
+
+
+links to explanations of relevant theories_models
+
+
+protocol_scope_what_has_this_been_tested_on
+
+
+Arbitrary Full Width Content:
+
+::: {.fullwidth}
+_R is free software and comes with ABSOLUTELY NO WARRANTY._ You are welcome to redistribute it under the terms of the GNU General Public License versions 2 or 3. For more information about these matters see http://www.gnu.org/licenses/.
+:::
+
+
+---
+
+
+
+# EQUIPMENT & CONSUMABLES
+
+
+* equipment_consumables_list
+
+
+---
+
+
+# PROTOCOL
+
+
+
+## STEP 1 : 
+
+
+step_1
+
+
+
+## STEP 2 : 
+
+
+step_2
+
+
+
+## STEP 3 : 
+
+
+step_3
+
+
+---
+
+
+
+# RESULTS LOG
+
+
+Examples of expected results can be noted here.
+
+
+---
+
+
+
+# TROUBLESHOOTING
+
+
+Troubleshooting Table - list step, problem, potential solutions.
+
+
+---
+
+
+
+# CHANGE LOG
+
+
+**Version 1.0 - DATE**
+
+
+changes_made
+
+
+---
+
+
+
+# FIGURES TABLE TEXT
+
+
+```{r margin-fig-example, fig.margin = TRUE, fig.cap = "A margin figure.", fig.width=3.5, fig.height=3.5, cache=TRUE, message=FALSE}
+
+knitr::include_graphics("img.png")
+
+```
+
+
+
+```{r fullwidth-fig-example, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, fig.cap = "A full width figure.", warning=FALSE, message=FALSE, cache=TRUE}
+
+knitr::include_graphics("img.png")
+
+```
+
+
+
+```{r maincol-fig-example, fig.cap = "A figure in the main column.", cache=TRUE}
+
+knitr::include_graphics("img.png")
+
+```
+
+
+
+Tables:  `knitr::kable()` integrates with Tufte handout style. The table captions are placed in the margin like figures in the HTML output.
+
+```{r}
+
+knitr::kable(
+  mtcars[1:6, 1:6], caption = 'A subset of mtcars.'
+)
+
+```
+
+
+
+```{marginfigure}
+Put ANY text into the margin in marginfigure chunks!  Can use **bold**` and `_italic_` text, please refrain from using footnotes, citations, or block-level elements (e.g. blockquotes and lists) there.
+```
+
+
+
+
+
