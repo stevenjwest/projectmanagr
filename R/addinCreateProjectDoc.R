@@ -179,6 +179,9 @@ addinCreateProjectDoc <- function() {
       }
       else {
 
+        # FIRST - save all open documents in RStudio:
+        rstudioapi::documentSaveAll()
+
         if(input$select == "REVIEW") {
           # call projectmanagr::createProjectDoc:
           projectmanagr::createProjectDoc(projectName = input$projectName,
