@@ -2,9 +2,6 @@
 #' Add a RELATIVE Hyperlink from an Open RStudio File to the currently Active RStudio
 #' file, at the current cursor position.
 #'
-#'
-#'
-#'
 #'@export
 addinAddHyperLink <- function( ) {
 
@@ -87,12 +84,12 @@ addinAddHyperLink <- function( ) {
         fillRow( h5("Add a new Hyperlink:") ),
 
         fillRow(
-          h3(  paste("TO:", contextName ), align="center"  )
+          h5(  paste("TO:", contextName ), align="center"  )
         ),
 
         fillRow(
-          h5(  paste("Line:", line ), align="center"  ),
-          h5(  paste("Column:", column ), align="center"  )
+          h6(  paste("Line:", line ), align="center"  ),
+          h6(  paste("Column:", column ), align="center"  )
         ),
 
         fillRow(
@@ -100,7 +97,15 @@ addinAddHyperLink <- function( ) {
                       choices = numberedFileList,
                       selected = numberedFileList[1],
                       width="100%")
-        )
+        ),
+
+        fillRow( h5("") ),
+
+        fillRow( h5("") ),
+
+        fillRow( h5("") ),
+
+        fillRow( h5("") )
 
       )
     )
