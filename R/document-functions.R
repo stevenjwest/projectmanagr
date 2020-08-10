@@ -1026,10 +1026,13 @@ cursorSelection <- function() {
   headerNoteLink <- ""
   headerNoteLineNumber <- 0
 
-  context <- rstudioapi::getActiveDocumentContext()
+  context <- rstudioapi::getSourceEditorContext()
 
   # first ENSURE the current file is saved:
   rstudioapi::documentSave(context$id)
+
+  # recapture, to ensure the path is retrieved!
+  context <- rstudioapi::getSourceEditorContext()
 
   original <- context$contents
 
@@ -1163,6 +1166,104 @@ cursorSelection <- function() {
   }
 
 }
+
+
+
+
+
+#' Document Cursor Selection
+#'
+#' Identify the selection from the Active Cursor position in current R Studio file.
+#'
+#' First identifies if the current Cursor position is on a GROUP (HEADER NOTE or SUBNOTE).
+#' It then searches back through the Active Document to find the first line starting with
+#' "##" - if this is a "#### TASK" line, then the first previous "### DELIVERABLE" line and
+#' the first previous "### GOAL" line is also identified.
+#'
+#' If TASK, DELIVERABLE and GOAL lines are all successfully found, this method returns
+#' a LIST:
+#'
+#' [[1]] or [["line"]] - line index selected in Project Note.
+#'
+#' [[2]] or [["column"]] - column index selected in Project Note.
+#'
+#' [[3]] or [["projectNotePath"]] - the path of the Active Doc (a Project Doc, as successfully retrieved Task/Del/Goal)
+#'
+#'
+#' If this method is unsuccessful (there is an error), it returns a LIST:
+#'
+#' [[1]] - contains the String "FALSE"
+#' [[2]] - contains the errorMessage - a String indicating why the method failed.
+#'
+#'
+projectNoteSelection <- function() {
+
+
+  projectNoteRetrieved <- TRUE
+
+  errorMessage <- ""
+
+  context <- rstudioapi::getSourceEditorContext()
+
+  # first ENSURE the current file is saved:
+  rstudioapi::documentSave(context$id)
+
+  # recapture, to ensure the path is retrieved!
+  context <- rstudioapi::getSourceEditorContext()
+
+  original <- context$contents
+
+  cursor <- rstudioapi::primary_selection(context)
+  line <- (cursor$range[[1]])[1] # get the line number of cursor
+  column <- (cursor$range[[1]])[2]
+
+  # check if the current note is a Project Note in an Organisation:
+
+  orgPath <- dirname( dirname(context$path) )
+
+  orgPath <- findOrgDir(orgPath)
+
+  if(orgPath == "" ) {
+    projectNoteRetrieved <- FALSE
+    errorMessage <- "Current File is not inside an Organisation"
+  }
+
+  if(regexpr("~_", context$path) < 0) {
+    projectNoteRetrieved <- FALSE
+    errorMessage <- "Current file name does not contain Prefix~_Name syntax"
+  }
+
+
+
+  # form the output for this Function:
+
+  if( projectNoteRetrieved == TRUE ) {
+
+    #taskNum <- as.integer(  substring(task,  first=11, last=(regexpr(":", task)-1) )  )
+    #delNum <- as.integer(  substring(deliverable,  first=17, last=(regexpr(":", deliverable)-1) )  )
+    #goalNum <- as.integer(  substring(goal,  first=9, last=(regexpr(":", goal)-1) )  )
+
+    #taskTitle <- substring(task,  first=(regexpr(":", task)+2 ) )
+    #delTitle <- substring(deliverable,  first=(regexpr(":", deliverable)+2 ) )
+    #goalTitle <- substring(goal,  first=(regexpr(":", goal)+2 ) )
+
+    output <- list( line, column, normalizePath( context$path )  )
+
+    names(output) <- c( "line", "column", "projectNotePath")
+
+    output
+
+  }
+  else {
+
+    list( "FALSE", errorMessage )
+
+  }
+
+}
+
+
+
 
 
 #' Document User Selection
