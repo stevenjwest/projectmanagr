@@ -19,13 +19,28 @@ Binding: addinAddProjectNote
 Interactive: true
 
 Name: ProjectManagr: Add Project Link
-Description: Add a New Project Link to a Project Document.
+Description: Add a New Project Link to a Project Document Goal Del Task.
 Binding: addinAddProjectLink
+Interactive: true
+
+Name: ProjectManagr: Add Protocol or CheatSheet
+Description: Add a New Protocol or CheatSheet to a Project File.
+Binding: addinAddProtocolCheatSheet
+Interactive: true
+
+Name: ProjectManagr: Create Volume
+Description: Create a New Volume in a Project Organisation.
+Binding: addinCreateVolume
 Interactive: true
 
 Name: ProjectManagr: Add Hyper Link
 Description: Add a New Hyper Link between the Active Document and another open document.
 Binding: addinAddHyperLink
+Interactive: true
+
+Name: ProjectManagr: Rename Project Doc or Note
+Description: Rename a Project Doc or Note in the Project Organisation.
+Binding: addinRenameComp
 Interactive: true
 
 Name: ProjectManagr: Set WD Active Doc
