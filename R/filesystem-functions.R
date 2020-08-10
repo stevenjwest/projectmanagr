@@ -119,7 +119,7 @@ checkProgSubDir <- function( fileSystemPath ) {
 #'
 #' Searches fileSystemPath's parent directories to identify
 #' a Programme directory.  This is identified by
-#' finding a 'PROJECTS/' directory and a 'templates' directory.
+#' finding a 'PROJECTS/' directory and a 'SOP' directory.
 #'
 #' If a Programme path is identified, it is returned, otherwise
 #' the function returns a BLANK string "".
@@ -129,9 +129,9 @@ findProgDir <- function( fileSystemPath ) {
 
   # Check fileSystemPath is in a PROGRAMME:
 
-  # look for the PROJECTS/ and templates/ dirs:
+  # look for the PROJECTS/ and SOP/ dirs:
   projPath <- paste(fileSystemPath, .Platform$file.sep, "PROJECTS" , sep="")
-  tempPath <- paste(fileSystemPath, .Platform$file.sep, "templates" , sep="")
+  tempPath <- paste(fileSystemPath, .Platform$file.sep, "SOP" , sep="")
 
   fileSystemPath2 <- "/" # use this as placeholder of PREVIOUS fileSystemPath
                          # if fileSystemPath == fileSystemPath2, then have not found projects or template!
@@ -144,7 +144,7 @@ findProgDir <- function( fileSystemPath ) {
       break
     }
     projPath <- paste(fileSystemPath, .Platform$file.sep, "PROJECTS" , sep="")
-    tempPath <- paste(fileSystemPath, .Platform$file.sep, "templates", sep="")
+    tempPath <- paste(fileSystemPath, .Platform$file.sep, "SOP", sep="")
   }
 
   fileSystemPath
