@@ -179,12 +179,12 @@ compareGoalDelTaskSummary <- function(projDocLinkList, projNotePath) {
                           length(projDocContents2) ]
 
 
-  max <- (grep("---", projDocContents2, fixed=TRUE)[1] + min -1)
+  max <- (grep("---", projDocContents2, fixed=TRUE)[1] + min -2)
 
   # up to END of TASK:  "---"
   projDocContents2 <- projDocContents2[
                         1 :
-                          grep("---", projDocContents2, fixed=TRUE)[1] ]
+                          grep("---", projDocContents2, fixed=TRUE)[1] -1 ]
 
 
   min <- min + grep( paste0(basename(projNotePath), ")" ), projDocContents2, fixed=TRUE)[1]
