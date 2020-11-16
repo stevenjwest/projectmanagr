@@ -27,16 +27,12 @@ addinAddProjectNote <- function() {
       # TASK or within bounds of a TASK - addProjectNote() OR addProjectNoteGroup()
   selection <- cursorSelection()
 
-  # get the orgPath, volPath and volumes:
+  # get the orgPath:
   orgPath <- findOrgDir(selection[["projectDocPath"]])
-  volPath <- paste0(orgPath, .Platform$file.sep, "volumes")
-  volumes <- list.dirs(volPath, full.names = FALSE, recursive = FALSE)
 
-  # order volumes to put local first:
-  volsorder <- c("local")
-  volumes <- volumes[order(match(volumes, volsorder))]
-
-  volumes <- as.list(volumes)
+  # get progPath
+  progPath <- findProgDir(selection[["projectDocPath"]])
+  progPath <- normalizePath(progPath)
 
   # If no project Task is selected, present ERROR MESSAGE:
 
@@ -101,9 +97,6 @@ addinAddProjectNote <- function() {
               helpText( p(delTitle, align="center") ),
               helpText( p(taskTitle, align="center") )
             ),
-
-            fillRow( selectInput("select", "Select Volume:",
-                                 choices = volumes, selected = volumes[1]) ),
 
             fillRow(  textInput("projectNoteName", "Sub Note Name:", width="100%")  ),
 
@@ -235,7 +228,6 @@ addinAddProjectNote <- function() {
                                       subNotePrefix = nextSubNotePrefix,
                                       subNoteDir = headerDirPath,
                                       selection = selection,
-                                      volume = input$select,
                                       subNoteTitle = input$projectNoteTitle,
                                       subNoteTemp="Project-Sub-Note-Template.Rmd")
 
@@ -290,9 +282,6 @@ addinAddProjectNote <- function() {
               helpText( p(delTitle, align="center") ),
               helpText( p(taskTitle, align="center") )
             ),
-
-            fillRow( selectInput("select", "Select Volume:",
-                                 choices = volumes, selected = volumes[1]) ),
 
             fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
@@ -351,7 +340,7 @@ addinAddProjectNote <- function() {
         shinyDirChoose(
           input,
           'dir',
-          roots = c(home = '~'),
+          roots = c(home = orgPath), # set to orgPath - so user can select any DIR inside the ORG!
           filetypes = c('', 'txt', 'bigWig', "tsv", "csv", "bw")
         )
 
@@ -363,9 +352,9 @@ addinAddProjectNote <- function() {
                      },
                      handlerExpr = {
                        if (!"path" %in% names(dir())) return() # check the path element exists in dir
-                       home <- normalizePath("~")
+                       #home <- normalizePath("~")
                        global$datapath <-
-                         file.path(home, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
+                         file.path(orgPath, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
                      })
 
 
@@ -384,7 +373,7 @@ addinAddProjectNote <- function() {
         observe({
           if(global$datapath == "") {
             output$warningDirectory <- renderText({
-              "DIR PATH NOT VALID DIRECTORY"
+              "DIR PATH NOT VALID DIRECTORY - Must be INSIDE a PROGRAMME DIR"
             })
           }
           else {
@@ -544,7 +533,6 @@ addinAddProjectNote <- function() {
                                            projectNotePrefix = nextNotePrefix,
                                            projectNotePath = global$datapath,
                                            selection = selection,
-                                           volume = input$select,
                                            projectNoteTitle = input$projectNoteTitle,
                                            projNoteTemplate="Project-Note-Template.Rmd"
                                 )
@@ -562,7 +550,6 @@ addinAddProjectNote <- function() {
                                                projectNoteDir = global$datapath,
                                                selection = selection,
                                                subNoteName = input$subNoteName,
-                                               volume = input$select,
                                                projectNoteTitle = input$projectNoteTitle,
                                                subNoteTitle = input$subNoteTitle,
                                                projNoteTemplate="Project-Header-Note-Template.Rmd",

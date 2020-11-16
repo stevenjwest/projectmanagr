@@ -15,7 +15,6 @@
 #' information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
 #' or userSelection().
 #' @param subNoteName The First SubNote name.
-#' @param volume The volume where the sub-notes data will be stored.  "local" by default.
 #' @param projectNoteTitle OPTIONAL title for the Project HEADER Note.  Default is to use projectNoteName and replace
 #' all _ and - with SPACES.
 #' @param subNoteTitle OPTIONAL title for the Project Sub Note.  Default is to use subNoteName and replace
@@ -27,7 +26,7 @@
 #'
 #' @export
 addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNoteDir, selection,
-                                  subNoteName, volume = "local", projectNoteTitle="", subNoteTitle="",
+                                  subNoteName, projectNoteTitle="", subNoteTitle="",
                                   projNoteTemplate="Project-Header-Note-Template.Rmd",
                                   subNoteTemplate="Project-Sub-Note-Template.Rmd" ) {
 
@@ -306,6 +305,6 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   selection <- projectmanagr::userSelection(  projectDocPath, grepLineIndexFrom( headerNotePrefix, projDocContents, (line-1) )  )
 
   # now run addSubNoteToGroup using subNotePrefix and new selection:
-  addSubNoteToGroup( subNoteName, subNotePrefix, headerNoteDir, selection, volume = volume, subNoteTemp = subNoteTemplate )
+  addSubNoteToGroup( subNoteName, subNotePrefix, headerNoteDir, selection, subNoteTemp = subNoteTemplate )
 
 }

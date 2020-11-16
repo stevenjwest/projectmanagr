@@ -16,15 +16,13 @@
 #' input (its not actually used in this function!  But the selection is used in RStudio Addins to determine whether
 #' to run addSubNoteToGroup, addProjectNote, or addProjectNoteGroup - may omit?).  See `cursorSelection()` or
 #' `userSelection()`.  Selection MUST be on a HeaderNote!
-#' @param volume The name of the volume where the sub-notes data will be stored.  Must be a directory inside the
-#' `volumes/` directory in the Project Organisation.  "local" by default.
 #' @param subNoteTitle OPTIONAL title for the Project Note.  Default is to use subNoteName and replace
 #' all _ and - with SPACES.
 #' @param subNoteTemp OPTIONAL template to use, as found in the `config/templates/` directory of the Organisation.
 #' Default is `Project-Sub-Note-Template.Rmd`
 #'
 #' @export
-addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection, volume = "local",
+addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection,
                             subNoteTitle="", subNoteTemp="Project-Sub-Note-Template.Rmd"  ) {
 
 
@@ -72,52 +70,20 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   # set confPath + tempPath:
   confPath <- paste0( orgPath, .Platform$file.sep, "config" )
   tempPath <- paste0(confPath, .Platform$file.sep, "templates" )
-  # set volume path:
-  volPath <- paste0( orgPath, .Platform$file.sep, "volumes", .Platform$file.sep, volume )
-
-  if( file.exists(volPath) == FALSE ) {
-    stop( paste0("  volume does not exist: ", volPath) )
-  }
-
-
-
-  ##########################
-  ### CREATE SYMLINK TO DIR for Project Sub Note (using its PREFIX as its name):
-  ##########################
-
-  # first make the Note DIR on the volume - traversing the SAME path as from the root of the projectmanagr org:
 
   subNoteDir <- normalizePath(subNoteDir)
 
-  projDirOrgPath <- paste0( substr(subNoteDir,
-                                   nchar(findOrgDir(subNoteDir))+2,
-                                   nchar(subNoteDir) ),
-                            .Platform$file.sep,
-                            subNotePrefix )
-
-  noteDirPath = paste( volPath, .Platform$file.sep, projDirOrgPath, sep="")
-  done <- dir.create( noteDirPath, recursive = TRUE )
+  ##############################
+  ### CREATE Project Note DIR:
+  ##############################
+  noteDirPath <- paste( subNoteDir, .Platform$file.sep, subNotePrefix, sep="")
+  done <- dir.create( noteDirPath )
 
   if(!done) {
-    stop( paste0("  Project Note directory could not be created on volume: ", noteDirPath) )
+    stop( paste0("  DIR for Project Note could not be created: ", noteDirPath) )
   }
 
-  cat( "  Made Project Note dir on volume: ", noteDirPath, "\n" )
-
-
-  # THEN make the symlink to this, putting the symlink in the projectNotePath:
-  noteDirSymPath = paste0( subNoteDir, .Platform$file.sep, subNotePrefix )
-  symLink <- R.utils::getRelativePath(noteDirPath, relativeTo=noteDirSymPath)
-  symLink <- substring(symLink, first=4, last=nchar(symLink)) # remove first `../`
-
-  done <- file.symlink( symLink, noteDirSymPath )
-
-  if(!done) {
-    file.remove(noteDirPath) # remove the file
-    stop( paste0("  Project Note symlink could not be made to volume: ", noteDirSymPath, " ", noteDirPath) )
-  }
-
-  cat( "  Made Project Note symlink: ", noteDirSymPath, "\n" )
+  cat( "  Made Project Note DIR: ", noteDirPath, "\n" )
 
 
   #####################################
@@ -135,8 +101,7 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   done <- file.create( subNotePath ) # just check the path is legal..
 
   if(!done) {
-    file.remove(noteDirPath) # remove the file
-    file.remove(noteDirSymPath) # remove the symlink
+    file.remove(noteDirPath) # remove the dir
     stop( paste0("  Project Sub Note could not be created: ", subNotePath) )
   }
 
@@ -157,8 +122,8 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   templateContents <- gsub("{{TITLE}}", subNoteTitle, templateContents, fixed=TRUE)
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
 
-  # add DATA STORAGE location
-  templateContents <- gsub("{{DATA_STORAGE}}", symLink, templateContents, fixed=TRUE)
+  # add the current data storage path:
+  templateContents <- gsub("{{DATASTORAGE}}", subNotePrefix, templateContents, fixed=TRUE)
 
 
   # replace the {{OBJECTIVES}} part of the template with the Objectives Template:

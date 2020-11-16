@@ -13,14 +13,13 @@
 #' @param selection List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
 #' information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
 #' or userSelection().
-#' @param volume The volume to store the Project Note Directory in.
 #' @param projectNoteTitle OPTIONAL title for the Project Note.  Default is to use projectNoteName and replace
 #' all _ and - with SPACES.
 #' @param projNoteTemplate Template to use, as found in the `config/templates/` directory.  Default is
 #' "Project-Note-Template.Rmd"
 #'
 #' @export
-addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath, selection, volume = "local",
+addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath, selection,
                                   projectNoteTitle="", projNoteTemplate="Project-Note-Template.Rmd"  ) {
 
   cat( "\nprojectmanagr::addProjectNote():\n" )
@@ -63,50 +62,18 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath,
   confPath <- paste0( orgPath, .Platform$file.sep, "config" )
   tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
 
-  volPath <- paste0( orgPath, .Platform$file.sep, "volumes", .Platform$file.sep, volume )
-
-  if( file.exists(volPath) == FALSE ) {
-    stop( paste0("  volume does not exist: ", volPath) )
-  }
-
   projectNotePath <- normalizePath(projectNotePath)
 
-  # Create SYMLINK to DIR for the Project Note (using its PREFIX as its name):
-  projDirOrgPath <- paste0( substr(projectNotePath,
-                                   nchar(findOrgDir(projectNotePath))+2,
-                                   nchar(projectNotePath) ),
-                            .Platform$file.sep, projectNotePrefix )
 
-  # first make the Note DIR on the volume - traversing the SAME path as from the root of the projectmanagr org:
-  noteDirPath = paste( volPath, .Platform$file.sep, projDirOrgPath, sep="")
-
-  if( file.exists(noteDirPath) == TRUE ) {
-    cat("  DIR for projectNote already exist: ", noteDirPath, "\n")
-    stop( paste0("  DIR for projectNote already exist: ", noteDirPath) )
-  }
-
-  done <- dir.create( noteDirPath, recursive = TRUE )
+  # Create Project Note DIR:
+  projDirPath <- paste( projectNotePath, .Platform$file.sep, projectNotePrefix, sep="")
+  done <- dir.create( projDirPath )
 
   if(!done) {
-    stop( paste0("  Project Note directory could not be created on volume: ", noteDirPath) )
+    stop( paste0("  DIR for Project Note could not be created: ", projDirPath) )
   }
 
-  cat( "  Made Project Note dir on volume: ", noteDirPath, "\n" )
-
-  # THEN make the symlink to this, putting the symlink in the projectNotePath:
-  noteDirSymPath = paste0( projectNotePath, .Platform$file.sep, projectNotePrefix )
-  symLink <- R.utils::getRelativePath(noteDirPath, relativeTo=noteDirSymPath)
-  symLink <- substring(symLink, first=4, last=nchar(symLink)) # remove first `../`
-
-  done <- file.symlink( symLink, noteDirSymPath )
-
-  if(!done) {
-    file.remove(noteDirPath) # remove the file
-    stop( paste0("  Project Note symlink could not be made to volume: ", noteDirSymPath, " ", noteDirPath) )
-  }
-
-  cat( "  Made Project Note symlink: ", noteDirSymPath, "\n" )
-
+  cat( "  Made Project Note DIR: ", projDirPath, "\n" )
 
 
   # read Simple project note template:
@@ -119,12 +86,12 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath,
   done <- file.create( projNotePath )
 
   if(!done) {
-    file.remove(noteDirPath) # remove the file
-    file.remove(noteDirSymPath) # remove the symlink
+    file.remove(projDirPath) # remove the project note dir
     stop( paste0("  Project Note could not be created: ", projNotePath) )
   }
 
   cat( "  Made Project Note: ", projNotePath, "\n" )
+
 
   # get creation time - use to write to SUMMARY:
   summaryBullet <- paste0("* ", as.character(file.info(projNotePath)[,5]) )
@@ -140,8 +107,8 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath,
   templateContents <- gsub("{{TITLE}}", projectNoteTitle, templateContents, fixed=TRUE)
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
 
-  # add DATA STORAGE location
-  templateContents <- gsub("{{DATA_STORAGE}}", symLink, templateContents, fixed=TRUE)
+  # add the current data storage path:
+  templateContents <- gsub("{{DATASTORAGE}}", projectNotePrefix, templateContents, fixed=TRUE)
 
 
   ### replace the {{OBJECTIVES}} part of the template with the Objectives Template:
@@ -246,78 +213,6 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath,
   close(projDocFileConn)
 
   cat( "  Written Project Note Link to Project Doc: ", basename(projectDocPath), "\n" )
-
-
-
-  ### WRITE PROJECT NOTE TO PROGRAMME INDEX FILE:  NOT USED
-
-  # read Programme Index File:
-  #progIndexPath = paste(progPath, .Platform$file.sep, basename(progPath), "_index.Rmd", sep="")
-  #progIndexFileConn <- file( progIndexPath )
-  #progIndexContents <- readLines( progIndexFileConn )
-  #close(progIndexFileConn)
-
-
-  # create the projIndexLink:
-  #NoteLink <- R.utils::getRelativePath(projNotePath, relativeTo=progIndexPath)
-  #NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  #projIndexLink <- paste("* [", projectNoteTitle, "](", NoteLink, ")",  sep="")
-
-  # create the Vector, including Whitespace and Summary information:
-  #projIndexLinkVector <- c( "", "", "", projIndexLink, "" )
-
-  # compute place to insert the project doc link:
-    # First get the line index containing containing the projectDoc Name
-  #line <- grepLineIndex(basename(projectDocPath), progIndexContents)
-
-  # Then get the NEXT line that starts with ##
-  #line <- computeNextLine(line, progIndexContents)
-
-  # Insert projIndexLinkVector to progIndexContents:
-  #progIndexContents <- c(progIndexContents[1:(line-1)], projIndexLinkVector, progIndexContents[(line+1):length(progIndexContents)])
-
-
-  # write to progIndexPath
-  #progIndexFileConn <- file( progIndexPath )
-  #writeLines(progIndexContents, progIndexFileConn)
-  #close(progIndexFileConn)
-
-  #cat( "  Written Project Note to Programme File: ", basename(progIndexPath), "\n" )
-
-
-
-  # Write PROJECT NOTE to the status.yml file:
-  # NO LONGER USING STATUS.YML TO HOLD DATA ON ALL DOCS AND NOTES
-
-  # Read the status.yml file first into a LIST:
-  #statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
-  #status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
-
-  # add projectName, goalNum, delNum, taskNum under the FULL projectNoteName (including prefix, index and name)
-  # in the "PROJECT_NOTES" section of the status.yml List:
-  # extract FULLY QUALIFIED PROJECT DOC NAME - including the Programme, "PROJECTS/" and the ProjectDoc Name:
-  #projectName <- paste(
-  #                basename(dirname(dirname(projectDocPath))), .Platform$file.sep,
-  #                basename(dirname(projectDocPath)), .Platform$file.sep,
-  #                substring(basename(projectDocPath), first=1, last=(nchar(basename(projectDocPath))-4)  ), sep="")
-  #noteType <- c( "SINGLE" ) # noteType is single - no subNotes will be added
-  # add the Project Doc GOAL/DEL/TASK in a list of objectives - so more can be added later
-  #objs <- list(projectName, goalNum, delNum, taskNum)
-  #names(objs) <- c("projectName", "goalNum", "delNum", "taskNum")
-  #obj <- list(objs)
-  #names(obj) <- c("1")
-  #attrs <- list(obj, as.character(file.info(projNotePath)[,5]), noteType )
-  #names(attrs) <- c("OBJECTIVES", "creationTime", "noteType")
-  #status[["PROJECT_NOTES"]][[ paste(projectNotePrefix, "~_", projectNoteName, sep="") ]] <- attrs
-  # can retrieve the programmePrefix with call to:
-  # status[["PROJECT_NOTES"]][[projectNoteName]][["projectName"]]
-  # status[["PROJECT_NOTES"]][[projectNoteName]][["goalNum"]]
-  # etc.
-
-  # Write status list to the statusFile:
-  #yaml::write_yaml( yaml::as.yaml(status), statusFile )
-
-  #cat( "  Written PROJECT to Status.yml file: ", statusFile, "\n" )
 
 
 }

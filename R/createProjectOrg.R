@@ -55,8 +55,10 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
   ### CREATE THE VOLUMES DIRECTORY ###
 
 
-  # This will contain SYMLINKS to Volume Mounts, which can then be used as DESTINATIONS for Project Note Directories.
-    # The Project Note DIR next to the Project Note itself will then be a SYMLINK to a Project Note dir on a MOUNT.
+  # This will contain SYMLINKS to Volume Mounts, which then act as data stores for data as needed:
+    # From each Project Note can run volumes_mkdir() to create a new DIR on a Volume Mount
+    # this will form a DIR on the Volume Mount and be SYMLINKED TO a sub-dir in the Project Note DIR (both same name!)
+    # NO LONGER using a local data storage idea - can just offset data dynamically as needed WITHIN the Project Note DIR!
 
   # volumes dir:
   volumesPath = paste(orgPath, .Platform$file.sep, "volumes" , sep="")
@@ -68,23 +70,22 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
 
   cat( "  Made volumes dir: ", volumesPath, "\n" )
 
+  # Add the volumes.Rmd file to the volumes/ DIR
+    # this contains the workflow for MOUNTING an External Volume, then
+    # SYMLINKING location(s)  in the External Volume to the volumes/ directory, then
+    # how to use the projectmanagr::volumes_mkdir() command to generate a DIR on this External Volume for external storage
 
+  # COPY default settings.yml file from the package:
+  volumesFile = paste(orgPath, .Platform$file.sep, "volumes", .Platform$file.sep, "volumes.Rmd", sep="") # location to copy file to
+  volumesPackageFile <- paste( find.package("projectmanagr"), .Platform$file.sep,
+                               "templates", .Platform$file.sep, "volumes.Rmd", sep="")
 
-  ### CREATE INITIAL DATA STORAGE DIR IN VOLUMES DIRECTORY ###
-
-
-  # The most basic data storage Mount will be a local/ directory in volumes/ - i.e. storage on local machine.
-    # Users can add further volumes in the volumes/ directory with createVolume() Function
-
-  # volumes/local sub-dir:
-  volumesDataPath = paste(orgPath, .Platform$file.sep, "volumes", .Platform$file.sep, "local" , sep="")
-  done <- dir.create( volumesDataPath )
+  done <- file.copy(volumesPackageFile, volumesFile)
 
   if(!done) {
-    stop( paste0("  Volumes Local sub-directory could not be created: ", volumesDataPath) )
+    stop( paste0("  Volumes file could not be copied: ", volumesPackageFile, " ", volumesFile) )
   }
-
-  cat( "  Made volumes local sub-dir: ", volumesDataPath, "\n" )
+  cat( "  Copied volumes file: ", volumesFile, "\n" )
 
 
 
@@ -95,10 +96,10 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
   done <- dir.create( todoPath )
 
   if(!done) {
-    stop( paste0("  ToDo directory could not be created: ", todoPath) )
+    stop( paste0("  todo directory could not be created: ", todoPath) )
   }
 
-  cat( "  Made ToDo dir: ", todoPath, "\n" )
+  cat( "  Made todo dir: ", todoPath, "\n" )
 
   # copy template todo file:
     # need to copy from the PACKAGE!
@@ -137,7 +138,8 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
 
   # COPY default settings.yml file from the package:
   settingsFile = paste(confPath, .Platform$file.sep, "settings.yml", sep="") # location to copy file to
-  settingsPackageFile <- paste( find.package("projectmanagr"), .Platform$file.sep, "config", .Platform$file.sep, "settings.yml", sep="")
+  settingsPackageFile <- paste( find.package("projectmanagr"), .Platform$file.sep, "config",
+                                .Platform$file.sep, "settings.yml", sep="")
 
   done <- file.copy(settingsPackageFile, settingsFile)
 
