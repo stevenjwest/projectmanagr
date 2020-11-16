@@ -475,6 +475,69 @@ getProjectPrefixFromName <- function(projectName) {
 }
 
 
+#' Get Protocol Summary
+#'
+#' Extracts the Protocol Summary from protocolName in SOP/ relative to projNotePath.
+#'
+#' @param projNotePath a path to a valid Project Note.
+#' @param protocolName the name of a valid protocol in SOP/ in programme relative to projNotePath
+#'
+#' @export
+getProtocolSummary <- function(projNotePath, protocolName) {
+
+  # get protocolPath from projNotePath and protocolName:
+  orgPath <- dirname( dirname(projNotePath) )
+
+  orgPath <- findOrgDir(orgPath)
+
+  if(orgPath == "" ) {
+    # the search reached the root of the filesystem without finding the Organisation files,
+    # therefore, projectNotePath is not inside a PROGRAMME sub-dir!
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projNotePath) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # set confPath + tempPath:
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+
+  # normalize path - remove HOME REF ~
+  projNotePath <- normalizePath(projNotePath)
+
+  # get the progPath:
+  progPath <- findProgDir(projNotePath)
+
+  # get SOP path:
+  protocolsPath <- paste0(progPath, .Platform$file.sep, "SOP")
+
+  protocolPath <- paste0( protocolsPath, .Platform$file.sep, protocolName,
+                          .Platform$file.sep, paste0(protocolName, ".Rmd") )
+
+  # read Protocol file:
+  protocolFileConn <- file( protocolPath )
+  protocolContents <- readLines( protocolFileConn )
+  close(protocolFileConn)
+
+  protocolStartIndex <- matchLineIndex("# PROTOCOL SUMMARY", protocolContents)
+
+  # get the NEXT LINE that starts with # - the FIRST HEADER of the actual Protocol
+  protocolStartIndex <- computeNextLineIndex((protocolStartIndex+1), protocolContents )-1
+
+  # defined as the line starting: # NEXT STEPS
+  protocolEndIndex <- grepLineIndexFrom("---", protocolContents, protocolStartIndex)
+
+  extractedProtocolSummary <- c("")
+
+  for(i in (protocolStartIndex-1):(protocolEndIndex-1) ) {
+
+    extractedProtocolSummary <- c(extractedProtocolSummary, protocolContents[i])
+
+  }
+
+  extractedProtocolSummary
+
+}
+
 
 #' Compute Line Index
 #'
@@ -520,6 +583,37 @@ grepLineIndex <- function(line, contents) {
   for( l in 1:length(contents) ) {
 
     if( grepl(line, contents[l]) ) {
+      returnVal <- l
+      break
+    }
+
+  }
+
+  returnVal
+
+}
+
+
+#' Match Line Index
+#'
+#' Returns the index of the first COMPLETE MATCH of line in contents,
+#' if not found returns -1.
+#'
+#' @param line a String to be found - any leading/trailing whitespace is TRIMMED.
+#' @param contents a vector of strings, the index of the first instance of line in
+#' this vector is returned - any leading/trailing whitespace is TRIMMED from each line.
+#'
+#'
+matchLineIndex <- function(line, contents) {
+
+  # trim leading/trailing whitespace
+  line <- trimws(line)
+
+  returnVal <- -1
+  # look through contents to find an index that matches line:
+  for( l in 1:length(contents) ) {
+
+    if( (line == trimws(contents[l]) ) ) {
       returnVal <- l
       break
     }
@@ -602,6 +696,35 @@ computePreviousLineIndex <- function(lineIndex, contents) {
 
   # start at the END of contents:
   for( l in lineIndex:1 ) {
+
+    if( grepl("[A-z,0-9]", contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
+
+      returnVal <- (l+1) # return the NEXT LINE after the line which contains content
+      break
+
+    }
+
+  }
+
+  returnVal
+
+}
+
+#' Compute Next Line Index
+#'
+#' Returns the index of the Next Line in contents that contains any content ("[A-z,0-9]"), looking
+#' from lineIndex to length of contents.
+#'
+#' @param lineIndex the index to start looking from.
+#' @param contents a vector of strings, the index of the first instance of any content in this vector is returned.
+#'
+#'
+computeNextLineIndex <- function(lineIndex, contents) {
+
+  returnVal <- 1
+
+  # start at the END of contents:
+  for( l in lineIndex:length(contents) ) {
 
     if( grepl("[A-z,0-9]", contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
 

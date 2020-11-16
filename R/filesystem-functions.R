@@ -75,6 +75,46 @@ checkProgFile <- function( fileSystemPath ) {
 }
 
 
+#' Check Project Note
+#'
+#' Checks fileSystemPath is inside a sub-dir to a PROGRAMME directory.
+#' A Programme Directory is a direct sub-dir to a Organisation
+#' directory, so this method establishes this is the case by checking
+#' the parent Dir to fileSystemPath, to see if 'config/' and
+#' 'config/templates/' exist.
+#'
+#' Secondly, it checks the 'PROJECTS/' directory exists in this
+#' putative Programme Directory.
+#'
+#' Finally, it confirms the Project Note is at least
+#'
+#' If a Programme path is confirmed, it returns the fileSystemPath, otherwise
+#' the function returns a BLANK string "".
+#'
+#'
+checkProjNote <- function( fileSystemPath ) {
+
+  returnPath <- ""
+
+  if( findProgDir(fileSystemPath) != "" ) {
+    # the fileSystemPath is in a Programme Directory
+
+    if( basename(dirname(fileSystemPath)) != "PROJECTS" ) {
+      # the filesystemPath DIR is NOT PROJECTS - therefore NOT a Project Doc
+
+      if(getFileType(fileSystemPath) == "NOTE" ) {
+        # the file type of fileSystemPath is NOTE - return fileSystemPath
+        returnPath <- fileSystemPath
+      }
+    }
+  }
+
+  # returnPath:
+  returnPath
+
+}
+
+
 #' Check Programme Sub Dir
 #'
 #' Searches fileSystemPath's parent directories to identify
@@ -108,6 +148,10 @@ checkProgSubDir <- function( fileSystemPath ) {
     }
     confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
     tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
+  }
+
+  if(fileSystemPath == "") {
+    stop(paste0("  Dir is NOT inside a PROGRAMME: ", fileSystemPath))
   }
 
   fileSystemPath
@@ -204,9 +248,9 @@ getFileType <- function( fileSystemPath ) {
 
   TYPE <- ""
 
-  cat( "\ngetFileType - fileSystemPath: ", fileSystemPath, "\n" )
+  #cat( "\ngetFileType - fileSystemPath: ", fileSystemPath, "\n" )
 
-  cat( "\ngetFileType - basename(dirname(fileSystemPath)): ", basename(dirname(fileSystemPath)), "\n" )
+  #cat( "\ngetFileType - basename(dirname(fileSystemPath)): ", basename(dirname(fileSystemPath)), "\n" )
 
   if(basename(dirname(fileSystemPath)) == "PROJECTS") {
     TYPE <- "DOC"
@@ -259,16 +303,21 @@ getNextGroupPrefix <- function( headerNotePath ) {
 
   # check if headerNotePath is a DIR or RMD file:
   if(regexpr("~_", headerNotePath, fixed=TRUE) == -1) {
+
     headerNoteDir <- headerNotePath
+
     # get prefix - extract after last file.sep:
     headerNotePrefix <- substring(headerNotePath, regexpr("\\/[^\\/]*$", headerNotePath)+1 )
-  }
-  else {
-    # extract headerNoteDir from path - from the ~_ separator, replace fileName with file.sep
-    headerNoteDir <- paste( substring(headerNotePath, 1, regexpr("~_", headerNotePath, fixed=TRUE)-1 ), sep="")
-    # get prefix - extract between last file.sep and "~_" string:
-    headerNotePrefix <- substring(headerNotePath, regexpr("\\/[^\\/]*$", headerNotePath)+1, regexpr("~_", headerNotePath, fixed=TRUE)-1 )
-  }
+
+    } else {
+
+      # extract headerNoteDir from path - from the ~_ separator, replace fileName with file.sep
+      headerNoteDir <- paste( substring(headerNotePath, 1, regexpr("~_", headerNotePath, fixed=TRUE)-1 ), sep="")
+
+      # get prefix - extract between last file.sep and "~_" string:
+      headerNotePrefix <- substring(headerNotePath, regexpr("\\/[^\\/]*$", headerNotePath)+1, regexpr("~_", headerNotePath, fixed=TRUE)-1 )
+
+    }
 
   # get the ROOT of the Prefix:
   majorPrefix <- substring(headerNotePrefix, first=1, last=nchar(headerNotePrefix)-2)
@@ -277,30 +326,41 @@ getNextGroupPrefix <- function( headerNotePath ) {
   majPrefixRegExp <- paste("^", majorPrefix, ".*", sep="")
 
   # look in headerNoteDir for any files - if so, compute Prefix from these, otherwise generate new Prefix for file:
-  subNoteDirs <- list.dirs( headerNoteDir, full.names=FALSE, recursive=FALSE )
+  #subNoteDirs <- list.dirs( headerNoteDir, full.names=FALSE, recursive=FALSE )
+  subNoteFiles <- list.files(headerNoteDir)
+  subNoteFiles <- subNoteFiles[endsWith(subNoteFiles, ".Rmd")]
+  # now CREATE subNoteDirs from subNoteFiles - substring at index of "~_"
+  subNoteDirs <- substr(subNoteFiles, 1, regexpr("~_", subNoteFiles)-1 )
+
 
   # filter subNoteDirs to only contain content that starts with the majorPrefix:
   subNoteDirs <- subNoteDirs[grepl(majPrefixRegExp, subNoteDirs)]
 
   if(length(subNoteDirs) > 0 ) {
+
     # compute NEXT subNote Prefix from the DIRs in subNoteDirs:
     subNoteVals <- as.integer(substring(subNoteDirs, first=regexpr("-", subNoteDirs, fixed=TRUE)+1  ) )
+
     nextVal <- max(subNoteVals) +1
+
     if(nextVal>99) {
       nextValChar <- paste("", nextVal, sep="")
-    }
-    else if(nextVal>9) {
+
+    } else if(nextVal>9) {
       nextValChar <- paste("0", nextVal, sep="")
-    }
-    else {
+
+    } else {
       nextValChar <- paste("00", nextVal, sep="")
+
     }
+
     subNotePrefix <- paste(majorPrefix, nextValChar, sep="")
-  }
-  else {
+
+    } else {
     # else, its the first subnote! create subNotePrefix by adding a "1" to end of headerNotePrefix:
-    subNotePrefix <- paste(headerNotePrefix, "1", sep="")
-  }
+      subNotePrefix <- paste(headerNotePrefix, "1", sep="")
+
+    }
 
   subNotePrefix
 
@@ -311,8 +371,11 @@ getNextGroupPrefix <- function( headerNotePath ) {
 #'
 #' This method extracts the Prefix String from fileSystemPath (isolated by extracting
 #' all letters and numbers up to the first "_").  It then checks the
-#' DIRs in fileSystemPath that begin with prefixString to compute the next SIMPLE
+#' Rmd Files in fileSystemPath that begin with prefixString to compute the next SIMPLE
 #' Prefix - +1 from the highest prefix value.
+#'
+#' NOTE must use Rmd files and not the Project
+#' Note DIRs, as the DIRs can be symlinks, and if not active are not returned as existing!
 #'
 #' fileSystemPath - must be a path to a VALID DIR for Project Notes - a SubDir in a PROGRAMME DIR.
 #'
@@ -334,7 +397,11 @@ getNextSimplePrefix <- function( fileSystemPath ) {
   prefixRegExp <- paste("^", prefix, ".*", sep="")
 
   # look in headerNoteDir for any files - if so, compute Prefix from these, otherwise generate new Prefix for file:
-  subDirs <- list.dirs( fileSystemPath, full.names=FALSE, recursive=FALSE )
+  #subDirs <- list.dirs( fileSystemPath, full.names=FALSE, recursive=FALSE )
+  subFiles <- list.files(fileSystemPath)
+  subFiles <- subFiles[endsWith(subFiles, ".Rmd")]
+  # now CREATE subDirs from subFiles - substring at index of "~_"
+  subDirs <- substr(subFiles, 1, regexpr("~_", subFiles)-1 )
 
   # filter subNoteDirs to only contain content that starts with the majorPrefix:
   subDirs <- subDirs[grepl(prefixRegExp, subDirs)]
@@ -342,41 +409,48 @@ getNextSimplePrefix <- function( fileSystemPath ) {
   if(length(subDirs) > 0 ) {
 
     # extract all MAJOR NUMBERING of subDirs (numbers BETWEEN ~ and - for GROUP HEADERS, and AFTER ~ for SINGLE NOTES)
+
     subVals <- integer( length(subDirs) )
+
     for(l in 1:length(subDirs) ) {
+
       if( regexpr("-", subDirs[l], fixed=TRUE) > 0 ) {
         # this is a GROUP HEADER DIR - extract the integer between ~ and -
+
         subVals[l] <- as.integer( substring(
-          subDirs[l],
-          first=regexpr("~", subDirs[l], fixed=TRUE)+1,
-          last=regexpr("-", subDirs[l], fixed=TRUE)-1
-        )
-        )
-      }
-      else {
+                                    subDirs[l],
+                              first=regexpr("~", subDirs[l], fixed=TRUE)+1,
+                              last=regexpr("-", subDirs[l], fixed=TRUE)-1
+                          )
+                      )
+      } else {
         # this is a SINGLE DIR - extract the integer AFTER ~
+
         subVals[l] <- as.integer( substring(
-          subDirs[l],
-          first=regexpr("~", subDirs[l], fixed=TRUE)+1
-        )
-        )
+                                    subDirs[l],
+                              first=regexpr("~", subDirs[l], fixed=TRUE)+1
+                          )
+                      )
       }
     }
+
     # subVals now contains all the index values - copmute the MAX, and then add 1 for NEXT index:
     nextIndex <- max(subVals) +1
     if(nextIndex>99) {
+
       nextIndexChar <- paste("", nextIndex, sep="")
-    }
-    else if(nextIndex>9) {
+
+      } else if(nextIndex>9) {
       nextIndexChar <- paste("0", nextIndex, sep="")
-    }
-    else {
+
+      } else {
       nextIndexChar <- paste("00", nextIndex, sep="")
-    }
+
+      }
+
     simplePrefix <- paste(prefix, "~", nextIndexChar, sep="")
 
-  }
-  else {
+  } else {
     # else this is the first note in this DIR - set index to 001
     simplePrefix <- paste(prefix, "~001", sep="")
   }
@@ -420,6 +494,28 @@ getProjectNotePath <- function( fileSystemPath, projectNoteName ) {
   prefix <- getNextSimplePrefix(fileSystemPath)
 
   paste(fileSystemPath, .Platform$file.sep, prefix, "~_", projectNoteName, ".Rmd", sep="")
+
+}
+
+#' Return the Project Note Rmd Path from a Project DIR Path
+#'
+#'
+getProjectNotePathFromDir <- function( projectNoteDir ) {
+
+  project_note_paths <- c()
+
+  for( i in 1:length(projectNoteDir) ) {
+
+    fileList <- list.files( dirname(projectNoteDir[i]) )
+
+    proj_note_path <- fileList[startsWith(fileList, basename(projectNoteDir[i])) & endsWith(fileList, ".Rmd")]
+
+    project_note_paths <- c(project_note_paths, paste0(dirname(projectNoteDir[i]), .Platform$file.sep, proj_note_path) )
+
+  }
+
+  # return projectNotePaths:
+  project_note_paths
 
 }
 
