@@ -19,7 +19,7 @@
 #' "CheatSheet-Template-Tufte.Rmd"
 #'
 #' @export
-addCheatSheet <- function( projectNotePath, cheatsheetName, cheatsheetTitle="", cheatsheetTemplate="CheatSheet-Template-Tufte.Rmd"  ) {
+addCheatSheet <- function( projectNotePath, cheatsheetName, cheatsheetTitle="", cheatsheetTemplate="CheatSheet-Template.Rmd"  ) {
 
   cat( "\nprojectmanagr::addCheatSheet():\n" )
 
@@ -58,7 +58,7 @@ addCheatSheet <- function( projectNotePath, cheatsheetName, cheatsheetTitle="", 
   progPath <- findProgDir(projectNotePath)
 
   # get SOP path:
-  protocolsPath <- paste0(progPath, .Platform$file.sep, "SOP")
+  sopPath <- paste0(progPath, .Platform$file.sep, "SOP")
 
 
   # CODE TO DEFINE THE PROJECT NOTE PREFIX DIR PATH:
@@ -75,27 +75,27 @@ addCheatSheet <- function( projectNotePath, cheatsheetName, cheatsheetTitle="", 
 
 
 
-  # read Protocol template:
-  templateFileConn <- file( paste( tempPath, .Platform$file.sep, protocolTemplate, sep="") )
+  # read Cheatsheet template:
+  templateFileConn <- file( paste( tempPath, .Platform$file.sep, cheatsheetTemplate, sep="") )
   templateContents <- readLines( templateFileConn )
   close(templateFileConn)
 
-  # Save Protocol to the project note DIR using its Name:
-  protocolDirPath <- paste( protocolsPath, .Platform$file.sep, cheatsheetName, sep="")
-  done <- dir.create(protocolDirPath)
+  # Save Cheatsheet to the project note DIR using its Name:
+  cheatsheetDirPath <- paste( sopPath, .Platform$file.sep, cheatsheetName, sep="")
+  done <- dir.create(cheatsheetDirPath)
 
   if(!done) {
-    stop( paste0("  Protocol Path could not be created: ", protocolDirPath) )
+    stop( paste0("  Cheatsheet Path could not be created: ", cheatsheetDirPath) )
   }
 
-  protocolPath <- paste( protocolDirPath, .Platform$file.sep, cheatsheetName, ".Rmd", sep="")
-  done <- file.create( protocolPath )
+  cheatsheetPath <- paste( cheatsheetDirPath, .Platform$file.sep, cheatsheetName, ".Rmd", sep="")
+  done <- file.create( cheatsheetPath )
 
   if(!done) {
-    stop( paste0("  Protocol could not be created: ", protocolPath) )
+    stop( paste0("  Cheatsheet could not be created: ", cheatsheetPath) )
   }
 
-  cat( "  Made Protocol File: ", protocolPath, "\n" )
+  cat( "  Made Cheatsheet File: ", cheatsheetPath, "\n" )
 
 
   # extract the Author value from the settings.yml file:
@@ -112,7 +112,7 @@ addCheatSheet <- function( projectNotePath, cheatsheetName, cheatsheetTitle="", 
   ### compute Project Source Doc RELATIVE LINK:
 
 
-  DocLink <- R.utils::getRelativePath(projectNotePath, relativeTo=protocolPath)
+  DocLink <- R.utils::getRelativePath(projectNotePath, relativeTo=cheatsheetPath)
   DocLink <- substring(DocLink, first=4, last=nchar(DocLink)) # remove first `../`
   # DocLink <- paste( substring(DocLink, first=1, last=nchar(DocLink)-4), "/", sep="")
   # for now have left links as ".Rmd", but this needs to be ".html", or "/" in a rendered website!
@@ -128,11 +128,11 @@ addCheatSheet <- function( projectNotePath, cheatsheetName, cheatsheetTitle="", 
   #templateContents <- gsub("{{PROJECT_NOTE_TITLE}}", DocName, templateContents, fixed=TRUE)
 
 
-  # write to protocolFile
-  fileConn <- file(protocolPath)
+  # write to CheatsheetFile
+  fileConn <- file(cheatsheetPath)
   writeLines(templateContents, fileConn)
   close(fileConn)
 
-  cat( "  Written Title and Author to Protocol file: ", basename(protocolPath), "\n" )
+  cat( "  Written Title and Author to Cheatsheet file: ", basename(cheatsheetPath), "\n" )
 
 }
