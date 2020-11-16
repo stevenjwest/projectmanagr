@@ -82,15 +82,15 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
 
 
 
-  # create templates dir:
-  templatesPath = paste(progPath, .Platform$file.sep, "templates", sep="")
+  # create SOP dir:
+  templatesPath = paste(progPath, .Platform$file.sep, "SOP", sep="")
   done <- dir.create(templatesPath)
 
   if(!done) {
-    stop( paste0("  templates directory could not be created: ", templatesPath) )
+    stop( paste0("  SOP directory could not be created: ", templatesPath) )
   }
 
-  cat( "  Made templates dir: ",templatesPath, "\n" )
+  cat( "  Made SOP dir: ",templatesPath, "\n" )
 
 
 

@@ -14,12 +14,8 @@
 #' @export
 addinCreateProjectDoc <- function() {
 
-  # set wd - set to parent if its the PROJECTS DIR:
-  wd <- getwd()
-
-  if( basename(wd)=="PROJECTS" ) {
-    wd <- dirname(wd) # get the PROGRAMME directory if WD is in the PROJECTS DIR
-  }
+  # find the PROGRAMME DIR if the current path is inside one:
+  wd <- findProgDir(getwd())
 
 
   # set templates:
