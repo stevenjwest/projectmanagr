@@ -19,7 +19,7 @@
 #' "Protocol-Template-Tufte.Rmd"
 #'
 #' @export
-addProtocol <- function( projectNotePath, protocolName, protocolTitle="", protocolTemplate="Protocol-Template-Tufte.Rmd"  ) {
+addProtocol <- function( projectNotePath, protocolName, protocolTitle="", protocolTemplate="Protocol-Template.Rmd"  ) {
 
   cat( "\nprojectmanagr::addProtocol():\n" )
 

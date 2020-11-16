@@ -98,7 +98,12 @@ addinAddProtocolCheatSheet <- function() {
         })
 
         output$projectNotePath <- renderText({
-          selection[["projectNotePath"]]
+          #selection[["projectNotePath"]]
+          projectNotePath <- normalizePath(selection[["projectNotePath"]])
+          progPath <- findProgDir(projectNotePath)
+          protocolsPath <- paste0(progPath, .Platform$file.sep, "SOP")
+          protocolDirPath <- paste( protocolsPath, .Platform$file.sep, input$protocolName, sep="")
+          paste( protocolDirPath, .Platform$file.sep, input$protocolName, ".Rmd", sep="")
         })
 
 
@@ -150,7 +155,7 @@ addinAddProtocolCheatSheet <- function() {
                                   projectNotePath = selection[["projectNotePath"]],
                                   protocolName = input$protocolName,
                                   protocolTitle = input$protocolTitle,
-                                  protocolTemplate="Protocol-Template-Tufte.Rmd" )
+                                  protocolTemplate="Protocol-Template.Rmd" )
 
             # normalize path - remove HOME REF ~
             projectNotePath <- normalizePath(selection[["projectNotePath"]])
@@ -187,7 +192,7 @@ addinAddProtocolCheatSheet <- function() {
                 projectNotePath = selection[["projectNotePath"]],
                 cheatsheetName = input$protocolName,
                 cheatsheetTitle = input$protocolTitle,
-                cheatsheetTemplate="CheatSheet-Template-Tufte.Rmd" )
+                cheatsheetTemplate="CheatSheet-Template.Rmd" )
 
               # normalize path - remove HOME REF ~
               projectNotePath <- normalizePath(selection[["projectNotePath"]])
