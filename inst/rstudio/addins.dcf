@@ -43,6 +43,11 @@ Description: Rename a Project Doc or Note in the Project Organisation.
 Binding: addinRenameComp
 Interactive: true
 
+Name: ProjectManagr: Insert Protocol
+Description: Insert a Protocol into a Project Note.
+Binding: addinInsertProtocol
+Interactive: true
+
 Name: ProjectManagr: Set WD Active Doc
 Description: Set the working directory to the active doc's parent directory.
 Binding: setwdActiveDoc
@@ -52,3 +57,9 @@ Name: ProjectManagr: Update
 Description: Updates all recently edited Project Notes' summary information in linked Project Docs.
 Binding: updateProjectOrg
 Interactive: false
+
+Name: ProjectManagr: Insert DateTime
+Description: Insert DateTime at the cursor location.
+Binding: addinInsertDateTimeString
+Interactive: false
+
