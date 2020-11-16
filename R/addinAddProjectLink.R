@@ -73,11 +73,80 @@ addinAddProjectLink <- function() {
 
     else {
 
+
       # else if selection[["addingSubNote"]] is FALSE, then a PRoject Doc TASK has been selected.
       # want to add a new Link from this task to a user-selected Project Note or Doc.
       # SINGLE or SUBNOTE: addLinkProjectNote()
       # GROUP HEADER: addLinkProjectGroup()
       # PROJECT DOC: addLinkProjectDoc()
+
+
+
+      # first, get all open RStudio Doc PATHS:
+      fileList <- getRStudioOpenDocIDs()
+
+      # next, get the currently active document:
+      context <- rstudioapi::getSourceEditorContext()
+
+      # get contents:
+      openDocContents <- context$contents
+
+      cursor <- rstudioapi::primary_selection(context)
+
+      line <- (cursor$range[[1]])[1]
+      column <- (cursor$range[[1]])[2]
+
+      foundActiveDoc = FALSE
+
+      reorderedFileList = list() # all files to RIGHT of current active doc are stored here in order L>R
+      firstFileList = list() # all files to LEFT of current active doc are stored here in order L>R
+      numberedFileList <- list() # will fill the choices var for selectInput shiny widget
+      # must be a list of numbers, with the names of each item the String that is presented in selectInput
+
+      foundIndex <- 0
+
+      for(i in 1:length(fileList) ) {
+
+        if(foundActiveDoc == TRUE) {
+
+          foundIndex <- foundIndex + 1
+
+          reorderedFileList[[foundIndex]] <- fileList[[i]][2]
+
+          numberedFileList[(i-1)] <- i-1 # AFTER skipped Active Doc, so set list[i-1] to i-1
+
+        }
+        else if (fileList[[i]][2] != context$path) {
+          firstFileList[[i]] <- fileList[[i]][2]
+
+          numberedFileList[i] <- i # BEFORE skipping Active Doc, so set list[i] to i
+        }
+        else if(fileList[[i]][2] == context$path) {
+
+          foundActiveDoc = TRUE
+
+          # This is the Active Doc - so DO NOT add an index to numberedFileList
+
+        }
+
+      }
+
+      # concat the list of file paths, with files to the RIGHT of active doc FIRST:
+      reorderedFileList <- c(reorderedFileList, firstFileList)
+
+      # form the numberedFileList (list of indexes, with names constituting the image file NAMES)
+      names(numberedFileList) <- lapply(reorderedFileList, basename)
+
+      # OR just use a list of file NAMES (indexes are implicitly understood by selectInput):
+      reorderedFileNames <- lapply(reorderedFileList, basename)
+
+
+      contextName <- basename(context$path)
+
+
+      # present these files in a combobox in shiny gadget:
+
+
 
       ui <- miniPage(
 
@@ -88,6 +157,13 @@ addinAddProjectLink <- function() {
           fillCol(
 
             fillRow( h5("Add a new Project Link to a Project Document.") ),
+
+            fillRow(
+              selectInput("select", "Select Document:",
+                          choices = numberedFileList,
+                          selected = numberedFileList[1],
+                          width="100%")
+            ),
 
             fillRow( flex = c(7, 1),  verbatimTextOutput("file", placeholder = TRUE), shinyFilesButton("file", "Select File", "Note Project File to Link to", FALSE)  ),
 
@@ -101,15 +177,27 @@ addinAddProjectLink <- function() {
 
       server <- function(input, output, session) {
 
+
+        #shinyFileChoose(
+        #  input,
+        #  'file',
+        #  root = c(home = '~'),
+        #  filetypes = c('', "Rmd", "txt")
+        #)
+
+        #output$file <- renderText({
+
+        #  checkProgSubDir( as.character(parseFilePaths(c(home = normalizePath("~")),input$file)$datapath) )
+
+        #})
+
+
+
+
+
         # initialises global$datapath:
         #global <- reactiveValues(datapath = checkProgSubDir( normalizePath("~") )  ) # this sets initial val to current working DIR
 
-        shinyFileChoose(
-          input,
-          'file',
-          root = c(home = '~'),
-          filetypes = c('', "Rmd", "txt")
-        )
 
         #file <- reactive( input$file )
 
@@ -138,17 +226,17 @@ addinAddProjectLink <- function() {
         #
         #             })
 
-        output$file <- renderText({
+       # output$file <- renderText({
 
           #checkProgSubDir( as.character(parseFilePaths(c(home = normalizePath("~")),file())$datapath) )
 
-          checkProgSubDir( as.character(parseFilePaths(c(home = normalizePath("~")),input$file)$datapath) )
+          #checkProgSubDir( as.character(parseFilePaths(c(home = normalizePath("~")),input$file)$datapath) )
 
           #checkProgSubDir(global$datapath)
 
           #filepath()
 
-        })
+        #})
 
         #observe({
 
@@ -196,7 +284,17 @@ addinAddProjectLink <- function() {
         # perform computations to create new Programme:
         observeEvent(input$done, {
 
-          if( checkProgSubDir( as.character(parseFilePaths(c(home = normalizePath("~")),input$file)$datapath) ) == "") {
+
+          print(input$select)
+
+          print(reorderedFileList[[as.integer(input$select)]])
+
+          #if( checkProgSubDir( as.character(parseFilePaths(c(home = normalizePath("~")),input$file)$datapath) ) == "") {
+          #  output$warningFile <- renderText({
+          #    "*** FILE PATH NOT IN VALID PROGRAMME ***"
+          #  })
+          #}
+          if( checkProgSubDir( reorderedFileList[[as.integer(input$select)]] ) == "") {
             output$warningFile <- renderText({
               "*** FILE PATH NOT IN VALID PROGRAMME ***"
             })
@@ -207,7 +305,7 @@ addinAddProjectLink <- function() {
             # and the output$file
 
             # determine if file is SIMPLE/SUBNOTE, HEADER NOTE or DOC:
-            type <- getFileType( checkProgSubDir( as.character(parseFilePaths(c(home = normalizePath("~")),input$file)$datapath) ) )
+            type <- getFileType( checkProgSubDir( reorderedFileList[[as.integer(input$select)]] ) )
 
             cat( "\nTYPE: ", type, "\n" )
 
@@ -216,21 +314,21 @@ addinAddProjectLink <- function() {
 
                 # SIMPLE or SUB NOTE:
 
-                projectmanagr::addLinkProjectNote( checkProgSubDir( as.character(parseFilePaths(c(home = normalizePath("~")),input$file)$datapath) ), selection)
+                projectmanagr::addLinkProjectNote( checkProgSubDir( reorderedFileList[[as.integer(input$select)]] ), selection)
 
             }
             else if( type == "HEAD" ) {
 
                 # GROUP (HEADER) NOTE:
 
-                projectmanagr::addLinkProjectGroup( checkProgSubDir( as.character(parseFilePaths(c(home = normalizePath("~")),input$file)$datapath) ), selection)
+                projectmanagr::addLinkProjectGroup( checkProgSubDir( reorderedFileList[[as.integer(input$select)]] ), selection)
 
             }
             else if( type == "DOC" ) {
 
                 # PROJECT DOC:
 
-                projectmanagr::addLinkProjectDoc( checkProgSubDir( as.character(parseFilePaths(c(home = normalizePath("~")),input$file)$datapath) ), selection)
+                projectmanagr::addLinkProjectDoc( checkProgSubDir( reorderedFileList[[as.integer(input$select)]] ), selection)
 
             }
 
