@@ -10,7 +10,7 @@ createVolume(sourcePath, volName, orgPath = getwd())
 \item{sourcePath}{Path to the source directory. If the dir at sourcePath
 does not exist, this function will terminate.}
 
-\item{volName}{The naem of the new volume. If a volume called volName already
+\item{volName}{The name of the new volume. If a volume called volName already
 exists, it is not overwritten, and this function will terminate.}
 
 \item{orgPath}{Optional argument to specify the location of the organisation with

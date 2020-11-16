@@ -5,8 +5,7 @@
 \title{Add a New Group of Project Notes}
 \usage{
 addProjectNoteGroup(projectNoteName, projectNotePrefix, projectNoteDir,
-  selection, subNoteName, volume = "local", projectNoteTitle = "",
-  subNoteTitle = "",
+  selection, subNoteName, projectNoteTitle = "", subNoteTitle = "",
   projNoteTemplate = "Project-Header-Note-Template.Rmd",
   subNoteTemplate = "Project-Sub-Note-Template.Rmd")
 }
@@ -26,8 +25,6 @@ information - lines of Task/Del/Goal, projectDoc path content of selection line.
 or userSelection().}
 
 \item{subNoteName}{The First SubNote name.}
-
-\item{volume}{The volume where the sub-notes data will be stored.  "local" by default.}
 
 \item{projectNoteTitle}{OPTIONAL title for the Project HEADER Note.  Default is to use projectNoteName and replace
 all _ and - with SPACES.}

@@ -9,9 +9,12 @@ getNextSimplePrefix(fileSystemPath)
 \description{
 This method extracts the Prefix String from fileSystemPath (isolated by extracting
 all letters and numbers up to the first "_").  It then checks the
-DIRs in fileSystemPath that begin with prefixString to compute the next SIMPLE
+Rmd Files in fileSystemPath that begin with prefixString to compute the next SIMPLE
 Prefix - +1 from the highest prefix value.
 }
 \details{
+NOTE must use Rmd files and not the Project
+Note DIRs, as the DIRs can be symlinks, and if not active are not returned as existing!
+
 fileSystemPath - must be a path to a VALID DIR for Project Notes - a SubDir in a PROGRAMME DIR.
 }

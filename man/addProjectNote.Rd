@@ -5,7 +5,7 @@
 \title{Add a New Project Note}
 \usage{
 addProjectNote(projectNoteName, projectNotePrefix, projectNotePath,
-  selection, volume = "local", projectNoteTitle = "",
+  selection, projectNoteTitle = "",
   projNoteTemplate = "Project-Note-Template.Rmd")
 }
 \arguments{
@@ -22,8 +22,6 @@ or lower inside a PROGRAMME Directory.}
 \item{selection}{List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
 information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
 or userSelection().}
-
-\item{volume}{The volume to store the Project Note Directory in.}
 
 \item{projectNoteTitle}{OPTIONAL title for the Project Note.  Default is to use projectNoteName and replace
 all _ and - with SPACES.}

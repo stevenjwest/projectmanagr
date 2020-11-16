@@ -4,8 +4,13 @@
 \alias{moveToVolume}
 \title{Move Project Note DIR to Volume}
 \usage{
-moveToVolume(projectNotePath, volumeName)
+moveToVolume(volName, projectNotePath)
 }
 \description{
-Move Project Note DIR to Volume
+Creates the Project Note DIR in new volume, copies all contents from
+the old Project Note DIR location into the new Project Note DIR location,
+deletes the old Project Note DIR, and symlinks to the new Project Note DIR.
+}
+\details{
+Finally, changes the location of the volume in the Project Note itself.
 }

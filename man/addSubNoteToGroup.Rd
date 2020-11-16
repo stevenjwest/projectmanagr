@@ -5,8 +5,7 @@
 \title{Add a New Sub Note to a Project Group}
 \usage{
 addSubNoteToGroup(subNoteName, subNotePrefix, subNoteDir, selection,
-  volume = "local", subNoteTitle = "",
-  subNoteTemp = "Project-Sub-Note-Template.Rmd")
+  subNoteTitle = "", subNoteTemp = "Project-Sub-Note-Template.Rmd")
 }
 \arguments{
 \item{subNoteName}{The name of the Project Sub Note, a Title with all SPACES replaced
@@ -24,9 +23,6 @@ information - lines of Task/Del/Goal, projectDoc path content of selection line.
 input (its not actually used in this function!  But the selection is used in RStudio Addins to determine whether
 to run addSubNoteToGroup, addProjectNote, or addProjectNoteGroup - may omit?).  See `cursorSelection()` or
 `userSelection()`.  Selection MUST be on a HeaderNote!}
-
-\item{volume}{The name of the volume where the sub-notes data will be stored.  Must be a directory inside the
-`volumes/` directory in the Project Organisation.  "local" by default.}
 
 \item{subNoteTitle}{OPTIONAL title for the Project Note.  Default is to use subNoteName and replace
 all _ and - with SPACES.}
