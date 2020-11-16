@@ -75,11 +75,11 @@ renameProjectComp <- function( oldProjectCompPath, newProjectCompName, newProjec
   close(fileConn)
 
   # find title line:
-  line <- grep( paste0("title: '", prefix), contents)
+  line <- grep( paste0("title: '"), contents)
 
   # compute old title - +2 as always have "~ " after prefix, -1 as have "'" at end of title
   oldProjectCompTitle <- substr(contents[line],
-                               regexpr( paste0(prefix), contents[line]) + (nchar(prefix) + 2),
+                               regexpr( "~ ", contents[line]) + 2,
                                nchar(contents[line])-1)
 
 
