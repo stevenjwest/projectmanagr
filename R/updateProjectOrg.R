@@ -155,6 +155,11 @@ compareGoalDelTaskSummary <- function(projDocLinkList, projNotePath) {
 
   min <- min + grep(projDocLinkList[[2]], projDocContents, fixed=TRUE)[1] -1
 
+  if( is.na(min) ) {
+    # finding GOAL failed!
+    stop( paste0("  failed to find GOAL in ", projDocLinkList[[1]], " - GOAL : ", projDocLinkList[[2]]) )
+  }
+
 
   # to GOAL:
   projDocContents2 <- projDocContents[
@@ -165,6 +170,11 @@ compareGoalDelTaskSummary <- function(projDocLinkList, projNotePath) {
 
   min <- min + grep(projDocLinkList[[3]], projDocContents2, fixed=TRUE)[1] -1
 
+  if( is.na(min) ) {
+    # finding DEL failed!
+    stop( paste0("  failed to find DELIVERABLE in ", projDocLinkList[[1]], " - DELIVERABLE : ", projDocLinkList[[3]]) )
+  }
+
   # to DEL:
   projDocContents2 <- projDocContents2[
                         grep(projDocLinkList[[3]], projDocContents2, fixed=TRUE)[1] :
@@ -172,6 +182,11 @@ compareGoalDelTaskSummary <- function(projDocLinkList, projNotePath) {
 
 
   min <- min + grep(projDocLinkList[[4]], projDocContents2, fixed=TRUE)[1] -1
+
+  if( is.na(min) ) {
+    # finding TASK failed!
+    stop( paste0("  failed to find TASK in ", projDocLinkList[[1]], " - TASK : ", projDocLinkList[[4]]) )
+  }
 
   # to TASK:
   projDocContents2 <- projDocContents2[
