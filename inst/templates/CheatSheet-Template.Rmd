@@ -1,0 +1,175 @@
+---
+title: "{{TITLE}}"
+author: "{{AUTHOR}}"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# PROJECT NOTE: 
+
+
+{{PROJECT_NOTE_LINK}}
+
+
+------
+
+
+
+# CHEATSHEET SUMMARY
+
+
+Cheat_Sheet_introduction_In_clear_and_concise_language_what_procedures_does_the_cheatsheet_cover
+
+
+---
+
+
+
+# CHEATSHEET BACKGROUND
+
+
+overview_of_libraries_frameworks_resources
+
+
+cheatsheet_scope_what_is_it_used_for
+
+
+---
+
+
+
+# CHEATSHEET
+
+
+The Cheatsheet consists of a set of Procedures that each achieve a specific goal:
+
+
+* Each Procedure is INDEPENDENT:
+
+    + They do not have to be followed in order
+    
+    + Find the Procedure required to meet your goal
+
+
+---
+
+
+
+## PROCEDURE_1
+
+
+procedure_1
+
+
+---
+
+
+
+## PROCEDURE_2 
+
+
+procedure_2
+
+
+---
+
+
+
+## PROCEDURE_3
+
+
+procedure_3
+
+
+---
+
+
+
+# TROUBLESHOOTING GUIDE
+
+
+Troubleshooting Guide - list step, problem, potential solutions.
+
+
+---
+
+
+
+# CHANGE LOG
+
+
+**Version 1.0 - DATE**
+
+
+changes_made
+
+
+---
+
+
+
+# FIGURES TABLES
+
+
+Example syntax for figures and tables
+
+
+```{r figure-example}
+
+knitr::include_graphics("relative/path/to/img.svg")
+
+```
+
+
+
+Tables:  Can use `knitr::kable()`:
+
+```{r table-example}
+
+#knitr::kable(
+#  mtcars[1:6, 1:6], caption = 'A subset of mtcars.'
+#)
+
+```
+
+
+Can also use basic markdown syntax:
+
+
+
+  Right     Left     Center     Default
+-------     ------ ----------   -------
+     12     12        12            12
+    123     123       123          123
+      1     1          1             1
+
+Table:  Demonstration of simple table syntax.
+
+
+
+-------------------------------------------------------------
+ Centered   Default           Right Left
+  Header    Aligned         Aligned Aligned
+----------- ------- --------------- -------------------------
+   First    row                12.0 Example of a row that
+                                    spans multiple lines.
+
+  Second    row                 5.0 Here's another one. Note
+                                    the blank line between
+                                    rows.
+                                    
+-------------------------------------------------------------
+
+Table: Here's the caption. It, too, may span
+multiple lines.
+
+
+
+

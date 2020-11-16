@@ -20,6 +20,16 @@ output:
 
 
 
+# DATA STORAGE:
+
+
+{{DATASTORAGE}}
+
+
+----
+
+
+
 ## GROUP CONTENTS:
 
 
@@ -30,48 +40,7 @@ output:
 
 
 
-# DATA STORAGE:
-
-
-{{DATA_STORAGE}}
-
-
-----
-
-
-
 # Introduction
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

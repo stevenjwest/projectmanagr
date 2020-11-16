@@ -23,7 +23,7 @@ output:
 # DATA STORAGE:
 
 
-{{DATA_STORAGE}}
+{{DATASTORAGE}}
 
 
 ----
@@ -31,47 +31,6 @@ output:
 
 
 # Introduction
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
