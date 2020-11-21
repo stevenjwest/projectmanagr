@@ -12,6 +12,8 @@
 #'
 #' fileList[[i]][2] - RStudio i'th Document Absolute Path, or null if the file is not saved to disk.
 #'
+#' NOTE: This method returns open documents in the BASE RStudio Session, and not in any opened project.
+#'
 #'@export
 getRStudioOpenDocIDs <- function() {
 
@@ -51,21 +53,19 @@ getRStudioOpenDocIDs <- function() {
         # extract path string:
         pathLine <- lines[grepl("    \"path\"*", lines)]
 
-        if( grepl("\"path\" : null,", pathLine) ) {
+        if( grepl("\"path\" : null,", pathLine) || grepl("\"path\": null,", pathLine) ) {
           # path is null - file has not been saved - store "null" in fileList:
           fileList[[i]][2] <- "null"
         }
         else {
-
           # copy path into fileList - second index
-          fileList[[i]][2] <- substring(pathLine, 15, nchar(pathLine)-2)
+          fileList[[i]][2] <- substring(pathLine, regexpr(": \"", pathLine)+3, nchar(pathLine)-2)
         }
 
         # extract relative order string:
-        relOrderLine <- lines[grepl("    \"relative_order\" :*", lines)]
+        relOrderLine <- lines[grepl("    \"relative_order\"*", lines)]
         # copy order into relVector:
-        relVector[i] <- as.integer(substring(relOrderLine, 24, nchar(relOrderLine)-1))
-
+        relVector[i] <- as.integer( substring(relOrderLine, regexpr("order", relOrderLine)+8, nchar(relOrderLine)-1) )
 
       }
 
