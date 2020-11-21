@@ -4,9 +4,16 @@
 \alias{sample_resample}
 \title{Re-Sample Sample Data}
 \usage{
-sample_resample(sampleDataFrame, resample_vector, resample_dt,
-  IDs = "all", rep_select = "all", rep_create = c(1),
-  overwrite = FALSE, writeToDisk = TRUE)
+sample_resample(
+  sampleDataFrame,
+  resample_vector,
+  resample_dt,
+  IDs = "all",
+  rep_select = "all",
+  rep_create = c(1),
+  overwrite = FALSE,
+  writeToDisk = TRUE
+)
 }
 \arguments{
 \item{sampleDataFrame}{a tibble opened with sample_load or created with sample_create.  The tibble MUST

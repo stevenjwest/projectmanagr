@@ -4,8 +4,14 @@
 \alias{addSubNoteToGroup}
 \title{Add a New Sub Note to a Project Group}
 \usage{
-addSubNoteToGroup(subNoteName, subNotePrefix, subNoteDir, selection,
-  subNoteTitle = "", subNoteTemp = "Project-Sub-Note-Template.Rmd")
+addSubNoteToGroup(
+  subNoteName,
+  subNotePrefix,
+  subNoteDir,
+  selection,
+  subNoteTitle = "",
+  subNoteTemp = "Project-Sub-Note-Template.Rmd"
+)
 }
 \arguments{
 \item{subNoteName}{The name of the Project Sub Note, a Title with all SPACES replaced

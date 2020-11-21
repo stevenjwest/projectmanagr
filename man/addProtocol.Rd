@@ -4,8 +4,12 @@
 \alias{addProtocol}
 \title{Add a New Protocol}
 \usage{
-addProtocol(projectNotePath, protocolName, protocolTitle = "",
-  protocolTemplate = "Protocol-Template.Rmd")
+addProtocol(
+  projectNotePath,
+  protocolName,
+  protocolTitle = "",
+  protocolTemplate = "Protocol-Template.Rmd"
+)
 }
 \arguments{
 \item{projectNotePath}{The ABSOLUTE path of the Project Note.}

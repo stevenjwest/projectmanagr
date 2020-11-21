@@ -4,8 +4,12 @@
 \alias{addCheatSheet}
 \title{Add a New CheatSheet}
 \usage{
-addCheatSheet(projectNotePath, cheatsheetName, cheatsheetTitle = "",
-  cheatsheetTemplate = "CheatSheet-Template.Rmd")
+addCheatSheet(
+  projectNotePath,
+  cheatsheetName,
+  cheatsheetTitle = "",
+  cheatsheetTemplate = "CheatSheet-Template.Rmd"
+)
 }
 \arguments{
 \item{projectNotePath}{The ABSOLUTE path of the Project Note.}

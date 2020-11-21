@@ -4,8 +4,14 @@
 \alias{sample_add_data}
 \title{Add Data to Samples}
 \usage{
-sample_add_data(sampleDataFrame, ..., IDs = "all", rep_select = "all",
-  overwrite = FALSE, writeToDisk = TRUE)
+sample_add_data(
+  sampleDataFrame,
+  ...,
+  IDs = "all",
+  rep_select = "all",
+  overwrite = FALSE,
+  writeToDisk = TRUE
+)
 }
 \arguments{
 \item{sampleDataFrame}{a tibble opened with sample_load, imported with sample_import, or created

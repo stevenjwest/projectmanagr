@@ -44,6 +44,7 @@ IN THE PROJECT DO (i.e. the link TITLE and then the link ADDRESS - for example
 
 [[12]] or [["projectDocPath"]] - the path of the Active Doc (a Project Doc, as successfully retrieved Task/Del/Goal)
 
+
 If this method is unsuccessful (there is an error), it returns a LIST:
 
 [[1]] - contains the String "FALSE"

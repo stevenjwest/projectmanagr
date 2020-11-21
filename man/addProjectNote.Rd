@@ -4,9 +4,14 @@
 \alias{addProjectNote}
 \title{Add a New Project Note}
 \usage{
-addProjectNote(projectNoteName, projectNotePrefix, projectNotePath,
-  selection, projectNoteTitle = "",
-  projNoteTemplate = "Project-Note-Template.Rmd")
+addProjectNote(
+  projectNoteName,
+  projectNotePrefix,
+  projectNotePath,
+  selection,
+  projectNoteTitle = "",
+  projNoteTemplate = "Project-Note-Template.Rmd"
+)
 }
 \arguments{
 \item{projectNoteName}{The name of the Project Note, a Title with all SPACES replaced

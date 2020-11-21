@@ -3,7 +3,6 @@
 \docType{package}
 \name{projectmanagr}
 \alias{projectmanagr}
-\alias{projectmanagr-package}
 \title{projectmanagr}
 \description{
 Use projectmanagr \R functions to manage project documentation in Rmd Files.

@@ -4,8 +4,13 @@
 \alias{insertProtocol}
 \title{Insert a Protocol into a Project Note}
 \usage{
-insertProtocol(projectNotePath, projectNoteRow, protocolName,
-  includeNotes = FALSE, includeEquip = TRUE)
+insertProtocol(
+  projectNotePath,
+  projectNoteRow,
+  protocolName,
+  includeNotes = FALSE,
+  includeEquip = TRUE
+)
 }
 \arguments{
 \item{projectNotePath}{The ABSOLUTE path of the Project Note.}

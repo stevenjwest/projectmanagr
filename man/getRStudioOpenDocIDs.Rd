@@ -18,4 +18,6 @@ in RStudio.
 fileList[[i]][1] - RStudio i'th Document ID.
 
 fileList[[i]][2] - RStudio i'th Document Absolute Path, or null if the file is not saved to disk.
+
+NOTE: This method returns open documents in the BASE RStudio Session, and not in any opened project.
 }

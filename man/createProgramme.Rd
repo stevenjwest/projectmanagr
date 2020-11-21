@@ -4,8 +4,13 @@
 \alias{createProgramme}
 \title{Create a New Programme}
 \usage{
-createProgramme(programmeName, programmePrefix, programmeTitle = "",
-  fileSystemPath = getwd(), progTemplate = "Programme-Template.Rmd")
+createProgramme(
+  programmeName,
+  programmePrefix,
+  programmeTitle = "",
+  fileSystemPath = getwd(),
+  progTemplate = "Programme-Template.Rmd"
+)
 }
 \arguments{
 \item{programmeName}{Name of Progamme - must NOT contain a space.}

@@ -4,16 +4,17 @@
 \alias{renameProjectComp}
 \title{Rename a Project Comp}
 \usage{
-renameProjectComp(oldProjectCompPath, newProjectCompName,
-  newProjectCompTitle = "")
+renameProjectComp(
+  oldProjectCompPath,
+  newProjectCompName,
+  newProjectCompTitle = ""
+)
 }
 \arguments{
-\item{oldProjectCompPath}{defines the path to the Project Comp - should point to the Project Comp Rmd file}
+\item{oldProjectCompPath}{defines the NEW Project Comp File name}
 
 \item{newProjectCompTitle}{defines the NEW Project Comp Title - written to its Rmd file.  By default this
 is the oldProjectCompPath, with spaces replacing "-" and "_".}
-
-\item{oldProjectCompPath}{defines the NEW Project Comp File name}
 }
 \description{
 Renames a Project Comp at oldProjectCompPath with file name (oldProjectCompPath), and newProjectCompTitle.

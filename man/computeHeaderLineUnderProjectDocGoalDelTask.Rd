@@ -4,8 +4,13 @@
 \alias{computeHeaderLineUnderProjectDocGoalDelTask}
 \title{Compute Next Line under Header Links, in Project Doc Goal Del Task}
 \usage{
-computeHeaderLineUnderProjectDocGoalDelTask(headerName, projDocContents,
-  GOAL, DELIVERABLE, TASK)
+computeHeaderLineUnderProjectDocGoalDelTask(
+  headerName,
+  projDocContents,
+  GOAL,
+  DELIVERABLE,
+  TASK
+)
 }
 \arguments{
 \item{headerName}{name of header note to search for}

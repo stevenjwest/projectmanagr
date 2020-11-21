@@ -9,8 +9,6 @@ updateAllLinks(orgPath, oldName, oldTitle, newName, newTitle)
 \arguments{
 \item{orgPath}{defines the path to the Organisation - should point to the root directory of the Organisation.}
 
-\item{oldName}{defines the OLD name that will be in Hyperlinks.  Should be the FILE NAME - with no spaces.}
-
 \item{oldName}{defines the NEW name to be written into Hyperlinks.  Should be the FILE NAME - with no spaces.}
 }
 \description{

@@ -4,9 +4,13 @@
 \alias{sample_add_data_by_group}
 \title{Add Data to Samples by Group Values}
 \usage{
-sample_add_data_by_group(sampleDataFrame, ...,
-  by_group = c("group_col_name", "group_col_value"), overwrite = FALSE,
-  writeToDisk = TRUE)
+sample_add_data_by_group(
+  sampleDataFrame,
+  ...,
+  by_group = c("group_col_name", "group_col_value"),
+  overwrite = FALSE,
+  writeToDisk = TRUE
+)
 }
 \arguments{
 \item{sampleDataFrame}{a tibble opened with sample_load or created with sample_create.  The tibble MUST

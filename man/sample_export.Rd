@@ -4,8 +4,14 @@
 \alias{sample_export}
 \title{Export Sample Data}
 \usage{
-sample_export(sampleDataFrame, export_dest, export_dt, IDs = "all",
-  rep_select = "all", writeToDisk = TRUE)
+sample_export(
+  sampleDataFrame,
+  export_dest,
+  export_dt,
+  IDs = "all",
+  rep_select = "all",
+  writeToDisk = TRUE
+)
 }
 \arguments{
 \item{sampleDataFrame}{a tibble opened with sample_load or created with sample_create.  The tibble MUST

@@ -13,7 +13,7 @@ Description: Provides functions for creating new Project Notes linked to a Proje
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 Imports: 
     shiny (>= 1.2.0),
     miniUI (>= 0.1.1.1),

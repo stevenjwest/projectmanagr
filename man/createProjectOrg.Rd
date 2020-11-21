@@ -4,9 +4,13 @@
 \alias{createProjectOrg}
 \title{Create a New Project Organisation}
 \usage{
-createProjectOrg(authorValue, orgName = "00_ORG",
-  orgTitle = "00 ORGANISATION", fileSystemPath = getwd(),
-  orgTemplate = "Org-Template.Rmd")
+createProjectOrg(
+  authorValue,
+  orgName = "00_ORG",
+  orgTitle = "00 ORGANISATION",
+  fileSystemPath = getwd(),
+  orgTemplate = "Org-Template.Rmd"
+)
 }
 \arguments{
 \item{authorValue}{name of author of this organisation - written into the yaml header of each Rmd file.}

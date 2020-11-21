@@ -15,6 +15,7 @@ methods.
 
 line - the line number to generate the selection list from.
 
+
 This function first identifies if the line in projectDocPath is on a GROUP (HEADER NOTE or SUBNOTE).
 It then searches back through the Active Document to find the first line starting with
 "##" - if this is a "#### TASK" line, then the first previous "### DELIVERABLE" line and
@@ -48,6 +49,7 @@ IN THE PROJECT DO (i.e. the link TITLE and then the link ADDRESS - for example
 [[11]] or [["headerNoteLineNumber"]] - if addingSubNote is TRUE, contains the line that contains the headerSubNoteLink, else is BLANK.
 
 [[12]] or [["projectDocPath"]] - the projectDocPath
+
 
 If this method is unsuccessful (there is an error), it returns a LIST that contains:
 

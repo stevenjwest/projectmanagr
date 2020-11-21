@@ -4,9 +4,13 @@
 \alias{createProjectDoc}
 \title{Create a New Project}
 \usage{
-createProjectDoc(projectName, projectTitle = "",
+createProjectDoc(
+  projectName,
+  projectTitle = "",
   fileSystemPath = getwd(),
-  projDocTemplate = "Project-Doc-Template.Rmd", projectIndex = 0)
+  projDocTemplate = "Project-Doc-Template.Rmd",
+  projectIndex = 0
+)
 }
 \arguments{
 \item{projectName}{Name of Project - must NOT contain a space.}

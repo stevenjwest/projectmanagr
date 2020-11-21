@@ -4,8 +4,12 @@
 \alias{findProjectDocGoalDelTaskLineIndex}
 \title{Find Goal/Del/Task Line Index in Project Doc}
 \usage{
-findProjectDocGoalDelTaskLineIndex(projectDocContents, goalNum, delNum,
-  taskNum)
+findProjectDocGoalDelTaskLineIndex(
+  projectDocContents,
+  goalNum,
+  delNum,
+  taskNum
+)
 }
 \description{
 Identify the line index of a goal/del/task, given the goalNum, delNum, taskNum.

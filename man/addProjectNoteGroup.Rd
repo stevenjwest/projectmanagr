@@ -4,10 +4,17 @@
 \alias{addProjectNoteGroup}
 \title{Add a New Group of Project Notes}
 \usage{
-addProjectNoteGroup(projectNoteName, projectNotePrefix, projectNoteDir,
-  selection, subNoteName, projectNoteTitle = "", subNoteTitle = "",
+addProjectNoteGroup(
+  projectNoteName,
+  projectNotePrefix,
+  projectNoteDir,
+  selection,
+  subNoteName,
+  projectNoteTitle = "",
+  subNoteTitle = "",
   projNoteTemplate = "Project-Header-Note-Template.Rmd",
-  subNoteTemplate = "Project-Sub-Note-Template.Rmd")
+  subNoteTemplate = "Project-Sub-Note-Template.Rmd"
+)
 }
 \arguments{
 \item{projectNoteName}{The name of the Project HEADER Note, a Title with all SPACES replaced
