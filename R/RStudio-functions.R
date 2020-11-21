@@ -93,8 +93,6 @@ getRStudioOpenDocIDs <- function() {
 
 }
 
-
-
 #' Set WD to RStudio Active Doc parent Directory
 #'
 #'
