@@ -14,7 +14,31 @@ output:
 # Overview
 
 
-DESCRIBE_PROGRAMME_AIMS
+*Welcome to the {{TITLE}} Programme!*
+
+
+* This Programme serves as the primary Documentation for DESCRIBE_PROGRAMME_AIMS
+
+    + DEFINE_PROGRAMME_SCOPE
+    
+    + DEFINE_PROJECT_ACTIVITIES_GOALS
+    
+    + DEFINE_PROJECT_ACTIVITIES_GOALS
+
+
+
+* This Programme comprises N key projects:
+
+    + First: LINK
+    
+        - KEY_GOAL
+        
+        - KEY_GOAL
+        
+    + Second: LINK
+    
+        - KEY_GOAL
+
 
 
 ----

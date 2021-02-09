@@ -1,0 +1,196 @@
+---
+title: 'projectmaangr Overview'
+author: 'Steven J. West'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# Introduction
+
+
+Overview of projectmanagr R package and its use for documenting and managing projects.
+
+
+---
+
+
+
+* projectmanagr:
+
+    + An R Package that enables Project Management using R Markdown Documents
+        
+    + `projectmanagr` Features include:
+        
+        - Filesystem layout:  
+            
+            - ORGANISATION -> PROGRAMMES -> PROJECTS -> PROJECT NOTES (Experiments) & PROTOCOLS (SOPs)
+                
+            - Projects are defined in programmes, and project notes are created to meet project deliverables
+                
+            - Project Notes can utilise developed Protocols (SOPs) for reproducible research output
+            
+        - Simple DATABASE Creation and Management 
+            
+            - for managing and inventory of antibodies and other important reagents
+            
+        - Sample Management Framework 
+            
+            - for managing an inventory of scientific samples 
+                
+            - as well as collecting data on these samples: metadata, procedure-data, experimental-data
+                
+        - Protocols (SOPs) Management
+            
+            - Insert into Experiments (Project Notes) for reproducible and documented methods and analysis
+                
+        - Data offset, backup and archiving
+            
+            - Connections to External Volumes (drives and servers) can be established for data management
+                
+            - Archives can be formed of Projects and data for long-term storage
+
+```{r}
+ #knitr::include_graphics("docs/images/projectmanagr-overview.svg")
+```
+        
+
+
+* The ELN is composed of R Markdown Documents:
+    
+        - R Markdown allows the documentation of experiments and data analysis
+        
+        - R Markdown allows the embedding of R, Python, Bash and other code to form REPRODUCIBLE REPORTS for data analysis
+        
+        - See R4DS, R Markdown complete guide, 
+
+
+```{r}
+ #knitr::include_graphics("docs/images/rmd-overview.svg")
+```
+
+
+
+* The ELN is ORGANISED into PROGRAMMES:
+
+    + COMMUNAL PROGRAMMES for Shared Resources and Data:
+    
+        - example: [00-NRF-SWC](00-NRF-SWC/00-NRF-SWC_index.Rmd) 
+        
+            - This Programme covers the Neurobiological Research Facility (Animal House)
+            
+            - Provides Protocols (SOPs) for the histological processing of animals
+            
+            - Serves as a COMMUNAL SOURCE of tissue (Brain Bank) for Histological Experiments
+            
+    + RESEARCHER PROGRAMMES where each scientist can manage their resources and data:
+    
+        - example: [01-SJW-OX](01-SJW-OX/01-SJW-OX_index.Rmd)
+        
+            - This Programme covers all Histological experimental work performed by Steven J. West in NDCN, Oxford 2011-2019.
+            
+            - Contains BMS (Biomedical Services - animal house and *in vivo* experiments) and LAB (histological and other *in vitro* experiments) Project Notes and all Project Docs and SOPs from this time.
+
+
+```{r}
+ #knitr::include_graphics("docs/images/projectmanagr-programmes.svg")
+```
+
+
+
+* Each PROGRAMME contains PROJECTS:
+
+    + Projects are defined in Project Docs
+
+
+```{r}
+ #knitr::include_graphics("docs/images/projectmanagr-projects.svg")
+```
+
+
+
+* Each PROJECT GOALS are met with PROJECT NOTES:
+    
+    + Project Notes
+
+
+```{r}
+ #knitr::include_graphics("docs/images/projectmanagr-project-notes.svg")
+```
+
+
+* Each PROJECT NOTES can utilise documented PROTOCOLS (SOPs):
+
+
+```{r}
+ #knitr::include_graphics("docs/images/projectmanagr-sops.svg")
+```
+
+
+
+* [DPhil Thesis](01-SJW-OX/PROJECTS/SW-OX02~_DPhil_Thesis.Rmd)
+
+
+---
+
+
+
+# LAYOUT
+
+
+ProjectManagr allows a flexible layout of Projects and Project Notes:
+
+
+* ProjectManagr enforces the following Structure:
+
+    + ORGANISATION - holds one or more Programmes
+    
+        - PROGRAMMES - holds one of more PROJECTS and Project Notes
+        
+            - PROJECTS/ - Contains all PROJECTS - defines GOALS and Project Notes to meet them - each project can contain Project Notes
+            
+                - PROJECT-NOTES - Documents actual work - they can be inside PROJECTS or in sub-DIR of PROGRAMME
+
+
+* The BASIC LAYOUT IS:
+
+    + CREATE initial ELN ORG:
+    
+        - This will contain all PROGRAMMES:
+        
+            - SHARED PROGRAMME for animal experiments -> to allow the sharing of tissues between researchers
+            
+            - RESEARCHER'S INDIVIDUAL PROGRAMME -> For Histology and other lab work Projects/Experiment Notes
+    
+    + Define PROGRAMMES:
+    
+        - NRF Programme to hold all TISSUES that are collected ACROSS the Lab
+        
+        - Each Researcher has their own Programme for their personal projects and histology/other lab experimental notes/data
+        
+    + Researcher defines PROJECTS
+    
+        - Under each PROJECT define the PROJECT NOTES that meet the PROJECT GOALS
+        
+    + Researcher defines PROJECT NOTES
+    
+        - Either under the PROJECT DOC DIR
+        
+        - Or in a communal DIRECTORY in the Programme Directory for experiments that are SHARED across Projects
+        
+            - i.e. LAB/ Directory can be used to store all LAB Experimental Notes
+            
+            - Placing all Expeirmental Notes into their own Directory ensures they all have the same prefix
+            
+            - Also avoids confusion with PREFIXES 
+            
+                - Difference in Prefix between PROJECTS is subtle, and can be confusing in the lab
+                
+                - Having a LAB/ Directory ensures each separate experiment is named: LAB~001 LAB~002 etc.
+                
+                

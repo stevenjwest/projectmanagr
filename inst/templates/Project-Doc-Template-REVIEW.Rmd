@@ -11,27 +11,35 @@ output:
 
 
 
-# INITIAL AIM:
+# Introduction:
 
 
+*Welcome to the _PROJECT_TITLE_!*
 
-### SUCCINCTLY_DESCRIBE_AIM
+
+* This Project aims to:
+
+    + SUCCINCTLY_DESCRIBE_AIM
 
 
 ---
 
 
 
-# Introduction:
+# Background
 
 
-Area_to_review_overview
+detail_of_initial_aim_and_background_information_MOTIVATION
 
 
-List_of_sources
+---
 
 
-Review_ORGANISATION_of_knowledge_FORMULATE_PLAN_TO_ORGANISE_PROJECT_NOTES_AS_SECTIONS
+
+# Plan
+
+
+REVIEW_PLAN_OF_WORK_AND_TASKS_TO_ACHIEVE_AIM
 
 
 

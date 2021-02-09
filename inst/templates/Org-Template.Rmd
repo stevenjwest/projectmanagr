@@ -14,7 +14,33 @@ output:
 # Overview
 
 
-DESCRIBE_ORG_AIMS
+*Welcome to the _ORGANISATION_!*
+
+
+* This _ORG_ serves as the primary documentation for SUCCINCT_DESCRIPTION :
+
+    + Project Planning:
+      
+        - Documenting Project Aims, Scope, Goals
+    
+    + Project Execution:
+    
+        - Documenting experimental work, data processing, analysis
+        
+    + Project Dissemination:
+    
+        - Creating outputs: papers, reports, posters, presentations, etc.
+
+
+* The _ORG_ is managed using `projectmanagr`
+            
+    + See [projectmanagr overview](docs/projectmanagr_overview.Rmd) for overview
+
+
+---
+
+
+FURTHER_DESCRIPTION_BREAKDOWN_ORG_SPECIFIC_STRUCTURE
 
 
 ----
