@@ -23,7 +23,7 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
   ### CREATING THE ORGANISATION: ###
 
     # create the fileSystem layout:
-  orgPath = paste(fileSystemPath, .Platform$file.sep, orgName , sep="")
+  orgPath <- paste(fileSystemPath, .Platform$file.sep, orgName , sep="")
   done <- dir.create( orgPath )
 
   if(!done) {
@@ -33,27 +33,30 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
   cat( "  Made ORG dir: ",orgPath, "\n" )
 
 
-
   ### CREATE THE SITE DIRECTORY ###
-
 
   # This will contain the compiled HTML - which will be made using the R Markdown in the first instance
     # In future, want to move to using HUGO and Blogdown potentially?
 
-  # site dir:
-  sitePath = paste(orgPath, .Platform$file.sep, "site" , sep="")
-  done <- dir.create( sitePath )
+  # site dir - placed NEXT TO the orgDir:
+  sitePath <- paste(fileSystemPath, .Platform$file.sep, "00_site" , sep="")
 
-  if(!done) {
-    stop( paste0("  Site directory could not be created: ", sitePath) )
+  if( file.exists(sitePath) == TRUE) {
+    # do nothing - dir already exists
+    cat( "  site dir exists: ", sitePath, "\n" )
+  } else {
+    done <- dir.create( sitePath )
+
+    if(!done) {
+      stop( paste0("  Site directory could not be created: ", sitePath) )
+    }
+
+    cat( "  Made site dir: ", sitePath, "\n" )
+
   }
-
-  cat( "  Made site dir: ", sitePath, "\n" )
-
 
 
   ### CREATE THE VOLUMES DIRECTORY ###
-
 
   # This will contain SYMLINKS to Volume Mounts, which then act as data stores for data as needed:
     # From each Project Note can run volumes_mkdir() to create a new DIR on a Volume Mount
@@ -78,7 +81,7 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
   # COPY default settings.yml file from the package:
   volumesFile = paste(orgPath, .Platform$file.sep, "volumes", .Platform$file.sep, "volumes.Rmd", sep="") # location to copy file to
   volumesPackageFile <- paste( find.package("projectmanagr"), .Platform$file.sep,
-                               "templates", .Platform$file.sep, "volumes.Rmd", sep="")
+                               "volumes", .Platform$file.sep, "volumes.Rmd", sep="")
 
   done <- file.copy(volumesPackageFile, volumesFile)
 
@@ -88,25 +91,24 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
   cat( "  Copied volumes file: ", volumesFile, "\n" )
 
 
+  ### CREATE DOCS DIRECTORY ###
 
-  ### CREATE POMODORO TODO DIRECTORY ###
-
-  # site dir:
-  todoPath = paste(orgPath, .Platform$file.sep, "todo" , sep="")
-  done <- dir.create( todoPath )
+  # dir:
+  docsPath = paste(orgPath, .Platform$file.sep, "docs" , sep="")
+  done <- dir.create( docsPath )
 
   if(!done) {
-    stop( paste0("  todo directory could not be created: ", todoPath) )
+    stop( paste0("  docs directory could not be created: ", todoPath) )
   }
 
-  cat( "  Made todo dir: ", todoPath, "\n" )
+  cat( "  Made docs dir: ", docsPath, "\n" )
 
-  # copy template todo file:
+  # copy projectmanagr docs file:
     # need to copy from the PACKAGE!
-  todoDir <- paste( find.package("projectmanagr"), .Platform$file.sep, "todo", .Platform$file.sep, sep="")
-  todoRmds <- list.files(todoDir)
-  for(f in todoRmds) {
-    done <- file.copy( paste(todoDir, f, sep=""), todoPath)
+  docsDir <- paste( find.package("projectmanagr"), .Platform$file.sep, "docs", .Platform$file.sep, sep="")
+  docsRmds <- list.files(docsDir)
+  for(f in docsRmds) {
+    done <- file.copy( paste(docsDir, f, sep=""), docsPath)
     if(!done) {
       stop( paste0("  Could Not copy Template: ", f) )
     }
@@ -115,10 +117,7 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
 
 
   ### CREATE CONFIG DIRECTORY ###
-
-
-  # Contains configuration information for Organisation
-
+    # Contains configuration information for Organisation
   # config dir:
   confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
   done <- dir.create( confPath )
@@ -150,10 +149,10 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
 
 
   # Adjust the AUTHOR Setting to authorValue:
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  settings[["Author"]] <- authorValue
-  yaml::write_yaml( yaml::as.yaml(settings), settingsFile )
-
+  #settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  #settings[["Author"]] <- authorValue
+  #yaml::write_yaml( yaml::as.yaml(settings), settingsFile )
+  # NOT USING NOW - moved to using the Sys.info()["user"] username as author for docs as they are created
 
   # create status.yml file - need to create it here to get the mtime for this file
   statusFile = paste(confPath, .Platform$file.sep, "status.yml", sep="")
@@ -171,7 +170,6 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
   org <- list(orgPath, orgName, orgTitle, as.character(updateTime) )
   names(org) <- c("orgPath", "orgName", "orgTitle", "updateTime")
   yaml::write_yaml( yaml::as.yaml(org), statusFile )
-
 
 
   # templates Dir - INSIDE the config DIR (these templates are part of the projectmanagr config!):
@@ -220,9 +218,10 @@ createProjectOrg <- function(authorValue, orgName = "00_ORG", orgTitle = "00 ORG
 
 
   # extract the Author value from the settings.yml file:
-  settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  authorValue <- settings[["Author"]]
+  #settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  #settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  #authorValue <- settings[["Author"]]
+  authorValue <- Sys.info()["user"] # use username as author instead
 
   # modify templateContents to include orgTitle and authorValue
   templateContents <- gsub("{{TITLE}}", orgTitle, templateContents, fixed=TRUE)
