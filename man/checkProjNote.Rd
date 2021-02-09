@@ -17,7 +17,7 @@ the parent Dir to fileSystemPath, to see if 'config/' and
 Secondly, it checks the 'PROJECTS/' directory exists in this
 putative Programme Directory.
 
-Finally, it confirms the Project Note is at least
+Finally, it confirms the Project Note is of type NOTE.
 
 If a Programme path is confirmed, it returns the fileSystemPath, otherwise
 the function returns a BLANK string "".
