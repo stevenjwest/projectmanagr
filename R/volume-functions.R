@@ -733,7 +733,7 @@ volume_mkdir <- function(dirName, projectNoteDir, volName) {
 #' @param orgPath Optional argument to specify the location of the organisation with
 #' orgPath, which by default is the current working directory.
 #'
-#' @export
+#' NO LONGER export - deprecated
 createVolume <- function( sourcePath, volName, orgPath=getwd() ) {
 
   cat( "\nprojectmanagr::createVolume():\n" )
@@ -780,7 +780,7 @@ createVolume <- function( sourcePath, volName, orgPath=getwd() ) {
 #'
 #' Finally, changes the location of the volume in the Project Note itself.
 #'
-#'
+#'  NO LONGER export - deprecated
 moveToVolume <- function(volName, projectNotePath) {
 
 

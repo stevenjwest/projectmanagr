@@ -1,0 +1,405 @@
+---
+title: 'Volumes'
+author: 'Steven J. West'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# VOLUMES MANAGEMENT
+
+
+* This note logs the use of External Volumes for data storage:
+
+    + External Volumes can be:
+    
+        - Data Servers: 
+        
+            - Any computer that can be accessed externally, and has disk space for data storage
+            
+            - The preferred access route is via ssh: As this also enables sshfs and rsync tools to manage data
+            
+        - External Drives:
+        
+            - Including external Hard Drives (HDDs), external Solid State Drives (SSDs), pen drives
+            
+                - Typically connected by USB
+                
+            - BluRay disks may also be used for ARCHIVING of data
+            
+                - Connected to system with bluray drive via USB
+
+    + Defines every External Volume where data is stored:
+    
+        - Defined under Heading: **EXTERNAL VOLUME : SERVER/DRIVE - NAME**
+        
+        - FIRST Describes how and where the External Volume is mounted
+        
+            - Define the SETUP procedures on this system to enable the mounting of the Server or External Drive
+        
+            - Defines the procedure on this system for mounting any Servers to this system via sshfs and how to use them
+            
+            - Defines the procedure on this system for accessing data via External Drives
+        
+        - SECOND Describes all symlinks made from it to this Organisation's `volumes/` directory
+        
+            - These symlinks will be active whenever the External Volume is mounted
+
+---
+
+
+
+# EXTERNAL VOLUME : SERVER - NAME
+
+
+
+## MOUNT
+
+
+* This External Volume is mounted by:
+
+
+```{bash, eval=FALSE}
+
+# EXAMPLE - edit as appropriate to mount server:
+
+# FIRST connect to any VPN ?
+ # HOW?
+ 
+# SECOND setup ssh access to this system:
+ # 
+
+# THEN use sshfs:
+sshfs -o allow_other,default_permissions USER@SERVER:/home/USER/ /mnt/SERVER
+ # USER@SERVER is the user@server-name for ssh access
+   # mounting the server FROM: /home/USER/
+ # mounting the server TO: /mnt/SERVER
+ 
+# To MOUNT:
+ # DEFINE procedure to mount this server - e.g. using a script:
+ # SCRIPT To mount all servers for data access: 
+  #from a terminal session on sia macbook:
+swc-mount-vols.sh # this calls the above sshfs command - convenience script
+
+# To UN-MOUNT:
+ # DEFINE procedure to mount this server - e.g. using a script:
+ # SCRIPT To un-mount all servers for data access:
+  # from a terminal session on sia macbook:
+swc-umount-vols.sh # this un-mounts /Volumes/tiler - convenience script
+
+```
+
+
+
+## SYMLINKS
+
+The following symlinks have been made FROM the mount-point TO this orgs `volumes/` directory:
+
+
+```{bash,eval=FALSE}
+
+# SYMLINKS to volumes/
+
+# EXAMPLES - edit as appropriate to setup symlinks
+
+# Made new DIR for local storage on tiler: /home/stevew/storage
+  # use for LOCAL STORAGE on tiler in stevew home dir - fast access/processing on tiler
+
+# SYMLINK TO volumes/tiler_local
+ln -s /Volumes/tiler/storage /Users/stevenwest/00_ELN/volumes/tiler_local
+
+
+# Mounted WINSTOR on tiler: /home/stevew/vols/winstor
+  # PETABYTES of Storage
+  # see stevew@172.24.170.115:/etc/fstab to see how this was mounted to home/stevew/vols/
+
+# SYMLINK FROM data/ dir in my project in mrsic_flogel on winstor TO volumes/winstor
+ln -s /Volumes/tiler/vols/winstor/mrsic_flogel/public/projects/SjWe_20200102_IBL/data /Users/stevenwest/00_ELN/volumes/winstor
+
+# SYMLINK FROM ibl project in mrsic_flogel on winstor TO volumes/ibl
+ln -s /Volumes/tiler/vols/winstor/mrsic_flogel/public/projects/RoCa_20190501_IBLanatomy /Users/stevenwest/00_ELN/volumes/ibl
+
+
+# Mounted raid storage as data: /home/stevew/vols/data
+  # 7.3T RAID storage - can check with df -h
+  # see stevew@172.24.170.115:/etc/fstab to see how RAID storage was mounted to home/stevew/vols/
+  # use for local HIGH CAPACITY AND FAST ACCESS STORAGE
+
+# SYMLINK FROM RAID drive: IBL/data/ TO volumes/tiler_7TB
+ln -s /Volumes/tiler/vols/data/IBL/data /Users/stevenwest/00_ELN/volumes/tiler_7TB
+
+
+```
+
+
+
+---
+
+
+
+# EXTERNAL VOLUME : DRIVE - NAME
+
+
+
+## MOUNT
+
+
+This External Volume is mounted by:
+
+
+```{bash, eval=FALSE}
+
+# EXAMPLE - edit as appropriate to mount HD:
+
+# FIRST connect the NAME External Hard Drive via USB to this computer
+
+ # NAME External Hard Drive should AUTOMATICALLY mount - location of the mount in the filesystem:
+
+  # /mnt/NAME/ Fill this with the mount location!
+
+
+# To MOUNT:
+ # connect the Drive via USB
+
+# To UNMOUNT:
+ # unmount the drive from Finder, and disconnect the Drive via USB
+
+```
+
+
+
+## SYMLINKS
+
+The following symlinks have been made FROM the mount-point TO this orgs `volumes/` directory:
+
+
+```{bash,eval=FALSE}
+
+# SYMLINKS to volumes/
+
+# EXAMPLES - edit as appropriate to setup symlinks:
+
+# SYMLINK TO external 8TB drive at ROOT - to connect with old Oxford data:
+ln -s /Volumes/tiler/vols/8TB /Users/stevenwest/00_ELN/volumes/8TB
+
+
+```
+
+
+---
+
+
+
+# CHEATSHEET
+
+
+```{bash}
+
+
+# FIRST - MOUNT EXTERNAL VOLUMES
+
+# External Drives should AUTOMATICALLY mount - identify the location of the mount in the filesystem
+  # it may be in: /mnt/ /Volumes/ /media/ 
+
+# connect to External workstation via sshfs - replace USER SERVER
+  # mount the HOME DIR of your User Account on Workstation to appropriate MountPoint
+  # use SERVER as name of mount
+
+sshfs -o allow_other,default_permissions USER@SERVER:/home/USER/ /mnt/SERVER
+
+  # To minimise mounts, mount only to the Workstation, and form mounts in Workstation HOME DIR to:
+    # Any other Data Servers, Drives, etc.
+  # Then - only need to mount Workstation HOME DIR, and can access all these mounts!
+    # Use Workstation FSTAB for automatic mounting:
+      # /etc/fstab - https://man7.org/linux/man-pages/man8/mount.8.html
+
+  # To easily connect to an External Volume, should add the sshfs command(s) to a bash script:
+    # put this in ~/bin/mount-volumes-projectmanagr.sh
+    # add to path, and can run the script from bash command line
+
+# To disconnect:
+umount /mnt/SERVER
+  # again add this to a Script - umount-volumes-projectmanagr.sh 
+
+
+
+# NEXT - FORM SYMLINKS to volumes/ Dir
+
+# Form symlink from External Volume Location to the volumes/ dir in ProjectManagr Org:
+  # DRIVE represents NAME of MOUNT
+  # USER represents the username
+
+# link to the DRIVE at its ROOT:
+ln -s /Volumes/DRIVE/ /home/USER/00_ORG/volumes/DRIVE
+
+# link to a sub-dir in DRIVE:
+  # DIRVE is a Workstation mounted at USER HOME DIR
+  # mnt/winstor - this is a mount in USER HOME DIR to a SEPARATE DATA SERVER that is on DRIVE!
+  # name the link winstor
+ln -s /Volumes/DRIVE/mnt/winstor /home/USER/00_ORG/volumes/winstor
+
+
+```
+
+
+* Now can create sub-dirs in any Project Note DIR for External Data Storage:
+
+    + RECOMMEND: Use projectmanagr ADDIN: `AddinCreateVolumeDir()`
+
+    + Can also run from R console `projectmanagr::volumes_mkdir()`
+
+
+---
+
+
+
+# Mounting External Volumes
+
+
+Before an External Volume can be used for data storage it must be mounted.
+
+
+* Here External Volumes refers to ANY external resource for data storage:
+
+    + External Hard Drives
+    
+    + Pen Drives
+    
+    + Data Servers
+    
+    + Workstation Computers
+    
+
+Mounting on UNIX-based systems can be achieved with a number of tools:
+
+
+* `mount` : use to mount any connected external drive
+
+    + In general this is automatically performed by the OS when an external drive is connected
+    
+    + The external drive is mounted to a standard mount point:  `/mnt/` `/Volumes/` `/media/` etc
+    
+        - Should identify the mount point to form SYMLINKS in Next Step!
+
+
+* `sshfs` : any system which can be accessed via `ssh` can have part of its file system mounted with `sshfs`
+
+    + Extremely useful and SECURE - once `ssh` access has been established, can mount with `sshfs`
+    
+    + RECOMMENDED for Workstations - this allows data storage and data processing management via one server application - `ssh`.
+    
+
+---
+
+
+
+# Symlink External Volumes to volumes/ Dir
+
+
+* Forming symlinks from an External Volumes has two advantages:
+
+    + Can select a sub-dir in External Volume to store the projectmanagr data
+    
+        - Can keep projectmanagr data separate from other data stored on the External Volume
+    
+    + Can select multiple locations in External Volume for different storge locations:
+    
+        - These might be a SEPARATE MOUNTS to other Data Servers or External Drives!
+        
+        - Therefore can use a single External Volume as a Gateway to other Volumes
+
+
+On UNIX-based systems form symlinks with the `ln-s` command:
+
+
+```{bash}
+
+
+# Form symlink from External Volume Location to the volumes/ dir in ProjectManagr Org:
+  # DRIVE represents NAME of MOUNT
+  # USER represents the username
+
+# link to the DRIVE at its ROOT:
+ln -s /Volumes/DRIVE/ /home/USER/00_ORG/volumes/DRIVE
+
+# link to a sub-dir in DRIVE:
+  # mnt/winstor - this is a mount to a SEPARATE DATA SERVER that is on DRIVE!
+  # name the link winstor
+ln -s /Volumes/DRIVE/mnt/winstor /home/USER/00_ORG/volumes/winstor
+
+```
+
+
+Once symlinks have been setup, whenever the external drive is connected, the symlink will automatically become visible and active
+
+
+---
+
+
+
+# Symlink volumes/ DIR to Project Note Sub-Dir
+
+
+* Finally, to create External Storage that will automatically appear in a Project Note DIR when mounted, need to symlink a volumes/ DIR to a Project Note sub-dir
+
+    + To ensure the data is stored correctly on an external volume need to MIRROR the whole ProjectManagr Organisation:  PROGRAMME / PROJECT_DIR / PROJECT_NOTE_DIR / sub-dir /
+    
+        - Necessary to ensure the External Volume can be used to store data across PROGRAMMES, PROJECTS and PROJECT NOTES
+
+    + This requires careful handling:
+    
+        - First the full dir tree needs to be generated down to the new sub-dir on the Volume selected.
+        
+        - Then an appropriate relative Symlink needs to be formed from this new sub-dir on the Volume, to location inside the Project Note DIR.
+        
+
+* This is handled by the `projectmanagr::volumes_mkdir()` command:
+
+    + Requires:
+    
+        - The sub-dir NAME - NO SPACES
+      
+        - the Project Note path (can extract Project Note DIR from this)
+        
+        - The Name of the Volume to store the new sub-dir on
+
+    + An RSTUDIO ADDIN will allow this to be easily called using guaranteed valid inputs:
+    
+        - NO SPACES in sub-dir name
+        
+        - Run with Project Note selected, its validity can be confirmed
+        
+        - Only EXISTING AND VISIBLE SYMLINKS in the volumes/ directory can be selected form a dropdown box.
+
+
+
+---
+
+
+
+# External Data Processing
+
+
+If data is stored on a Workstation mounted via `sshfs`, it is also possible to process this data on this workstation using `ssh` access to run bash scripts.
+
+
+* Can use local machine to connect to Workstation via ssh, initiate an analysis script, and disconnect from the Workstation to leave the script to run by using `nohup` with ssh:
+
+    + `ssh -n me@example.com "nohup MyScript.sh >./nohup.out 2>./nohup.err &"`
+    
+        - Can even run this from an Rmd bash chunk!  
+        
+            - So can document code run on Workstation in Project Notes!
+        
+        - This connects via ssh, then runs the nohup command, referencing a local script
+        
+        - MUST ensure ALL datastreams are redirected (`>` and `2>`) and nohup runs in background (`&`)
+
+
+
+
