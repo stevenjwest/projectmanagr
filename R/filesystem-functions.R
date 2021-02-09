@@ -86,7 +86,7 @@ checkProgFile <- function( fileSystemPath ) {
 #' Secondly, it checks the 'PROJECTS/' directory exists in this
 #' putative Programme Directory.
 #'
-#' Finally, it confirms the Project Note is at least
+#' Finally, it confirms the Project Note is of type NOTE.
 #'
 #' If a Programme path is confirmed, it returns the fileSystemPath, otherwise
 #' the function returns a BLANK string "".
@@ -469,6 +469,17 @@ getNextSimplePrefix <- function( fileSystemPath ) {
 #' the ProjectDoc Dir - the path plus the projectDoc PREFIX.
 #'
 getProjectDocDirPath <- function( projectDocPath ) {
+
+  substring(projectDocPath, first=1, last=regexpr("~_", projectDocPath, fixed=TRUE)-1 )
+
+}
+
+
+#' Get Project Note Dir Path
+#'
+#' Retrieves the project Note DIR from the project Note path:
+#'
+getProjectNoteDirPath <- function( projectDocPath ) {
 
   substring(projectDocPath, first=1, last=regexpr("~_", projectDocPath, fixed=TRUE)-1 )
 

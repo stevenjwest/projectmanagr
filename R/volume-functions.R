@@ -1,3 +1,397 @@
+
+#' Move Data between Volumes
+#'
+#' Volume mounts are managed in the volumes/ DIR of the Organisation via instructions and log
+#' in the volumes/volumes.Rmd file.
+#'
+#' This is a convenience function to move or copy data associated with a project note between volumes.
+#'
+#' * All data is associated with a project note, and the project note path must be supplied.  Inside the project
+#' note is a section (# DATA STORAGE) that describes each sub-DIR that has previously been moved via this function,
+#' and is initially read by this function.
+#'
+#' * Data is moved from a sub-DIR in the project note DIR.  Any data associated with a Project Note DIR MUST exist
+#' within the Project Note DIR - if the sub-DIR has been moved to a volume, it will be symlinked to the Project Note
+#' DIR, and therefore will EXIST as a sub-DIR in the Project Note DIR as long as the volume is mounted.  The sub-DIR
+#' name is givne in the from_dir arg - and this sub-DIR MUST be available in the PRoject Note DIR for the transfer
+#' of data to take place!  So CHECK the volume is mounted for this sub-DIR!
+#'
+#' * The Data is moved to a new volume.  The volume can be any existing volume in the volumes/ DIR, or it can be the
+#' local volume (which is the Project Note DIR) in which case the current symlink is deleted in local.  All data is
+#' moved recursively - first the directory structure is generated and then all data files are copied over, and
+#' finally the copy is confirmed as complete by comparing DIR TREES between source and destination.  Only once this
+#' is confirmed is the source data deleted.
+#'
+#' * The data can be copied rather than moved, in which case the deletion is not performed.
+#'
+#' * If the data has been moved to a volume other than local, a symlink is made in local to the new volume.
+#' The symlink is given the same name as the original DIR. If the data is moved to local, no symlink is needed. If
+#' the data is copied from local to a volume, again no symlink is needed (as the data will still exist locally!).
+#'
+#' * Finally, this operation is logged in the project note under the DATA STORAGE Section:  If the sub-DIR is already
+#' listed, its listing is updated with the new destination (overwriting the appropriate old DIR, or adding to the
+#' destination list if copied).  If the sub-DIR does not exist on the list, it is added and its destination(s) added
+#' as appropriate to the operation.
+#'
+#' The DATA STORAGE Section in a Project Note will list a subDIR name, followed by its destination(s): Each destination
+#' is listed in a comma separated list after subDIR name (separated from the list with a colon:).  The destination can be
+#' local, or any symlink in the volumes/ dir.  If the data exists on local, this is always listed first.  Otherwise the
+#' primary link to this data via a symlink in local is listed first.  This is the primary data storage location.  This
+#' is followed with secondary storage locations which can be used to backup the data (HIGHLY RECOMMENDED!).
+#'
+#' * The secondary storage locations can be kept in sync with the primary data storage location via volume_update_copies(),
+#' this method receives the project note as input, and will update any data copies as needed.
+#'
+#'@param project_note_path Path to Project Note.
+#'
+#'@param from_dir The subDir to be moved, should exist in the project note DIR as a DIR or symlink.
+#'
+#'@param to_volume The volume name to move to.  This must be an ACTIVE SYMLINK in the volumes/ dir, or keyword 'local'
+#' to move the dir to the project note local DIR.
+#'
+#'@param copy Boolean to indicate if the data should be copied or moved - data is moved (deleted in source) by default.
+#'
+volume_move_data <- function(project_note_path, from_dir, to_volume, copy = FALSE) {
+
+  # check project note path is valid:
+  project_note_path <- path.expand(project_note_path) # expand HOME ~
+  project_note_path <- checkProjNote(project_note_path)
+  if( nchar(project_note_path) == 0 ) {
+    stop( paste0("  project_note_path is not valid: ", project_note_path) )
+  }
+
+  # define project_note_dir path:
+  project_note_dir <- getProjectNoteDirPath(project_note_path)
+
+  # define the volume path:
+  org_path <- findOrgDir(project_note_path)
+  if( nchar(org_path) == 0 ) {
+    stop( paste0("  org_path not identified from project_note_path: ", project_note_path) )
+  }
+
+  # define volume path
+  vol_path <- paste0(org_path, .Platform$file.sep, "volumes", .Platform$file.sep, to_volume)
+  if( file.exists(vol_path) == FALSE ) {
+    if( to_volume != "local") {
+    stop( paste0("  Volume does not exist: ", to_volume, " is it mounted?") )
+    }
+  }
+
+  # define the path to this project notes dir on volume:
+  vol_path <- paste0(vol_path, .Platform$file.sep,
+                     substr(project_note_dir, nchar(org_path)+2, nchar(project_note_dir)),
+                     .Platform$file.sep, from_dir )
+
+  # load project note contents:
+  project_note_filecon <- file( project_note_path )
+  project_note_contents <- readLines( project_note_filecon )
+  close(project_note_filecon)
+
+  # get project note storage list from contents:
+  project_note_storage <- get_proj_note_storage(project_note_contents)
+
+  # define from_dir path and check it EXISTS
+  dir_path <- paste0(project_note_dir, .Platform$file.sep, from_dir)
+  if( file.exists(dir_path) == FALSE ) {
+    stop( paste0("  DIR does not exist - is the volume mounted? : ", from_dir) )
+  }
+
+  # TODO DEALT WITH to_volume == local
+  # if to_volume is local, then
+  # from_dir must not exist in local dir (must be an ACTIVE SYMLINK to a volume)
+  # copy MUST be FALSE (when moving to volume local, ALWAYS MOVE PRIMARY COPY)
+  # check these are the case, otherwise STOP:
+  if( to_volume == "local" ) {
+    # check symlink:
+    if( is.na(Sys.readlink(dir_path)) ) {
+      stop( paste0("  DIR does not exist - is the volume mounted? : ", from_dir) )
+    } else if( nchar(Sys.readlink(dir_path)) == 0 ) {
+      # dir_path is NOT a symlink - STOP the function
+      stop( paste0("  DIR already is in local : ", from_dir) )
+    }
+
+    # check copy:
+    if(copy == TRUE) {
+      stop( paste0("  Can only MOVE data dir to local - set copy to FALSE : ", from_dir) )
+    }
+
+    # if to_volume is local, will be moving the data dir FROM CURRENT SYMLINK to the
+     # project_note_dir - to set the variables appropriately
+    # adjust vol_path:
+    dir_path <- paste0(Sys.readlink(dir_path) )
+    vol_path <- paste0(project_note_dir, .Platform$file.sep, from_dir )
+    # and DELETE the symlink - now vol_path!!:
+    unlink(vol_path)
+  }
+
+  # get list of DIRS in source to build DIR TREE:
+  dirs <- list.dirs(dir_path, full.names = FALSE)
+  dirs_dir <- paste0(dir_path, .Platform$file.sep, dirs)
+  dirs_vol <- paste0(vol_path, .Platform$file.sep, dirs)
+
+  # list of files in source to copy:
+  files <- list.files(dir_path, full.names = FALSE, recursive = TRUE )
+  files_dir <- paste0(dir_path, .Platform$file.sep, files)
+  files_vol <- paste0(vol_path, .Platform$file.sep, files)
+
+  # create vol_path DIRS
+  for(i in 1:length(dirs_vol) ) {
+    rtn <- dir.create(dirs_vol[i], recursive=TRUE, showWarnings = FALSE)
+    if(rtn == FALSE) {
+      stop( paste0("  File Transfer Failure : ", dirs_vol[i], " already exists on ", to_volume,
+                   ".  Are you trying to copy data where it already exists?") )
+    }
+  }
+
+  # copy files_dir to files_vol
+   # add error check to this step!
+  for(i in 1:length(files_dir) ) {
+    copy_val <- file.copy(files_dir[i], files_vol[i])
+    if(copy_val == TRUE) {
+      cat( "  Copied file successfully: ", files_vol[i], "\n" )
+    } else {
+      # delete all progress to date:
+      unlink(files_vol)
+      unlink(dirs_vol, recursive=TRUE)
+      # and return error message
+      stop( paste0("  File Transfer Failure : ", files_vol[i], " removed transferred data from ", to_volume,
+                   " and retained original - please check volume connection and try transfer again.") )
+    }
+  }
+
+  # if no error has stopped the method, then can complete the movement of data:
+
+  # delete data from source - if copy == FALSE:
+  if(copy == FALSE ) {
+    unlink(files_dir)
+    unlink(dirs_dir, recursive=TRUE)
+  }
+
+  # add symlink to project_note_dir:
+   # if copy == FALSE and if the data is NOT being transferred BACK to local (to_volume == local)
+  if( copy == FALSE) {
+    if( to_volume != 'local' ) {
+      file.symlink(dirs_vol[1], dir_path)
+    }
+  }
+
+  # create project_note_storage list and write to project_note_contents:
+  pns <- project_note_storage[[from_dir]] # get the current contents if they exist (otherwise this is null)
+  if(copy == TRUE) {
+    pns <- c(pns, to_volume) # when making a copy add current to_volume to the list
+      # copy to END as this makes a NEW COPY and will not replace the PRIMARY COPY (in local or another volume)
+  } else {
+    pns[1] <- to_volume # REPLACE first item in pns if MOVING - Moving always acts on the PRIMARY COPY
+  }
+  project_note_storage[[from_dir]] <- pns
+  project_note_contents <- set_proj_note_storage(project_note_contents, project_note_storage)
+
+  # save project note contents:
+  project_note_filecon <- file( project_note_path )
+  writeLines( project_note_contents, project_note_filecon )
+  close(project_note_filecon)
+
+}
+
+
+#' Get Storage Vector from Contents
+#'
+#' returned storage vector is a list of vectors: Each vector is named the directory name,
+#' and the vector contents are each location the directory has been moved/copied to.
+#'
+get_proj_note_storage <- function(project_note_contents) {
+
+  start <- grepLineIndex("# DATA STORAGE:", project_note_contents)
+  end <- grepLineIndexFrom("----", project_note_contents, start)
+
+  # extract each line between start and end that has any text content
+  contents <- c()
+  for( i in (start+1):(end-1) ) {
+    if( nchar(trimws(project_note_contents[i]) ) > 0  ) {
+      contents <- c(contents, trimws(project_note_contents[i]) )
+    }
+  }
+
+  if( is.null(contents) ) {
+    list()
+  } else {
+
+  # each line represents a directory with syntax - name : storage_location , storage_location
+   # parse each into a list of vectors
+  storage_vector <- list()
+  storage_vector_names <- c()
+  for( i in 1:length(contents) ) {
+    split_contents <- unlist( strsplit(contents[i], "\\s+") )
+    # check the contents are valid - must have : as SECOND ELEMENT
+    if(split_contents[2] != ":" ) {
+      stop( paste0("  Syntax Error in DATA STORAGE Section of Project Note: ", contents[i]) )
+    }
+
+    if( length(split_contents) > 3 ) {
+      vector <- c()
+      for( j in seq(3,length(split_contents),2) ) {
+        vector <- c(vector, split_contents[j])
+      }
+    }
+    else {
+      vector <- c(split_contents[3])
+    }
+
+    storage_vector[[i]] <- vector
+    storage_vector_names <- c(storage_vector_names, split_contents[1])
+
+  }
+
+  names(storage_vector) <- storage_vector_names
+
+  storage_vector
+
+  }
+
+}
+
+#' Set Storage Vector from Contents
+#'
+#'
+set_proj_note_storage <- function(project_note_contents, project_note_storage) {
+
+  vector <- c("","")
+  dir_names <- names(project_note_storage)
+
+  for(i in 1:length(dir_names) ) {
+    pnsv <- project_note_storage[[i]]
+    ch <- paste("    ", dir_names[i], ":")
+    for(j in 1:length(pnsv)) {
+      ch <- paste(ch, pnsv[j], ",")
+    }
+    ch <- substr(ch, 1, nchar(ch)-2) # remove ' ,'
+    vector <- c(vector, ch, "" )
+  }
+
+  vector <- c(vector, "") # add extra blank line
+
+  start <- grepLineIndex("# DATA STORAGE:", project_note_contents)
+  end <- grepLineIndexFrom("----", project_note_contents, start)
+
+  # set the contents between # DATA STORAGE and ---- to vector
+  project_note_contents <- c( project_note_contents[1:start],
+                              vector,
+                              project_note_contents[end:length(project_note_contents)] )
+
+  project_note_contents
+
+}
+
+
+#' Update data copies between volumes
+#'
+#' This updates any copies of data between volumes so they are all in sync with the latest data - ASSUMED to be
+#' the PRIMARY COPY (i.e. the one which is in or symlinked to the project note dir!)
+#'
+#' This function ASSUMES that data copies are IMMUTABLE - data is not edited or deleted, only new data files/paths
+#' are ADDED to a data copy.
+#'
+volume_update_copies <- function(project_note_path, from_dir) {
+
+  # check project note path is valid:
+  project_note_path <- path.expand(project_note_path) # expand HOME ~
+  project_note_path <- checkProjNote(project_note_path)
+  if( nchar(project_note_path) == 0 ) {
+    stop( paste0("  project_note_path is not valid: ", project_note_path) )
+  }
+
+  # define the volume path:
+  org_path <- findOrgDir(project_note_path)
+  if( nchar(org_path) == 0 ) {
+    stop( paste0("  org_path not identified from project_note_path: ", project_note_path) )
+  }
+
+  # define project_note_dir path:
+  project_note_dir <- getProjectNoteDirPath(project_note_path)
+
+  # load project note contents:
+  project_note_filecon <- file( project_note_path )
+  project_note_contents <- readLines( project_note_filecon )
+  close(project_note_filecon)
+
+  # get project note storage list from contents:
+  project_note_storage <- get_proj_note_storage(project_note_contents)
+
+  # define from_dir path and check it EXISTS
+  dir_path <- paste0(project_note_dir, .Platform$file.sep, from_dir)
+  if( file.exists(dir_path) == FALSE ) {
+    stop( paste0("  DIR does not exist - is the volume mounted? : ", from_dir) )
+  }
+
+  pns <- project_note_storage[[from_dir]] # get all locations of copies
+  # define volume paths - all COPIES will be from index 2 to END
+  vol_paths <- paste0(org_path, .Platform$file.sep, "volumes",
+                      .Platform$file.sep, pns[2:length(pns)], .Platform$file.sep,
+                      substr(project_note_dir, nchar(org_path)+2, nchar(project_note_dir)),
+                      .Platform$file.sep, from_dir)
+  for(i in 1:length(vol_paths) ) {
+    if( file.exists(vol_paths[i]) == FALSE ) {
+      stop( paste0("  Volume does not exist: ", vol_paths[i], " is it mounted?") )
+    }
+  }
+
+  # update all dirs and files from dir_path in each vol_paths
+
+  for(i in 1:length(vol_paths) ) {
+
+    cat("  volume: ", pns[i])
+
+    # get list of DIRS in source to build DIR TREE:
+    dirs <- list.dirs(dir_path, full.names = FALSE)
+    dirs_dir <- paste0(dir_path, .Platform$file.sep, dirs)
+    dirs_vol <- paste0(vol_paths[i], .Platform$file.sep, dirs)
+
+    # list of files in source to copy:
+    files <- list.files(dir_path, full.names = FALSE, recursive = TRUE )
+    files_dir <- paste0(dir_path, .Platform$file.sep, files)
+    files_vol <- paste0(vol_paths[i], .Platform$file.sep, files)
+
+    # create vol_path DIRS - if they dont exist
+    for(j in 1:length(dirs_vol) ) {
+      if(dir.exists(dirs_vol[j]) == FALSE) {
+        rtn <- dir.create(dirs_vol[j], recursive=TRUE, showWarnings = FALSE)
+        cat("    added DIR: ", dirs_vol[j], "\n")
+        if(rtn == FALSE) {
+          stop( paste0("  File Transfer Failure : ", dirs_vol[j], " already exists on ", pns[i],
+                     ".  Are you trying to copy data where it already exists?") )
+        }
+      }
+    }
+
+    # copy files_dir to files_vol
+    # add error check to this step!
+    for(j in 1:length(files_dir) ) {
+      copy_val = TRUE
+      if(file.exists(files_vol[j]) == FALSE ) {
+        copy_val <- file.copy(files_dir[j], files_vol[j])
+        cat("    added file: ", files_vol[j], "\n")
+      } else if( as.POSIXct(file.info(files_vol[j])$mtime) < as.POSIXct(file.info(files_dir[j])$mtime) ) {
+        # if vol file is YOUNGER than dir file - dir file has been updated, so delete files_vol and replace
+        file.remove(files_vol[j])
+        copy_val <- file.copy(files_dir[j], files_vol[j])
+        cat("    updated file: ", files_vol[j], "\n")
+      }
+
+      if(copy_val == TRUE) {
+        #cat( "  Copied file successfully: ", files_vol[j], "\n" )
+      } else {
+        # and return error message
+        stop( paste0("  File Copy Failure : ", files_vol[j], " removed transferred data from ", pns[i],
+                     " and retained original - please check volume connection and try transfer again.") )
+      }
+
+    } # end j
+
+  } # end i
+
+}
+
+
 #' Add directory to Volume
 #'
 #' This function adds dirName to the selected volume (volName), under the current
