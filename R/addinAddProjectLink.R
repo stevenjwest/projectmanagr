@@ -73,14 +73,11 @@ addinAddProjectLink <- function() {
 
     else {
 
-
       # else if selection[["addingSubNote"]] is FALSE, then a PRoject Doc TASK has been selected.
-      # want to add a new Link from this task to a user-selected Project Note or Doc.
+       # want to add a new Link from this task to a user-selected Project Note or Doc.
       # SINGLE or SUBNOTE: addLinkProjectNote()
       # GROUP HEADER: addLinkProjectGroup()
       # PROJECT DOC: addLinkProjectDoc()
-
-
 
       # first, get all open RStudio Doc PATHS:
       fileList <- getRStudioOpenDocIDs()
@@ -163,11 +160,11 @@ addinAddProjectLink <- function() {
                           choices = numberedFileList,
                           selected = numberedFileList[1],
                           width="100%")
-            ),
+            )
 
-            fillRow( flex = c(7, 1),  verbatimTextOutput("file", placeholder = TRUE), shinyFilesButton("file", "Select File", "Note Project File to Link to", FALSE)  ),
+            #fillRow( flex = c(7, 1),  verbatimTextOutput("file", placeholder = TRUE), shinyFilesButton("file", "Select File", "Note Project File to Link to", FALSE)  ),
 
-            fillRow(   span( textOutput("warningFile"), style="color:red")  )
+            #fillRow(   span( textOutput("warningFile"), style="color:red")  )
 
           )
         )
@@ -176,7 +173,6 @@ addinAddProjectLink <- function() {
 
 
       server <- function(input, output, session) {
-
 
         #shinyFileChoose(
         #  input,
@@ -191,13 +187,8 @@ addinAddProjectLink <- function() {
 
         #})
 
-
-
-
-
         # initialises global$datapath:
         #global <- reactiveValues(datapath = checkProgSubDir( normalizePath("~") )  ) # this sets initial val to current working DIR
-
 
         #file <- reactive( input$file )
 

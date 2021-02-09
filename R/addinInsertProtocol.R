@@ -95,7 +95,7 @@ addinInsertProtocol <- function() {
 
             fillRow(  selectInput("includeEquip", "Include Equipment and Material:",
                                   choices = list("No" = 1, "Yes" = 2),
-                                  selected = 2)  ),
+                                  selected = 1)  ),
 
             fillRow(  selectInput("includeNotes", "Include Protocol Notes:",
                                   choices = list("No" = 1, "Yes" = 2),
