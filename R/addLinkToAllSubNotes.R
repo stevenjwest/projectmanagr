@@ -105,7 +105,7 @@ addLinkToAllSubNotes <- function( headerNotePath, selection, summaryBullet ) {
 
     goalTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal) ) ), ")", sep="" )
 
-    GoalTitleLink <- paste("# [", goal, "](", DocLink, goalTag, sep="")
+    GoalTitleLink <- paste("* [", goal, "](", DocLink, goalTag, sep="")
 
 
     # DEL:
@@ -115,7 +115,7 @@ addLinkToAllSubNotes <- function( headerNotePath, selection, summaryBullet ) {
 
     delTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del) ) ), ")", sep="" )
 
-    DelTitleLink <- paste("## [", del, "](", DocLink, delTag, sep="")
+    DelTitleLink <- paste("    + [", del, "](", DocLink, delTag, sep="")
 
 
     # TASK:
@@ -125,15 +125,17 @@ addLinkToAllSubNotes <- function( headerNotePath, selection, summaryBullet ) {
 
     taskTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task) ) ), ")", sep="" )
 
-    TaskTitleLink <- paste("### [", task, "](", DocLink, taskTag, sep="")
+    TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
+    # create DocTitle - DocName plus the Gnum Dnum Tnum
+    DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
 
     # form the objectivesContents:
-    objectivesContents <- c("----","","","",DocTitleLink,"","","",
-                          GoalTitleLink,"","","",
-                          DelTitleLink,"","","",
-                          TaskTitleLink,"","",
-                          summaryBullet,"","")
+    objectivesContents <- c("----","","","",DocTitle,"","",DocTitleLink,"","",
+                            GoalTitleLink,"",
+                            DelTitleLink,"",
+                            TaskTitleLink,"","",
+                            summaryBullet,"","")
 
     # insert objectivesContents into the first line that matches the string "------"
     # "------" (6 x '-') denotes the END of the objectives section
@@ -145,9 +147,6 @@ addLinkToAllSubNotes <- function( headerNotePath, selection, summaryBullet ) {
     # Insert projectNoteLinkVector to projNoteContents:
     projNoteContents <- c(projNoteContents[1:(line-1)], objectivesContents, projNoteContents[(line):length(projNoteContents)])
 
-
-
-
     # write to projFile
     fileConn <- file(headerNotePath)
     writeLines(projNoteContents, fileConn)
@@ -156,6 +155,7 @@ addLinkToAllSubNotes <- function( headerNotePath, selection, summaryBullet ) {
     cat( "    Written Goal Del Task to Sub Note file: ", basename(headerNotePath), "\n" )
 
 
+    ### INSERT LINK FROM PROJECT NOTE INTO PROJECT DOC:
 
     # read Project Doc:
     projDocFileConn <- file( projectDocPath )

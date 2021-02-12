@@ -74,14 +74,10 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
   # for now have left links as ".Rmd", but this needs to be ".html", or "/" in a rendered website!
   # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!
 
-  # NB Need to convert the .Rmd links to .html when WRITING the Organisation to a html site!
-
   DocName <- basename(projectDocPath)
-
   DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
 
-  DocTitleLink <- paste( "## [", DocName, "](", DocLink, ")", sep="" )
-
+  DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
   # GOAL:
   goal <- substring(selection[["goal"]], first=4)
@@ -90,7 +86,7 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
 
   goalTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal) ) ), ")", sep="" )
 
-  GoalTitleLink <- paste("# [", goal, "](", DocLink, goalTag, sep="")
+  GoalTitleLink <- paste("* [", goal, "](", DocLink, goalTag, sep="")
 
 
   # DEL:
@@ -100,8 +96,7 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
 
   delTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del) ) ), ")", sep="" )
 
-  DelTitleLink <- paste("## [", del, "](", DocLink, delTag, sep="")
-
+  DelTitleLink <- paste("    + [", del, "](", DocLink, delTag, sep="")
 
   # TASK:
   task <- substring(selection[["task"]], first=6)
@@ -110,13 +105,15 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
 
   taskTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task) ) ), ")", sep="" )
 
-  TaskTitleLink <- paste("### [", task, "](", DocLink, taskTag, sep="")
+  TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
+  # create DocTitle - DocName plus the Gnum Dnum Tnum
+  DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
 
   # form the objectivesContents:
-  objectivesContents <- c("----","","","",DocTitleLink,"","","",
-                          GoalTitleLink,"","","",
-                          DelTitleLink,"","","",
+  objectivesContents <- c("----","","","",DocTitle,"","",DocTitleLink,"","",
+                          GoalTitleLink,"",
+                          DelTitleLink,"",
                           TaskTitleLink,"","",
                           summaryBullet,"","")
 
@@ -138,6 +135,7 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
   cat( "  Written Goal Del Task to Header Note file: ", basename(headerNotePath), "\n" )
 
 
+  ### INSERT LINK FROM PROJECT NOTE INTO PROJECT DOC:
 
   # read Project Doc:
   projDocFileConn <- file( projectDocPath )
@@ -151,7 +149,7 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
   #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
   # create the Vector, including Whitespace and Summary information:
-  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "" )
+  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "" ) # no summary bullet in header note
 
   # compute place to insert the project note link:
   # get the line selected in the projectDoc - [["originalLine"]]

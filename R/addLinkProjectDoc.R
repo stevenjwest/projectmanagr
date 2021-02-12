@@ -71,14 +71,10 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
   # for now have left links as ".Rmd", but this needs to be ".html", or "/" in a rendered website!
   # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!
 
-  # NB Need to convert the .Rmd links to .html when WRITING the Organisation to a html site!
-
   DocName <- basename(sourceProjectDocPath)
-
   DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
 
-  DocTitleLink <- paste( "## [", DocName, "](", DocLink, ")", sep="" )
-
+  DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
   # GOAL:
   goal <- substring(selection[["goal"]], first=4)
@@ -87,7 +83,7 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
 
   goalTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal) ) ), ")", sep="" )
 
-  GoalTitleLink <- paste("# [", goal, "](", DocLink, goalTag, sep="")
+  GoalTitleLink <- paste("* [", goal, "](", DocLink, goalTag, sep="")
 
 
   # DEL:
@@ -97,7 +93,7 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
 
   delTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del) ) ), ")", sep="" )
 
-  DelTitleLink <- paste("## [", del, "](", DocLink, delTag, sep="")
+  DelTitleLink <- paste("    + [", del, "](", DocLink, delTag, sep="")
 
 
   # TASK:
@@ -107,7 +103,10 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
 
   taskTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task) ) ), ")", sep="" )
 
-  TaskTitleLink <- paste("### [", task, "](", DocLink, taskTag, sep="")
+  TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
+
+  # create DocTitle - DocName plus the Gnum Dnum Tnum
+  DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
 
   # insert objectivesContents into the first line that matches the string "------"
       # "------" (6 x '-') denotes the END of the objectives section
@@ -123,9 +122,9 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
     # note need to use "---" at end of metadata for metadata to END!
     objectivesContents <- c("","","",
                             "# OBJECTIVES:","","","",
-                            DocTitleLink,"","","",
-                            GoalTitleLink,"","","",
-                            DelTitleLink,"","","",
+                            DocTitle,"","",DocTitleLink,"","",
+                            GoalTitleLink,"",
+                            DelTitleLink,"",
                             TaskTitleLink,"","",
                             summaryBullet,"","",
                             "------")
@@ -136,9 +135,9 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
   }
   else {
     # otherwise, insert the link where line indicates:
-    objectivesContents <- c("----","","","",DocTitleLink,"","","",
-                            GoalTitleLink,"","","",
-                            DelTitleLink,"","","",
+    objectivesContents <- c("----","","","",DocTitle,"","",DocTitleLink,"","",
+                            GoalTitleLink,"",
+                            DelTitleLink,"",
                             TaskTitleLink,"","",
                             summaryBullet,"","")
 
@@ -178,7 +177,6 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
 
   # Insert projectNoteLinkVector to projDocContents:
   projDocContents <- c(projDocContents[1:(line-1)], projectNoteLinkVector, projDocContents[(line+1):length(projDocContents)])
-
 
   # write to projFile
   projDocFileConn <- file( sourceProjectDocPath )

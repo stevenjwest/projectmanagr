@@ -74,14 +74,10 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   # for now have left links as ".Rmd", but this needs to be ".html", or "/" in a rendered website!
   # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!
 
-  # NB Need to convert the .Rmd links to .html when WRITING the Organisation to a html site!
-
   DocName <- basename(projectDocPath)
-
   DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
 
-  DocTitleLink <- paste( "## [", DocName, "](", DocLink, ")", sep="" )
-
+  DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
   # GOAL:
   goal <- substring(selection[["goal"]], first=4)
@@ -90,7 +86,7 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
 
   goalTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal) ) ), ")", sep="" )
 
-  GoalTitleLink <- paste("# [", goal, "](", DocLink, goalTag, sep="")
+  GoalTitleLink <- paste("* [", goal, "](", DocLink, goalTag, sep="")
 
 
   # DEL:
@@ -100,7 +96,7 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
 
   delTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del) ) ), ")", sep="" )
 
-  DelTitleLink <- paste("## [", del, "](", DocLink, delTag, sep="")
+  DelTitleLink <- paste("    + [", del, "](", DocLink, delTag, sep="")
 
 
   # TASK:
@@ -110,13 +106,15 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
 
   taskTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task) ) ), ")", sep="" )
 
-  TaskTitleLink <- paste("### [", task, "](", DocLink, taskTag, sep="")
+  TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
+  # create DocTitle - DocName plus the Gnum Dnum Tnum
+  DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
 
   # form the objectivesContents:
-  objectivesContents <- c("----","","","",DocTitleLink,"","","",
-                          GoalTitleLink,"","","",
-                          DelTitleLink,"","","",
+  objectivesContents <- c("----","","","",DocTitle,"","",DocTitleLink,"","",
+                          GoalTitleLink,"",
+                          DelTitleLink,"",
                           TaskTitleLink,"","",
                           summaryBullet,"","")
 
@@ -131,8 +129,6 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   projNoteContents <- c(projNoteContents[1:(line-1)], objectivesContents, projNoteContents[(line):length(projNoteContents)])
 
 
-
-
   # write to projFile
   fileConn <- file(projectNotePath)
   writeLines(projNoteContents, fileConn)
@@ -141,9 +137,7 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   cat( "  Written Goal Del Task to Project Note file: ", basename(projectNotePath), "\n" )
 
 
-
   ### INSERT LINK FROM PROJECT NOTE INTO PROJECT DOC:
-
 
   # read Project Doc:
   projDocFileConn <- file( projectDocPath )
