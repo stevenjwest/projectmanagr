@@ -1,8 +1,8 @@
 #' Add a New CheatSheet
 #'
 #' This Function adds a new CheatSheet to a Project Note - saved in the PROGRAMMES' SOP/ Dir.
-#' The CheatSheet is formed using a Rmd template, and uses the tufte::tufte_handout format to
-#' generate a PDF of the cheatsheet.
+#' The CheatSheet is formed using an Rmd template: CheatSheet-Template.Rmd from the projectmanagr
+#' package. Cheatheets compile to PDF as standard, and can therefore be used as independent files.
 #'
 #' CheatSheets are stored in the SOP/ directory inside the PROGRAMME Directory.  Each CheatSheet
 #' exists in its own directory, to keep its compiled files together.
@@ -10,11 +10,17 @@
 #' The CheatSheet source Rmd will link to its creating Project Note, and the Project Note will link to the
 #' compiled PDF of the CheatSheet.
 #'
+#' Cheatsheets can further be inserted into new Project Notes, using the insertProcotol() function, which
+#' allows convenient insertion of documentation into new Notes.
+#'
 #' @param projectNotePath The ABSOLUTE path of the Project Note.
+#'
 #' @param cheatsheetName The name of the CheatSheet, a Title with all SPACES replaced
 #' with - or _.
-#' #' @param cheatsheetTitle The title of the CheatSheet, by default the name with all - and _ replaced
+#'
+#' @param cheatsheetTitle The title of the CheatSheet, by default the name with all - and _ replaced
 #' with SPACES.
+#'
 #' @param cheatsheetTemplate Template to use, as found in the `config/templates/` directory.  Default is
 #' "CheatSheet-Template-Tufte.Rmd"
 #'
@@ -28,7 +34,7 @@ addCheatSheet <- function( projectNotePath, cheatsheetName, cheatsheetTitle="", 
     stop( paste0("  cheatsheetName contains a SPACE: ", cheatsheetName) )
   }
 
-  # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
+  # Check cheatsheetTitle, and if blank, fill with cheatsheetName, replacing all "_" and "-" with spaces
   if( nchar(cheatsheetTitle)==0 ) {
     cheatsheetTitle = gsub("-", " ", gsub("_", " ", cheatsheetName) )
   }
@@ -74,7 +80,6 @@ addCheatSheet <- function( projectNotePath, cheatsheetName, cheatsheetTitle="", 
   #projectPrefixDirPath <- normalizePath(projectPrefixDirPath)
 
 
-
   # read Cheatsheet template:
   templateFileConn <- file( paste( tempPath, .Platform$file.sep, cheatsheetTemplate, sep="") )
   templateContents <- readLines( templateFileConn )
@@ -99,18 +104,17 @@ addCheatSheet <- function( projectNotePath, cheatsheetName, cheatsheetTitle="", 
 
 
   # extract the Author value from the settings.yml file:
-  settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  authorValue <- settings[["Author"]]
+  #settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  #settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  #authorValue <- settings[["Author"]]
+  authorValue <- Sys.info()["user"] # use username as author instead
 
   # modify templateContents to include PREFIX and projectTitle
   templateContents <- gsub("{{TITLE}}", cheatsheetTitle, templateContents, fixed=TRUE)
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
 
 
-
   ### compute Project Source Doc RELATIVE LINK:
-
 
   DocLink <- R.utils::getRelativePath(projectNotePath, relativeTo=cheatsheetPath)
   DocLink <- substring(DocLink, first=4, last=nchar(DocLink)) # remove first `../`

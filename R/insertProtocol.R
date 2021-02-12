@@ -1,19 +1,18 @@
 #' Insert a Protocol into a Project Note
 #'
-#' This Function adds a new Protocol to a Project Note - saved in the PROGRAMMES' SOP/ Dir.
-#' The Protocol is formed using a Rmd template, and uses the tufte::tufte_handout format to
-#' generate a PDF of the protocol.
+#' This Function adds a Protocol to a Project Note - protocols are found in the PROGRAMMES' SOP/ Dir.
 #'
-#' Protocols are stored in the SOP/ directory inside the PROGRAMME Directory.  Each Protocol
-#' exists in its own directory, to keep its compiled files together.
-#'
-#' The Protocol source Rmd will link to its creating Project Note, and the Project Note will link to the
-#' compiled PDF of the Protocol.
+#' Inserted protocols add each Procedure defined under the '# PROTOCOL' section of the document.
+#' Notes and the Equipment section can be optionally included in the inserted protocol.
 #'
 #' @param projectNotePath The ABSOLUTE path of the Project Note.
+#'
 #' @param projectNoteRow Index to insert the protocol into project notes
+#'
 #' @param protocolName The name of the Protocol Rmd file
+#'
 #' @param includeNotes Boolean to indicate whether all Notes bullets are included or not.
+#'
 #' @param includeEquip Boolean to indicate whether the initial equipment and material section should be included.
 #'
 #' @export
