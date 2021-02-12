@@ -4,28 +4,36 @@
 #' Note, and one SubNote INSIDE the Header Note Dir.  This can be expanded
 #' by adding further SubNotes - useful for Optimisation and Experimental Repeats.
 #'
-#' @param projectNoteName The name of the Project HEADER Note, a Title with all SPACES replaced
-#' with - or _.
 #' @param projectNotePrefix The whole projectNotePrefix, including identifier and Major
 #' Numbering, separated by ~.  NB Do NOT add the Minor Numbering - this is added automatically!
+#'
+#' @param projectNoteName The name of the Project HEADER Note, a Title with all SPACES replaced
+#' with - or _.
+#'
 #' @param projectNoteDir The directory where the Project Note will be stored.  This
 #' may be a Project Directory, or another Directory specified by the User.  MUST be a sub-directory
 #' or lower inside a PROGRAMME Directory.
+#'
 #' @param selection List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
 #' information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
 #' or userSelection().
+#'
 #' @param subNoteName The First SubNote name.
+#'
 #' @param projectNoteTitle OPTIONAL title for the Project HEADER Note.  Default is to use projectNoteName and replace
 #' all _ and - with SPACES.
+#'
 #' @param subNoteTitle OPTIONAL title for the Project Sub Note.  Default is to use subNoteName and replace
 #' all _ and - with SPACES.
+#'
 #' @param projNoteTemplate Template to use, as found in the `config/templates/` directory.  Default is
 #' "Project-Header-Note-Template.Rmd"
+#'
 #' @param subNoteTemplate Template to use, as found in the `config/templates/` directory.  Default is
 #' "Project-Sub-Note-Template.Rmd"
 #'
 #' @export
-addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNoteDir, selection,
+addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNoteDir, selection,
                                   subNoteName, projectNoteTitle="", subNoteTitle="",
                                   projNoteTemplate="Project-Header-Note-Template.Rmd",
                                   subNoteTemplate="Project-Sub-Note-Template.Rmd" ) {
@@ -105,13 +113,14 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   cat( "  Made Project Header Note: ", headerNotePath, "\n" )
 
   # get creation time - use to write to SUMMARY:
-  summaryBullet <- paste0("* ", as.character(file.info(headerNotePath)[,5]) )
-
+  # summaryBullet <- paste0("* ", as.character(file.info(headerNotePath)[,5]) )
+    # NO LONGER putting summary bullet in header note - the summaries only exist for concrete SUBNOTES!
 
   # extract the Author value from the settings.yml file:
-  settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  authorValue <- settings[["Author"]]
+  #settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  #settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  #authorValue <- settings[["Author"]]
+  authorValue <- Sys.info()["user"] # use username as author instead
 
   # modify templateContents to include PREFIX and projectTitle
   templateContents <- gsub("{{PREFIX}}", projectNotePrefix, templateContents, fixed=TRUE)
@@ -121,8 +130,8 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
 
   # replace the {{OBJECTIVES}} part of the template with the Objectives Template:
 
-  # read objectives template:
-  objectivesFileConn <- file( paste( tempPath, .Platform$file.sep, "Objectives.Rmd", sep="") )
+  # read objectives-header template:
+  objectivesFileConn <- file( paste( tempPath, .Platform$file.sep, "Objectives-Header.Rmd", sep="") )
   objectives <- readLines( objectivesFileConn )
   close(objectivesFileConn)
 
@@ -143,7 +152,7 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   DocName <- basename(projectDocPath)
   DocName <- gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4))
 
-  DocTitleLink <- paste( "## [", DocName, "](", DocLink, ")", sep="" )
+  DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
   # GOAL:
   goal <- substring(selection[["goal"]], first=4)
@@ -152,7 +161,7 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
 
   goalTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal) ) ), ")", sep="" )
 
-  GoalTitleLink <- paste("# [", goal, "](", DocLink, goalTag, sep="")
+  GoalTitleLink <- paste("* [", goal, "](", DocLink, goalTag, sep="")
 
 
   # DEL:
@@ -162,7 +171,7 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
 
   delTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del) ) ), ")", sep="" )
 
-  DelTitleLink <- paste("## [", del, "](", DocLink, delTag, sep="")
+  DelTitleLink <- paste("    + [", del, "](", DocLink, delTag, sep="")
 
   # TASK:
   task <- substring(selection[["task"]], first=6)
@@ -171,8 +180,12 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
 
   taskTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task) ) ), ")", sep="" )
 
-  TaskTitleLink <- paste("### [", task, "](", DocLink, taskTag, sep="")
+  TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
+  # create DocTitle - DocName plus the Gnum Dnum Tnum
+  DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+
+  templateContents <- gsub("{{PROJECT_DOC_TITLE}}", DocTitle, templateContents, fixed=TRUE)
 
   templateContents <- gsub("{{PROJECT_DOC_LINK}}", DocTitleLink, templateContents, fixed=TRUE)
 
@@ -181,7 +194,7 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   templateContents <- gsub("{{PROJECT_DOC_LINK_TASK}}", TaskTitleLink, templateContents, fixed=TRUE)
 
   # insert the summaryBullet into SUMMARY_INFO field:
-  templateContents <- gsub("{{SUMMARY_INFO}}", summaryBullet, templateContents, fixed=TRUE)
+  #templateContents <- gsub("{{SUMMARY_INFO}}", summaryBullet, templateContents, fixed=TRUE) # NO LONGER USING!
 
 
   # write to projFile
@@ -305,6 +318,6 @@ addProjectNoteGroup  <- function( projectNoteName, projectNotePrefix, projectNot
   selection <- projectmanagr::userSelection(  projectDocPath, grepLineIndexFrom( headerNotePrefix, projDocContents, (line-1) )  )
 
   # now run addSubNoteToGroup using subNotePrefix and new selection:
-  addSubNoteToGroup( subNoteName, subNotePrefix, headerNoteDir, selection, subNoteTemp = subNoteTemplate )
+  addSubNoteToGroup( subNotePrefix, subNoteName, headerNoteDir, selection, subNoteTemp = subNoteTemplate )
 
 }

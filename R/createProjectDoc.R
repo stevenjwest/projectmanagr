@@ -12,11 +12,15 @@
 #' "_" & "-" with " ". The default fileSystemPath is the working directory.
 #'
 #' @param projectName Name of Project - must NOT contain a space.
+#'
 #' @param projectTitle Title of project - typically the projectName with "_" & "-" replaced with spaces.
+#'
 #' @param fileSystemPath Path to insert the Project into.  This must be a Programme dir, one level below the
 #' organisation, and containing a PROJECTS/ directory.  The Project will be placed into the PROJECTS/ directory.
 #' If none found, the method will end without making a Project
+#'
 #' @param projDocTemplate Rmd template used to create the Project Doc - default is "Project-Doc-Template.Rmd"
+#'
 #' @param projectIndex If 0, the function will determine the projectIndex by searching the PROJECTS/ directory.
 #' Otherwise, the projectIndex is used to number the Project in its Prefix.
 #'
@@ -142,10 +146,11 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   }
 
 
-  # extract the Author value from the settings.yml file:
-  settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  authorValue <- settings[["Author"]]
+  # extract the Author value from the settings.yml file: NOW USE username
+  #settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  #settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  #authorValue <- settings[["Author"]]
+  authorValue <- Sys.info()["user"] # use username as author instead
 
   # modify templateContents to include PREFIX and projectTitle
   templateContents <- gsub("{{PREFIX}}", paste(programmePrefix, projectIndex, sep=""), templateContents, fixed=TRUE)
@@ -182,47 +187,47 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   #cat( "  Written PROJECT to Status.yml file: ", statusFile, "\n" )
 
 
-  ### WRITE PROJECT DOC TO ORGANISATION INDEX FILE:
+  ### DEPRECATED - WRITE PROJECT DOC TO ORGANISATION INDEX FILE:
 
   # read Organisation Index File: orgName in status
-  orgIndexPath = paste(orgPath, .Platform$file.sep, status[["orgName"]], "_index.Rmd", sep="")
-  orgIndexFileConn <- file( orgIndexPath )
-  orgIndexContents <- readLines( orgIndexFileConn )
-  close(orgIndexFileConn)
+  #orgIndexPath = paste(orgPath, .Platform$file.sep, "index_", status[["orgName"]], ".Rmd", sep="")
+  #orgIndexFileConn <- file( orgIndexPath )
+  #orgIndexContents <- readLines( orgIndexFileConn )
+  #close(orgIndexFileConn)
 
 
   # create the projIndexLink:
-  NoteLink <- R.utils::getRelativePath(projFile, relativeTo=orgIndexPath)
-  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  projIndexLink <- paste("* [", projectTitle, "](", NoteLink, ")",  sep="")
+  #NoteLink <- R.utils::getRelativePath(projFile, relativeTo=orgIndexPath)
+  #NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  #projIndexLink <- paste("* [", projectTitle, "](", NoteLink, ")",  sep="")
 
   # create the Vector, including Whitespace and Summary information:
-  projIndexLinkVector <- c( "", "", "", projIndexLink, "" )
+  #projIndexLinkVector <- c( "", "", "", projIndexLink, "" )
 
   # compute place to insert the project doc link:
   # First get the line index containing containing the programmeName
-  line <- grepLineIndex(programmeName, orgIndexContents)
+  #line <- grepLineIndex(programmeName, orgIndexContents)
 
   # Then get the NEXT line that starts with ##
-  line <- computeNextLine(line, orgIndexContents)
+  #line <- computeNextLine(line, orgIndexContents)
 
   # Insert projIndexLinkVector to orgIndexContents:
-  orgIndexContents <- c(orgIndexContents[1:(line-1)], projIndexLinkVector, orgIndexContents[(line+1):length(orgIndexContents)])
+  #orgIndexContents <- c(orgIndexContents[1:(line-1)], projIndexLinkVector, orgIndexContents[(line+1):length(orgIndexContents)])
 
 
   # write to orgIndexPath
-  orgIndexFileConn <- file( orgIndexPath )
-  writeLines(orgIndexContents, orgIndexFileConn)
-  close(orgIndexFileConn)
+  #orgIndexFileConn <- file( orgIndexPath )
+  #writeLines(orgIndexContents, orgIndexFileConn)
+  #close(orgIndexFileConn)
 
-  cat( "  Written Project Doc to Org File: ", basename(orgIndexPath), "\n" )
+  #cat( "  Written Project Doc to Org File: ", basename(orgIndexPath), "\n" )
 
 
 
   ### WRITE PROJECT DOC TO PROGRAMME INDEX FILE:
 
   # read Programme Index File:
-  progIndexPath = paste(progPath, .Platform$file.sep, programmeName, "_index.Rmd", sep="")
+  progIndexPath = paste(progPath, .Platform$file.sep, "index_", programmeName, ".Rmd", sep="")
   progIndexFileConn <- file( progIndexPath )
   progIndexContents <- readLines( progIndexFileConn )
   close(progIndexFileConn)

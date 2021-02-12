@@ -4,27 +4,31 @@
 #' Group Directory, links to the subNote are added to the project doc(s) and the project group header
 #' note, and the subnote is written to any Programme Index files necessary, under the project doc(s).
 #'
-#' @param subNoteName The name of the Project Sub Note, a Title with all SPACES replaced
-#' with - or _.
 #' @param subNotePrefix The whole subNotePrefix, including identifier and Major
 #' Numbering, separated by ~, and finally the Minor Numbering system (or subNote numbering),
 #' separated by -.  User needs to define this.
+#'
+#' @param subNoteName The name of the Project Sub Note, a Title with all SPACES replaced
+#' with - or _.
+#'
 #' @param subNoteDir The directory where the Sub Note will be stored.  This will be the Project Group
 #' Note Directory.  Must be an ABSOLUTE path!
+#'
 #' @param selection List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
 #' information - lines of Task/Del/Goal, projectDoc path content of selection line.  Mainly for validating the
 #' input (its not actually used in this function!  But the selection is used in RStudio Addins to determine whether
 #' to run addSubNoteToGroup, addProjectNote, or addProjectNoteGroup - may omit?).  See `cursorSelection()` or
 #' `userSelection()`.  Selection MUST be on a HeaderNote!
+#'
 #' @param subNoteTitle OPTIONAL title for the Project Note.  Default is to use subNoteName and replace
 #' all _ and - with SPACES.
+#'
 #' @param subNoteTemp OPTIONAL template to use, as found in the `config/templates/` directory of the Organisation.
 #' Default is `Project-Sub-Note-Template.Rmd`
 #'
 #' @export
-addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection,
+addSubNoteToGroup <- function( subNotePrefix, subNoteName, subNoteDir, selection,
                             subNoteTitle="", subNoteTemp="Project-Sub-Note-Template.Rmd"  ) {
-
 
   cat( "\nprojectmanagr::addSubNoteToGroup():\n" )
 
@@ -53,7 +57,6 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   ### FIND ORG PATH AND RESOURCES
   #################################
 
-
   # Check subNoteDir is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
   # run dirname TWICE as want to ensure subNoteDir is a sub-dir in a Programme!
   orgPath <- dirname( dirname(subNoteDir) )
@@ -72,6 +75,7 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   tempPath <- paste0(confPath, .Platform$file.sep, "templates" )
 
   subNoteDir <- normalizePath(subNoteDir)
+
 
   ##############################
   ### CREATE Project Note DIR:
@@ -109,13 +113,15 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
 
 
   # get creation time - use to write to SUMMARY:
-  summaryBullet <- paste0("* ", as.character(file.info(subNotePath)[,5]) )
+  #summaryBullet <- paste0("* ", as.character(file.info(subNotePath)[,5]) )
+   # NOT USED - links written in addLinks() function
 
 
   # extract the Author value from the settings.yml file:
-  settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  authorValue <- settings[["Author"]]
+  #settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  #settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  #authorValue <- settings[["Author"]]
+  authorValue <- Sys.info()["user"] # use username as author instead
 
   # modify templateContents to include PREFIX and projectTitle
   templateContents <- gsub("{{PREFIX}}", subNotePrefix, templateContents, fixed=TRUE)
@@ -123,7 +129,8 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
 
   # add the current data storage path:
-  templateContents <- gsub("{{DATASTORAGE}}", subNotePrefix, templateContents, fixed=TRUE)
+  #templateContents <- gsub("{{D ATASTORAGE}}", subNotePrefix, templateContents, fixed=TRUE)
+   # do not add the project note DIR here - the DATA STORAGE section will be filled out by volume functions
 
 
   # replace the {{OBJECTIVES}} part of the template with the Objectives Template:
@@ -154,11 +161,10 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   close(headerNoteFileConn)
 
   # get list of project docs from the header note:
-  projDocList <- getProjectNoteDocLinkList(headerNoteContents, headerPath)
+  projDocList <- getHeaderNoteDocLinkList(headerNoteContents, headerPath)
 
   # add Project Doc links to the current subnote contents (templateContents):
   templateContents <- addLinks( templateContents, subNotePath, projDocList )
-
 
 
   ### WRITE HEADER LINK
@@ -171,12 +177,11 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   headerLink <- R.utils::getRelativePath(headerPath, relativeTo=subNotePath)
   headerLink <- substring(headerLink, first=4, last=nchar(headerLink)) # remove first `../`
 
-  headerTitleLink <- paste( "## [", headerTitle, "](", headerLink, ")", sep="" )
+  headerTitleLink <- paste( "[", headerTitle, "](", headerLink, ")", sep="" )
 
   templateContents <- gsub("{{HEADER_NOTE_LINK}}", headerTitleLink, templateContents, fixed=TRUE)
 
   cat( "    Written Header Link to Sub Note file: ", basename(subNotePath), "\n" )
-
 
 
   # write subNote file to disk:
@@ -187,14 +192,12 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   cat( "  Written Sub Note to disk: ", basename(subNotePath), "\n" )
 
 
-
   ### INSERT LINK FROM PROJECT SUB NOTE INTO PROJECT DOC(S) ONLY
 
     # No Longer writing to Programmes - Programmes just contains a list of Projects
     # Should use the Pomodoro TODO Sheet to keep track of Tasks!
 
   addSubNoteLinkToDocs(projDocList, subNotePath, headerPath)
-
 
 
   ### INSERT LINK FROM PROJECT SUB NOTE INTO PROJECT HEADER NOTE:
@@ -214,7 +217,9 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   projectNoteLinkVector <- c( "", "", projectNoteLink, "" )
 
   # compute place to insert the sub note link in the header note:
-  line <- computeNextHeaderLine( headerNoteContents )
+  line <- matchLineIndex("## CONTENTS:", headerNoteContents)
+  line <- grepLineIndexFrom("----", headerNoteContents, line)
+  line <- computeNextHeaderLine( line, headerNoteContents )
 
   # Insert projectNoteLinkVector to headerNoteContents:
   headerNoteContents <- c(headerNoteContents[1:(line-1)], projectNoteLinkVector, headerNoteContents[(line+1):length(headerNoteContents)])
@@ -226,7 +231,6 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   close(headerNoteFileConn)
 
   cat( "  Written Project Sub Note Link to Header Note file: ", basename(headerPath), "\n" )
-
 
 
   # Write PROJECT SUB NOTE to the status.yml file - under the HEADER NOTE:
@@ -261,6 +265,5 @@ addSubNoteToGroup <- function( subNoteName, subNotePrefix, subNoteDir, selection
   #yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
   #cat( "  Written PROJECT to Status.yml file: ", statusFile, "\n" )
-
 
 }

@@ -3,23 +3,28 @@
 #' This Function adds a single Project Note - consisting of one Note and
 #' its corresponding Directory.
 #'
-#' @param projectNoteName The name of the Project Note, a Title with all SPACES replaced
-#' with - or _.
 #' @param projectNotePrefix The whole projectNotePrefix, including identifier and Major
 #' Numbering, separated by ~.
+#'
+#' @param projectNoteName The name of the Project Note, a Title with all SPACES replaced
+#' with - or _.
+#'
 #' @param projectNotePath The directory where the Project Note will be stored.  This
 #' may be a Project Directory, or another Directory specified by the User.  MUST be a sub-directory
 #' or lower inside a PROGRAMME Directory.
+#'
 #' @param selection List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
 #' information - lines of Task/Del/Goal, projectDoc path content of selection line.  See cursorSelection()
 #' or userSelection().
+#'
 #' @param projectNoteTitle OPTIONAL title for the Project Note.  Default is to use projectNoteName and replace
 #' all _ and - with SPACES.
+#'
 #' @param projNoteTemplate Template to use, as found in the `config/templates/` directory.  Default is
 #' "Project-Note-Template.Rmd"
 #'
 #' @export
-addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath, selection,
+addProjectNote <- function( projectNotePrefix, projectNoteName, projectNotePath, selection,
                                   projectNoteTitle="", projNoteTemplate="Project-Note-Template.Rmd"  ) {
 
   cat( "\nprojectmanagr::addProjectNote():\n" )
@@ -98,9 +103,10 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath,
 
 
   # extract the Author value from the settings.yml file:
-  settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  authorValue <- settings[["Author"]]
+  #settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  #settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  #authorValue <- settings[["Author"]]
+  authorValue <- Sys.info()["user"] # use username as author instead
 
   # modify templateContents to include PREFIX and projectTitle
   templateContents <- gsub("{{PREFIX}}", projectNotePrefix, templateContents, fixed=TRUE)
@@ -108,8 +114,8 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath,
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
 
   # add the current data storage path:
-  templateContents <- gsub("{{DATASTORAGE}}", projectNotePrefix, templateContents, fixed=TRUE)
-
+  #templateContents <- gsub("{{D ATASTORAGE}}", projectNotePrefix, templateContents, fixed=TRUE)
+   # do not add the project note DIR here - the DATA STORAGE section will be filled out by volume functions
 
   ### replace the {{OBJECTIVES}} part of the template with the Objectives Template:
 
@@ -134,7 +140,7 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath,
   DocName <- basename(projectDocPath)
   DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
 
-  DocTitleLink <- paste( "## [", DocName, "](", DocLink, ")", sep="" )
+  DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
   # GOAL:
   goal <- substring(selection[["goal"]], first=4)
@@ -143,7 +149,7 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath,
 
   goalTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal) ) ), ")", sep="" )
 
-  GoalTitleLink <- paste("# [", goal, "](", DocLink, goalTag, sep="")
+  GoalTitleLink <- paste("* [", goal, "](", DocLink, goalTag, sep="")
 
 
   # DEL:
@@ -153,7 +159,7 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath,
 
   delTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del) ) ), ")", sep="" )
 
-  DelTitleLink <- paste("## [", del, "](", DocLink, delTag, sep="")
+  DelTitleLink <- paste("    + [", del, "](", DocLink, delTag, sep="")
 
   # TASK:
   task <- substring(selection[["task"]], first=6)
@@ -162,8 +168,14 @@ addProjectNote <- function( projectNoteName, projectNotePrefix, projectNotePath,
 
   taskTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task) ) ), ")", sep="" )
 
-  TaskTitleLink <- paste("### [", task, "](", DocLink, taskTag, sep="")
+  TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
+
+  # create DocTitle - DocName plus the Gnum Dnum Tnum
+  DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+
+
+  templateContents <- gsub("{{PROJECT_DOC_TITLE}}", DocTitle, templateContents, fixed=TRUE)
 
   templateContents <- gsub("{{PROJECT_DOC_LINK}}", DocTitleLink, templateContents, fixed=TRUE)
 

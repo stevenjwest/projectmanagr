@@ -2,20 +2,26 @@
 #'
 #' Generates a new Programme at the top level of the Organisation.  If the
 #' fileSystemPath is not at the top of the Organisation, will traverse until
-#' it is found.  This function will halt if no Organisation is found - defined
-#' by the presence of config/ and config/templates dirs ar root.
+#' it is found.  This function will halt if no Organisation is found - the
+#' organisation root is defined by the presence of config/ and config/templates
+#' dirs at root.
 #'
 #' User must supply the programmeName and programmePrefix.  The
-#' programmeName must NOT contain a space, an optional programmeTitle (which
-#' if not supplied will default to the programmeName, replacing "_" & "-" with
-#' " ").  The default fileSystemPath is the working directory.
+#' programmeName must NOT contain a space, and programmePrefix should be two to three
+#' CAPITAL LETTERS.  An optional programmeTitle (which if not supplied will default
+#' to the programmeName, replacing "_" & "-" with " ").  The default fileSystemPath
+#' is the working directory.
 #'
 #' @param programmeName Name of Progamme - must NOT contain a space.
+#'
 #' @param programmePrefix PREFIX used for all new PROJECTS in this PROGRAMME - should use ALL CAPS, and
-#' NO NUMBERS.  Must not contain a space
+#' NO NUMBERS.  Must not contain a space. Ideally two or three letters long.
+#'
 #' @param programmeTitle Title of programme - typically the programmeName with "_" & "-" replaced with spaces.
+#'
 #' @param fileSystemPath Path to insert the PROGRAMME into.  If this is not an Organisation Directory, will search up
 #' the directory tree to attempt to find one.  If none found, the method will end without making a PROGRAMME.
+#'
 #' @param progTemplate The Rmd file to use as a template to create the Programme.  This is set to "Programme-Template.Rmd" in
 #' projectmanagr.
 #'
@@ -27,12 +33,12 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
 
   # check programmeName contains NO SPACES:
   if( grepl("\\s+", programmeName) ) {
-    stop( paste0("  programmeName contains a SPACE: ",programmeName) )
+    stop( paste0("  programmeName contains a SPACE: ", programmeName) )
   }
 
   # check programmePrefix contains NO SPACES:
   if( grepl("\\s+", programmePrefix) ) {
-    stop( paste0("  programmePrefix contains a SPACE: ",programmePrefix) )
+    stop( paste0("  programmePrefix contains a SPACE: ", programmePrefix) )
   }
 
   # Search for root of an ORGANISATION:
@@ -54,11 +60,9 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   orgPath <- fileSystemPath
 
 
-
   ### CREATING A PROGRAMME: ###
 
-
-  # create Dir:
+  # create PROG Dir:
   progPath = paste(orgPath, .Platform$file.sep, programmeName, sep="")
   done <- dir.create(progPath)
 
@@ -67,8 +71,6 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   }
 
   cat( "  Made Programme dir: ", progPath, "\n" )
-
-
 
   # create PROJECTS dir:
   projsPath = paste(progPath, .Platform$file.sep, "PROJECTS", sep="")
@@ -95,7 +97,7 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
 
 
   # create Rmd file:
-  progFile = paste(progPath, .Platform$file.sep, programmeName, "_index.Rmd", sep="")
+  progFile = paste(progPath, .Platform$file.sep, "index_", programmeName, ".Rmd", sep="")
   done <- file.create(progFile)
 
   if(!done) {
@@ -117,9 +119,10 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
 
 
   # extract the Author value from the settings.yml file:
-  settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  authorValue <- settings[["Author"]]
+  #settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  #settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  #authorValue <- settings[["Author"]]
+  authorValue <- Sys.info()["user"] # use username as author instead
 
   # modify templateContents to include programmeTitle and authorValue
   templateContents <- gsub("{{TITLE}}", programmeTitle, templateContents, fixed=TRUE)
@@ -154,7 +157,7 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   ### WRITE PROGRAMME TO ORGANISATION INDEX FILE:
 
   # read Organisation Index File: orgName in status
-  orgIndexPath = paste(orgPath, .Platform$file.sep, status[["orgName"]], "_index.Rmd", sep="")
+  orgIndexPath = paste(orgPath, .Platform$file.sep, "index_", status[["orgName"]], ".Rmd", sep="")
   orgIndexFileConn <- file( orgIndexPath )
   orgIndexContents <- readLines( orgIndexFileConn )
   close(orgIndexFileConn)
