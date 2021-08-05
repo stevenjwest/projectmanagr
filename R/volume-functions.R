@@ -6,27 +6,29 @@
 #'
 #' This is a convenience function to move or copy data associated with a project note between volumes.
 #'
-#' * All data is associated with a project note, and the project note path must be supplied.  Inside the project
-#' note is a section (# DATA STORAGE) that describes each sub-DIR that has previously been moved via this function,
+#' * All data is associated with a project note, and the project note path must be supplied.  The project note Rmd
+#' file contains a section (# DATA STORAGE) that describes each sub-DIR that has previously been moved via this function,
 #' and is initially read by this function.
 #'
-#' * Data is moved from a sub-DIR in the project note DIR.  Any data associated with a Project Note DIR MUST exist
+#' * Data is moved from a sub-DIR in the project note DIR.  Any data associated with a Project Note MUST exist
 #' within the Project Note DIR - if the sub-DIR has been moved to a volume, it will be symlinked to the Project Note
 #' DIR, and therefore will EXIST as a sub-DIR in the Project Note DIR as long as the volume is mounted.  The sub-DIR
-#' name is givne in the from_dir arg - and this sub-DIR MUST be available in the PRoject Note DIR for the transfer
-#' of data to take place!  So CHECK the volume is mounted for this sub-DIR!
+#' name is given in the from_dir arg - and this sub-DIR MUST be available (exist and be mounted) in the Project Note
+#' DIR for the transfer of data to take place!  So CHECK the volume is mounted for this sub-DIR if its a symlink!
 #'
 #' * The Data is moved to a new volume.  The volume can be any existing volume in the volumes/ DIR, or it can be the
-#' local volume (which is the Project Note DIR) in which case the current symlink is deleted in local.  All data is
+#' local volume (which is the Project Note DIR itself!), in which case the current symlink is deleted in local.  All data is
 #' moved recursively - first the directory structure is generated and then all data files are copied over, and
-#' finally the copy is confirmed as complete by comparing DIR TREES between source and destination.  Only once this
+#' finally the copy is confirmed as complete by comparing DIR/FILE TREES between source and destination.  Only once this
 #' is confirmed is the source data deleted.
 #'
 #' * The data can be copied rather than moved, in which case the deletion is not performed.
 #'
 #' * If the data has been moved to a volume other than local, a symlink is made in local to the new volume.
 #' The symlink is given the same name as the original DIR. If the data is moved to local, no symlink is needed. If
-#' the data is copied from local to a volume, again no symlink is needed (as the data will still exist locally!).
+#' the data is COPIED from local to a volume, again no symlink is needed (as the data will still exist locally!). The new
+#' copy on the volume is a SECONDARY COPY - and will be updated to the PRIMARY COPY (on local) when volume_update_copies()
+#' is run.
 #'
 #' * Finally, this operation is logged in the project note under the DATA STORAGE Section:  If the sub-DIR is already
 #' listed, its listing is updated with the new destination (overwriting the appropriate old DIR, or adding to the
@@ -51,6 +53,7 @@
 #'
 #'@param copy Boolean to indicate if the data should be copied or moved - data is moved (deleted in source) by default.
 #'
+#'@export
 volume_move_data <- function(project_note_path, from_dir, to_volume, copy = FALSE) {
 
   # check project note path is valid:
@@ -96,7 +99,7 @@ volume_move_data <- function(project_note_path, from_dir, to_volume, copy = FALS
     stop( paste0("  DIR does not exist - is the volume mounted? : ", from_dir) )
   }
 
-  # TODO DEALT WITH to_volume == local
+  # DEAL WITH to_volume == local
   # if to_volume is local, then
   # from_dir must not exist in local dir (must be an ACTIVE SYMLINK to a volume)
   # copy MUST be FALSE (when moving to volume local, ALWAYS MOVE PRIMARY COPY)
@@ -139,7 +142,7 @@ volume_move_data <- function(project_note_path, from_dir, to_volume, copy = FALS
     rtn <- dir.create(dirs_vol[i], recursive=TRUE, showWarnings = FALSE)
     if(rtn == FALSE) {
       stop( paste0("  File Transfer Failure : ", dirs_vol[i], " already exists on ", to_volume,
-                   ".  Are you trying to copy data where it already exists?") )
+                   ".  Are you trying to move data where it already exists?") )
     }
   }
 
@@ -171,7 +174,10 @@ volume_move_data <- function(project_note_path, from_dir, to_volume, copy = FALS
    # if copy == FALSE and if the data is NOT being transferred BACK to local (to_volume == local)
   if( copy == FALSE) {
     if( to_volume != 'local' ) {
-      file.symlink(dirs_vol[1], dir_path)
+      # add symlink using RELATIVE PATH
+      dir_path_rel <- R.utils::getRelativePath(dirs_vol[1], relativeTo=dir_path)
+      dir_path_rel <- substring(dir_path_rel, first=4, last=nchar(dir_path_rel))
+      file.symlink(dir_path_rel, dir_path)
     }
   }
 
@@ -198,6 +204,8 @@ volume_move_data <- function(project_note_path, from_dir, to_volume, copy = FALS
 #'
 #' returned storage vector is a list of vectors: Each vector is named the directory name,
 #' and the vector contents are each location the directory has been moved/copied to.
+#'
+#' Returns a blank list if no content in DATA STORAGE
 #'
 get_proj_note_storage <- function(project_note_contents) {
 
@@ -419,7 +427,9 @@ volume_update_copies <- function(project_note_path, from_dir) {
 #' Docs, and Programmes, without any issues of name clash.
 #'
 #' @param dirName Name of dir to form in Project Note DIR.
+#'
 #' @param volName Name of volume to store data on.  The volume must EXIST and be MOUNTED.
+#'
 #' @param use_full_path If true, will write full path from Org root through to Project Note
 #' DIR (prog-dir/proj-doc-dir/proj-note-dir/ path).  If false, the project note DIR will be
 #' directly written to volume.  Direct writing of project note minimises DIR tree, whereas
@@ -428,7 +438,7 @@ volume_update_copies <- function(project_note_path, from_dir) {
 #'
 #' @export
 volume_attach_dir <- function(dirName, volName,
-                              use_full_path = FALSE ) {
+                              use_full_path = TRUE ) {
 
   cat( "\nprojectmanagr::volume_add_dir():\n" )
 
@@ -508,8 +518,7 @@ volume_attach_dir <- function(dirName, volName,
 
     projDirOrgPath <- paste0( substr(projectNoteDir,
                                      nchar(findOrgDir(projectNoteDir))+2,
-                                     nchar(projectNoteDir) ),
-                              .Platform$file.sep, basename(projectNoteDir) )
+                                     nchar(projectNoteDir) )  )
 
     noteDirPath <- paste0( volPath, .Platform$file.sep, projDirOrgPath )
 
@@ -627,8 +636,10 @@ volume_move_dir <- function() {
 #'
 #' @param dirName Name for the DIR - sub-DIR in projectNoteDir on volume, and SYMLINK in
 #' local projectNoteDir.  NO SPACES.
+#'
 #' @param projectNoteDir The ABSOLUTE PATH to the projectNoteDir where the SYMLINK will
 #' reside.  NO SPACES.
+#'
 #' @param volName The NAME of the volume in volumes/ - Must EXIST and be VISIBLE
 #' (i.e mounted). NO SPACES.
 #'

@@ -15,17 +15,20 @@ addCheatSheet(
 \item{projectNotePath}{The ABSOLUTE path of the Project Note.}
 
 \item{cheatsheetName}{The name of the CheatSheet, a Title with all SPACES replaced
-with - or _.
-#' @param cheatsheetTitle The title of the CheatSheet, by default the name with all - and _ replaced
+with - or _.}
+
+\item{cheatsheetTitle}{The title of the CheatSheet, by default the name with all - and _ replaced
 with SPACES.}
 
 \item{cheatsheetTemplate}{Template to use, as found in the `config/templates/` directory.  Default is
-"CheatSheet-Template-Tufte.Rmd"}
+"CheatSheet-Template-Tufte.Rmd"
+
+NO LONGER exporting this!}
 }
 \description{
 This Function adds a new CheatSheet to a Project Note - saved in the PROGRAMMES' SOP/ Dir.
-The CheatSheet is formed using a Rmd template, and uses the tufte::tufte_handout format to
-generate a PDF of the cheatsheet.
+The CheatSheet is formed using an Rmd template: CheatSheet-Template.Rmd from the projectmanagr
+package. Cheatheets compile to PDF as standard, and can therefore be used as independent files.
 }
 \details{
 CheatSheets are stored in the SOP/ directory inside the PROGRAMME Directory.  Each CheatSheet
@@ -33,4 +36,7 @@ exists in its own directory, to keep its compiled files together.
 
 The CheatSheet source Rmd will link to its creating Project Note, and the Project Note will link to the
 compiled PDF of the CheatSheet.
+
+Cheatsheets can further be inserted into new Project Notes, using the insertProcotol() function, which
+allows convenient insertion of documentation into new Notes.
 }

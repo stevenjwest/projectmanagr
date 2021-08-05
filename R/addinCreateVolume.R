@@ -6,10 +6,7 @@
 #' optionally the current working directory (set to
 #' current WD).  The addin will call createVolume.
 #'
-#'
-#'
-#'
-#' @export
+#' no export - deprecated now - should add volumes manually via volumes/volumes.Rmd documentation
 addinCreateVolume <- function() {
 
   ui <- miniPage(

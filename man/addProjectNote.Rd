@@ -5,8 +5,8 @@
 \title{Add a New Project Note}
 \usage{
 addProjectNote(
-  projectNoteName,
   projectNotePrefix,
+  projectNoteName,
   projectNotePath,
   selection,
   projectNoteTitle = "",
@@ -14,11 +14,11 @@ addProjectNote(
 )
 }
 \arguments{
-\item{projectNoteName}{The name of the Project Note, a Title with all SPACES replaced
-with - or _.}
-
 \item{projectNotePrefix}{The whole projectNotePrefix, including identifier and Major
 Numbering, separated by ~.}
+
+\item{projectNoteName}{The name of the Project Note, a Title with all SPACES replaced
+with - or _.}
 
 \item{projectNotePath}{The directory where the Project Note will be stored.  This
 may be a Project Directory, or another Directory specified by the User.  MUST be a sub-directory

@@ -36,6 +36,10 @@ output:
             
     + See [projectmanagr overview](docs/projectmanagr_overview.Rmd) for overview
 
+    + ProjectManagr offers support for working with external drives and data servers for external data storage:
+    
+        - See [volumes](volumes/volumes.Rmd) for introduction.
+
 
 ---
 

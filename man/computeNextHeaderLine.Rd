@@ -4,7 +4,12 @@
 \alias{computeNextHeaderLine}
 \title{Compute next Header line}
 \usage{
-computeNextHeaderLine(headerContents)
+computeNextHeaderLine(lineIndex, headerContents)
+}
+\arguments{
+\item{lineIndex}{Line to start to search back in headerContents from.}
+
+\item{headerContents}{Character vector containing header note contents.}
 }
 \description{
 Returns the first blank line after the last content in Header Note contents.

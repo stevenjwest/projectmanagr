@@ -20,3 +20,7 @@ returned by getProjectNoteDocLinkList().}
 Assumes the Project Note MAY not have ANY Project Doc links written to it, and
 therefore still contain the original Objective.Rmd template Variables.
 }
+\details{
+This is exclusively used for adding subnotes to a group, and so will add all header note
+Goal-Del-Tasks to the new subnote.
+}

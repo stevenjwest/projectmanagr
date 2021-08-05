@@ -3,6 +3,9 @@
 #' Assumes the Project Note MAY not have ANY Project Doc links written to it, and
 #' therefore still contain the original Objective.Rmd template Variables.
 #'
+#' This is exclusively used for adding subnotes to a group, and so will add all header note
+#' Goal-Del-Tasks to the new subnote.
+#'
 #' @param projNoteContents character vector containing the initial contents of a project note.
 #' @param projNotePath ABSOLUTE path to the location on the filesystem where project note will be saved.
 #' @param projDocList List containing all Project Docs - Absolute path, Goal/Del/Task.  Like the list
@@ -17,10 +20,13 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
     projectDocPath <- projDocList[[i]][[1]]
 
     # generate the summaryBullets from the projDocList:
-    summaryBullets <- spaceSummaryBulletPoints(projDocList[[i]][[5]])
+    #summaryBullets <- spaceSummaryBulletPoints(projDocList[[i]][[5]])
+    summaryBullets <- paste0("* ", as.character(file.info(projNotePath)[,5]) )
 
-    cat("summaryBullets:", summaryBullets, "\n")
-    cat("summaryBullets length:", length(summaryBullets), "\n")
+    #cat("summar projDocList:", projDocList[[i]][[5]], "\n")
+    #cat("summar projDocList length:", length(projDocList[[i]][[5]]), "\n")
+    #cat("summaryBullets:", summaryBullets, "\n")
+    #cat("summaryBullets length:", length(summaryBullets), "\n")
 
     # compute Project Source Doc RELATIVE LINK:
     DocLink <- R.utils::getRelativePath(projectDocPath, relativeTo=projNotePath)
@@ -34,7 +40,7 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
     DocName <- basename(projectDocPath)
     DocName <- gsub( "-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
 
-    DocTitleLink <- paste( "## [", DocName, "](", DocLink, ")", sep="" )
+    DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
 
     # GOAL:
@@ -45,7 +51,7 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
 
     goalTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal) ) ), ")", sep="" )
 
-    GoalTitleLink <- paste("# [", goal, "](", DocLink, goalTag, sep="")
+    GoalTitleLink <- paste("* [", goal, "](", DocLink, goalTag, sep="")
 
 
     # DEL:
@@ -56,7 +62,7 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
 
     delTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del) ) ), ")", sep="" )
 
-    DelTitleLink <- paste("## [", del, "](", DocLink, delTag, sep="")
+    DelTitleLink <- paste("    + [", del, "](", DocLink, delTag, sep="")
 
 
     # TASK:
@@ -67,9 +73,14 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
 
     taskTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task) ) ), ")", sep="" )
 
-    TaskTitleLink <- paste("### [", task, "](", DocLink, taskTag, sep="")
+    TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
-    if( is.element("{{PROJECT_DOC_LINK}}", projNoteContents) ) { # if the VARIABLES are in contents:
+    # create DocTitle - DocName plus the Gnum Dnum Tnum
+    DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+
+    if( is.element("{{PROJECT_DOC_LINK}}", projNoteContents) ) { # if the OBJECTIVES VARIABLES are in contents:
+
+      projNoteContents <- gsub("{{PROJECT_DOC_TITLE}}", DocTitle, projNoteContents, fixed=TRUE)
 
       projNoteContents <- gsub("{{PROJECT_DOC_LINK}}", DocTitleLink, projNoteContents, fixed=TRUE)
 
@@ -83,22 +94,23 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
       #                         projNoteContents, fixed=TRUE )
 
       # use replaceAndInsertVector ??
-      sb <- summaryBullets[3:(length(summaryBullets)-3)]
+      #sb <- summaryBullets[3:(length(summaryBullets)-3)]
 
-      cat("sb:", sb, "\n")
-      cat("sb length:", length(sb), "\n")
+      #cat("sb:", sb, "\n")
+      #cat("sb length:", length(sb), "\n")
 
-      projNoteContents <- replaceAndInsertVector("{{SUMMARY_INFO}}", sb, projNoteContents)
+      # summaryBullets is just the datetime of creation of projNote:
+      projNoteContents <- replaceAndInsertVector("{{SUMMARY_INFO}}", summaryBullets, projNoteContents)
 
     }
-    else { # insert the links at END of OBJECTIVES Section - marked by "------"
+    else { # if not first set of link must insert the links at END of OBJECTIVES Section - marked by "------"
 
       # form the objectivesContents:
-      objectivesContents <- c("----","","","",DocTitleLink,"","","",
-                              GoalTitleLink,"","","",
-                              DelTitleLink,"","","",
-                              TaskTitleLink,
-                              summaryBullets)
+      objectivesContents <- c("----","","","",DocTitle,"","",DocTitleLink,"","",
+                              GoalTitleLink,"",
+                              DelTitleLink,"",
+                              TaskTitleLink,"","",
+                              summaryBullets,"","")
 
       # insert objectivesContents into the first line that matches the string "------"
       # "------" (6 x '-') denotes the END of the objectives section
@@ -251,10 +263,16 @@ updateAllLinks <- function( orgPath, oldName, oldTitle, newName, newTitle ) {
 #'
 addSubNoteLinkToDocs <- function(projDocList, subNotePath, headerPath) {
 
+  # Determine projectNote PREFIX and TITLE:
+  subNotePrefix <- substring( basename(subNotePath), first=1, last=regexpr("~_", basename(subNotePath), fixed=TRUE)-1 )
+  subNoteTitle <- substring( basename(subNotePath), first=regexpr("~_", basename(subNotePath), fixed=TRUE)+2 )
+  # Remove - and _ and remove file suffix:
+  subNoteTitle <- gsub("-", " ",  gsub("_", " ", substring(subNoteTitle, first=1, last=nchar(subNoteTitle)-4) )  )
+
   # first, compute subnote prefix and title:
-  subNotePrefix <- getProjectPrefixFromPath(subNotePath)
-  subNoteName <- substr(basename(subNotePath), 1, nchar(basename(subNotePath))-4 )
-  subNoteTitle <- gsub("-", " ", gsub("_", " ", subNoteName) )
+  #subNotePrefix <- getProjectPrefixFromPath(subNotePath)
+  #subNoteName <- substr(basename(subNotePath), 1, nchar(basename(subNotePath))-4 )
+  #subNoteTitle <- gsub("-", " ", gsub("_", " ", subNoteName) )
 
   # compute headerName
   headerName <- basename(headerPath)
@@ -267,27 +285,29 @@ addSubNoteLinkToDocs <- function(projDocList, subNotePath, headerPath) {
     projectDocPath <- projDocList[[i]][[1]]
 
     # generate the summaryBullets from the projDocList:
-    summaryBullets <- spaceSummaryBulletPoints(projDocList[[i]][[5]])
+    #summaryBullets <- spaceSummaryBulletPoints(projDocList[[i]][[5]])
+    summaryBullets <- paste0("* ", as.character(file.info(subNotePath)[,5]) )
+      # NO LONGER using headerNote summary bullets - use fresh bullet with datetime of subnote
 
     # read Project Doc:
     projDocFileConn <- file( projectDocPath )
     projDocContents <- readLines( projDocFileConn )
     close(projDocFileConn)
 
-    # create the projectNoteLink:
+    # create the projectNoteLink: projectNotePrefix, "~ ", projectNoteTitle,
     NoteLink <- R.utils::getRelativePath(subNotePath, relativeTo=projectDocPath)
     NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
     projectNoteLink <- paste("*[", subNotePrefix, "~ ", subNoteTitle, "](", NoteLink, ")*",  sep="")
     # output ex.:
     # *[LAB~003-001~ THF MeOH/DCM Clearing Tau Labelling](../LAB/LAB~001-00~_thf_meoh_dcm_clearing_tau_labelling.Rmd)*
 
-    sb <- summaryBullets[1:(length(summaryBullets)-2)]
+    #sb <- summaryBullets[1:(length(summaryBullets)-2)]
 
-    cat("sb:", sb, "\n")
-    cat("sb length:", length(sb), "\n")
+    #cat("sb:", sb, "\n")
+    #cat("sb length:", length(sb), "\n")
 
     # create the Vector, including summaryBullets (these have appropriate whitespace):
-    projectNoteLinkVector <- c( "", "", "", projectNoteLink, sb )
+    projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryBullets, "" )
 
     # compute place to insert the project note link:
     line <- computeHeaderLineUnderProjectDocGoalDelTask(headerName,
@@ -518,7 +538,7 @@ getProtocolSummary <- function(projNotePath, protocolName) {
   protocolContents <- readLines( protocolFileConn )
   close(protocolFileConn)
 
-  protocolStartIndex <- matchLineIndex("# PROTOCOL SUMMARY", protocolContents)
+  protocolStartIndex <- matchLineIndex("# SUMMARY", protocolContents)
 
   # get the NEXT LINE that starts with # - the FIRST HEADER of the actual Protocol
   protocolStartIndex <- computeNextLineIndex((protocolStartIndex+1), protocolContents )-1
@@ -744,14 +764,17 @@ computeNextLineIndex <- function(lineIndex, contents) {
 #'
 #' Returns the first blank line after the last content in Header Note contents.
 #'
+#' @param lineIndex Line to start to search back in headerContents from.
+#'
+#' @param headerContents Character vector containing header note contents.
 #'
 #'
-computeNextHeaderLine <- function(headerContents) {
+computeNextHeaderLine <- function(lineIndex, headerContents) {
 
   returnVal <- 1
 
   # start at the END of headerContents:
-  for( l in length(headerContents):1 ) {
+  for( l in lineIndex:1 ) {
 
     if( grepl("[A-z,0-9]", headerContents[l]) ) { # returns TRUE if line CONTAINS any letter or number
 
@@ -806,14 +829,27 @@ getProjectNoteDocLinkList <- function(projectNoteContents, projectNotePath) {
     # From OBJECTIVES up to line "------" - which marks the end of the Project Doclinks
 
   for( l in ( grep("# OBJECTIVES", projectNoteContents, fixed=TRUE) +1 ):
-            ( grep("------", projectNoteContents) )  ) {
+            ( grep("------", projectNoteContents)[1] )  ) {
 
     # check for Project Doc link, plus GOAL, DEL, TASK
     # First will encounter Project Doc Link, then GOAL, DEL, TASK
 
-    # however, check for GOAL DEL TASK first, as DEL has same signature as Project Doc Link
-      # NOTE the ProjectDoc Link will ALWAYS come first though!
-    if(substring(projectNoteContents[l], first=1, last=7) == "# [GOAL") {
+
+    if( substring(projectNoteContents[l], first=1, last=1) == "[" ) { # this must be ProjectDocLink
+
+      # projectNoteContents[l] is a line that contains Project Doc link in ()
+      # extract this Relative Link, and add to list to return:
+      # AUTOMATICALLY uses [1] as the vector reference (and creates an error if referencing it!)
+      # SO do not use goaldeltaskIndex:
+      projDocRelLink <- substring(projectNoteContents[l],
+                                  first=regexpr("\\(", projectNoteContents[l])+1,
+                                  last=regexpr("\\)", projectNoteContents[l])-1 )
+
+      linkList[[linkIndex]] <- computePath(projectNotePath, projDocRelLink)
+
+      goaldeltaskIndex <- goaldeltaskIndex +1 # STILL increment this index
+
+    } else if(substring(projectNoteContents[l], first=1, last=7) == "* [GOAL") {
 
           linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "## ", substring(projectNoteContents[l],
                                                                first=4,
@@ -821,45 +857,23 @@ getProjectNoteDocLinkList <- function(projectNoteContents, projectNotePath) {
 
           goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
 
-          }
-
-    else if(substring(projectNoteContents[l], first=1, last=15) == "## [DELIVERABLE") {
+      } else if(substring(projectNoteContents[l], first=1, last=18) == "    + [DELIVERABLE") {
 
           linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "### ", substring(projectNoteContents[l],
-                                                               first=5,
+                                                               first=8,
                                                                last=regexpr("]", projectNoteContents[l])-1 ) )
 
           goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
 
-          }
-
-    else if(substring(projectNoteContents[l], first=1, last=9) == "### [TASK") {
+      } else if(substring(projectNoteContents[l], first=1, last=15) == "        - [TASK") {
 
           linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "#### ", substring(projectNoteContents[l],
-                                                               first=6,
+                                                               first=12,
                                                                last=regexpr("]", projectNoteContents[l])-1 ) )
 
           goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
 
-          }
-
-    else if( substring(projectNoteContents[l], first=1, last=4) == "## [" ) { # this must be ProjectDocLink
-
-          # projectNoteContents[l] is a line that contains Project Doc link in ()
-          # extract this Relative Link, and add to list to return:
-            # AUTOMATICALLY uses [1] as the vector reference (and creates an error if referencing it!)
-            # SO do not use goaldeltaskIndex:
-          projDocRelLink <- substring(projectNoteContents[l],
-                                             first=regexpr("\\(", projectNoteContents[l])+1,
-                                             last=regexpr("\\)", projectNoteContents[l])-1 )
-
-          linkList[[linkIndex]] <- computePath(projectNotePath, projDocRelLink)
-
-          goaldeltaskIndex <- goaldeltaskIndex +1 # STILL increment this index
-
-    }
-
-    else if( substring(projectNoteContents[l], first=1, last=4) == "----" ) {
+      } else if( substring(projectNoteContents[l], first=1, last=4) == "----" ) {
 
         # save summaryVector to linkList, and reset the summaryVector
         linkList[[linkIndex]][goaldeltaskIndex] <- list(summaryVector)
@@ -870,11 +884,13 @@ getProjectNoteDocLinkList <- function(projectNoteContents, projectNotePath) {
 
         # and reset the goaldeltaskIndex
         goaldeltaskIndex <- 1
-    }
-    else if(grepl("[A-Za-z0-9]", projectNoteContents[l]) ) {
-      # if the line contains letters and is not the Doc Link, or Goal/Del/Task, it is part of the
+
+    } else if(grepl("[A-Za-z0-9]", projectNoteContents[l]) && !grepl("##", projectNoteContents[l]) ) {
+
+      # if the line contains letters and is not the Doc Title, Doc Link, or Goal/Del/Task, it is part of the
       # overview - so concat this into a character vector:
       summaryVector <- c(summaryVector, projectNoteContents[l])
+
     }
 
   }
@@ -884,6 +900,105 @@ getProjectNoteDocLinkList <- function(projectNoteContents, projectNotePath) {
 
 }
 
+
+
+#' Get Header Note Doc Link List
+#'
+#' Returns a list of VECTORS:
+#'
+#'  list[[i]] : A VECTOR that includes the Project Doc ABSOLUTE Link, GOAL Num, DEL Num, TASK Num.
+#'
+#'  list[[i]][1] : Project Doc ABSOLUTE Link
+#'
+#'  list[[i]][2] : Project Doc GOAL - number plus title
+#'
+#'  list[[i]][3] : Project Doc DELIVERABLE - number plus title
+#'
+#'  list[[i]][4] : Project Doc TASK - number plus title
+#'
+#'  length( list ) returns the number of Project Doc links in the returned list.
+#'
+#'  @param projectNoteContents Character vector containing the contents of a Project Note, which includes links to
+#'  at least one ProjectDoc, separated by "----", and ended with "------".
+#'
+#'  @param projectNotePath the FULL PATH to the project note, from which the contents is derived.
+#'
+#'
+getHeaderNoteDocLinkList <- function(projectNoteContents, projectNotePath) {
+
+  # instantiate a list to store links
+  linkList <- list()
+
+  summaryVector <- c()
+
+  # start indices at 1:
+  linkIndex <- 1
+  goaldeltaskIndex <- 1
+
+  # look through projectNoteContents:
+  # From OBJECTIVES up to line "------" - which marks the end of the Project Doclinks
+
+  for( l in ( grep("# OBJECTIVES", projectNoteContents, fixed=TRUE) +1 ):
+       ( grep("------", projectNoteContents) )  ) {
+
+    # check for Project Doc link, plus GOAL, DEL, TASK
+    # First will encounter Project Doc Link, then GOAL, DEL, TASK
+
+
+    if( substring(projectNoteContents[l], first=1, last=1) == "[" ) { # this must be ProjectDocLink
+
+      # projectNoteContents[l] is a line that contains Project Doc link in ()
+      # extract this Relative Link, and add to list to return:
+      # AUTOMATICALLY uses [1] as the vector reference (and creates an error if referencing it!)
+      # SO do not use goaldeltaskIndex:
+      projDocRelLink <- substring(projectNoteContents[l],
+                                  first=regexpr("\\(", projectNoteContents[l])+1,
+                                  last=regexpr("\\)", projectNoteContents[l])-1 )
+
+      linkList[[linkIndex]] <- computePath(projectNotePath, projDocRelLink)
+
+      goaldeltaskIndex <- goaldeltaskIndex +1 # STILL increment this index
+
+    } else if(substring(projectNoteContents[l], first=1, last=7) == "* [GOAL") {
+
+      linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "## ", substring(projectNoteContents[l],
+                                                                          first=4,
+                                                                          last=regexpr("]", projectNoteContents[l])-1 ) )
+
+      goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+
+    } else if(substring(projectNoteContents[l], first=1, last=18) == "    + [DELIVERABLE") {
+
+      linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "### ", substring(projectNoteContents[l],
+                                                                           first=8,
+                                                                           last=regexpr("]", projectNoteContents[l])-1 ) )
+
+      goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+
+    } else if(substring(projectNoteContents[l], first=1, last=15) == "        - [TASK") {
+
+      linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "#### ", substring(projectNoteContents[l],
+                                                                            first=12,
+                                                                            last=regexpr("]", projectNoteContents[l])-1 ) )
+
+      goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+
+    } else if( substring(projectNoteContents[l], first=1, last=4) == "----" ) {
+
+      #increment linkIndex when divider BETWEEN ProjectDoc links is seen:
+      linkIndex <- linkIndex + 1
+
+      # and reset the goaldeltaskIndex
+      goaldeltaskIndex <- 1
+
+    }
+
+  }
+
+  #return the linkList
+  linkList
+
+}
 
 
 #' Space Summary Bullets

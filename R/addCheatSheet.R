@@ -24,7 +24,7 @@
 #' @param cheatsheetTemplate Template to use, as found in the `config/templates/` directory.  Default is
 #' "CheatSheet-Template-Tufte.Rmd"
 #'
-#' @export
+#' NO LONGER exporting this!
 addCheatSheet <- function( projectNotePath, cheatsheetName, cheatsheetTitle="", cheatsheetTemplate="CheatSheet-Template.Rmd"  ) {
 
   cat( "\nprojectmanagr::addCheatSheet():\n" )

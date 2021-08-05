@@ -1,9 +1,17 @@
 #' Insert a Protocol into a Project Note
 #'
-#' This Function adds a Protocol to a Project Note - protocols are found in the PROGRAMMES' SOP/ Dir.
+#' This Function adds a Protocol to a Project Note - protocols are found in the
+#'  PROGRAMMES' SOP/ Dir.
 #'
-#' Inserted protocols add each Procedure defined under the '# PROTOCOL' section of the document.
-#' Notes and the Equipment section can be optionally included in the inserted protocol.
+#' Inserted protocols add each Procedure defined under the '# PROTOCOL' section
+#'  of the document. Notes sections (FALSE by default) and the Equipment section
+#' (TRUE by default) can be optionally included in the inserted protocol.
+#'
+#' All links in the Protocol are UPDATED to work from the destination Project
+#'  Note.
+#'
+#' All graphics included in a knitr::include_graphics() r code chunk are
+#'  transferred to the new Project Note DIR and linked appropriately.
 #'
 #' @param projectNotePath The ABSOLUTE path of the Project Note.
 #'
@@ -21,9 +29,8 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
 
   cat( "\nprojectmanagr::insertProtocol():\n" )
 
-
+  # get protocl title from Name - replace _ with ' '
   protocolTitle <- gsub("-", " ", gsub("_", " ", protocolName) )
-
 
   # Check projectNotePath is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
   # run dirname TWICE as want to ensure projectNotePath is a sub-dir in a Programme!
@@ -45,6 +52,13 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
   # normalize path - remove HOME REF ~
   projectNotePath <- normalizePath(projectNotePath)
 
+  # get projectNotePrefix form path
+  projectNotePrefix <- substring( basename(projectNotePath), first=1, last=regexpr("~_", basename(projectNotePath), fixed=TRUE)-1 )
+
+  # read projectNote file:
+  projNoteFileConn <- file( projectNotePath )
+  projNoteContents <- readLines( projNoteFileConn )
+  close(projNoteFileConn)
 
   # get the progPath:
   progPath <- findProgDir(projectNotePath)
@@ -52,14 +66,7 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
   # get SOP path:
   protocolsPath <- paste0(progPath, .Platform$file.sep, "SOP")
 
-
-
-  # read projNote file:
-  projNoteFileConn <- file( projectNotePath )
-  projNoteContents <- readLines( projNoteFileConn )
-  close(projNoteFileConn)
-
-
+  # get protocol path:
   protocolPath <- paste0( protocolsPath, .Platform$file.sep, protocolName,
                           .Platform$file.sep, paste0(protocolName, ".Rmd") )
   # read Protocol file:
@@ -76,7 +83,8 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
 
   DocTitleLink <- paste( "[", protocolTitle, "](", DocLink, ")", sep="" )
 
-  extractedProtocol <- c(DocTitleLink, "", "", "") # begin with link to Protocol
+  extractedProtocol <- c(DocTitleLink, "", "", "---", "", "", "") # begin with link to Protocol
+
 
   if( includeEquip == TRUE ) {
     # first insert equipment and material if needed:
@@ -110,7 +118,75 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
         # traversing NOTES lines, do not insert lines if not including notes!
 
       } else {
+
         # insert lines:
+        line <- protocolContents[i]
+
+        # if it contains a link, need to UPDATE this to be a link from the new Rmd file to link destination:
+        if( grepl("\\]\\(", line) == TRUE ) {
+
+          # line contains at least one link
+          num <- length(gregexpr("\\]\\(", line)[[1]]) # gives the NUMBER of links (number of '](' strings in line))
+
+          completeLink <- substr(line, 1, gregexpr("\\]\\(", line)[[1]][1]+2)
+
+          for( a in 1:num) {
+
+            # extract the relative link address from line
+            start <- gregexpr("\\]\\(", line)[[1]][a]
+            lineLink <- substr(line, start+2, nchar(line))
+            end <- regexpr(")", lineLink)
+            lineLink <- substr(lineLink, 1, end-1)
+
+            # modify relative link to point from new source:
+            lineLink <- R.utils::getAbsolutePath(lineLink, workDirectory=dirname(protocolPath) )
+            DocLink <- R.utils::getRelativePath( dirname(protocolPath), relativeTo=dirname(projectNotePath) )
+            #DocLink <- substring(DocLink, first=4, last=nchar(DocLink)) # PATH IS CORRECT FOR DIRS!
+            DocSplit <-strsplit(DocLink, .Platform$file.sep) # get the containing DIR to link lineLink and DocLink
+            pir <- DocSplit[[1]][ length(DocSplit[[1]]) ]
+            # DocLink is now
+            DocLink <- paste0(DocLink, .Platform$file.sep, substr(lineLink, ( regexpr(pir, lineLink) + nchar(pir) )+2, nchar(lineLink) ) )
+
+            if(a < num) {
+            completeLink <- paste0(completeLink, DocLink, substr(line, start+end+1, gregexpr("\\]\\(", line)[[1]][a+1]+1 ) )
+            }
+            else {
+              completeLink <- paste0(completeLink, DocLink, substr(line, start+end+1, nchar(line) ) )
+            }
+
+          }
+
+          protocolContents[i] <- completeLink
+
+        }
+
+        # ALSO if line includes a graphic should UPDATE this to point to the graphic from the new Rmd file
+        if( grepl("knitr::include_graphics\\(", line) == TRUE ) {
+
+            # extract the relative link address from line
+            start <- gregexpr("knitr::include_graphics\\(", line)[[1]][1]
+            lineLink <- substr(line, start+25, nchar(line))
+            end <- regexpr(")", lineLink)
+            lineLink <- substr(lineLink, 1, end-2)
+
+            # modify relative link to point from new source:
+            lineLink <-  R.utils::getAbsolutePath(lineLink, workDirectory=dirname(protocolPath) )
+            DocLink <- R.utils::getRelativePath(dirname(protocolPath), relativeTo=dirname(projectNotePath) )
+            #DocLink <- substring(DocLink, first=4, last=nchar(DocLink)) # PATH IS CORRECT FOR DIRS!
+            DocSplit <-strsplit(DocLink, .Platform$file.sep) # get the containing DIR to link lineLink and DocLink
+            pir <- DocSplit[[1]][ length(DocSplit[[1]]) ]
+            # DocLink is now
+            DocLink <- paste0(DocLink, substr(lineLink, ( regexpr(pir, lineLink) + nchar(pir) ), nchar(lineLink) ) )
+
+            # put new link into line
+            protocolContents[i] <- paste0( substr(line, 1, start+24), DocLink, substr(line, end-1, nchar(line) ) )
+
+        }
+
+        if( grepl("PREFIX", line) == TRUE ) {
+          protocolContents[i] <- gsub("PREFIX", projectNotePrefix, line)
+        }
+
         extractedProtocol <- c(extractedProtocol, protocolContents[i])
 
       }
@@ -147,6 +223,78 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
       # traversing NOTES lines, do not insert lines if not including notes!
 
     } else {
+
+
+      # insert lines:
+      line <- protocolContents[i]
+
+      # if it contains a link, need to UPDATE this to be a link from the new Rmd file to link destination:
+      if( grepl("\\]\\(", line) == TRUE ) {
+
+        # line contains at least one link
+        num <- length(gregexpr("\\]\\(", line)[[1]]) # gives the NUMBER of links (number of '](' strings in line))
+
+        completeLink <- substr(line, 1, gregexpr("\\]\\(", line)[[1]][1]+2)
+
+        for( a in 1:num) {
+
+          # extract the relative link address from line
+          start <- gregexpr("\\]\\(", line)[[1]][a]
+          lineLink <- substr(line, start+2, nchar(line))
+          end <- regexpr(")", lineLink)
+          lineLink <- substr(lineLink, 1, end-1)
+
+          # modify relative link to point from new source:
+          lineLink <- R.utils::getAbsolutePath(lineLink, workDirectory=dirname(protocolPath) )
+          DocLink <- R.utils::getRelativePath( dirname(protocolPath), relativeTo=dirname(projectNotePath) )
+          #DocLink <- substring(DocLink, first=4, last=nchar(DocLink)) # PATH IS CORRECT FOR DIRS!
+          DocSplit <-strsplit(DocLink, .Platform$file.sep) # get the containing DIR to link lineLink and DocLink
+          pir <- DocSplit[[1]][ length(DocSplit[[1]]) ]
+          # DocLink is now
+          DocLink <- paste0(DocLink, .Platform$file.sep, substr(lineLink, ( regexpr(pir, lineLink) + nchar(pir) )+2, nchar(lineLink) ) )
+
+          if(a < num) {
+            completeLink <- paste0(completeLink, DocLink, substr(line, start+end+1, gregexpr("\\]\\(", line)[[1]][a+1]+1 ) )
+          }
+          else {
+            completeLink <- paste0(completeLink, DocLink, substr(line, start+end+1, nchar(line) ) )
+          }
+
+        }
+
+        protocolContents[i] <- completeLink
+
+      }
+
+      # ALSO if line includes a graphic should UPDATE this to point to the graphic from the new Rmd file
+      if( grepl("knitr::include_graphics\\(", line) == TRUE ) {
+
+        # extract the relative link address from line
+        start <- gregexpr("knitr::include_graphics\\(", line)[[1]][1]
+        lineLink <- substr(line, start+25, nchar(line))
+        end <- regexpr(")", lineLink)
+        lineLink <- substr(lineLink, 1, end-2)
+
+        # modify relative link to point from new source:
+        lineLink <-  R.utils::getAbsolutePath(lineLink, workDirectory=dirname(protocolPath) )
+        DocLink <- R.utils::getRelativePath(dirname(protocolPath), relativeTo=dirname(projectNotePath) )
+        #DocLink <- substring(DocLink, first=4, last=nchar(DocLink)) # PATH IS CORRECT FOR DIRS!
+        DocSplit <-strsplit(DocLink, .Platform$file.sep) # get the containing DIR to link lineLink and DocLink
+        pir <- DocSplit[[1]][ length(DocSplit[[1]]) ]
+        # DocLink is now
+        DocLink <- paste0(DocLink, substr(lineLink, ( regexpr(pir, lineLink) + nchar(pir) ), nchar(lineLink) ) )
+
+        # put new link into line
+        protocolContents[i] <- paste0( substr(line, 1, start+24), DocLink, substr(line, start+end+23, nchar(line) ) )
+
+      }
+
+
+      if( grepl("PREFIX", line) == TRUE ) {
+        protocolContents[i] <- gsub("PREFIX", projectNotePrefix, line)
+      }
+
+
       # insert lines:
       extractedProtocol <- c(extractedProtocol, protocolContents[i])
 

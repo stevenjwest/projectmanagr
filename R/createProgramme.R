@@ -96,6 +96,17 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
 
 
 
+  # create REF dir:
+  templatesPath = paste(progPath, .Platform$file.sep, "REF", sep="")
+  done <- dir.create(templatesPath)
+
+  if(!done) {
+    stop( paste0("  REF directory could not be created: ", templatesPath) )
+  }
+
+  cat( "  Made REF dir: ",templatesPath, "\n" )
+
+
   # create Rmd file:
   progFile = paste(progPath, .Platform$file.sep, "index_", programmeName, ".Rmd", sep="")
   done <- file.create(progFile)

@@ -5,8 +5,8 @@
 \title{Add a New Sub Note to a Project Group}
 \usage{
 addSubNoteToGroup(
-  subNoteName,
   subNotePrefix,
+  subNoteName,
   subNoteDir,
   selection,
   subNoteTitle = "",
@@ -14,12 +14,12 @@ addSubNoteToGroup(
 )
 }
 \arguments{
-\item{subNoteName}{The name of the Project Sub Note, a Title with all SPACES replaced
-with - or _.}
-
 \item{subNotePrefix}{The whole subNotePrefix, including identifier and Major
 Numbering, separated by ~, and finally the Minor Numbering system (or subNote numbering),
 separated by -.  User needs to define this.}
+
+\item{subNoteName}{The name of the Project Sub Note, a Title with all SPACES replaced
+with - or _.}
 
 \item{subNoteDir}{The directory where the Sub Note will be stored.  This will be the Project Group
 Note Directory.  Must be an ABSOLUTE path!}

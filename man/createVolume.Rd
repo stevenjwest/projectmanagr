@@ -14,7 +14,9 @@ does not exist, this function will terminate.}
 exists, it is not overwritten, and this function will terminate.}
 
 \item{orgPath}{Optional argument to specify the location of the organisation with
-orgPath, which by default is the current working directory.}
+orgPath, which by default is the current working directory.
+
+NO LONGER export - deprecated}
 }
 \description{
 Create a new Volume in the volumes/ dir of the projectmanagr

@@ -5,8 +5,8 @@
 \title{Add a New Group of Project Notes}
 \usage{
 addProjectNoteGroup(
-  projectNoteName,
   projectNotePrefix,
+  projectNoteName,
   projectNoteDir,
   selection,
   subNoteName,
@@ -17,11 +17,11 @@ addProjectNoteGroup(
 )
 }
 \arguments{
-\item{projectNoteName}{The name of the Project HEADER Note, a Title with all SPACES replaced
-with - or _.}
-
 \item{projectNotePrefix}{The whole projectNotePrefix, including identifier and Major
 Numbering, separated by ~.  NB Do NOT add the Minor Numbering - this is added automatically!}
+
+\item{projectNoteName}{The name of the Project HEADER Note, a Title with all SPACES replaced
+with - or _.}
 
 \item{projectNoteDir}{The directory where the Project Note will be stored.  This
 may be a Project Directory, or another Directory specified by the User.  MUST be a sub-directory

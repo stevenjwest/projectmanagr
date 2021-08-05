@@ -23,9 +23,6 @@ output:
 # DATA STORAGE:
 
 
-{{DATASTORAGE}}
-
-
 ----
 
 

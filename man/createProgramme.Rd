@@ -16,7 +16,7 @@ createProgramme(
 \item{programmeName}{Name of Progamme - must NOT contain a space.}
 
 \item{programmePrefix}{PREFIX used for all new PROJECTS in this PROGRAMME - should use ALL CAPS, and
-NO NUMBERS.  Must not contain a space}
+NO NUMBERS.  Must not contain a space. Ideally two or three letters long.}
 
 \item{programmeTitle}{Title of programme - typically the programmeName with "_" & "-" replaced with spaces.}
 
@@ -29,12 +29,14 @@ projectmanagr.}
 \description{
 Generates a new Programme at the top level of the Organisation.  If the
 fileSystemPath is not at the top of the Organisation, will traverse until
-it is found.  This function will halt if no Organisation is found - defined
-by the presence of config/ and config/templates dirs ar root.
+it is found.  This function will halt if no Organisation is found - the
+organisation root is defined by the presence of config/ and config/templates
+dirs at root.
 }
 \details{
 User must supply the programmeName and programmePrefix.  The
-programmeName must NOT contain a space, an optional programmeTitle (which
-if not supplied will default to the programmeName, replacing "_" & "-" with
-" ").  The default fileSystemPath is the working directory.
+programmeName must NOT contain a space, and programmePrefix should be two to three
+CAPITAL LETTERS.  An optional programmeTitle (which if not supplied will default
+to the programmeName, replacing "_" & "-" with " ").  The default fileSystemPath
+is the working directory.
 }

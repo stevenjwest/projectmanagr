@@ -14,10 +14,10 @@ output:
 # Introduction:
 
 
-*Welcome to the _PROJECT_TITLE_!*
+*Welcome to the {{TITLE}} Project!*
 
 
-* This Project aims to:
+* Project Goals:
 
     + SUCCINCTLY_DESCRIBE_AIM
 
@@ -36,17 +36,7 @@ detail_of_initial_aim_and_background_information_MOTIVATION
 
 
 
-# Plan
-
-
-REVIEW_PLAN_OF_WORK_AND_TASKS_TO_ACHIEVE_AIM
-
-
----
-
-
-
-## Objective Summary:
+# Objective Summary:
 
 
 * OBJECTIVE:

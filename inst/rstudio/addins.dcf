@@ -1,3 +1,20 @@
+
+
+Name: ProjectManagr: Add Project Note
+Description: Add a New Project Note to a Project Document.
+Binding: addinAddProjectNote
+Interactive: true
+
+Name: ProjectManagr: Add Project Link
+Description: Add a New Project Link to a Project Document Goal Del Task.
+Binding: addinAddProjectLink
+Interactive: true
+
+Name: ProjectManagr: Add SOP
+Description: Add a New SOP (Protocol or sReference) to a Project File.
+Binding: addinAddProtocolReference
+Interactive: true
+
 Name: ProjectManagr: Create Organisation
 Description: Initialise a New Project Organisation.
 Binding: addinCreateProjectOrg
@@ -13,39 +30,54 @@ Description: Create a New Project Document in a Programme.
 Binding: addinCreateProjectDoc
 Interactive: true
 
-Name: ProjectManagr: Add Project Note
-Description: Add a New Project Note to a Project Document.
-Binding: addinAddProjectNote
-Interactive: true
-
-Name: ProjectManagr: Add Project Link
-Description: Add a New Project Link to a Project Document Goal Del Task.
-Binding: addinAddProjectLink
-Interactive: true
-
-Name: ProjectManagr: Add Protocol or CheatSheet
-Description: Add a New Protocol or CheatSheet to a Project File.
-Binding: addinAddProtocolCheatSheet
-Interactive: true
-
 Name: ProjectManagr: Create Volume
 Description: Create a New Volume in a Project Organisation.
 Binding: addinCreateVolume
 Interactive: true
 
-Name: ProjectManagr: Add Hyper Link
-Description: Add a New Hyper Link between the Active Document and another open document.
+Name: ProjectManagr: Datatable Add Data
+Description: Add data to a datatable via addin: select samples to add to, and provide layout, ID format, and data column headers.
+Binding: addinDatatableAddData
+Interactive: true
+
+Name: ProjectManagr: Datatable Add Groups
+Description: Add group data to a datatable via addin: select samples to add to, and provide data column headers and group values.
+Binding: addinDatatableAddGroups
+Interactive: true
+
+Name: ProjectManagr: Datatable Create
+Description: Create a datatable via addin: provide optional IDs and data columns.
+Binding: addinDatatableCreate
+Interactive: true
+
+Name: ProjectManagr: Datatable Create from File
+Description: Create a datatable from a data file (such as CSV).
+Binding: addinDatatableCreateFromFile
+Interactive: true
+
+Name: ProjectManagr: Datatable Resample
+Description: Resample a datatable via addin: select samples to resample, and optionally add resample codes.
+Binding: addinDatatableResample
+Interactive: true
+
+Name: ProjectManagr: Insert DateTime
+Description: Insert DateTime at the cursor location.
+Binding: addinInsertDateTimeString
+Interactive: false
+
+Name: ProjectManagr: Insert Hyper Link
+Description: Insert a New Hyper Link between the Active Document and another open document.
 Binding: addinAddHyperLink
+Interactive: true
+
+Name: ProjectManagr: Insert SOP
+Description: Insert a SOP (Protocol or Cheatsheet) into a Project Note.
+Binding: addinInsertProtocol
 Interactive: true
 
 Name: ProjectManagr: Rename Project Doc or Note
 Description: Rename a Project Doc or Note in the Project Organisation.
 Binding: addinRenameComp
-Interactive: true
-
-Name: ProjectManagr: Insert Protocol
-Description: Insert a Protocol into a Project Note.
-Binding: addinInsertProtocol
 Interactive: true
 
 Name: ProjectManagr: Set WD Active Doc
@@ -56,10 +88,5 @@ Interactive: false
 Name: ProjectManagr: Update
 Description: Updates all recently edited Project Notes' summary information in linked Project Docs.
 Binding: updateProjectOrg
-Interactive: false
-
-Name: ProjectManagr: Insert DateTime
-Description: Insert DateTime at the cursor location.
-Binding: addinInsertDateTimeString
 Interactive: false
 

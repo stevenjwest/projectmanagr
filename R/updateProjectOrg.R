@@ -41,8 +41,7 @@ updateProjectOrg <- function( fileSystemPath=getwd()  ) {
   # remove standard DIRS:
     # config, site, todo (dives/pomodoros), volumes:
   progList <- progList[ !endsWith(progList, "config" ) &
-                        !endsWith(progList, "site" ) &
-                        !endsWith(progList, "todo" ) &
+                        !endsWith(progList, "docs" ) &
                         !endsWith(progList, "volumes" ) ]
 
   # for each PROGRAMME DIR:
@@ -88,7 +87,7 @@ updateProjectOrg <- function( fileSystemPath=getwd()  ) {
         # check the summary information for each Project Doc Link in each Project Note:
         for(j in 1:length(fileList) ) {
 
-          cat( "    checking Project Note -", j, ":", basename(fileList[j]),"\n" )
+          #cat( "    checking Project Note -", j, ":", basename(fileList[j]),"\n" )
           checkProjectNote(fileList[j])
 
         }
@@ -238,6 +237,9 @@ compareGoalDelTaskSummary <- function(projDocLinkList, projNotePath) {
 
   # if these do not match, INSERT text from Project Note into Project Doc - use original projDocContents:
   if( summaryMatch == FALSE ) {
+
+    # log this in output:
+    cat( "    updating Project Note summary -", basename(projNotePath), ":", basename(projDocLinkList[[1]]),"\n" )
 
     # get appropriately spaced Character Vector for Summary Bullet Points:
     summaryBullets <- spaceSummaryBulletPoints(projDocLinkList[[5]])

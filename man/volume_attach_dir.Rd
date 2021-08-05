@@ -4,7 +4,7 @@
 \alias{volume_attach_dir}
 \title{Add directory to Volume}
 \usage{
-volume_attach_dir(dirName, volName, use_full_path = FALSE)
+volume_attach_dir(dirName, volName, use_full_path = TRUE)
 }
 \arguments{
 \item{dirName}{Name of dir to form in Project Note DIR.}

@@ -26,9 +26,9 @@ addinCreateProjectOrg <- function() {
 
           fillRow(   span( textOutput("warning2"), style="color:red")  ),
 
-          fillRow(  textInput("authorName", "Author Name:", value = "", width="100%")  ),
+          #fillRow(  textInput("authorName", "Author Name:", value = "", width="100%")  ),
 
-          fillRow(   span( textOutput("warning3"), style="color:red")  ),
+          #fillRow(   span( textOutput("warning3"), style="color:red")  ),
 
           fillRow( flex = c(7, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Organisation Parent Directory")  )
 
@@ -54,15 +54,15 @@ addinCreateProjectOrg <- function() {
       })
 
       observeEvent(ignoreNULL = TRUE,
-                   eventExpr = {
-                     input$dir
-                   },
-                   handlerExpr = {
-                     if (!"path" %in% names(dir())) return()
-                     home <- normalizePath("~")
-                     global$datapath <-
-                       file.path(home, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
-                   })
+         eventExpr = {
+           input$dir
+         },
+         handlerExpr = {
+           if (!"path" %in% names(dir())) return()
+           home <- normalizePath("~")
+           global$datapath <-
+             file.path(home, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
+         })
 
 
       observeEvent(input$done, {
@@ -79,19 +79,27 @@ addinCreateProjectOrg <- function() {
             "PROVIDE ORGANISATION TITLE"
           })
         }
-        else if(input$authorName == "") {
-          # set the warning TextOutput:
-          output$warning3 <- renderText({
-            "PROVIDE AUTHOR NAME"
-          })
-        }
+        #else if(input$authorName == "") {
+        #  # set the warning TextOutput:
+        #  output$warning3 <- renderText({
+        #    "PROVIDE AUTHOR NAME"
+        #  })
+        #}
         else {
 
           # call projectmanagr::createProjectOrg:
-          projectmanagr::createProjectOrg( authorValue = input$authorName,
-                                           orgName = input$organisationName,
-                                           orgTitle = input$organisationTitle,
-                                           fileSystemPath = global$datapath )
+          projectmanagr::createProjectOrg(
+                    orgName = input$organisationName,
+                    orgTitle = input$organisationTitle,
+                    fileSystemPath = global$datapath
+                          )
+
+          # navigate to org index file:
+          rstudioapi::navigateToFile( paste( global$datapath, .Platform$file.sep, input$organisationName, .Platform$file.sep,
+                                             "index_", input$organisationName, ".Rmd", sep=""))
+
+          # navigate to containing dir - this function currently doesnt work!
+          #rstudioapi::filesPaneNavigate( paste0(global$datapath, .Platform$file.sep, input$organisationName) )
 
           # Close Gadget after 'done' is clicked.
           stopApp()

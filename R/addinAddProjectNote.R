@@ -224,14 +224,17 @@ addinAddProjectNote <- function() {
               nextSubNotePrefix <- getNextGroupPrefix(headerDirPath)
 
               projectmanagr::addSubNoteToGroup(
-                                      subNoteName = input$projectNoteName,
                                       subNotePrefix = nextSubNotePrefix,
+                                      subNoteName = input$projectNoteName,
                                       subNoteDir = headerDirPath,
                                       selection = selection,
                                       subNoteTitle = input$projectNoteTitle,
                                       subNoteTemp="Project-Sub-Note-Template.Rmd")
 
               rstudioapi::navigateToFile( paste( headerDirPath, .Platform$file.sep, nextSubNotePrefix, "~_", input$projectNoteName, ".Rmd", sep="") )
+
+              # navigate to containing dir
+              #rstudioapi::filesPaneNavigate(  paste( headerDirPath, sep="") )
 
             # Close Gadget after computations are complete:
             stopApp()
@@ -529,8 +532,8 @@ addinAddProjectNote <- function() {
               # call projectmanagr::addProjectNote:
                 nextNotePrefix <- getNextSimplePrefix(global$datapath)
                 projectmanagr::addProjectNote(
-                                           projectNoteName = input$projectNoteName,
                                            projectNotePrefix = nextNotePrefix,
+                                           projectNoteName = input$projectNoteName,
                                            projectNotePath = global$datapath,
                                            selection = selection,
                                            projectNoteTitle = input$projectNoteTitle,
@@ -538,15 +541,19 @@ addinAddProjectNote <- function() {
                                 )
                 rstudioapi::navigateToFile( paste( global$datapath, .Platform$file.sep,
                                                    nextNotePrefix, "~_",
-                                                   input$projectNoteName, ".Rmd", sep=""))
+                                                   input$projectNoteName, ".Rmd", sep="")
+                                            )
+
+                # navigate to containing dir
+                #rstudioapi::filesPaneNavigate(  paste( global$datapath, sep="") )
               }
 
               else {
                 # If GROUP note is Selected, addProjectNoteGroup():
                 nextNotePrefix <- getNextSimplePrefix(global$datapath)
                 projectmanagr::addProjectNoteGroup(
-                                               projectNoteName = input$projectNoteName,
                                                projectNotePrefix = nextNotePrefix,
+                                               projectNoteName = input$projectNoteName,
                                                projectNoteDir = global$datapath,
                                                selection = selection,
                                                subNoteName = input$subNoteName,
@@ -559,7 +566,14 @@ addinAddProjectNote <- function() {
                           paste( global$datapath, .Platform$file.sep,
                                  paste(nextNotePrefix, "-00", sep=""), sep=""),
                           .Platform$file.sep, paste(nextNotePrefix, "-001", sep=""),
-                          "~_", input$subNoteName, ".Rmd", sep="") )
+                          "~_", input$subNoteName, ".Rmd", sep="")
+                          )
+
+                # navigate to containing dir
+                #rstudioapi::filesPaneNavigate(
+                 #         paste( global$datapath, .Platform$file.sep,
+                  #        paste(nextNotePrefix, "-00", sep=""), sep="")
+                   #       )
               }
 
 

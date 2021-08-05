@@ -1,23 +1,23 @@
-#' Add a New Protocol or CheatSheet
+#' Add a New Protocol or Reference
 #'
-#' Generates a Shiny Gadget for adding a new Protocol ot CheatSheet inside
+#' Generates a Shiny Gadget for adding a new Protocol or Reference inside
 #' the SOP/ dir of the containing Programme, and inserting a link to this
-#' inside the active Proejct Note.
+#' inside the active Project Note.
 #'
 #' The User must be in an active Project Note, and the selected
-#' line and column is where the Protocol/CheatSheet Link will be inserted.
+#' line and column is where the Protocol/Reference Link will be inserted.
 #' This command works for all Project Notes.  A reciprocal link is formed
-#' from the Protocol/Cheatsheet to the Project Note.
+#' from the Protocol/Reference to the Project Note.
 #'
-#' User selects a Protocol/CheatSheet name, and (Optionally) Protocol/CheatSheet
+#' User selects a Protocol/Reference name, and (Optionally) Protocol/Reference
 #'  title (filled by default with SPACES replacing "_" and "-" from name).
 #'
 #' Stipulates any errors in the input, and can only be completed
 #' when these errors have been resolved.
 #'
 #'
-#' @export
-addinAddProtocolCheatSheet <- function() {
+#' NO LONGER exporting this
+addinAddProtocolReference <- function() {
 
 
   # Retrieve cursorSelection from current Active Doc in rstudio:
@@ -35,8 +35,8 @@ addinAddProtocolCheatSheet <- function() {
   if( selection[[1]] == "FALSE" ) {
 
     ui <- miniPage(
-      gadgetTitleBar("Add New Protocol or Cheat Sheet"),
-      h2("Select a Project Note to generate a new Protocol or Cheat Sheet in.", align="center", style="color:red")
+      gadgetTitleBar("Add New Protocol or Reference"),
+      h2("Select a Project Note to generate a new Protocol or Reference in.", align="center", style="color:red")
     )
 
     server <- function(input, output, session) {
@@ -47,7 +47,7 @@ addinAddProtocolCheatSheet <- function() {
 
     }
 
-    viewer <- dialogViewer("Add New Protocol or Cheat Sheet", width = 500, height = 300)
+    viewer <- dialogViewer("Add New Protocol or Reference", width = 500, height = 300)
 
     runGadget(ui, server, viewer = viewer)
 
@@ -59,15 +59,15 @@ addinAddProtocolCheatSheet <- function() {
 
       ui <- miniPage(
 
-        gadgetTitleBar("Add New Protocol or Cheat Sheet"),
+        gadgetTitleBar("Add New Protocol or Reference"),
 
         miniContentPanel(
 
           fillCol(
 
-            fillRow( h5("Add a new Protocol or Cheat Sheet to a Project File") ),
+            fillRow( h5("Add a new Protocol or Reference to a Project File") ),
 
-            fillRow( p("Protocol Name MUST end with _Protocol or _Cheatsheet:") ),
+            fillRow( p("Protocol Name MUST end with _Protocol or _Reference:") ),
 
             fillRow(  textInput("protocolName", "Protocol Name", value="_Protocol", width="100%")  ),
 
@@ -113,7 +113,7 @@ addinAddProtocolCheatSheet <- function() {
           if( grepl("\\s", input$protocolName)  ) {
             # set the warningName TextOutput:
             output$warningName <- renderText({
-              "PROTOCOL NAME CANNOT CONTAIN SPACES"
+              "PROTOCOL/REFERENCE NAME CANNOT CONTAIN SPACES"
             })
           }
           else {
@@ -131,14 +131,14 @@ addinAddProtocolCheatSheet <- function() {
           if(input$protocolName == "") {
             # set the warningName TextOutput:
             output$warningName <- renderText({
-              "*** PROVIDE PROTOCOL/CHEATSHEET NAME ***"
+              "*** PROVIDE PROTOCOL/REFERENCE NAME ***"
             })
           }
-          else if(! endsWith( tolower(input$protocolName), "_protocol") & ! endsWith( tolower(input$protocolName), "_cheatsheet")  ) {
-            # if protocolName does not end with protocol or cheatsheet, stop and inform user:
+          else if(! endsWith( tolower(input$protocolName), "_protocol") & ! endsWith( tolower(input$protocolName), "_reference")  ) {
+            # if protocolName does not end with protocol or reference, stop and inform user:
             # set the warningName TextOutput:
             output$warningName <- renderText({
-              "*** NAME MUST END WITH 'PROTOCOL' OR 'CHEATSHEET' ***"
+              "*** NAME MUST END WITH 'PROTOCOL' OR 'REFERENCE' ***"
             })
           }
           else if( grepl("\\s", input$protocolName)  ) {
@@ -186,13 +186,13 @@ addinAddProtocolCheatSheet <- function() {
 
             }
 
-            else if( endsWith( tolower(input$protocolName), "_cheatsheet") ) {
+            else if( endsWith( tolower(input$protocolName), "_reference") ) {
 
-              projectmanagr::addCheatSheet(
-                projectNotePath = selection[["projectNotePath"]],
-                cheatsheetName = input$protocolName,
-                cheatsheetTitle = input$protocolTitle,
-                cheatsheetTemplate="CheatSheet-Template.Rmd" )
+              projectmanagr::addReference(
+                projectNotePath =   selection[["projectNotePath"]],
+                referenceName =     input$protocolName,
+                referenceTitle =    input$protocolTitle,
+                referenceTemplate=  "Reference-Template.Rmd" )
 
               # normalize path - remove HOME REF ~
               projectNotePath <- normalizePath(selection[["projectNotePath"]])

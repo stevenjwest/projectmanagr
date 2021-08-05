@@ -24,14 +24,17 @@ insertProtocol(
 \item{includeEquip}{Boolean to indicate whether the initial equipment and material section should be included.}
 }
 \description{
-This Function adds a new Protocol to a Project Note - saved in the PROGRAMMES' SOP/ Dir.
-The Protocol is formed using a Rmd template, and uses the tufte::tufte_handout format to
-generate a PDF of the protocol.
+This Function adds a Protocol to a Project Note - protocols are found in the
+ PROGRAMMES' SOP/ Dir.
 }
 \details{
-Protocols are stored in the SOP/ directory inside the PROGRAMME Directory.  Each Protocol
-exists in its own directory, to keep its compiled files together.
+Inserted protocols add each Procedure defined under the '# PROTOCOL' section
+ of the document. Notes sections (FALSE by default) and the Equipment section
+(TRUE by default) can be optionally included in the inserted protocol.
 
-The Protocol source Rmd will link to its creating Project Note, and the Project Note will link to the
-compiled PDF of the Protocol.
+All links in the Protocol are UPDATED to work from the destination Project
+ Note.
+
+All graphics included in a knitr::include_graphics() r code chunk are
+ transferred to the new Project Note DIR and linked appropriately.
 }

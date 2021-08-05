@@ -13,3 +13,6 @@ the file system, Volume name (for the symlink), and
 optionally the current working directory (set to
 current WD).  The addin will call createVolume.
 }
+\details{
+no export - deprecated now - should add volumes manually via volumes/volumes.Rmd documentation
+}

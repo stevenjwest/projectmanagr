@@ -76,15 +76,15 @@ addinCreateProjectDoc <- function() {
     dir <- reactive(input$dir)
 
     observeEvent(ignoreNULL = TRUE,
-                 eventExpr = {
-                   input$dir
-                 },
-                 handlerExpr = {
-                   if (!"path" %in% names(dir())) return()
-                   home <- normalizePath("~")
-                   global$datapath <-
-                     file.path(home, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
-                 })
+       eventExpr = {
+         input$dir
+       },
+       handlerExpr = {
+         if (!"path" %in% names(dir())) return()
+         home <- normalizePath("~")
+         global$datapath <-
+           file.path(home, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
+       })
 
     observe({
       if(global$datapath != "") {
@@ -180,21 +180,33 @@ addinCreateProjectDoc <- function() {
 
         if(input$select == "REVIEW") {
           # call projectmanagr::createProjectDoc:
-          projectmanagr::createProjectDoc(projectName = input$projectName,
-                                          projectTitle = input$projectTitle,
-                                          fileSystemPath = global$datapath,
-                                          projDocTemplate = "Project-Doc-Template-REVIEW.Rmd",
-                                          projectIndex = 0 )
+          projectmanagr::createProjectDoc(
+            projectName = input$projectName,
+            projectTitle = input$projectTitle,
+            fileSystemPath = global$datapath,
+            projDocTemplate = "Project-Doc-Template-REVIEW.Rmd",
+            projectIndex = 0
+                  )
 
         }
         else if(input$select == "DEV") {
           # call projectmanagr::createProjectDoc:
-          projectmanagr::createProjectDoc(projectName = input$projectName,
-                                          projectTitle = input$projectTitle,
-                                          fileSystemPath = global$datapath,
-                                          projDocTemplate = "Project-Doc-Template-DEV.Rmd",
-                                          projectIndex = 0 )
+          projectmanagr::createProjectDoc(
+            projectName = input$projectName,
+            projectTitle = input$projectTitle,
+            fileSystemPath = global$datapath,
+            projDocTemplate = "Project-Doc-Template-DEV.Rmd",
+            projectIndex = 0
+                  )
         }
+
+        # navigate to project doc file:
+        pro_path <- paste0(global$datapath, .Platform$file.sep, "PROJECTS")
+        rstudioapi::navigateToFile( paste0( pro_path, .Platform$file.sep,
+                                      list.files(pro_path)[grepl(input$projectName, list.files(pro_path))]  )  )
+
+        # navigate to containing dir - this function currently doesnt work!
+        #rstudioapi::filesPaneNavigate( pro_path )
 
         # Close Gadget after 'done' is clicked.
         stopApp()

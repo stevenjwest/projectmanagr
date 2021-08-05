@@ -1,3 +1,4 @@
+
 #' Create Sample Tibble
 #'
 #' Create a new Tibble to store samples data in.  User must pass

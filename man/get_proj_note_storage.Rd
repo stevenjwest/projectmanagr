@@ -10,3 +10,6 @@ get_proj_note_storage(project_note_contents)
 returned storage vector is a list of vectors: Each vector is named the directory name,
 and the vector contents are each location the directory has been moved/copied to.
 }
+\details{
+Returns a blank list if no content in DATA STORAGE
+}

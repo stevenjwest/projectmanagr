@@ -15,8 +15,9 @@ addProtocol(
 \item{projectNotePath}{The ABSOLUTE path of the Project Note.}
 
 \item{protocolName}{The name of the Protocol, a Title with all SPACES replaced
-with - or _.
-#' @param protocolTitle The title of the Protocol, by default the name with all - and _ replaced
+with - or _.}
+
+\item{protocolTitle}{The title of the Protocol, by default the name with all - and _ replaced
 with SPACES.}
 
 \item{protocolTemplate}{Template to use, as found in the `config/templates/` directory.  Default is
@@ -24,8 +25,8 @@ with SPACES.}
 }
 \description{
 This Function adds a new Protocol to a Project Note - saved in the PROGRAMMES' SOP/ Dir.
-The Protocol is formed using a Rmd template, and uses the tufte::tufte_handout format to
-generate a PDF of the protocol.
+The Protocol is formed using an Rmd template: Protocol-Template.Rmd from the projectmanagr
+package. Protocols compile to PDF as standard, and can therefore be used as independent files.
 }
 \details{
 Protocols are stored in the SOP/ directory inside the PROGRAMME Directory.  Each Protocol
@@ -33,4 +34,7 @@ exists in its own directory, to keep its compiled files together.
 
 The Protocol source Rmd will link to its creating Project Note, and the Project Note will link to the
 compiled PDF of the Protocol.
+
+Protocols can further be inserted into new Project Notes, using the insertProcotol() function, which
+allows convenient insertion of documentation into new Notes.
 }

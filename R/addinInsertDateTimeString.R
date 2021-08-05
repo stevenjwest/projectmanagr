@@ -16,14 +16,17 @@ addinInsertDateTimeString <- function() {
   col <- (cursor$range[[1]])[2] # get the col number of cursor
 
   # get datetime
-  datetime <- Sys.time()
+    # using UTC for consistency - this may mean the time is DIFFERENT to the current time!
+  datetime <- lubridate::now("UTC") #Sys.time()
 
   # round to nearest minute:
   datetime <- round(datetime,"mins")
 
-  # round to nearest 5 min
+  # convert to POSIXlt:
   datetime <- as.POSIXlt(datetime)
-  datetime$min <- (datetime$min + 5/2) %/% 5 * 5
+
+  # round to nearest 5 min - not using now keep round to nearest 1min!
+  #datetime$min <- (datetime$min + 5/2) %/% 5 * 5
 
   # format datetime to use "/" and have a ":" between date and time
   datetime_split <- strsplit(as.character(datetime), " ")

@@ -66,15 +66,15 @@ addinCreateProgramme <- function() {
     })
 
     observeEvent(ignoreNULL = TRUE,
-                 eventExpr = {
-                   input$dir
-                 },
-                 handlerExpr = {
-                   if (!"path" %in% names(dir())) return()
-                   home <- normalizePath("~")
-                   global$datapath <-
-                     file.path(home, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
-                 })
+       eventExpr = {
+         input$dir
+       },
+       handlerExpr = {
+         if (!"path" %in% names(dir())) return()
+         home <- normalizePath("~")
+         global$datapath <-
+           file.path(home, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
+       })
 
 
     observe({
@@ -115,10 +115,19 @@ addinCreateProgramme <- function() {
       else {
 
         # call projectmanagr::createProgramme:
-        projectmanagr::createProgramme(programmeName = input$programmeName,
-                                       programmePrefix = input$programmePrefix,
-                                       programmeTitle = input$programmeTitle,
-                                       fileSystemPath = global$datapath  )
+        projectmanagr::createProgramme(
+            programmeName = input$programmeName,
+            programmePrefix = input$programmePrefix,
+            programmeTitle = input$programmeTitle,
+            fileSystemPath = global$datapath
+                  )
+
+        # navigate to programme index file:
+        rstudioapi::navigateToFile( paste( global$datapath, .Platform$file.sep, input$programmeName, .Platform$file.sep,
+                                           "index_", input$programmeName, ".Rmd", sep=""))
+
+        # navigate to containing dir - this function currently doesnt work!
+        #rstudioapi::filesPaneNavigate( paste0(global$datapath, .Platform$file.sep, input$programmeName) )
 
         # Close Gadget after 'done' is clicked.
         stopApp()

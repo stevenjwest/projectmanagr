@@ -3,6 +3,9 @@ title: "{{TITLE}}"
 author: "{{AUTHOR}}"
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: 5
   html_document:
     theme: united
     toc: yes
@@ -25,7 +28,10 @@ output:
 # CHEATSHEET SUMMARY
 
 
-Cheat_Sheet_introduction_In_clear_and_concise_language_what_procedures_does_the_cheatsheet_cover
+Cheat_Sheet_introduction
+
+
+In_clear_and_concise_language_what_procedures_does_the_cheatsheet_cover
 
 
 ---
@@ -103,6 +109,9 @@ Troubleshooting Guide - list step, problem, potential solutions.
 
 
 # CHANGE LOG
+
+
+NB: Save OLD VERSIONS with version number to preserve a record of previous versions!
 
 
 **Version 1.0 - DATE**

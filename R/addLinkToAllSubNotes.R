@@ -95,7 +95,7 @@ addLinkToAllSubNotes <- function( headerNotePath, selection, summaryBullet ) {
 
     DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
 
-    DocTitleLink <- paste( "## [", DocName, "](", DocLink, ")", sep="" )
+    DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
 
     # GOAL:

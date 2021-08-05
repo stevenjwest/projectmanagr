@@ -50,6 +50,281 @@ output:
         
             - These symlinks will be active whenever the External Volume is mounted
 
+
+---
+---
+
+
+
+# TEMPLATES
+
+
+
+# SERVER - NAME
+
+
+Description.
+
+
+---
+
+
+
+## MOUNT
+
+
+To Mount:
+
+
+```{bash, eval=FALSE}
+
+# connect to SWC vpn: - convenience script:
+~/bin/vpn-INST-connect.sh 
+ # p hint: 
+
+# MOUNT SERVER:
+INST-mount-SERVER.sh # mount server - convenience script
+ # p hint:
+ 
+```
+
+
+
+* When SERVER is mounted, following Symlinks in `volumes/` will become active:
+
+    + symlink_name : /location/on/mount/point
+    
+
+---
+
+
+To Un-Mount:
+
+
+```{bash, eval=FALSE}
+
+# UNMOUNT SERVER:
+INST-umount-SERVER.sh
+
+```
+
+
+---
+
+
+
+## PROCESS
+
+
+To Process data on SERVER:
+
+
+```{bash, eval=FALSE}
+
+# SSH
+ # for sending scripts to server
+ # must be able to access the system WITHOUT A PASSWORD - using ssh keys: ssh-copy-id
+ssh USER@SERVER "bash -s > results.out 2>&1" < path/to/script.sh &
+  # this will start the process in the background, and will continue even if the ssh connection is broken!
+
+# to pass args to the script use '--':
+ssh USER@SERVER "bash -s > results.out 2>&1" -- < path/to/script.sh "arg1" "arg2" &
+
+
+# NOHUP
+ # for interactive bash session - make a process immune to hang-ups (no_h-up!)
+ssh USER@SERVER # connect to the server
+nohup cmd & # run the command with nohup
+ # RUN IN BACKGROUND WITH &
+ # generates output file: nohup.out in current dir with all outputs of cmd
+
+
+# TMUX
+ # for interactive sessions
+ssh USER@SERVER # connect to the server
+tmux # start tmux session
+ # to rename session: ctrl + b + $ -> type NAME
+ # detach from session: ctrl + b, d
+tmux ls # list all sessions
+tmux attach-session -t NAME # attach session NAME
+
+
+# rstudio-server
+ # if running rstudio server, can use the terminal or console in the http interface to run scripts
+
+```
+
+
+---
+
+
+
+## Mount Setup
+
+
+* This Server is mounted via `sshfs`
+
+    + connect to any vpn - create a bash script to automate this process
+    
+    + Setup/check `ssh` access to server
+    
+    + setup `sshfs` mount from server home dir to a mount point  - create a bash script to automate this process
+    
+    + un-mount `sshfs` using `fusermount` (or `umount`) - create a bash script to automate this process
+
+
+```{bash, eval=FALSE}
+
+# EXAMPLE - edit as appropriate to mount server:
+
+# Connect to any VPN to access the server - eg.:
+vpn-INST-connect.sh # bash script in ~/bin and in $PATH
+ # INST - institute code
+ # connect to swc vpn with netExtender
+ # connect to ucl vpn with openconnect
+
+
+# CHECK ssh access
+ssh USER@SERVER
+ # USER@SERVER is the user@server-name for ssh access
+
+
+# Manually setup mount using sshfs:
+sshfs -o allow_other,default_permissions USER@SERVER:/home/USER/ ~/vols/SERVER
+ # mounting the server FROM:  /home/USER/
+  # RECOMMEND to use HOME DIR - then mount other resources to dirs on this system here
+ # mounting the server TO:    ~/vols/SERVER
+  # Prefer mounting to HOME DIR in vols/ directory
+   # make sure ~/vols/ EXISTS!
+
+# Put this into a bash script for easy mounting - place into $PATH (eg. ~/bin)
+INST-mount-SERVER.sh # this should call the above sshfs command - convenience script
+
+
+# Manually un-mount - umount or fusermount (for FUSE [Filesystem in Userspace])
+fusermount -u ~/vols/SERVER
+ 
+# Put this into a bash script for easy un-mounting - place into $PATH (eg. ~/bin)
+INST-umount-SERVER.sh # this should un-mount using command above - convenience script
+
+```
+
+
+
+## Symlinks
+
+
+* This server has the following locations symlinked to `volumes/`:
+
+
+```{bash,eval=FALSE}
+
+# SYMLINK EXAMPLES
+  # all written to create symlink from this bash code chunk
+    # symlink paths are relative to volumes.Rmd
+
+
+# SYMLINK GENERIC_TEMPLATE
+ # FROM :  ~/vols/SERVER/storage
+ # TO   :  volumes/SERVER_local
+  # use for LOCAL STORAGE on SERVER - fast access/processing
+ln -s ~/vols/SERVER/storage SERVER_local
+
+
+# EXAMPLES - edit as appropriate
+
+
+# SYMLINK 
+ # FROM :  data/ dir in my project in mrsic_flogel on winstor 
+ # TO   :  winstor
+  # Winstor - PETABYTES of Storage at SWC
+   # Mounted to my home DIR - see stevew@172.24.170.115:/etc/fstab to see how this was mounted to home/stevew/vols/
+  # My own project dir on mrsic-flogel lab for storing imaging data
+ln -s /home/sjwest/vols/tiler/vols/winstor/mrsic_flogel/public/projects/SjWe_20200102_IBL/data winstor
+
+
+# SYMLINK 
+ # FROM :  ibl project in mrsic_flogel on winstor 
+ # TO   :  ibl
+  # Winstor - PETABYTES of Storage at SWC
+  # ibl data storage - syncs with flatiron data server
+ln -s /home/sjwest/vols/tiler/vols/winstor/mrsic_flogel/public/projects/RoCa_20190501_IBLanatomy ibl
+
+
+# SYMLINK 
+ # FROM :  vols/data/IBL/data/ 
+ # TO   :  tiler_7TB
+  # 7.3T RAID storage - can check with df -h
+  # see stevew@172.24.170.115:/etc/fstab to see how RAID storage was mounted to home/stevew/vols/
+  # use for local HIGH CAPACITY AND FAST ACCESS STORAGE
+ln -s /home/sjwest/vols/tiler/vols/data/IBL/data /Users/stevenwest/00_ELN/volumes/tiler_7TB
+
+
+```
+
+
+
+---
+
+
+
+# DRIVE - NAME
+
+
+
+## MOUNT
+
+
+To Mount:
+
+
+* Connect NAME HD:
+
+    + The mount point and symlinks are already setup!
+
+
+
+## Mount Setup
+
+
+This External Volume is mounted by:
+
+
+```{bash, eval=FALSE}
+
+# FIRST connect the Hard Drive to this computer
+
+ # should AUTOMATICALLY mount to /media/sjwest:
+
+ls /media/sjwest/NAME
+
+
+# To MOUNT:
+ # connect the Drive via USB
+
+# To UNMOUNT:
+ # unmount the drive from Files, and disconnect the Drive
+
+```
+
+
+
+## Symlinks
+
+
+The following symlinks have been made FROM the mount-point TO this orgs `volumes/` directory:
+
+
+```{bash,eval=FALSE}
+
+# SYMLINKS to volumes/
+
+# SYMLINK TO NAME at ROOT:
+ln -s /media/sjwest/NAME /home/sjwest/00_ELN/volumes/NAME
+
+```
+
+
 ---
 
 

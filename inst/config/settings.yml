@@ -2,3 +2,4 @@
   RunUpdateOnStartup: yes
   RunCompileWithUpdate: yes
   htmlDocTheme: united
+  site: ~/site/
