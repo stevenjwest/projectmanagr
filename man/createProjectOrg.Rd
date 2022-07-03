@@ -24,7 +24,7 @@ createProjectOrg(
 Generates the layout for a new Project Organisation in the File System.
 }
 \details{
-The function generates the organisation directory and its initial contents:  config/ direcotry with the
+The function generates the organisation directory and its initial contents:  config/ directory with the
 config files and templates/ directory containing component templates.  The volumes/ directory, that will
 hold all volumes for managing data storage. The docs/ directory, that will hold documentation for a
 projectmanagr usage.   A 00_site/ directory is created next to org, which will contain the generated html

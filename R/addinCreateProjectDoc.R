@@ -41,12 +41,14 @@ addinCreateProjectDoc <- function() {
 
         fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
 
-        fillRow(   textOutput("projectPathOutput")  ),
+        fillRow(   textOutput("projectPathOutput")  )
 
-        fillRow( selectInput("select", "Select Template:",
-                             choices = templates, selected = templates[1]) ),
+        #fillRow(   textOutput("projectPathOutput")  ),
 
-        fillRow(   span( textOutput("warningTemplate"), style="color:red")  )
+        #fillRow( selectInput("select", "Select Template:",
+        #                     choices = templates, selected = templates[1]) ),
+
+        #fillRow(   span( textOutput("warningTemplate"), style="color:red")  )
 
       )
     )
@@ -168,37 +170,46 @@ addinCreateProjectDoc <- function() {
           "*** DIR PATH NOT VALID PROGRAMME ***"
         })
       }
-      else if(input$select == "") {
-        output$warningTemplate <- renderText({
-          "*** SELECT A TEMPLATE ***"
-        })
-      }
+      #else if(input$select == "") {
+      #  output$warningTemplate <- renderText({
+      #    "*** SELECT A TEMPLATE ***"
+      #  })
+      #}
       else {
 
         # FIRST - save all open documents in RStudio:
         rstudioapi::documentSaveAll()
 
-        if(input$select == "REVIEW") {
-          # call projectmanagr::createProjectDoc:
-          projectmanagr::createProjectDoc(
-            projectName = input$projectName,
-            projectTitle = input$projectTitle,
-            fileSystemPath = global$datapath,
-            projDocTemplate = "Project-Doc-Template-REVIEW.Rmd",
-            projectIndex = 0
-                  )
+        # call projectmanagr::createProjectDoc:
+        projectmanagr::createProjectDoc(
+          projectName = input$projectName,
+          projectTitle = input$projectTitle,
+          fileSystemPath = global$datapath,
+          projDocTemplate = "Project-Doc-Template.Rmd",
+          projectIndex = 0
+        )
 
-        }
-        else if(input$select == "DEV") {
-          # call projectmanagr::createProjectDoc:
-          projectmanagr::createProjectDoc(
-            projectName = input$projectName,
-            projectTitle = input$projectTitle,
-            fileSystemPath = global$datapath,
-            projDocTemplate = "Project-Doc-Template-DEV.Rmd",
-            projectIndex = 0
-                  )
-        }
+        #if(input$select == "REVIEW") {
+        #  # call projectmanagr::createProjectDoc:
+        #  projectmanagr::createProjectDoc(
+        #    projectName = input$projectName,
+        #    projectTitle = input$projectTitle,
+        #    fileSystemPath = global$datapath,
+        #    projDocTemplate = "Project-Doc-Template-REVIEW.Rmd",
+        #    projectIndex = 0
+        #          )
+        #
+        #}
+        #else if(input$select == "DEV") {
+        #  # call projectmanagr::createProjectDoc:
+        #  projectmanagr::createProjectDoc(
+        #    projectName = input$projectName,
+        #    projectTitle = input$projectTitle,
+        #    fileSystemPath = global$datapath,
+        #    projDocTemplate = "Project-Doc-Template-DEV.Rmd",
+        #    projectIndex = 0
+        #          )
+        #}
 
         # navigate to project doc file:
         pro_path <- paste0(global$datapath, .Platform$file.sep, "PROJECTS")

@@ -80,33 +80,23 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
     projectIndex <- projectIndex+1 # add one to max projectIndex
 
     if(length(projectIndex) == 0 ) {
-
       projectIndex <- 1 #this ensures if there are NO directories that match the glob above, that the index is set to 1!
-
-    }
+     }
 
     # if projectIndex is only one digit, append "0" to front:
-    if(projectIndex < 10 ) {
-
-      projectIndex <- paste("0", projectIndex, sep="")
-
-    } else {
-
-      projectIndex <- paste("", projectIndex, sep="")
-
-    }
-
-  } else { # else, if projectIndex was set to be above 0, then use this number!
-
-    if(projectIndex < 10 ) {
-
+     if(projectIndex < 10 ) {
         projectIndex <- paste("0", projectIndex, sep="")
+     } else {
+        projectIndex <- paste("", projectIndex, sep="")
+     }
 
-    } else {
+    } else { # else, if projectIndex was set to be above 0, then use this number!
 
+     if(projectIndex < 10 ) {
+        projectIndex <- paste("0", projectIndex, sep="")
+     } else {
       projectIndex <- paste("", projectIndex, sep="")
-
-    }
+     }
 
   }
 
@@ -142,7 +132,7 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
 
   # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
   if( nchar(projectTitle)==0 ) {
-    projectTitle = gsub("-", " ", gsub("_", " ", projectName) )
+    projectTitle <- gsub("-", " ", gsub("_", " ", projectName) )
   }
 
 
@@ -152,10 +142,19 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   #authorValue <- settings[["Author"]]
   authorValue <- Sys.info()["user"] # use username as author instead
 
-  # modify templateContents to include PREFIX and projectTitle
+  # modify templateContents to include PREFIX projectTitle author
   templateContents <- gsub("{{PREFIX}}", paste(programmePrefix, projectIndex, sep=""), templateContents, fixed=TRUE)
   templateContents <- gsub("{{TITLE}}", projectTitle, templateContents, fixed=TRUE)
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
+
+  # write correct programme link
+  progIndexPath = paste(progPath, .Platform$file.sep, "index_", programmeName, ".Rmd", sep="")
+  #programmeTitle <- gsub("-", " ", gsub("_", " ", programmeName) )
+  programmeTitle <- programmeName
+  NoteLink <- R.utils::getRelativePath(progIndexPath, relativeTo=projFile)
+  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  progLink <- paste("[", programmeTitle, "](", NoteLink, ")",  sep="")
+  templateContents <- gsub("{{PROGLINK}}", progLink, templateContents, fixed=TRUE)
 
   # write to projFile
   fileConn <- file(projFile)
@@ -235,10 +234,32 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
   # create the projIndexLink:
   NoteLink <- R.utils::getRelativePath(projFile, relativeTo=progIndexPath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  projIndexLink <- paste("* [", projectTitle, "](", NoteLink, ")",  sep="")
+  projName <- substring( basename(projFile), first=1, last=nchar(basename(projFile))-4)
+  projIndexLink <- paste("[", projName, "](", NoteLink, ")",  sep="")
+
+  # read string from proj summary to paste into prog index
+  summaryStartIndex <- matchLineIndex(progLink, templateContents) # finds FIRST MATCH
+  #summaryStartIndex <- computeNextLineIndex((summaryStartIndex+1), templateContents )-1
+  summaryEndIndex <- grepLineIndexFrom("----", templateContents, summaryStartIndex)-1
+  summaryStartIndex <- summaryStartIndex+1 # to remove the prog link
+
+  if(summaryStartIndex == summaryEndIndex) {
+    # start and end both found line '----' - there is no summary info to add!
+    progSummary <- c(projIndexLink)
+  }
+  else {
+    # fill summary with lines
+    progSummary <- c(projIndexLink)
+
+    for(i in (summaryStartIndex):(summaryEndIndex-1) ) {
+
+      progSummary <- c(progSummary, templateContents[i])
+
+    }
+  }
 
   # create the Vector, including Whitespace and Summary information:
-  projIndexLinkVector <- c( "", "", "", "---", "", "", "", paste("## ",projectTitle, sep=""), "", "", projIndexLink, "" )
+  projIndexLinkVector <- c( "", "", "---", "", "", "", paste("## ",projName, sep=""), "", "", progSummary )
   #projIndexLinkVector <- c( "", "", "", projIndexLink, "" )
 
   # compute place to insert the project doc link:
@@ -251,7 +272,6 @@ createProjectDoc <- function(projectName, projectTitle="", fileSystemPath=getwd(
 
   # Insert projIndexLinkVector to progIndexContents:
   progIndexContents <- c(progIndexContents[1:(line-1)], projIndexLinkVector, progIndexContents[(line+1):length(progIndexContents)])
-
 
   # write to progIndexPath
   progIndexFileConn <- file( progIndexPath )

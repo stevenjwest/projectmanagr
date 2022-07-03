@@ -144,7 +144,9 @@ addSubNoteToGroup <- function( subNotePrefix, subNoteName, subNoteDir, selection
   templateContents <- replaceAndInsertVector("{{OBJECTIVES}}", objectives, templateContents)
 
 
+  ##############################
   ### INSERT Project Doc Links:
+  ##############################
 
   # There may be more than one, so first retrieve all ProjectDoc links from headerNote:
     # any new SubNote should inherit all Project Doc links from its parent -> header note
@@ -167,17 +169,17 @@ addSubNoteToGroup <- function( subNotePrefix, subNoteName, subNoteDir, selection
   templateContents <- addLinks( templateContents, subNotePath, projDocList )
 
 
+  ##############################
   ### WRITE HEADER LINK
-  # Want to add a RELATIVE LINK to the HEADER NOTE here
+  ##############################
 
-  # define the headerTitle:
-  headerTitle <- gsub( "-", " ",  gsub("_", " ", headerName )  )
+  # Want to add a RELATIVE LINK to the HEADER NOTE here
 
   # compute Project Source Doc RELATIVE LINK:
   headerLink <- R.utils::getRelativePath(headerPath, relativeTo=subNotePath)
   headerLink <- substring(headerLink, first=4, last=nchar(headerLink)) # remove first `../`
 
-  headerTitleLink <- paste( "[", headerTitle, "](", headerLink, ")", sep="" )
+  headerTitleLink <- paste( "[", headerName, "](", headerLink, ")", sep="" )
 
   templateContents <- gsub("{{HEADER_NOTE_LINK}}", headerTitleLink, templateContents, fixed=TRUE)
 
@@ -192,7 +194,9 @@ addSubNoteToGroup <- function( subNotePrefix, subNoteName, subNoteDir, selection
   cat( "  Written Sub Note to disk: ", basename(subNotePath), "\n" )
 
 
+  #################################################################
   ### INSERT LINK FROM PROJECT SUB NOTE INTO PROJECT DOC(S) ONLY
+  #################################################################
 
     # No Longer writing to Programmes - Programmes just contains a list of Projects
     # Should use the Pomodoro TODO Sheet to keep track of Tasks!
@@ -210,8 +214,8 @@ addSubNoteToGroup <- function( subNotePrefix, subNoteName, subNoteDir, selection
   # create the projectNoteLink:
   NoteLink <- R.utils::getRelativePath(subNotePath, relativeTo=headerPath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  projectNoteLink <- paste("[", subNotePrefix, "~ ", subNoteTitle, "](", NoteLink, ")",  sep="")
-  #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
+  projectNoteLink <- paste("[", subNotePrefix, "~_", subNoteName, "](", NoteLink, ")",  sep="")
+  #[BMS~314~_AVIL_42SNI_EdU_16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
   # create the Vector, including Whitespace and Summary information:
   projectNoteLinkVector <- c( "", "", projectNoteLink, "" )

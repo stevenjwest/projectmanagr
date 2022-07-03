@@ -28,7 +28,9 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
   projectNotePrefix <- substring( basename(headerNotePath), first=1, last=regexpr("~_", basename(headerNotePath), fixed=TRUE)-1 )
   projectNoteTitle <- substring( basename(headerNotePath), first=regexpr("~_", basename(headerNotePath), fixed=TRUE)+2 ) # still contains .Rmd!
 
-  projectNoteName <- substring( gsub("_", " ", projectNoteTitle), first=1, last=nchar(projectNoteTitle)-4)
+  projectNoteName <- substring( projectNoteTitle, first=1, last=nchar(projectNoteTitle)-4 ) # still contains underscores!
+
+  projectNoteTitle <- substring( basename(headerNotePath), first=1, last=nchar(basename(headerNotePath))-4 ) # better yet grab prefix+name with - & _ and no .Rmd
 
 
   # Check headerNoteDir is a sub-dir in a Programme DIR, which itself is a sub-dir to the root of an ORGANISATION:
@@ -65,7 +67,7 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
   close(projNoteFileConn)
 
 
-  # modify the Project Note to add the new Project Doc GOAL/DEL/TASK:
+  ### modify the Project Note to add the new Project Doc GOAL/DEL/TASK: ###
 
   # compute Project Source Doc RELATIVE LINK:
   DocLink <- R.utils::getRelativePath(projectDocPath, relativeTo=headerNotePath)
@@ -75,7 +77,9 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
   # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!
 
   DocName <- basename(projectDocPath)
-  DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
+  DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
+  # ACTUALLY better to link with note file name!
+   # avoids bug where old links made with old Titles would be missed if title is edited in note in meantime..
 
   DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
@@ -135,7 +139,7 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
   cat( "  Written Goal Del Task to Header Note file: ", basename(headerNotePath), "\n" )
 
 
-  ### INSERT LINK FROM PROJECT NOTE INTO PROJECT DOC:
+  ### INSERT LINK FROM PROJECT NOTE INTO PROJECT DOC: ###
 
   # read Project Doc:
   projDocFileConn <- file( projectDocPath )
@@ -145,8 +149,9 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
   # create the projectNoteLink:
   NoteLink <- R.utils::getRelativePath(headerNotePath, relativeTo=projectDocPath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  projectNoteLink <- paste("**[", projectNotePrefix, "~ ", projectNoteName, "](", NoteLink, ")**",  sep="")
-  #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
+  #projectNoteLink <- paste("**[", projectNotePrefix, "~_", projectNoteName, "](", NoteLink, ")**",  sep="")
+  projectNoteLink <- paste("**[", projectNoteTitle, "](", NoteLink, ")**", sep="") # just use projectNoteTitle : prefix+name!
+  #[BMS~314~_AVIL_42SNI_EdU_16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
   # create the Vector, including Whitespace and Summary information:
   projectNoteLinkVector <- c( "", "", "", projectNoteLink, "" ) # no summary bullet in header note

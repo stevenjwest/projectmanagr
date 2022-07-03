@@ -19,6 +19,9 @@ orgPath, which by default is the current working directory.
 NO LONGER export - deprecated}
 }
 \description{
+DEPRECATED - now using volumes.Rmd to manage volumes on filesystem.
+}
+\details{
 Create a new Volume in the volumes/ dir of the projectmanagr
 Organisation.  The function Symlinks the dir at sourcePath to a new
 Symlink made in the Organisation volumes/ directory, with

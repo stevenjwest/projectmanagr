@@ -25,11 +25,8 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   # Find programme DIR from projectDocPath:
   progPath <- findProgDir(projectDocPath)
 
-  # Determine projectNote PREFIX and TITLE:
+  # Determine projectNote PREFIX (get TITLE from contents below):
   projectNotePrefix <- substring( basename(projectNotePath), first=1, last=regexpr("~_", basename(projectNotePath), fixed=TRUE)-1 )
-  projectNoteTitle <- substring( basename(projectNotePath), first=regexpr("~_", basename(projectNotePath), fixed=TRUE)+2 )
-  # Remove - and _ and remove file suffix:
-  projectNoteTitle <- gsub("-", " ",  gsub("_", " ", substring(projectNoteTitle, first=1, last=nchar(projectNoteTitle)-4) )  )
 
 
   # Check projectNoteDir is a sub-dir in a Programme DIR, which itself is a sub-dir to the root of an ORGANISATION:
@@ -64,6 +61,10 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   projNoteContents <- readLines( projNoteFileConn )
   close(projNoteFileConn)
 
+  # read project note title
+  #projectNoteTitle <- getProjCompTitle(projNoteContents)
+  projectNoteTitle <- substring(basename(projectNotePath), first=1, last=nchar(basename(projectNotePath))-4) # ACTUALLY better to link with note file name!
+   # avoids bug where old links made with old Titles would be missed if title is edited in note in meantime..
 
   # modify the Project Note to add the new Project Doc GOAL/DEL/TASK:
 
@@ -75,7 +76,7 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!
 
   DocName <- basename(projectDocPath)
-  DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
+  DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
 
   DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
@@ -147,7 +148,7 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   # create the projectNoteLink:
   NoteLink <- R.utils::getRelativePath(projectNotePath, relativeTo=projectDocPath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  projectNoteLink <- paste("**[", projectNotePrefix, "~ ", projectNoteTitle, "](", NoteLink, ")**",  sep="")
+  projectNoteLink <- paste("**[", projectNoteTitle, "](", NoteLink, ")**",  sep="")
   #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
   # create the Vector, including Whitespace and Summary information:

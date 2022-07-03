@@ -4,12 +4,19 @@
 \alias{updateAllLinks}
 \title{Update all links}
 \usage{
-updateAllLinks(orgPath, oldName, oldTitle, newName, newTitle)
+updateAllLinks(orgPath, oldName, newName, oldTitle = "", newTitle = "")
 }
 \arguments{
 \item{orgPath}{defines the path to the Organisation - should point to the root directory of the Organisation.}
 
-\item{oldName}{defines the NEW name to be written into Hyperlinks.  Should be the FILE NAME - with no spaces.}
+\item{oldName}{defines the OLD name that will be in Hyperlinks.  Should be the FILE NAME - with no spaces,
+including PREFIX and .Rmd EXTENSION}
+
+\item{newName}{defines the NEW name to be written into Hyperlinks.  Should be the FILE NAME - with no spaces.}
+
+\item{oldTitle}{defines the OLD TITLE that will be in Hyperlinks.  By default replaces - & _ with spaces from name.}
+
+\item{newTitle}{defines the NEW TITLE that will be in Hyperlinks.  By default replaces - & _ with spaces from name.}
 }
 \description{
 Updates every hyperlink in all Rmd files within orgPath directory tree, from oldName

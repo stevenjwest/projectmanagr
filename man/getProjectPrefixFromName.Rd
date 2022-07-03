@@ -4,7 +4,7 @@
 \alias{getProjectPrefixFromName}
 \title{Get Project Prefix From Name}
 \usage{
-getProjectPrefixFromName(projectName)
+getProjectPrefixFromName(projectCompName)
 }
 \description{
 Extracts the Project Prefix from the projectName - all characters before "~_"

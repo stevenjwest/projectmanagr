@@ -66,28 +66,6 @@ EXAMPLE_edit_as_appropriate
 
 
 
-## Scope
-
-
-This protocol has been tested on mouse, but could be applied to other rodents and small mammals with some modification:
-
-
-* Isoflurane overdose requires a higher dose and time for rats - its absolutely essential to ensure larger animals are effectively overdosed when using isoflurane, as mice seem to be particularly sensitive to this anaesthetic.
-
-
-* The Drop Jar method is far more humane:
-
-    + no restraint is made of the animal, and no injection needs to be made - it is simply moved from its home cage into a jar, where it falls asleep in 5-10 seconds.
-    
-    + There is a COMMON MYTH concerning perfusion that the animals must have its heart beating for an effective perfusion:  
-    
-        - This is WRONG - the beating heart makes it far harder to setup the perfusion, and the pressue applied by a syringe is what drives the perfusion, not any beating of the heart.
-    
-        - It is true that the perfusion should take place rapidly, as some elements of rigor mortis and associated hypoxic changes to tissue can set in within minutes:  indeed, if the mouse is left for 5 minutes before perfusion, these changes are clearly noticeable on the heart and other tissues (they appear to firm up).  But as long as the animal is perfused within 2-3 minutes of overdose, these symptoms do not appear to arise.
-
-    + Inevitably there will be some changes due to the overdose and the unavoidable hypoxic nature of it, but as long as the perfusion is rapidly performed, these changes can be minimised.
-
-
 ---
 
 
@@ -192,31 +170,19 @@ EXAMPLE_edit_as_appropriate
 
 * [] Make PBS - 250mL:
 
-    + WEIGH **0.479g Na2HPO4-7H2O** (Sigma S9390) in 250mL Lab Bottle
+    + Dissolve **0.479g Na2HPO4-7H2O** (Sigma S9390) into ~180mL dH2O in 250mL Lab Bottle
     
-        - Dissolve in ~180mL dH2O
-            
-        - Dissolve fully with shaking or stirring
-                
-    + WEIGH **0.0983g NaH2PO4-H2O** (Sigma S9638) in 50mL Falcon Tube
-    
-        - Dissolve in ~30mL dH2O
+    + Dissolve **0.0983g NaH2PO4-H2O** (Sigma S9638) into ~30mL dH2O in 50mL Falcon Tube
 
-        - Dissolve fully with shaking or stirring
-                
-    + ADD ~30mL NaH2PO4-H2O solution to ~180mL Na2HPO4-7H2O Solution in 250mL Lab Bottle
+    + Mix ~30mL NaH2PO4-H2O solution to ~180mL Na2HPO4-7H2O Solution in 250mL Lab Bottle
     
-        - Mix thoroughly with shaking or stirring
-        
-    + ADD **2.0g NaCl** (Sigma S9888) and **0.05g KCl** (Sigma P3911) to 250mL Lab Bottle
+    + Dissolve **2.0g NaCl** (Sigma S9888) and **0.05g KCl** (Sigma P3911) into 250mL Lab Bottle
 
-        - Dissolve fully with shaking or stirring
-    
     + Top up 250mL bottle to 250mL with dH2O
             
         - Rinse Falcon Tube with ~40mL to add any remnants of NaH2PO4-H2O solution
         
-    + This will keep for weeks in 4C fridge
+    + Will keep for weeks in 4C fridge
     
 
 * Notes:
@@ -301,6 +267,7 @@ procedure_2_summary_explain_purpose_of_steps
 knitr::include_graphics("relative/path/to/img.svg")
 
 ```
+
 
 
 * STEP_1_PASSIVE_AB_INCUBATION

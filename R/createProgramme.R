@@ -128,6 +128,9 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
     programmeTitle = gsub("-", " ", gsub("_", " ", programmeName) )
   }
 
+  # Read the status.yml file first into a LIST:
+  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
+  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
   # extract the Author value from the settings.yml file:
   #settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
@@ -139,6 +142,14 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   templateContents <- gsub("{{TITLE}}", programmeTitle, templateContents, fixed=TRUE)
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
 
+  # modify templateContents to include relative link to org index Rmd
+  orgIndexPath = paste(orgPath, .Platform$file.sep, "index_", status[["orgName"]], ".Rmd", sep="")
+  orgTitle <- substring(basename(orgIndexPath), first=1, last=nchar(basename(orgIndexPath))-4)
+  NoteLink <- R.utils::getRelativePath(orgIndexPath, relativeTo=progFile)
+  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  orgLink <- paste("[", orgTitle, "](", NoteLink, ")",  sep="")
+  templateContents <- gsub("{{ORGLINK}}", orgLink, templateContents, fixed=TRUE)
+
   # write to projFile
   fileConn <- file(progFile)
   writeLines(templateContents, fileConn)
@@ -148,10 +159,6 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
 
 
   # Write to the status.yml file the Programme Prefix
-
-  # Read the status.yml file first into a LIST:
-  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
   # add the programmePrefix under the programmeName in the "PROGRAMMES" section of the status.yml List:
   attrs <- list(programmePrefix, programmeTitle, as.character(file.info(progFile)[,5]) )
@@ -168,7 +175,7 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   ### WRITE PROGRAMME TO ORGANISATION INDEX FILE:
 
   # read Organisation Index File: orgName in status
-  orgIndexPath = paste(orgPath, .Platform$file.sep, "index_", status[["orgName"]], ".Rmd", sep="")
+  orgIndexPath <- paste(orgPath, .Platform$file.sep, "index_", status[["orgName"]], ".Rmd", sep="")
   orgIndexFileConn <- file( orgIndexPath )
   orgIndexContents <- readLines( orgIndexFileConn )
   close(orgIndexFileConn)
@@ -178,14 +185,39 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
   progIndexLink <- paste("[", programmeName, "](", NoteLink, ")",  sep="")
 
+  # read string from prog summary to paste into org index
+  summaryStartIndex <- matchLineIndex(orgLink, templateContents) # finds FIRST MATCH
+  #summaryStartIndex <- computeNextLineIndex((summaryStartIndex+1), templateContents )-1
+  summaryEndIndex <- grepLineIndexFrom("----", templateContents, summaryStartIndex)-1
+  summaryStartIndex <- summaryStartIndex+1 # to remove the org link
+
+  if(summaryStartIndex == summaryEndIndex) {
+    # start and end both found line '----' - there is no summary info to add!
+    progSummary <- c(progIndexLink)
+  }
+  else {
+    # fill summary with lines
+    progSummary <- c(progIndexLink)
+
+    for(i in (summaryStartIndex):(summaryEndIndex-1) ) {
+
+      progSummary <- c(progSummary, templateContents[i])
+
+    }
+  }
+  #progIndexLinkBullet <- c(progIndexLink, "", "", "", "## AIMS", "",
+  #                         "", "* LIST_AIMS", "", "", "", "## PROGRESS", "",
+  #                         "", "* ADD_PROGRESS", "" )
+
   # create the Vector, including Whitespace and Summary information:
-  progIndexLinkVector <- c( "", "", "", "---", "", "", "", paste("## ",programmeName, sep=""), "", "", progIndexLink, "" )
+  progIndexLinkVector <- c( "", "", "---", "", "", "", paste("# ",programmeName, sep=""), "", "", progSummary )
 
   # compute place to insert the project note link:
   # get the line selected in the projectDoc - [["originalLine"]]
   line <- computeLastLineIndex(orgIndexContents)
 
   # Insert projectNoteLinkVector to orgIndexContents:
+  #orgIndexContents <- c(orgIndexContents[1:(line-1)], progIndexLinkVector, orgIndexContents[(line+1):length(orgIndexContents)])
   orgIndexContents <- c(orgIndexContents[1:(line-1)], progIndexLinkVector, orgIndexContents[(line+1):length(orgIndexContents)])
 
 

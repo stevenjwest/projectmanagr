@@ -2,7 +2,7 @@
 % Please edit documentation in R/samples-functions.R
 \name{sample_find}
 \alias{sample_find}
-\title{Find Samples Recursively inside a Directory}
+\title{Find Samples Recursively inside a Directory from Rmd}
 \usage{
 sample_find(subProgDir)
 }
@@ -11,7 +11,7 @@ sample_find(subProgDir)
 to find all files that contain the string glob `__sample*`}
 }
 \description{
-This will identify all samples CSVs inside a Direcotry recursively, presenting
+This will identify all samples CSVs inside a Directory recursively, presenting
 a summary Tibble containing each EXISTING sample - data including:
 }
 \details{
@@ -19,5 +19,6 @@ a summary Tibble containing each EXISTING sample - data including:
 * SAMPLE: Composite of all subsampling
 * COUNT: Number of reps of the sample (sections)
 * EXP: The experiment PREFIX ID
+* TITLE: Fill with Experiment Title - will contain the LAB_TREATMENT
 * PATH: The absolute path to the Expeirment DIR
 }

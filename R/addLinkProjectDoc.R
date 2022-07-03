@@ -23,8 +23,6 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
 
   destProjectDocPath <- projectDocPath # rename to make clear this is the DESINTATION Project Doc
 
-  destProjectDocTitle <- basename(destProjectDocPath)
-
 
   # Check destProjectDocPath is a sub-dir in a Programme DIR, which itself is a sub-dir to the root of an ORGANISATION:
   projPath <- dirname(destProjectDocPath)
@@ -61,6 +59,12 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
   destProjDocContents <- readLines( destProjDocFileConn )
   close(destProjDocFileConn)
 
+  # get TITLE from contents
+  destProjectDocTitle <- getProjCompTitle(destProjDocContents)
+  destProjectDocName <- substring( basename(destProjectDocPath), first=1, last=nchar(basename(destProjectDocPath))-4)
+  # ACTUALLY better to link with doc file name!
+   # avoids bug where old links made with old Titles would be missed if title is edited in doc in meantime..
+
 
   # modify the Project Note to add the new Project Doc GOAL/DEL/TASK:
 
@@ -72,7 +76,7 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
   # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!
 
   DocName <- basename(sourceProjectDocPath)
-  DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
+  DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
 
   DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
@@ -165,7 +169,7 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
   NoteLink <- R.utils::getRelativePath(destProjectDocPath, relativeTo=sourceProjectDocPath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
 
-  projectNoteLink <- paste("**[", destProjectDocTitle, "](", NoteLink, ")**",  sep="")
+  projectNoteLink <- paste("**[", destProjectDocName, "](", NoteLink, ")**",  sep="")
 
   # create the Vector, including Whitespace and Summary information:
   projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "",

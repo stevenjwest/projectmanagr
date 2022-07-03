@@ -138,7 +138,7 @@ addProjectNote <- function( projectNotePrefix, projectNoteName, projectNotePath,
   # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!  CONVERT LINKS in update() function
 
   DocName <- basename(projectDocPath)
-  DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
+  DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
 
   DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
@@ -205,8 +205,9 @@ addProjectNote <- function( projectNotePrefix, projectNoteName, projectNotePath,
   # create the projectNoteLink:
   NoteLink <- R.utils::getRelativePath(projNotePath, relativeTo=projectDocPath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  projectNoteLink <- paste("**[", projectNotePrefix, "~ ", projectNoteTitle, "](", NoteLink, ")**",  sep="")
-  #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
+  noteName <- substring( basename(projNotePath), first=1, last=nchar(basename(projNotePath))-4)
+  projectNoteLink <- paste("**[", noteName, "](", NoteLink, ")**",  sep="")
+  #[BMS~314~_AVIL_42SNI_EdU_16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
   # create the Vector, including Whitespace and Summary information:
   projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryBullet, "" )

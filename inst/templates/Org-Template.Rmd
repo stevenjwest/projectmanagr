@@ -14,27 +14,15 @@ output:
 # Overview
 
 
-*Welcome to the _ORGANISATION_!*
+*Welcome to the {{TITLE}} ORGANISATION!*
 
 
-* This _ORG_ serves as the primary documentation for SUCCINCT_DESCRIPTION :
 
-    + Project Planning:
-      
-        - Documenting Project Aims, Scope, Goals
-    
-    + Project Execution:
-    
-        - Documenting experimental work, data processing, analysis
-        
-    + Project Dissemination:
-    
-        - Creating outputs: papers, reports, posters, presentations, etc.
-
-
-* The _ORG_ is managed using `projectmanagr`
+* The Organisation is managed using `projectmanagr`
             
-    + See [projectmanagr overview](docs/projectmanagr_overview.Rmd) for overview
+    + ProjectManagr : R Package for Project Management using R Markdown Documents
+    
+        - See [projectmanagr overview](docs/projectmanagr_overview.Rmd) for usage instructions
 
     + ProjectManagr offers support for working with external drives and data servers for external data storage:
     
@@ -44,7 +32,7 @@ output:
 ---
 
 
-FURTHER_DESCRIPTION_BREAKDOWN_ORG_SPECIFIC_STRUCTURE
+This Organisation defines the following PROGRAMMES that encompass DOMAINS OF PROJECT WORK.
 
 
 ----

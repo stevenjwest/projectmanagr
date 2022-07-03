@@ -8,8 +8,9 @@ datatable_add_group(
   contents,
   group_names,
   datatable_name,
-  groups = "",
-  dt_length = 120
+  groups,
+  dt_length = 120,
+  summarise_reps = FALSE
 )
 }
 \arguments{
@@ -26,6 +27,12 @@ EXIST/BE DECLARED BEFORE rmd_line in rmd_path.}
 defined in group_names}
 
 \item{dt_length}{Int of data table max length in characters - default 120.}
+
+\item{summarise_reps}{Boolean to indicate whether reps should be summarised in
+the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
+otherwise if TRUE, all reps are summarised using r vector index syntax on
+one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
+indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.}
 }
 \description{
 Adds Groups to an EXISTING Data Table in the character vector `contents`.

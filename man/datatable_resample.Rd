@@ -4,14 +4,7 @@
 \alias{datatable_resample}
 \title{Resample a set of samples}
 \usage{
-datatable_resample(
-  contents,
-  datatable_name,
-  IDs = "ALL",
-  resample_vector = c("RS_CODES"),
-  rep_vector = c(1),
-  dt_length = 120
-)
+datatable_resample(contents, datatable_name, resample_vector, dt_length = 120)
 }
 \arguments{
 \item{contents}{character vector containing current document with
@@ -22,43 +15,31 @@ EXIST/BE DECLARED BEFORE rmd_line in rmd_path.  The resampling will be
 default include all sample IDs from this datatable.  The user may then
 delete and sample IDs as is appropriate.}
 
-\item{IDs}{A character vector of VALID sample IDs.  These must exist in the
-selected datatable_name, and NOT alreayd be resampled!  Default is "ALL", which
-translates to all IDs being resampled.}
-
 \item{resample_vector}{A character vector that contains all the resample
-codes to be added to each sample/rep in the resample table. Default val is
-"RS_CODES".}
-
-\item{rep_vector}{A numeric vector that contains the number of reps for each
-sample ID in order. Default is 1 rep for each sample. Typically this is
-edited in the resample table AFTER it has been created!}
+codes to be added to each sample/rep in the resample table.}
 
 \item{dt_length}{Int of data table max length in characters - default 120.}
 }
 \description{
-First column contains a list of sample IDs, then resample column is used to
-denote the resampling.  Data values in the cells encode the new sub-samples
-derived from each sample.
+Creates a resample datatable consisting of: sample ID column containing all
+EXISTING sample IDs, sample reps column (if applicable) containing all EXISTING
+sample reps, and then the resample and rep columns, which represent the
+resampling.
 }
 \details{
-The function assumes all EXISTING reps of the current samples are going to
-be resampled: if more than one rep exists for any of the samples, this table
- will add the first rep column and fill it with all the EXISTING rep numbers.
+The function assumes all EXISTING samples and reps from selected datatable are
+resampled: ALL are added to the output resample datatable.
 
-The resampling function supports the ability to resample a SUBSET of samples
-from selected datatable.  A subset of valid IDs from the datatable can be
-passed to this function, and only these will be displayed in the resample
-table.  Alternatively, the user is free to DELETE sample IDs from the resulting
-resample table, and the deleted samples will no longer be resampled.
+The User is free to DELETE sample IDs and reps from the resample table, and
+the deleted samples will no longer be resampled when read into tibbles.
 
-This functionality means the user can resample a SUBSET of samples in an
-experiment (perhaps as a pilot - for example resampling a block of CNS at
+This functionality means the user can resample an INITIAL SUBSET of samples
+in an experiment (perhaps as a pilot - for example resampling a block of CNS at
 different thicknesses 100um 200um 400um 500um etc), and then later to resample
 the remaining samples in the experiment (eg. now the pilot shows 200um is the
 best thickness, all other samples are resampled to 200um thick sections).
 
 These two resampling events can be documented in two separate resample tables,
-and these will be collated into a single resample/rep columns in the finally
+and these will be collated into a single resample/rep columns in the final
 compiled datatable tibble.
 }

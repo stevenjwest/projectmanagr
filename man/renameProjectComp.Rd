@@ -2,7 +2,7 @@
 % Please edit documentation in R/renameProjectComp.R
 \name{renameProjectComp}
 \alias{renameProjectComp}
-\title{Rename a Project Comp}
+\title{Rename a Project Component}
 \usage{
 renameProjectComp(
   oldProjectCompPath,
@@ -11,13 +11,15 @@ renameProjectComp(
 )
 }
 \arguments{
-\item{oldProjectCompPath}{defines the NEW Project Comp File name}
+\item{oldProjectCompPath}{defines the path to the Project Comp - should point to the Project Comp Rmd file}
+
+\item{newProjectCompName}{defines the NEW Project Comp File name}
 
 \item{newProjectCompTitle}{defines the NEW Project Comp Title - written to its Rmd file.  By default this
 is the oldProjectCompPath, with spaces replacing "-" and "_".}
 }
 \description{
-Renames a Project Comp at oldProjectCompPath with file name (oldProjectCompPath), and newProjectCompTitle.
+Renames a Project Component at oldProjectCompPath with file name newProjectCompName, and newProjectCompTitle.
 }
 \details{
 This also modifies all LINKS to this file throughout the Organisation - updating them to use the new

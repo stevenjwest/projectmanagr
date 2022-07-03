@@ -68,6 +68,13 @@ addinDatatableAddData <- function() {
           fillRow(
             helpText( p('line: ', row, align="center") ) ),
 
+          fillRow( h4("Choose datatable:") ),
+
+          fillRow( selectInput("dt", "Select Datatable",
+                               choices = lt, selected = 1, width="100%")  ),
+
+          fillRow( h4("Choose datatable type: ") ),
+
           fillRow( p("sample-first: First col. is filled with all sample or group IDs, subsequent columns are data cols. specified below.") ),
 
           fillRow( p("variable-first: First col. is filled with all data cols. specified below, subsequent columns are sample or group IDs") ),
@@ -77,12 +84,7 @@ addinDatatableAddData <- function() {
           fillRow( selectInput("type", "Select Datatable Type",
                                choices = type, selected = 1, width="100%")  ),
 
-          fillRow( p("Choose which datatable the new data columns will be added to.") ),
-
-          fillRow( selectInput("dt", "Select Datatable",
-                               choices = lt, selected = 1, width="100%")  ),
-
-          fillRow( p("Choose which sample or group IDs the new data columns will be added to: ") ),
+          fillRow( h4("Choose sample/group IDs: ") ),
 
           fillRow( p("    ALL : A single ID, ALL, is used - will add all data to all sample IDs.") ),
 
@@ -93,11 +95,13 @@ addinDatatableAddData <- function() {
           fillRow( selectInput("id", "Select IDs or Groups",
                                choices = ltid, selected = 1, width="100%")  ),
 
-          fillRow( p("Define the data column names - these MUST be unique to this new datatable.") ),
+          fillRow( p("Define data column names - these MUST be unique to this new datatable.") ),
 
           fillRow(  textInput("data_cols", "Data Cols. to add (space-separated):", width="100%")  ),
 
-          fillRow(  span( textOutput("warningName"), style="color:red")  )
+          fillRow(  span( textOutput("warningName"), style="color:red")  ),
+
+          fillRow( checkboxInput("summarise_reps", "Summarise Sample Reps"))
 
         )
       )
@@ -105,6 +109,7 @@ addinDatatableAddData <- function() {
 
     server <- function(input, output, session) {
 
+       # modify group IDs if new dt is selected
       observe({
 
         x <- input$dt # returns CHARACTER - cast to numeric to use as index!!
@@ -127,6 +132,44 @@ addinDatatableAddData <- function() {
               )
         }
       })
+
+       # modify group IDs if different dt type is selected
+        # variable-first does NOT support all-IDs anymore!
+       observe({
+
+          x <- input$type # returns CHARACTER - cast to numeric to use as index!!
+
+          #print( paste0("x: ", x) )
+
+          if( is.null(x) ) {
+             # do nothing
+          } else {
+             xn <- as.numeric(x)
+             if( xn == 2 || xn == 3 ) {
+                # must convert x to numeric as its returned as a character!
+                gdt <- dplyr::select( dts[[ as.numeric(x) ]], dplyr::starts_with("group-") )
+                ltid <- as.list(1:(length(gdt)+2) )
+                names(ltid) <- c("ALL", names(gdt))
+                # update select input with new ltid:
+                updateSelectInput(session, "id",
+                                  label = "Select IDs or Groups",
+                                  choices = ltid,
+                                  selected = 1
+                )
+             } else {
+                # must convert x to numeric as its returned as a character!
+                gdt <- dplyr::select( dts[[ as.numeric(x) ]], dplyr::starts_with("group-") )
+                ltid <- as.list(1:(length(gdt)+2) )
+                names(ltid) <- c("ALL", "all-IDs", names(gdt))
+                # update select input with new ltid:
+                updateSelectInput(session, "id",
+                                  label = "Select IDs or Groups",
+                                  choices = ltid,
+                                  selected = 1
+                )
+             }
+          }
+       })
 
       observeEvent(input$done, {
 
@@ -167,13 +210,13 @@ addinDatatableAddData <- function() {
               ids_vector <- "ALL"
               group_vector <- ids_vector
 
-            } else if( as.numeric(input$id) == 2 ) { # sample IDs
+            } else if( as.numeric(input$id) == 2 ) { # names(ltid)[as.numeric(input$id)] == "all-IDs" ) { # sample IDs
                cat( "\n  group_vector : ID" )
               ids_vector <- dts[[ as.numeric(input$dt) ]]$ID
               group_vector <- ids_vector
               cat( "\n  group_vector : ", group_vector )
 
-            } else if( as.numeric(input$id) > 2 ) { # a group col has been selected
+            } else { # a group col has been selected
 
                cat( "\n  group_vector : COL" )
                # retrieve the group names AGAIN - as its not updated globally from previous observation function!
@@ -196,7 +239,7 @@ addinDatatableAddData <- function() {
                # currently automatically uses all sample IDs
                # cannot choose any group IDs or special group ALL
 
-               cat( "\npSAMPLE-FIRST LAYOUT")
+               cat( "\nSAMPLE-FIRST LAYOUT")
                cat( "\npath: ", path)
                cat( "\nline: ", row)
                cat( "\ndata_cols: ", data_cols)
@@ -206,8 +249,10 @@ addinDatatableAddData <- function() {
                 rmd_path = path,
                 rmd_line = row,
                 data_cols = data_cols,
+                datatable_name =  names(dts)[ as.numeric(input$dt) ],
                 ids_vector = ids_vector,
-                datatable_name =  names(dts)[ as.numeric(input$dt) ]
+                dt_length = 120,
+                summarise_reps = input$summarise_reps
                 )
 
             } else if( as.numeric(input$type) == 2 ) {

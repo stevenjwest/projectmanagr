@@ -3,3 +3,6 @@
   RunCompileWithUpdate: yes
   htmlDocTheme: united
   site: ~/site/
+  gadgetWidth: 1000
+  gadgetHeight: 800
+  rstudioInternalStateDir: ~/.local/share/rstudio

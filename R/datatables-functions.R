@@ -955,6 +955,11 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
                                         ids_vector="", dt_length = 120, summarise_reps = FALSE  ) {
 
 
+  # DEFINE NAMED CONSTANTS
+  # GET DATATABLES AND CHECK VALIDITY
+  # DEFINE IDs and REPs
+
+
   cat( "\nprojectmanagr::datatable_add_data_samples():\n" )
 
   # CHECK data_cols are all unique
@@ -991,132 +996,38 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
   if( length(ids_vector)== 1 && ids_vector == "" ) {
     # if this is BLANK, define IDs as ALL IDs that EXIST:
 
-    # REPS PROCESSING - want each sample ID to be listed with REPS in succinct format
-     # format is using R vector syntax - 1:10 - with any gaps indicated with commas 1,3:6,8:10,15
-      # eg.
-       #> x <- seq(1,20)
-       #> x[ c(1,3:6,8:10,15)]
-
-    # FIRST split whether rep col exists:
+    # FIRST split whether rep col exists && summairse_reps is TRUE:
     rep_exists <- any( names( datatables[[ datatable_name ]]) == "rep" )
 
     if( summarise_reps == FALSE || rep_exists == FALSE) {
 
-        dtIDs <- datatables[[ datatable_name ]]$ID # get ALL IDs from the selected dt
-        IDs <- c()
-
-        # CHECK if datatable IDs have been RESAMPLED or EXPORTED
-        dc <- c("resample", names(datatables[[datatable_name]]) )
-
-        if( anyDuplicated(dc) != 0 ) {
-          # if any cols are duplicated means samples from this datatable have been resampled before!
-           # i.e resample col EXISTS
-           # so now check each sample ID - if it has NOT been resampled, add it to IDs
-
-          for( i in 1:length(dtIDs) ) {
-            if( is.na( datatables[[datatable_name]][["resample"]][i] ) == TRUE  ) {
-              IDs <- c(IDs, dtIDs[i])
-            }
-
-          }
-        } else {
-          # all IDs in datatable are VALID - so copy them to IDs
-          IDs <- datatables[[ datatable_name ]]$ID
-        }
+      # get ALL EXISTING IDs - all that have NOT been exported, disposed, resampled
+      if( rep_exists == TRUE ) { # also get EXISTING REPs if rep_exists
+        ID_rep <- check_divisions_ids_reps( datatables[[datatable_name]] )
+        IDs <- ID_rep$IDs
+        REPs <- ID_rep$REPs
+      } else {
+        IDs <- check_divisions_ids( datatables[[datatable_name]] )
+      }
 
     } else if( summarise_reps == TRUE && rep_exists == TRUE ) {
        # rep_exists is TRUE - so need to process IDs and REPs accordingly
 
-      dtIDs <- datatables[[ datatable_name ]]$ID # get ALL IDs/REPs from the selected dt
-      dtREPs <- datatables[[ datatable_name ]]$rep
+      # get ALL EXISTING IDs & REPs - all that have NOT been exported, disposed, resampled
+      ID_rep <- check_divisions_ids_reps( datatables[[datatable_name]] )
+      IDs <- ID_rep$IDs
+      REPs <- ID_rep$REPs
 
-      IDs <- c() # initiate blank vectors to add to
-      REPs <- c()
-
-      # CHECK if datatable IDs have been RESAMPLED or EXPORTED
-      dc <- c("resample", names(datatables[[datatable_name]]) )
-
-      if( anyDuplicated(dc) != 0 ) {
-        # if any cols are duplicated means samples from this datatable have been resampled before!
-        # i.e resample col EXISTS
-        # so now check each sample ID - if it has NOT been resampled, add it to IDs
-
-        for( i in 1:length(dtIDs) ) {
-          if( is.na( datatables[[datatable_name]][["resample"]][i] ) == TRUE  ) {
-            IDs <- c(IDs, dtIDs[i])
-            REPs <- c(REPs, dtREPs[i])
-          }
-        }
-
-      } else {
-        # all IDs in datatable are VALID - so copy them to IDs
-        IDs <- datatables[[ datatable_name ]]$ID
-        REPs <- datatables[[ datatable_name ]]$rep
-      }
-
-      # NOW process IDs and REPs so there is ONE PER ID
-        # convert reps to r vector syntax : 1:3,5,8:10 etc
-      IDs_unique <- unique(IDs)
-      IDs_dup <- table(IDs) # gets the COUNTS of duplicated IDs - use to loop through each ID value
-
-      REPs_unique <- c() # use to store the new reps string
-
-      start_index <- 1
-      seq_seen <- FALSE
-      for( g in 1:length(IDs_dup) ) { # loop each unique ID val
-
-        REPs_unique <- c(REPs_unique, REPs[start_index]) # ALWAYS will have the first val - must exist
-
-        for(h in (start_index+1):sum(IDs_dup[1:g]) ) { # loop through each INSTANCE of ID - to look at the REPs val for this ID
-
-          if( ( as.numeric(REPs[h]) )  ==  ( as.numeric(REPs[h-1]) + 1 ) ) {
-            # integers form a SEQUENCE
-            # mark a sequence has been seen:
-            seq_seen <- TRUE
-
-            if( h == sum(IDs_dup[1:g]) ) {
-              cat("end")
-              # FINALLY - deal with the end of sequence if seq_seen:
-              if(seq_seen == TRUE) {
-                REPs_unique[g] <- paste0(REPs_unique[g], ":", REPs[h])
-              }
-            }
-          } else if( ( as.numeric(REPs[h]) )  !=  ( as.numeric(REPs[h-1]) + 1 ) ) {
-            # integers BREAK a sequence
-             # will add a COMMA and the current val in REPs (REPs[h]), but only after adding the seq to the string
-
-            if(seq_seen == FALSE) {
-              REPs_unique[g] <- paste0(REPs_unique[g], ",", REPs[h])
-            } else {
-              REPs_unique[g] <- paste0(REPs_unique[g], ":", REPs[h-1], ",", REPs[h])
-            }
-            seq_seen <- FALSE # reset to FALSE - as no seq has been seen in this new run!
-          } else if( h == sum(IDs_dup[1:g]) ) {
-
-            # FINALLY - deal with the end of sequence if seq_seen:
-            if(seq_seen == TRUE) {
-              REPs_unique[g] <- paste0(REPs_unique[g], ":", REPs[h-1], ",", REPs[h])
-            }
-          }
-
-        }
-
-        start_index <- sum(IDs_dup[1:g]) + 1 # now restart start_index to start of NEXT IDs_dup val!
-
-      }
-
-      # NOW IDs_unique gives each existing ID only ONCE
-      # AND REPs_unique gives the r vector formatted string of reps : 1:3,5,8:10
-
-      # set these to the original variables
-      IDs <- IDs_unique
-      REPs <- REPs_unique
-
+      # NOW process IDs and REPs so there is ONE PER ID - summarise REPs!
+      ID_rep <- summarise_id_rep(IDs, REPs)
+      IDs <- ID_rep$IDs
+      REPs <- ID_rep$REPs
 
     }
 
   } else {
-    # ids_vector contains either ALL, <group-names> <ID-names>
+
+    # ids_vector contains either ALL, <group-names>, <ID-names>
     # CHECK they are VALID
 
     gdt <- dplyr::select(datatables[[datatable_name]], dplyr::starts_with("group-"))
@@ -1126,11 +1037,19 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
       # all good - set IDs to ALL
       IDs <- ids_vector[1]
 
+      # NEED TO SUMMARISE REPS IF THEY EXIST:
+      rep_exists <- any( names( datatables[[ datatable_name ]]) == "rep" )
+
+      if(rep_exists == TRUE) {
+        summarise_reps <- TRUE
+        REPs <- "ALL" # use special summary syntax - ALL - for the rep col!
+      }
+
     } else {
       # check each ids_vector - first through all IDs, then through all groups
 
-      # start by checking the first value:
-      if( any(iddt == ids_vector) ) {
+      if( any(iddt == ids_vector[1]) ) { # CHECK IDs - only check first index to prevent subtle bug
+            # comparing vectors of differnet lengths does so with recycling, which may miss the value!
 
         pass <- TRUE
         for(i in 1:length(ids_vector) ) {
@@ -1144,24 +1063,56 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
         }
 
         # if this passes, set IDs to ids_vector
-        IDs <- ids_vector
+        IDs <- ids_vector # THIS MAY BE A SUBSET OF IDs!!
 
-      } else if( any(gdt == ids_vector) ) {
+        # NEED TO GET REPS IF THEY EXIST:
+        rep_exists <- any( names( datatables[[ datatable_name ]]) == "rep" )
 
-        # check ALL ids_vectors match iddt vals!
+        if( rep_exists == TRUE) { # for each ID in IDs, get the VALID reps:
+           # first get all IDs/REPs
+          ID_rep <- check_divisions_ids_reps( datatables[[datatable_name]] )
+          # now filter through ID_rep$IDs/REPs saving only ones which match IDs
+          IDs2 <- c()
+          REPs2 <- c()
+          for(o in 1:length( ID_rep$IDs ) ) {
+            if( any(ID_rep$IDs[o] == IDs) ) {
+              IDs2 <- c(IDs2, ID_rep$IDs[o])
+              REPs2 <- c(REPs2, ID_rep$REPs[o])
+            }
+          }
+          # and set IDs and REPs to these new filtered values
+          IDs <- IDs2
+          REPs <- REPs2 # now these contain the subset of IDs and their REPs
+        }
 
-        # get index of th group dt first
+        if(summarise_reps == TRUE) {
+          # summarise the REPs variable (and IDs variable!)
+          ID_rep <- summarise_id_rep(IDs, REPs)
+          IDs <- ID_rep$IDs
+          REPs <- ID_rep$REPs
+        }
+
+      } else if( any(sort( unlist(gdt)[ !is.na(unlist(gdt)) ] ) == ids_vector[1]) ) { # CHECK GROUPs
+          # this first checks if the first val in ids_vector is in gdt AT ALL
+
+        # check ALL ids_vectors match gdt vals!
+
+        # get index of the group dt first
         gdtindex <- 0
-        for(i in 1:length(gdt) ) {
-          if( any(gdt[[i]] == ids_vector) ) {
-            gdtindex <- i
+        for(q in 1:length(gdt) ) {
+          # remove any NAs first
+          gdt2 <- gdt[[q]][!is.na(gdt[[q]])]
+          if( any(gdt2 == ids_vector[1]) ) { # only compare to FIRST ids_vector index
+              # comparing vectors of differnet lengths does so with recycling, which may miss the value!
+            gdtindex <- q
           }
         }
 
         # now check each ids_vector exists in this gdt vector
+        gdt2 <- gdt[[gdtindex]][!is.na(gdt[[gdtindex]])]
         pass <- TRUE
         for(i in 1:length(ids_vector) ) {
-          if(any(gdt[[gdtindex]] == ids_vector[i]) == FALSE) {
+          if(any(gdt2 == ids_vector[i]) == FALSE) {
             pass <- FALSE
           }
         }
@@ -1190,12 +1141,11 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
   }
 
 
-
-  # ?? THEN check col rep exists - if so must copy the REPS to the new datatable
+  # THEN check col rep exists - if so must copy the REPS to the new datatable
    # col rep is what is defined when a resampling generates many SECTIONS or REPS
    # its NOT the same as reps!
   # THIS ENSURES REPS ARE SUPPORTED IN ADD DATA TO SAMPLES!
-  if( any( names( datatables[[ datatable_name ]] ) == "rep" ) == TRUE ) {
+  if( rep_exists == TRUE ) {
     # add rep col to data_cols to add!
     data_cols <- c("rep", data_cols)
   }
@@ -1206,19 +1156,20 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
   for(i in 1:length(data_cols) ) {
     # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
     if( data_cols[i] == "rep" ) {
-      if( summarise_reps == TRUE && rep_exists == TRUE ) { # summarising reps to r vector format
+
+      #if( summarise_reps == TRUE && rep_exists == TRUE ) { # summarising reps to r vector format
           # format stored in string - REPs
         # calc width based on REPs nchar!
         data_col_wds[i] <- pmax(nchar(data_cols[i])+4,
                                 max(nchar(REPs)),
                                 5)
 
-      } else {
+      #} else {
       # need to calc width based on the widths of the CURRENT REP col in datatables
-      data_col_wds[i] <- pmax(nchar(data_cols[i])+4,
-                              max(nchar(datatables[[ datatable_name ]][[ "rep" ]])),
-                              5)
-      }
+      #data_col_wds[i] <- pmax(nchar(data_cols[i])+4,
+       #                       max(nchar(datatables[[ datatable_name ]][[ "rep" ]])),
+        #                      5)
+      #}
     } else if( endsWith(data_cols[i], "_dt") ) {
       data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 18)
     } else {
@@ -1232,12 +1183,15 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
     # add default data vals to the data col for each ID
     # first compute the most appropriate default data val to add - based on width of column
     if( data_cols[i] == "rep" ) {
-      if( summarise_reps == TRUE && rep_exists == TRUE ) { # summarising reps to r vector format
+
+      #if( summarise_reps == TRUE && rep_exists == TRUE ) { # summarising reps to r vector format
         # format stored in string - REPs
         default_data_vals[[i]] <- REPs
-      } else { # just use the rep col from datatable:
-      default_data_vals[[i]] <- datatables[[ datatable_name ]][[ "rep" ]]
-      }
+
+      #} else { # just use the rep col from datatable:
+       # default_data_vals[[i]] <- datatables[[ datatable_name ]][[ "rep" ]]
+      #}
+
     } else if( endsWith(data_cols[i], "_dt") ) {
       default_data_vals[[i]] <- rep(obs_default_val_dt, length(IDs) )
     } else if( data_col_wds[i] > 9 ) {
@@ -1255,6 +1209,76 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
 
   # return
   data_tables
+
+}
+
+
+#'
+#'
+#'
+summarise_id_rep <- function(IDs, REPs) {
+
+  # convert reps to r vector syntax : 1:3,5,8:10 etc
+  IDs_unique <- unique(IDs)
+  IDs_dup <- table(IDs) # gets the COUNTS of duplicated IDs - use to loop through each ID value
+
+  REPs_unique <- c() # use to store the new reps string
+
+  start_index <- 1
+  seq_seen <- FALSE
+  for( g in 1:length(IDs_dup) ) { # loop each unique ID val
+
+    REPs_unique <- c(REPs_unique, REPs[start_index]) # ALWAYS will have the first val - must exist
+
+    for(h in (start_index+1):sum(IDs_dup[1:g]) ) { # loop through each INSTANCE of ID - to look at the REPs val for this ID
+
+      if( ( as.numeric(REPs[h]) )  ==  ( as.numeric(REPs[h-1]) + 1 ) ) {
+        # integers form a SEQUENCE
+        # mark a sequence has been seen:
+        seq_seen <- TRUE
+
+        if( h == sum(IDs_dup[1:g]) ) {
+          #cat("end")
+          # FINALLY - deal with the end of sequence if seq_seen:
+          if(seq_seen == TRUE) {
+            REPs_unique[g] <- paste0(REPs_unique[g], ":", REPs[h])
+          }
+        }
+      } else if( ( as.numeric(REPs[h]) )  !=  ( as.numeric(REPs[h-1]) + 1 ) ) {
+        # integers BREAK a sequence
+        # will add a COMMA and the current val in REPs (REPs[h]), but only after adding the seq to the string
+
+        if(seq_seen == FALSE) {
+          REPs_unique[g] <- paste0(REPs_unique[g], ",", REPs[h])
+        } else {
+          REPs_unique[g] <- paste0(REPs_unique[g], ":", REPs[h-1], ",", REPs[h])
+        }
+        seq_seen <- FALSE # reset to FALSE - as no seq has been seen in this new run!
+      } else if( h == sum(IDs_dup[1:g]) ) {
+
+        # FINALLY - deal with the end of sequence if seq_seen:
+        if(seq_seen == TRUE) {
+          REPs_unique[g] <- paste0(REPs_unique[g], ":", REPs[h-1], ",", REPs[h])
+        }
+      }
+
+    }
+
+    start_index <- sum(IDs_dup[1:g]) + 1 # now restart start_index to start of NEXT IDs_dup val!
+
+  }
+
+  # NOW IDs_unique gives each existing ID only ONCE
+  # AND REPs_unique gives the r vector formatted string of reps : 1:3,5,8:10
+
+  # set these to the original variables
+  IDs <- IDs_unique
+  REPs <- REPs_unique
+
+  # return as named list:
+  lst <- list(IDs, REPs)
+  names(lst) <- c("IDs", "REPs")
+  lst
 
 }
 
@@ -1286,9 +1310,15 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
 #'
 #' @param dt_length Int of data table max length in characters - default 120.
 #'
+#' @param summarise_reps Boolean to indicate whether reps should be summarised in
+#' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
+#' otherwise if TRUE, all reps are summarised using r vector index syntax on
+#' one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
+#' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.
+#'
 #' @export
 datatable_add_group_rmd <- function(rmd_path, rmd_line, group_names, datatable_name,
-                                    groups="", dt_length = 120 ) {
+                                    groups, dt_length = 120, summarise_reps = FALSE  ) {
 
   cat( "\nprojectmanagr::datatable_group_rmd():\n" )
 
@@ -1321,7 +1351,7 @@ datatable_add_group_rmd <- function(rmd_path, rmd_line, group_names, datatable_n
   rmd_contents <- readLines( rmd_file_conn )
   close(rmd_file_conn)
 
-  data_tables <- datatable_add_group( rmd_contents[1:rmd_line], group_names, datatable_name, groups, dt_length )
+  data_tables <- datatable_add_group( rmd_contents[1:rmd_line], group_names, datatable_name, groups, dt_length, summarise_reps )
 
   # write these to the file:
   cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
@@ -1359,9 +1389,15 @@ datatable_add_group_rmd <- function(rmd_path, rmd_line, group_names, datatable_n
 #'
 #' @param dt_length Int of data table max length in characters - default 120.
 #'
+#' @param summarise_reps Boolean to indicate whether reps should be summarised in
+#' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
+#' otherwise if TRUE, all reps are summarised using r vector index syntax on
+#' one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
+#' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.
+#'
 #' @export
 datatable_add_group <- function( contents, group_names, datatable_name,
-                                  groups="", dt_length = 120  ) {
+                                  groups, dt_length = 120, summarise_reps = FALSE   ) {
 
 
   cat( "\nprojectmanagr::datatable_add_groups():\n" )
@@ -1396,15 +1432,44 @@ datatable_add_group <- function( contents, group_names, datatable_name,
     # no datatable of name datatable_name to add data to - STOP
     stop( paste0("  No datatable of this name exists in vector: ", datatable_name ) )
   }
-  # TODO
-   # THEN check the table has not been exported or resampled:
 
   # ?? THEN check col ID exists ??:
   if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
     stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
   }
 
-  IDs <- datatables[[ datatable_name ]]$ID
+
+  # get IDs/REPs
+
+  # FIRST split whether rep col exists && summairse_reps is TRUE:
+  rep_exists <- any( names( datatables[[ datatable_name ]]) == "rep" )
+
+  if( summarise_reps == FALSE || rep_exists == FALSE) {
+
+    # get ALL EXISTING IDs - all that have NOT been exported, disposed, resampled
+    if( rep_exists == TRUE ) { # also get EXISTING REPs if rep_exists
+      ID_rep <- check_divisions_ids_reps( datatables[[datatable_name]] )
+      IDs <- ID_rep$IDs
+      REPs <- ID_rep$REPs
+    } else {
+      IDs <- check_divisions_ids( datatables[[datatable_name]] )
+    }
+
+  } else if( summarise_reps == TRUE && rep_exists == TRUE ) {
+    # rep_exists is TRUE - so need to process IDs and REPs accordingly
+
+    # get ALL EXISTING IDs & REPs - all that have NOT been exported, disposed, resampled
+    ID_rep <- check_divisions_ids_reps( datatables[[datatable_name]] )
+    IDs <- ID_rep$IDs
+    REPs <- ID_rep$REPs
+
+    # NOW process IDs and REPs so there is ONE PER ID - summarise REPs!
+    ID_rep <- summarise_id_rep(IDs, REPs)
+    IDs <- ID_rep$IDs
+    REPs <- ID_rep$REPs
+
+  }
+
 
   # CHECK none of data_cols already exists in datatables[[datatable_name]]
   dc <- c(data_cols, names(datatables[[datatable_name]]) )
@@ -1413,16 +1478,43 @@ datatable_add_group <- function( contents, group_names, datatable_name,
     stop( paste0("  Column headers already exist in datatable: ", dc[duplicated(dc)]) )
   }
 
+
+  # THEN check col rep exists - if so must copy the REPS to the new datatable
+  # col rep is what is defined when a resampling generates many SECTIONS or REPS
+  # its NOT the same as reps!
+  # THIS ENSURES REPS ARE SUPPORTED IN ADD DATA TO SAMPLES!
+  if( any( names( datatables[[ datatable_name ]] ) == "rep" ) == TRUE ) {
+    # add rep col to data_cols to add!
+    data_cols <- c("rep", data_cols)
+  }
+
+
   # determine default widths of data cols
   data_col_wds <- c()
   for(i in 1:length(data_cols) ) {
     # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
-    if( endsWith(data_cols[i], "_dt") ) {
+    if( data_cols[i] == "rep" ) {
+
+      #if( summarise_reps == TRUE && rep_exists == TRUE ) { # summarising reps to r vector format
+      # format stored in string - REPs
+      # calc width based on REPs nchar!
+      data_col_wds[i] <- pmax(nchar(data_cols[i])+4,
+                              max(nchar(REPs)),
+                              5)
+
+      #} else {
+      # need to calc width based on the widths of the CURRENT REP col in datatables
+      #data_col_wds[i] <- pmax(nchar(data_cols[i])+4,
+      #                       max(nchar(datatables[[ datatable_name ]][[ "rep" ]])),
+      #                      5)
+      #}
+    } else if( endsWith(data_cols[i], "_dt") ) {
       data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 18)
     } else {
       data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 5) #pmax ensures min col width is 5!
     }
   }
+
 
   # set the groups value to an appropriate list of vectors with default values
   if( groups[1] == "" ) {
@@ -1431,7 +1523,10 @@ datatable_add_group <- function( contents, group_names, datatable_name,
     for( i in 1:length(data_cols) ) {
       # add default data vals to the data col for each ID
       # first compute the most appropriate default data val to add - based on width of column
-      if( endsWith(data_cols[i], "_dt") ) {
+      if( data_cols[i] == "rep" ) {
+        default_data_vals[[i]] <- REPs
+
+      } else if( endsWith(data_cols[i], "_dt") ) {
         default_data_vals[[i]] <- rep(obs_default_val_dt, length(IDs) )
       } else if( data_col_wds[i] > 9 ) {
         default_data_vals[[i]] <- rep(obs_default_val_8, length(IDs) )
@@ -1446,13 +1541,24 @@ datatable_add_group <- function( contents, group_names, datatable_name,
   } else {
     # must ensure that each VECTOR in each List element of groups is of length(IDs)!
     for( i in 1:length(data_cols) ) {
-      vec <- groups[[i]]
-      groups[[i]] <- rep(vec, length(IDs))[1:length(IDs)]
+
+      if( data_cols[i] == "rep" ) { # add reps to groups list at START!
+        groups2 <- list()
+        groups2[[1]] <- REPs
+        for(q in 1:length(groups) ) {
+          groups2[[(q+1)]] <- groups[[q]]
+        }
+        groups <- groups2
+
+      } else { # need to duplicate out the groups vals to fill IDs length (also REPs length if it exists!)
+        vec <- groups[[i]]
+        groups[[i]] <- rep(vec, length(IDs))[1:length(IDs)]
+      }
     }
   }
 
 
-  data_tables <- build_datatable("ID", IDs, group_names, groups, "GROUP",
+  data_tables <- build_datatable("ID", IDs, data_cols, groups, "GROUP",
                                  datatable_name, dt_length,
                                  DATATABLE_SPACER_CHAR)
 
@@ -1801,6 +1907,11 @@ datatable_add_data_variables <- function(contents, var_names, datatable_name, gr
 
   } else if( length(group_names) == length(dt$ID) && all( group_names_comp_ids ==  sort(dt$ID) ) ) {
 
+    # SHOULD NOT ALLOW THIS
+      # gets complicated to handle if IDs have reps
+      # so can only add ALL or groups to this kind of datatable..
+    stop( paste0("  group names  CANNOT be IDs for var-first layout - use sample-first layout: datatables_add_data_samples"))
+
     cat( "  group_names are IDs\n" )
 
   } else {
@@ -1837,7 +1948,7 @@ datatable_add_data_variables <- function(contents, var_names, datatable_name, gr
   data_col_wds <- c()
   for(i in 1:length(group_names) ) {
     # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
-    if( endsWith(group_names[i], "_dt") ) {
+    if( any(endsWith(data_cols, "_dt")) ) { # if any data_col is dt add the dt length to wds
       data_col_wds[i] <- 18
     } else {
       data_col_wds[i] <- pmax(nchar(group_names[i])+2, 5) #pmax ensures min col width is 5!
@@ -1849,7 +1960,7 @@ datatable_add_data_variables <- function(contents, var_names, datatable_name, gr
   for( i in 1:length(group_names) ) {
     # add default data vals to the data col for each ID
     # first compute the most appropriate default data val to add - based on width of column
-    if( endsWith(group_names[i], "_dt") ) {
+    if( any(endsWith(data_cols, "_dt"))) { # if any data_col is _dt add the dt default val
       default_data_vals[[i]] <- rep(obs_default_val_dt, length(IDs) )
     } else if( data_col_wds[i] > 9 ) {
       default_data_vals[[i]] <- rep(obs_default_val_8, length(IDs) )
@@ -2023,10 +2134,22 @@ datatable_add_data_timetable <- function(contents, step_names, datatable_name, g
   # or it is the special group `ALL` - so just check this
   # or the group names are the names from a group declared in samples datatable
   if( length(group_names)==1 && group_names[1] == "ALL" ) {
+
+     # no need to use timetable with ALL - so STOP and suggest var-first datatable
     cat( "  group_names is 'ALL'\n" )
+    stop("  Cannot add timetable to ALL - use variable-first or sample-first layout: ")
+
   } else if( length(group_names) == length(dt$ID) && all( sort(group_names) ==  sort(dt$ID) ) ) {
+
+    # SHOULD NOT ALLOW THIS
+     # gets complicated to handle if IDs have reps
+      # so can only add ALL or groups to this kind of datatable..
+    stop( paste0("  group names CANNOT be IDs for timetable layout - create new group col and use this for timetable layout."))
+
     cat( "  group_names are IDs\n" )
+
   } else {
+
     # check all group cols
     group_names_match_group_cols <- c()
     for( i in 1:length(gdt) ) {
@@ -2090,52 +2213,33 @@ datatable_add_data_timetable <- function(contents, step_names, datatable_name, g
 
 
 
-#' Resample a set of samples and insert into Rmd
+#' Dispose of a set of Samples from Rmd
 #'
-#' First column contains a list of sample IDs, then resample column is used to
-#' denote the resampling.  Data values in the cells encode the new sub-samples
-#' derived from each sample.
+#' This generates a new datatable that disposes samples - indicates they no
+#' longer exist.
 #'
-#' The resampling function supports the ability to resample a SUBSET of samples
-#' from selected datatable.  A subset of valid IDs from the datatable can be
-#' passed to this function, and only these will be displayed in the resample
-#' table.  Alternatively, the user is free to DELETE sample IDs from the resulting
-#' resample table, and the deleted samples will no longer be resampled.
+#' Datatable comprises the dataframe NAME, sample IDs, reps (if applicable), and
+#' the special column titled `dispose`.  In this column the datetime of disposal
+#' (i.e. time of creation of dispose datatable) is written.
 #'
-#' This functionality means the user can resample a SUBSET of samples in an
-#' experiment (perhaps as a pilot - for example resampling a block of CNS at
-#' different thicknesses 100um 200um 400um 500um etc), and then later to resample
-#' the remaining samples in the experiment (eg. now the pilot shows 200um is the
-#' best thickness, all other samples are resampled to 200um thick sections).
+#' @param contents character vector containing current document with
+#' existing data tables.
 #'
-#' These two resampling events can be documented in two separate resample tables,
-#' and these will be collated into a single resample/rep columns in the finally
-#' compiled datatable tibble.
-#'
-#' @param rmd_path path to Rmd file
-#'
-#' @param rmd_line line in Rmd file to insert table
-#'
-#' @param datatable_name String of data table name - MUST exist in rmd_path!
-#'
-#' @param IDs A character vector of VALID sample IDs.  These must exist in the
-#' selected datatable_name, and NOT alreayd be resampled!  Default is "ALL", which
-#' translates to all IDs being resampled.
-#'
-#' @param resample_vector A character vector that contains all the resample
-#' codes to be added to each sample/rep in the resample table. Default val is
-#' "RS_CODES".
-#'
-#' @param rep_vector A numeric vector that contains the number of reps for each
-#' sample ID in order. Default is 1 rep for each sample. Typically this is
-#' edited in the resample table AFTER it has been created!
+#' @param datatable_name String of data table name: This data table MUST ALREADY
+#' EXIST IN `contents`.  The resampling will be default include all sample IDs
+#' from this datatable.  The user may then delete sample IDs as appropriate.
 #'
 #' @param dt_length Int of data table max length in characters - default 120.
 #'
+#' @param summarise_reps Boolean to indicate whether reps should be summarised in
+#' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
+#' otherwise if TRUE, all reps are summarised using r vector index syntax on
+#' one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
+#' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to TRUE
+#'
 #' @export
-datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name, IDs = "ALL",
-                                    resample_vector = c("RS_CODES"), rep_vector=c(1),
-                                            dt_length = 120 ) {
+datatable_dispose_rmd <- function( rmd_path, rmd_line, datatable_name,
+                                   dt_length = 120, summarise_reps = TRUE ) {
 
   cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
 
@@ -2168,7 +2272,236 @@ datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name, IDs = "A
   rmd_contents <- readLines( rmd_file_conn )
   close(rmd_file_conn)
 
-  data_tables <- datatable_resample( rmd_contents[1:rmd_line], datatable_name, IDs, resample_vector, rep_vector, dt_length )
+  data_tables <- datatable_dispose( rmd_contents[1:rmd_line], datatable_name, dt_length, summarise_reps )
+
+  # write these to the file:
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
+  rmd_contents <- c( rmd_contents[1:rmd_line], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
+
+  rmd_file_conn <- file( rmd_path )
+  writeLines(rmd_contents, rmd_file_conn)
+  close(rmd_file_conn)
+
+}
+
+
+
+#' Dispose of a set of Samples
+#'
+#' This generates a new datatable that disposes of samples - indicates they no
+#' longer exist.
+#'
+#' Datatable comprises the dataframe NAME, sample IDs, reps (if applicable), and
+#' the special column titled `dispose`.  In this column the datetime of disposal
+#' (i.e. time of creation of dispose datatable) is written.
+#'
+#' @param contents character vector containing current document with
+#' existing data tables.
+#'
+#' @param datatable_name String of data table name: This data table MUST ALREADY
+#' EXIST IN `contents`.  The resampling will be default include all sample IDs
+#' from this datatable.  The user may then delete sample IDs as appropriate.
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#' @param summarise_reps Boolean to indicate whether reps should be summarised in
+#' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
+#' otherwise if TRUE, all reps are summarised using r vector index syntax on
+#' one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
+#' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.
+#'
+#' @export
+datatable_dispose <- function( contents, datatable_name, dt_length = 120, summarise_reps = TRUE ) {
+
+  cat( "\nprojectmanagr::datatable_dispose():\n" )
+
+  # parse all lines in contents to extract all datatables:
+  datatables <- datatable_read_vector(contents)
+
+  # define data cols : dispose ONLY
+  data_cols <- c("dispose")
+
+  ### NAMED CONSTANTS For this function ###
+  DATATABLE_SPACER_CHAR <- "="
+  cdt <- get_current_datetime_string()
+
+  # Check datatable_name EXISTS in rmd_contents!
+  if( any(names(datatables) == datatable_name) == FALSE ) {
+    # no datatable of name datatable_name to add data to - STOP
+    stop( paste0("  No datatable of this name exists in vector: ", datatable_name ) )
+  }
+
+  # ?? THEN check col ID exists ??:
+  if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
+    stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
+  }
+
+
+  # DEFINE IDs (& REPs if necessary):
+
+  # determine if the samples have any REPS:
+  reps_exist <- (any( names( datatables[[ datatable_name ]] ) == "rep" ) == TRUE)
+
+  if( reps_exist == TRUE ) {
+
+    # CHECK DIVISIONS of IDs and REPs:
+     # check and remove all samples/reps that no longer exist in datatable
+     # resample, dispose, export, split
+    div_list <- check_divisions_ids_reps( datatables[[ datatable_name ]] )
+     # get IDs and REPs
+    IDs <- div_list[[1]]
+    REPs <- div_list[[2]]
+
+    if( summarise_reps == TRUE ) {
+
+      # NOW process IDs and REPs so there is ONE PER ID - summarise REPs!
+      ID_rep <- summarise_id_rep(IDs, REPs)
+      IDs <- ID_rep$IDs
+      REPs <- ID_rep$REPs
+
+    }
+
+    # add rep col to start of data_cols to add to new datatable
+    data_cols <- c("rep", data_cols)
+
+    # set all default_data_vals for cols
+    # 1 rep
+    # 2 dispose
+    default_data_vals <- list()
+    default_data_vals[[1]] <- REPs # first col is rep - fill with REPs
+    default_data_vals[[2]] <- rep( cdt, length(IDs) ) # dispose col - fill with current datetime UTC
+
+
+  } else if( reps_exist == FALSE ) {
+
+    # CHECK DIVISIONS of IDs ONLY:
+    # check and remove all samples/reps that no longer exist in datatable
+    # resample, dispose, export, split
+    IDs <- check_divisions_ids( datatables[[ datatable_name ]] )
+
+    # set all default_data_vals for cols
+    # 1 dispose
+    default_data_vals <- list()
+    default_data_vals[[1]] <- rep( cdt, length(IDs) ) # dispose col - fill with current datetime UTC
+
+  }
+
+  # build datatable to insert into Rmd:
+  # using the OLD datatable_name - declaration of RESAMPLE table will END this datatable for IDs/reps in it
+   # its still ADD_DATA - just using the dispose col!
+  data_tables <- build_datatable("ID", IDs, data_cols, default_data_vals,
+                                 "ADD_DATA", datatable_name, dt_length,
+                                 DATATABLE_SPACER_CHAR)
+
+  # return
+  data_tables
+
+
+}
+
+
+
+get_current_datetime_string <- function() {
+
+  # get datetime
+  # using UTC for consistency - this may mean the time is DIFFERENT to the current time!
+  datetime <- lubridate::now("UTC") #Sys.time()
+
+  # round to nearest minute:
+  datetime <- round(datetime,"mins")
+
+  # convert to POSIXlt:
+  datetime <- as.POSIXlt(datetime)
+
+  # round to nearest 5 min - not using now keep round to nearest 1min!
+  #datetime$min <- (datetime$min + 5/2) %/% 5 * 5
+
+  # format datetime to use "/" and have a ":" between date and time
+  datetime_split <- strsplit(as.character(datetime), " ")
+  datetime_split[[1]][1] <- gsub("-", "/", datetime_split[[1]][1] )
+
+  datetime_colon <- paste0( datetime_split[[1]][1], ":", datetime_split[[1]][2] )
+
+  # remove seconds:
+  datetime_colon <- substr(datetime_colon, 1, nchar(datetime_colon)-3)
+
+  # return
+  datetime_colon
+}
+
+
+
+
+#' Resample a set of samples and insert into Rmd
+#'
+#' Creates a resample datatable consisting of: sample ID column containing all
+#' EXISTING sample IDs, sample reps column (if applicable) containing all EXISTING
+#' sample reps, and then the resample and rep columns, which represent the
+#' resampling.
+#'
+#' The function assumes all EXISTING samples and reps from selected datatable are
+#' resampled: ALL are added to the output resample datatable.
+#'
+#' The User is free to DELETE sample IDs and reps from the resample table, and
+#' the removed samples will no longer be resampled when read into tibbles.
+#'
+#' This functionality means the user can resample an INITIAL SUBSET of samples
+#' in an experiment (perhaps as a pilot - for example resampling a block of CNS at
+#' different thicknesses 100um 200um 400um 500um etc), and then later to resample
+#' the remaining samples in the experiment (eg. now the pilot shows 200um is the
+#' best thickness, all other samples are resampled to 200um thick sections).
+#'
+#' These two resampling events can be documented in two separate resample tables,
+#' and these will be collated into a single resample/rep columns in the final
+#' compiled datatable tibble.
+#'
+#' @param rmd_path path to Rmd file
+#'
+#' @param rmd_line line in Rmd file to insert table
+#'
+#' @param datatable_name String of data table name - MUST exist in rmd_path!
+#'
+#' @param resample_vector A character vector that contains all the resample
+#' codes to be added to each sample/rep in the resample table.
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#' @export
+datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name,
+                                    resample_vector, dt_length = 120 ) {
+
+  cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
+
+  # if not an absolute path:
+  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
+    rmd_path <- R.utils::getAbsolutePath(rmd_path )
+  }
+
+  # CONFIRM rmd_path is a project doc or note:
+  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
+  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
+  orgPath <- dirname( dirname(rmd_path) )
+
+  orgPath <- findOrgDir(orgPath)
+
+  if(orgPath == "" ) {
+    # the search reached the root of the filesystem without finding the Organisation files,
+    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
+    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # normalize path - remove HOME REF ~
+  rmd_path <- normalizePath(rmd_path)
+
+  cat( "  Reading Rmd...\n" )
+
+  # read rmd_path file:
+  rmd_file_conn <- file( rmd_path )
+  rmd_contents <- readLines( rmd_file_conn )
+  close(rmd_file_conn)
+
+  data_tables <- datatable_resample( rmd_contents[1:rmd_line], datatable_name, resample_vector, dt_length )
 
   # write these to the file:
   cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
@@ -2182,28 +2515,25 @@ datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name, IDs = "A
 
 #' Resample a set of samples
 #'
-#' First column contains a list of sample IDs, then resample column is used to
-#' denote the resampling.  Data values in the cells encode the new sub-samples
-#' derived from each sample.
+#' Creates a resample datatable consisting of: sample ID column containing all
+#' EXISTING sample IDs, sample reps column (if applicable) containing all EXISTING
+#' sample reps, and then the resample and rep columns, which represent the
+#' resampling.
 #'
-#' The function assumes all EXISTING reps of the current samples are going to
-#' be resampled: if more than one rep exists for any of the samples, this table
-#'  will add the first rep column and fill it with all the EXISTING rep numbers.
+#' The function assumes all EXISTING samples and reps from selected datatable are
+#' resampled: ALL are added to the output resample datatable.
 #'
-#' The resampling function supports the ability to resample a SUBSET of samples
-#' from selected datatable.  A subset of valid IDs from the datatable can be
-#' passed to this function, and only these will be displayed in the resample
-#' table.  Alternatively, the user is free to DELETE sample IDs from the resulting
-#' resample table, and the deleted samples will no longer be resampled.
+#' The User is free to DELETE sample IDs and reps from the resample table, and
+#' the deleted samples will no longer be resampled when read into tibbles.
 #'
-#' This functionality means the user can resample a SUBSET of samples in an
-#' experiment (perhaps as a pilot - for example resampling a block of CNS at
+#' This functionality means the user can resample an INITIAL SUBSET of samples
+#' in an experiment (perhaps as a pilot - for example resampling a block of CNS at
 #' different thicknesses 100um 200um 400um 500um etc), and then later to resample
 #' the remaining samples in the experiment (eg. now the pilot shows 200um is the
 #' best thickness, all other samples are resampled to 200um thick sections).
 #'
 #' These two resampling events can be documented in two separate resample tables,
-#' and these will be collated into a single resample/rep columns in the finally
+#' and these will be collated into a single resample/rep columns in the final
 #' compiled datatable tibble.
 #'
 #' @param contents character vector containing current document with
@@ -2214,59 +2544,290 @@ datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name, IDs = "A
 #' default include all sample IDs from this datatable.  The user may then
 #' delete and sample IDs as is appropriate.
 #'
-#' @param IDs A character vector of VALID sample IDs.  These must exist in the
-#' selected datatable_name, and NOT alreayd be resampled!  Default is "ALL", which
-#' translates to all IDs being resampled.
-#'
 #' @param resample_vector A character vector that contains all the resample
-#' codes to be added to each sample/rep in the resample table. Default val is
-#' "RS_CODES".
-#'
-#' @param rep_vector A numeric vector that contains the number of reps for each
-#' sample ID in order. Default is 1 rep for each sample. Typically this is
-#' edited in the resample table AFTER it has been created!
+#' codes to be added to each sample/rep in the resample table.
 #'
 #' @param dt_length Int of data table max length in characters - default 120.
 #'
 #' @export
-datatable_resample <- function( contents, datatable_name, IDs = "ALL",
-                                resample_vector = c("RS_CODES"), rep_vector=c(1),
+datatable_resample <- function( contents, datatable_name, resample_vector,
                                 dt_length = 120 ) {
 
+  cat( "\nprojectmanagr::datatable_resample():\n" )
 
   # parse all lines in contents to extract all datatables:
   datatables <- datatable_read_vector(contents)
 
-  cat( "\nprojectmanagr::datatable_resample():\n" )
-
-  # need two pre-defined data cols - resample and reps:
+  # define data cols : resample and reps
   data_cols <- c("resample", "reps")
 
   ### NAMED CONSTANTS For this function ###
   DATATABLE_SPACER_CHAR <- "="
 
-  # identify datatable_name and extract its ID column
-  # FIRST check datatable_name EXISTS in rmd_contents!
+  # Check datatable_name EXISTS in rmd_contents!
   if( any(names(datatables) == datatable_name) == FALSE ) {
     # no datatable of name datatable_name to add data to - STOP
     stop( paste0("  No datatable of this name exists in vector: ", datatable_name ) )
   }
+
   # ?? THEN check col ID exists ??:
   if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
     stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
   }
 
+  # CHECK resample_vector
+   # all entries must NOT contain an UNDERSCORE
+    # UNDERSCORE is used to separate the RESAMPLINGS in the new datatable name
+    # May use this to define the resamplings
+  if( any( grepl("_", resample_vector) ) ) {
+    stop( paste0("  resample_vector cannot contain any UNDERSCORES - use `-`: ", resample_vector[grepl("_", resample_vector)] ) )
+  }
+
+
+  # DEFINE IDs (& REPs if necessary):
+
+  # determine if the samples have any REPS:
+  reps_exist <- (any( names( datatables[[ datatable_name ]] ) == "rep" ) == TRUE)
+
+  if( reps_exist == TRUE ) {
+
+    # CHECK DIVISIONS of IDs and REPs:
+      # check and remove all samples/reps that no longer exist in datatable
+      # resample, dispose, export, split
+    div_list <- check_divisions_ids_reps( datatables[[ datatable_name ]] )
+     # get IDs and REPs
+    IDs <- div_list[[1]]
+    REPs <- div_list[[2]]
+
+    # add rep col to start of data_cols to add to new datatable
+    data_cols <- c("rep", data_cols)
+
+    # set all default_data_vals for cols
+     # 1 rep
+     # 2 resample
+     # 3 reps
+    default_data_vals <- list()
+    default_data_vals[[1]] <- REPs # first col is rep - fill with REPs
+    default_data_vals[[2]] <- rep(resample_vector, length(IDs) ) # resample col - fill each ID with resample vector
+    default_data_vals[[3]] <- rep("1", (length(IDs)*length(resample_vector)) ) # reps - fill be default with "1"
+
+
+  } else if( reps_exist == FALSE ) {
+
+    # CHECK DIVISIONS of IDs ONLY:
+     # check and remove all samples/reps that no longer exist in datatable
+     # resample, dispose, export, split
+    IDs <- check_divisions_ids( datatables[[ datatable_name ]] )
+
+    # set all default_data_vals for cols
+     # 1 resample
+     # 2 reps
+    default_data_vals <- list()
+    default_data_vals[[1]] <- rep(resample_vector, length(IDs) ) # resample col - fill each ID with resample vector
+    default_data_vals[[2]] <- rep("1", (length(IDs)*length(resample_vector)) ) # reps - fill be default with "1"
+
+  }
+
+  # build datatable to insert into Rmd:
+  # using the OLD datatable_name - declaration of RESAMPLE table will END this datatable for IDs/reps in it
+  data_tables <- build_datatable("ID", IDs, data_cols, default_data_vals,
+                                 "RESAMPLE", datatable_name, dt_length,
+                                 DATATABLE_SPACER_CHAR)
+
+  # return
+  data_tables
+
+
+}
+
+
+
+
+#' Split Samples into separate datatables
+#'
+#' This is NOW DEPRECATED - not using SPLIT as this interferes with the FIND function:
+#' find will summarise sample IDs and REPs from each Rmd into each sub-sample, which
+#' is dictated by the resampling vector chain - which indicates WHAT TISSUES ARE
+#' AVAILABLE!  By corrupting this with SPLIT codes, this becomes harder to use?
+#'
+#' Further, the get_history function will ELIMINATE any blank columns when reading
+#' back to collect data on samples/reps so this is not really a problem?
+#'
+#' JUST USE GROUP - no need to split!
+#'
+datatable_split_rmd <- function(rmd_path, rmd_line, datatable_name,
+                                split_vector, dt_length = 120 ) {
+
+  cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
+
+  # if not an absolute path:
+  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
+    rmd_path <- R.utils::getAbsolutePath(rmd_path )
+  }
+
+  # CONFIRM rmd_path is a project doc or note:
+  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
+  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
+  orgPath <- dirname( dirname(rmd_path) )
+
+  orgPath <- findOrgDir(orgPath)
+
+  if(orgPath == "" ) {
+    # the search reached the root of the filesystem without finding the Organisation files,
+    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
+    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # normalize path - remove HOME REF ~
+  rmd_path <- normalizePath(rmd_path)
+
+  cat( "  Reading Rmd...\n" )
+
+  # read rmd_path file:
+  rmd_file_conn <- file( rmd_path )
+  rmd_contents <- readLines( rmd_file_conn )
+  close(rmd_file_conn)
+
+  data_tables <- datatable_split( rmd_contents[1:rmd_line], datatable_name, split_vector, dt_length )
+
+  # write these to the file:
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
+  rmd_contents <- c( rmd_contents[1:rmd_line], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
+
+  rmd_file_conn <- file( rmd_path )
+  writeLines(rmd_contents, rmd_file_conn)
+  close(rmd_file_conn)
+
+
+}
+
+
+
+
+#' Split Samples into separate datatables
+#'
+#' This is NOW DEPRECATED - not using SPLIT as this interferes with the FIND function:
+#' find will summarise sample IDs and REPs from each Rmd into each sub-sample, which
+#' is dictated by the resampling vector chain - which indicates WHAT TISSUES ARE
+#' AVAILABLE!  By corrupting this with SPLIT codes, this becomes harder to use?
+#'
+#' Further, the get_history function will ELIMINATE any blank columns when reading
+#' back to collect data on samples/reps so this is not really a problem?
+#'
+#' JUST USE GROUP - no need to split!
+#'
+datatable_split <- function(contents, datatable_name, split_vector,
+                            dt_length = 120 ) {
+
+  cat( "\nprojectmanagr::datatable_resample():\n" )
+
+  # parse all lines in contents to extract all datatables:
+  datatables <- datatable_read_vector(contents)
+
+  # define data cols : resample and reps
+  data_cols <- c("resample", "reps")
+
+  ### NAMED CONSTANTS For this function ###
+  DATATABLE_SPACER_CHAR <- "="
+
+  # Check datatable_name EXISTS in rmd_contents!
+  if( any(names(datatables) == datatable_name) == FALSE ) {
+    # no datatable of name datatable_name to add data to - STOP
+    stop( paste0("  No datatable of this name exists in vector: ", datatable_name ) )
+  }
+
+  # ?? THEN check col ID exists ??:
+  if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
+    stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
+  }
+
+  # CHECK split_vector
+  # all entries must NOT contain an UNDERSCORE
+  # UNDERSCORE is used to separate the RESAMPLINGS in the new datatable name
+  # May use this to define the resamplings
+  if( any( grepl("_", split_vector) ) ) {
+    stop( paste0("  split_vector cannot contain any UNDERSCORES - use `-`: ", split_vector[grepl("_", split_vector)] ) )
+  }
+
+
+  # DEFINE IDs (& REPs if necessary):
+
+  # determine if the samples have any REPS:
+  reps_exist <- (any( names( datatables[[ datatable_name ]] ) == "rep" ) == TRUE)
+
+  if( reps_exist == TRUE ) {
+
+    # CHECK DIVISIONS of IDs and REPs:
+    # check and remove all samples/reps that no longer exist in datatable
+    # resample, dispose, export, split
+    div_list <- check_divisions_ids_reps( datatables[[ datatable_name ]] )
+    # get IDs and REPs
+    IDs <- div_list[[1]]
+    REPs <- div_list[[2]]
+
+    # add rep col to start of data_cols to add to new datatable
+    data_cols <- c("rep", data_cols)
+
+    # set all default_data_vals for cols
+    # 1 rep
+    # 2 resample
+    # 3 reps
+    default_data_vals <- list()
+    default_data_vals[[1]] <- REPs # first col is rep - fill with REPs
+    default_data_vals[[2]] <- rep(split_vector, length(IDs) ) # resample col - fill each ID with resample vector
+    default_data_vals[[3]] <- rep("1", (length(IDs)*length(split_vector)) ) # reps - fill be default with "1"
+
+
+  } else if( reps_exist == FALSE ) {
+
+    # CHECK DIVISIONS of IDs ONLY:
+    # check and remove all samples/reps that no longer exist in datatable
+    # resample, dispose, export, split
+    IDs <- check_divisions_ids( datatables[[ datatable_name ]] )
+
+    # set all default_data_vals for cols
+    # 1 resample
+    # 2 reps
+    default_data_vals <- list()
+    default_data_vals[[1]] <- rep(split_vector, length(IDs) ) # resample col - fill each ID with resample vector
+    default_data_vals[[2]] <- rep("1", (length(IDs)*length(split_vector)) ) # reps - fill be default with "1"
+
+  }
+
+  # build datatable to insert into Rmd:
+  # using the OLD datatable_name - declaration of RESAMPLE table will END this datatable for IDs/reps in it
+  data_tables <- build_datatable("ID", IDs, data_cols, default_data_vals,
+                                 "SPLIT", datatable_name, dt_length,
+                                 DATATABLE_SPACER_CHAR)
+
+  # return
+  data_tables
+
+
+}
+
+
+
+#'
+#' old code - not used!
+old_resample <- function() {
 
   # SHOULD CHECK INDIVIDUAL ENTRIES HERE
-  # selected datatable may already have resample and reps cols
+  # selected datatable may already have DIVISIONS :
+    # resample and reps cols
+    # dispose col
+    # export col
+    # split col
   # if so dont just fail - check if they have been filled for the selected IDs!
+    # THEN only generate a new resample datatable with remaining (EXISTING) sample IDs!
 
   # Its more convenient to add separate resamplings of tissue blocks in separate tables for set of samples
-  # For example, may resample one SUBSET of samples as a PILOT : possibly in different ways!
-  # THEN later may resample the REMAINING SAMPLES for full experiment
-  # Resample function must support this - therefore must handle the resampling of samples from the same datatable
-  # in different resample tables
-  # also need method for returning all EXISTING SAMPLES/ROWS in all DATATABLES for doing this check
+    # For example, may resample one SUBSET of samples as a PILOT : possibly in different ways!
+      # THEN later may resample the REMAINING SAMPLES for full experiment
+    # Resample function must support this - therefore must handle the resampling of samples from the same datatable
+      # in different resample tables
+    # also need method for returning all EXISTING SAMPLES/ROWS in all DATATABLES for doing this check
 
   # CHECK if the selected samples/datatable already contains a resampling col:
 
@@ -2275,11 +2836,13 @@ datatable_resample <- function( contents, datatable_name, IDs = "ALL",
   reps_existing <- c()
 
   if( all(IDs == "ALL") ) {
+
     # CHECK if datatable IDs have been RESAMPLED or EXPORTED
     dc <- c("resample", names(datatables[[datatable_name]]) )
+
     if( anyDuplicated(dc) != 0 ) {
       dtReps <- datatables[[ datatable_name ]]$rep
-      # if any cols are duplicated means samples from this datatable have been resampled before!
+      # if any cols are duplicated means SOME/ALL(?) samples from this datatable have been resampled before!
       # so now check each sample ID - if it has NOT been resampled, add it to IDs
       for( i in 1:length(dtIDs) ) {
         if( is.na( datatables[[datatable_name]][["resample"]][i] ) == TRUE  ) {
@@ -2375,16 +2938,149 @@ datatable_resample <- function( contents, datatable_name, IDs = "ALL",
 
 
 
+#' Find EXISTING Samples in Datatables
 #'
+#' Search through path recursively to find all Rmd files that contain datatables.
+#' Summarise all EXISTING samples that are declared in them (not resampled,
+#' exported, disposed).
 #'
+#' Summary tibble includes following columns:
 #'
-datatable_find <- function() {
+#' * ID - sample ID
+#'
+#' * SAMPLE: Composite of all subsampling - what the sample is
+#'
+#' * COUNT: Number of reps of the sample available (sections)
+#'
+#' * EXP: The experiment PREFIX ID and EXPERIMENT TITLE - title can help identify
+#' where the tissue comes from/its properties - as using functional names for
+#' experiments eg. `NRF~005-001~_SLEIGH_CNS_GARS_01_SC-LUM` know tissue is from
+#' James Sleigh, and its GARS mutant or WT control.
+#'
+#' * PATH: The absolute path to the Experiment DIR ??
+#'
+#' * LOCATION : values of `_location` col IF LAST COL DECLARED - where is the
+#' sample currently?  Only defined last if currently in storage!
+#'
+#' * CONDITION : value of last `_condition` col - what is sample in?
+#'
+#' If further metadata is needed - can use `datatable_get_sample_data_history`
+#' and filter for relevant information.
+#'
+#' @return a tibble containing summary of all EXISTING samples
+#'
+datatable_find <- function( path, datatable_name_prefix = 'samples' ) {
+
+  cat( "\nprojectmanagr::datatable_find():\n" )
+
+  context <- rstudioapi::getSourceEditorContext()
+  context$path <- path.expand(context$path) # expand "~" HOME
+
+  # get all Project Notes inside subProgDir
+  # they all contain "~_" in filename
+  samplesList <- list.files(subProgDir, full.names = TRUE, recursive=TRUE)
+  samplesList <- samplesList[ regexpr("~_", samplesList) > 0  ]
+
+  if( length(samplesList) == 0 ) {
+    # check if the subProgDir is defined from the orgDir:
+    subProgDir <- paste0(findOrgDir(context$path), .Platform$file.sep, subProgDir )
+
+    # get all Project Notes inside subProgDir
+    # they all contain "~_" in filename
+    samplesList <- list.files(subProgDir, full.names = TRUE, recursive=TRUE)
+    samplesList <- samplesList[ regexpr("~_", samplesList) > 0  ]
+  }
+
+  # check subProgDir - make sure its in a org DIR
+  subProgDir <- checkProgSubDir(subProgDir)
+
+
+  # define a new Summary tibble to hold all samples:
+  # MUST define a STANDARD TEMPLATE to hold SUMMARY DATA on samples
+  # From this summary information, should be possible to select samples, or further explore them
+  ID <- ""      # ID: Each Sample ID
+  SAMPLE <- ""  # SAMPLE: COMPOSITE of all subsampling columns: CNS-RT-MB etc.
+  COUNT <- integer()  # COUNT: How many REPS are there of this sample?
+  PREFIX <- ""     # EXP: Fill with the Experiment Prefix ID
+  TITLE <- ""   # TITLE: Fill with Experiment Title - will contain the LAB_TREATMENT
+  #PATH <- ""    # PATH: Put the absolute PATH to the Project Note Rmd to Navigate to
+  LOCATION <- "" # LOCATION of the sample, if in storage
+  CONDITION <- "" # CONDITIONS of sample - what is it in?
+
+  samples_summary <- tibble::tibble(ID, SAMPLE, COUNT, PREFIX, TITLE, LOCATION, CONDITION)
+
+  for(s in samplesList) {
+    # for each Rmd
+
+    # get all datatables
+    dts <- projectmanagr::datatable_read_rmd(s)
+
+    # apply datatable_name_prefix filter
+    dts <- dts[startsWith(names(dts), datatable_name_prefix)]
+
+    for(d_index in 1:length(dts) ) {
+      # for each dt
+
+      # get the datatable, its name, and col_names
+      d <- dts[[d_index]]
+      d_name <- names(dts)[d_index]
+      col_names <- names(d)
+
+      # remove all samples that have been:
+      # resampled
+      if(is.element("resample", col_names) ) {
+        d <- d[is.na(d$resample),] # remove all cols that are NOT NA - resampled
+      }
+      # exported
+      if(is.element("export", col_names) ) {
+        d <- d[is.na(d$export),] # remove all cols that are NOT NA - exported
+      }
+      # disposed
+      if(is.element("dispose", col_names) ) {
+        d <- d[is.na(d$dispose),] # remove all cols that are NOT NA - disposed
+      }
+
+      # summarise across reps
+      #colsnorep <- col_names[!"rep" == col_names] # want to group by all EXCEPT rep
+      #dg <- dplyr::group_by_at(d, colsnorep )
+      dg <- dplyr::group_by_at(d, "ID" ) # group by the ID - this is ALWAYS THE FIRST COL!
+      dc <- dplyr::summarise(dg, count=dplyr::n() )
+      dc <- dplyr::ungroup(dc)
+
+      if(endsWith(col_names[length(col_names)], "_location") ){
+        dg <- dplyr::group_by_at(d, "ID" ) # group by the ID - this is ALWAYS THE FIRST COL!
+        #dc <- dplyr::summarise(dg, count=dplyr::n(), location=dplyr::distinct() )
+        dc <- dplyr::summarise(dg,
+                               count=dplyr::n(),
+                               location=as.character(dplyr::distinct(dg[col_names[length(col_names)]])) )
+        dc <- dplyr::ungroup(dc)
+
+      }
+      else {
+        LOC=""
+      }
+
+      # edit t - mutate to form ID, SAMPLE, COUNT, EXP
+      dc <- dplyr::transmute(
+        dc,
+        ID=ID,
+        SAMPLE=d_name,
+        COUNT=count,
+        PREFIX=projectmanagr::getProjectPrefixFromPath( s ),
+        TITLE=basename(s),
+        LOCATION=location )
+
+    }
+
+  }
+
+
 
 }
 
 
 
-#' Export a set of samples
+#' Export a set of samples from summary datatable
 #'
 #' This function will write an EXPORT table to the end of
 #'
@@ -2394,7 +3090,7 @@ datatable_export <- function() {
 
 
 
-#'
+#' Import a set of samples and reps from a summary datatable
 #'
 #'
 #'
@@ -2404,12 +3100,21 @@ datatable_import <- function() {
 
 
 
+#' Get History of samples
 #'
+#' Retrieves all sample data, traversing all divisions (resample, export).
 #'
+#' Passes back through all Rmd's through imports, and identifies the CREATE
+#' datatable for each sample.  Then collects all data, moving through all
+#' resampling and exports, and omitting any blank columns.
 #'
-datatable_dispose <- function() {
+#' Returns a list of tibbles that contains all sample data, collating samples
+#' where the data columns match.
+#'
+datatable_get_sample_data_history <- function( df ) {
 
 }
+
 
 
 #' Read datatables from ACTIVE RMD in RStudio
@@ -2516,6 +3221,67 @@ datatable_read_to_selection <- function() {
 
   # read datatables upto selection
   datatables <- datatable_read_vector(rmd_contents[1:row] )
+
+  # return
+  datatables
+}
+
+
+
+#' Read datatables upto LINE in ACTIVE RMD in RStudio
+#'
+#' Function to read all projectmanagr datatables up to line number
+#' in the active plain text document (typically an R Markdown doc), and return
+#' them as tibbles. Extracts all datatables between `+===` markers, and checks
+#' the validity of each datatable declared.
+#'
+#' Each datatable is named, and each contains samples which must all possess a
+#' unique ID.  Datatables are created in CREATE, and have data added to them
+#' in ADD_DATA tables.  IDs from a given datatable can be put into new groups
+#' using a GROUP table.
+#'
+#' Adding data can use various layouts:
+#'
+#' * Sample-first layout:  Typically used for measurements made on each sample
+#' individually - sample IDs are in first col, subsequent cols contain the
+#' measurement data.
+#'
+#' * Variable-first layout: Typically used to add datetimes of procedures -
+#' procedure titles are laid out in first col, and subsequent cols are GORUPS
+#' which are processed together.  This allows timing data to be added cleanly
+#' and easily across all samples in a group (including the special group ALL).
+#'
+#' * TIMETABLE: Used for measuring the actual timings used during optimisation
+#' of a protocol.  When time is varied in a protocol it is very difficult to
+#' plan and track this.  The timetable provides a convenient layout for planning
+#' the groups and the timings of changes over the procedure where timing is being
+#' optimised.  It then allows the ACTUAL TIMINGS to be inserted into the table
+#' as the procedures are followed - and these are linked to the original samples,
+#' making this data available in further analyses.
+#'
+#' Samples in datatables can be subsampled - destroying the original sample,
+#' and creating one or more sub-samples.  The parent samples can no longer
+#' have data added to them, only the existing sub-samples.
+#'
+#' Samples in datatables are be exported to destination notes, and imported
+#' from source notes.  If exported from this source note, the samples no longer
+#' exist in the current note - they cannot be manipulated in this note.
+#'
+#' If imported from a previous source note, the samples now exist in this note.
+#' They can have data added to them, grouped, subsampled, and exported.
+#'
+#' @export
+datatable_read_to_line <- function(line) {
+
+  rmd_path <- normalizePath( rstudioapi::getSourceEditorContext()$path )
+
+  # read rmd_path file:
+  rmd_file_conn <- file( rmd_path )
+  rmd_contents <- readLines( rmd_file_conn )
+  close(rmd_file_conn)
+
+  # read datatables upto selection
+  datatables <- datatable_read_vector(rmd_contents[1:line] )
 
   # return
   datatables
@@ -2670,7 +3436,7 @@ datatable_read_vector <- function(rmd_contents) {
    # samples can be GROUPED - save group tables and apply any further group refs to the samples directly
 
   for(i in 1:length(tables) ) {
-  #for(i in 1:2 ) {
+  #for(i in 1:35 ) {
 
     # parse each table IN ORDER
      # tables[[i]][4] contains the table NAME then FUNCTION
@@ -2731,6 +3497,35 @@ datatable_read_vector <- function(rmd_contents) {
       # RESAMPLE : parse tables character vector and the datatables list,
        # return the new datatables list with NEW DATATABLES ADDED:
       datatables <- parse_datatable_resample(tables[[i]], datatables, table_name)
+
+    } else if( table_function == "IMPORT" ) {
+
+      # IMPORT : parse as CREATE: parse the tables character vector to create a tibble
+      datatables[[ table_name ]] <- parse_datatable_create(tables[[i]])
+
+
+    } else if( table_function == "EXPORT" ) {
+
+      # DEAL WITH NEW SYNTAX - declaring multiple datatable names in one:
+      table_names <- unlist(strsplit( table_name, " ") )
+      # remove blank elements - happens if the table_names were separated by MORE THAN ONE SPACE
+      table_names <- table_names[table_names != ""]
+
+      for(f in 1:length(table_names) ) {
+
+        t_n <- table_names[f]
+
+        # FIRST check that table_name ALREADY EXISTS in datatables
+        if( any(names(datatables) == t_n) == FALSE ) {
+          # no datatable of name table_name to add data to - STOP
+          stop( paste0("  No datatable exists to add data to: ", t_n, " table index: ", i) )
+        }
+
+        # EXPORT : just add data to the relevant datatable!
+          # ADD_DATA : parse tables character vector and CHECK AGAINST EXISTING datatables to ADD DATA TO TABLE
+        datatables[[ t_n ]] <- parse_datatable_add_data( tables[[i]], datatables[[ t_n ]] )
+
+      }
 
     }
 
@@ -2972,6 +3767,7 @@ parse_datatable_add_data <- function(dt_vector, dt) {
       }
 
       # extract group_names - first entry in each list entry 3:length
+       # NOT USED!
       group_names <- c()
       for(i in 3:length(data) ) {
         #group_names[(2-1)] <- data[[1]][i]
@@ -2981,10 +3777,11 @@ parse_datatable_add_data <- function(dt_vector, dt) {
       for(i in 3:length(data) ) { # SKIP index 1+2 - this IS ID COL & REP COL - which already exist in dt!
 
         # check dt doesnt already contain col of same name?
-        if( any(names(dt) == data[[i]][1] ) ) {
-          stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
-                       " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
-        }
+        # NOT NEEDED - as may add data to SAME COLS but DIFFERENT SAMPLE IDs!
+        #if( any(names(dt) == data[[i]][1] ) ) {
+        #  stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
+        #               " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
+        #}
 
         #dt <- tibble::add_column( dt, newCol )
         #names(dt)[names(dt) == "newCol"] <- data[[i]][1] # and SET THE NAME IMMEDIATELY!
@@ -2993,15 +3790,71 @@ parse_datatable_add_data <- function(dt_vector, dt) {
          # also should CHECK the ID and rep values match between data and dt!
          # need to check each ID and rep in case only a SUBSET of IDs or REPS have data added to them!
         indices <- c()
+        summarise_reps <- FALSE
+        expanded_data <- c()
+
         for( j in 2:length(data[[i]]) ) {
+
           ID <- data[[1]][j]
           rep <- data[[2]][j]
-          index <- match( TRUE, (dt[["ID"]] == ID & dt[["rep"]] == rep) )
-          indices <- c( indices, index )
+
+          # expand ID and rep if they are "ALL"
+          if( length(ID) == 1 && ID == "ALL" ) {
+
+            summarise_reps <- TRUE # ALL is one form of summarising reps
+              # will be adding multiple data as expanded_data to dt...
+
+            ID_rep <- check_divisions_ids_reps(dt)
+              # using check_divisions - to OMIT any IDs/REPs that have been divided
+                # resampled, disposed, exported..
+            ID <- ID_rep$IDs
+            rep <- ID_rep$REPs
+
+            for(k in 1:length(ID) ) {
+              # need to loop through each ID now! index [k]
+              index <- match( TRUE, (dt[["ID"]] == ID[k] & dt[["rep"]] == as.character(rep[k]) ) )
+              indices <- c( indices, index )
+            }
+            # AND fill new vector - expanded_data - with REPLICATED DATA
+            expanded_data <- c(expanded_data, rep(data[[i]][j], length(ID) ) )
+
+
+          } else if( rep == "ALL" ) { # expand if rep contains keyword ALL
+
+
+
+
+          } else if( grepl(",", rep) || grepl(":", rep) ) { # expand if rep uses the r vector indexing syntax: 1:3,4,8:10 etc
+
+            summarise_reps <- TRUE
+            # expand it in the c() function
+            rep <- eval(parse(text = paste0("c(",rep,")") )  )
+
+            # and expand ID by replicating it by length of rep now:
+            ID <- rep(ID, length(rep) )
+            for(k in 1:length(ID) ) {
+              # need to loop through each ID now! index [k]
+              index <- match( TRUE, (dt[["ID"]] == ID[k] & dt[["rep"]] == as.character(rep[k]) ) )
+              indices <- c( indices, index )
+            }
+            # AND fill new vector - expanded_data - with REPLICATED DATA
+            expanded_data <- c(expanded_data, rep(data[[i]][j], length(ID) ) )
+
+          } else { # ID and rep are single vals - so just process as normal!
+            index <- match( TRUE, (dt[["ID"]] == ID & dt[["rep"]] == rep) )
+            indices <- c( indices, index )
+
+          }
           #dt[[ data[[i]][1] ]][ index ] <- data[[i]][j]
         }
         #this checks each ID and rep index and inserts the data CORRECTLY!
-        dt <- add_data_col_type(dt, data[[i]][1], data[[i]][2:length(data[[i]])], indices)
+
+        if( summarise_reps == TRUE ) { # need to rep each element in data[[i]][2:length(data[[i]])] by rep count!
+          dt <- add_data_col_type(dt, data[[i]][1], expanded_data, indices)
+
+        } else { # can add the data as it exists
+          dt <- add_data_col_type(dt, data[[i]][1], data[[i]][2:length(data[[i]])], indices)
+        }
 
       }
 
@@ -3026,10 +3879,11 @@ parse_datatable_add_data <- function(dt_vector, dt) {
       for(i in 2:length(data) ) { # SKIP index 1 - this IS ID COL - which already exists in dt!
 
         # check dt doesnt already contain col of same name?
-        if( any(names(dt) == data[[i]][1] ) ) {
-          stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
-                       " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
-        }
+        # NOT NEEDED - as may add data to SAME COLS but DIFFERENT SAMPLE IDs!
+        #if( any(names(dt) == data[[i]][1] ) ) {
+        #  stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
+        #               " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
+        #}
 
 
         # converts group_names to vector same length as dt[["ID"]]
@@ -3043,11 +3897,18 @@ parse_datatable_add_data <- function(dt_vector, dt) {
         # ADD DATA ACROSS ALL DATA IF ID IS ALL
         if( length(group_names)==1 && group_names[1] == "ALL" ) {
 
-          #dt <- tibble::add_column( dt, newCol )
-          #names(dt)[names(dt) == "newCol"] <- data[[i]][1] # and SET THE NAME IMMEDIATELY!
-          #dt[[ data[[i]][1] ]] <- rep(  data[[i]][2], length( dt[["ID"]] )  )
+          # first get all VALID IDs
+          ID <- check_divisions_ids(dt)
 
-          dt <- add_data_col_type(dt, data[[i]][1], rep(data[[i]][2], length( dt[["ID"]] )) )
+          # then get indices of these from dt:
+          indices <- c()
+          for( j in 1:length(ID) ) {
+            index <- match( TRUE, (dt[["ID"]] == ID[j]) )
+            indices <- c(indices, index)
+          }
+
+          # then add data col, but only add data at indices
+          dt <- add_data_col_type(dt, data[[i]][1], rep(data[[i]][2], length( indices )), indices )
 
         }
         else if( any( sort(group_names_comp_ids) == sort(dt[["ID"]]) ) ) { # group_names are IDs - so fill by ID index!
@@ -3067,21 +3928,28 @@ parse_datatable_add_data <- function(dt_vector, dt) {
         }
         else {  # group_names correspond to a group-col in dt?
 
-          # ADD DATA TO ALL ID ROWS ACCORDING TO GROUP ASSIGNMENT
+          # FIRST - deal with edge case - no group cols
+          if( ncol(gdt) == 0 ) {
+            stop( paste0("  Non-existant GROUPS in datatable: ", group_names ) )
+          }
+
+          # ADD DATA TO ID ROWS ACCORDING TO GROUP ASSIGNMENT
 
           # get index of the group dt first
           gdtindex <- 0
           for(j in 1:length(gdt) ) {
-            if( any( sort(gdt[[j]][ !is.na(gdt[[j]])]) == sort(group_names) ) ) {
+            if( any( sort(gdt[[j]][ !is.na(gdt[[j]])]) == group_names[1] ) ) { # compare to first group name only
+                 # eliminates subtle bug due to vector recycling..
               gdtindex <- j
             }
           }
 
           # now check each group_names exists in this gdt vector
           pass <- TRUE
+          gdt2 <- gdt[[gdtindex]][!is.na(gdt[[gdtindex]])]
           gnindex <- 0
           for(k in 1:length(group_names) ) {
-            if(any(gdt[[gdtindex]] == group_names[k]) == FALSE) {
+            if(any(gdt2 == group_names[k]) == FALSE) {
               pass <- FALSE
               gnindex <- k
             }
@@ -3092,12 +3960,19 @@ parse_datatable_add_data <- function(dt_vector, dt) {
           }
 
           # now identified and checked all group_names, can add to dt the data to each ID according to its group identity
+          indices <- c()
+          IDs <- c()
           for( j in 2:length(data[[i]]) ) {
             ID <- data[[1]][j]
+             # index <- match( TRUE, (gdt[[gdtindex]] == ID) )
+            indcs <- which( (gdt[[gdtindex]] == ID) )
+            indices <- c(indices, indcs)
+            IDs <- c( IDs, rep(data[[i]][j], length(indcs)) )
             #dt[[ data[[i]][1] ]][ (gdt[[gdtindex]] == ID) ] <- data[[i]][j]
           }
 
-          dt <- add_data_col_type( dt, data[[i]][1], data[[i]][2:length(data[[i]])], (gdt[[gdtindex]] == ID) )
+          dt <- add_data_col_type( dt, data[[i]][1], IDs, indices )
+           # dt <- add_data_col_type( dt, data[[i]][1], data[[i]][2:length(data[[i]])], (gdt[[gdtindex]] == ID) )
 
 
         }
@@ -3248,11 +4123,15 @@ parse_datatable_add_data <- function(dt_vector, dt) {
           #indices <- c(indices, index)
           #indices <- match( TRUE, (gdt[[gdtindex]] == GID) )
           #dt[[ data[[1]][i+1] ]][ (gdt[[gdtindex]] == GID) ] <- data[[j]][i+1]
+          datac <- unlist(lapply(data[2:length(data)], function(x) x[i+1]))[(j-1)]
+          indices <- (gdt[[gdtindex]] == GID)
+
           dt <- add_data_col_type(
             dt,
             data[[1]][i+1],
-            unlist(lapply(data[2:length(data)], function(x) x[i+1])), #data[[2:length(data)]][i+1],
-            (gdt[[gdtindex]] == GID)   )
+            datac, #data[[2:length(data)]][i+1],
+            indices
+          )
 
         }
 
@@ -3381,7 +4260,12 @@ parse_datatable_add_data <- function(dt_vector, dt) {
       # check all group cols
       group_names_match_group_cols <- c()
       for( i in 1:length(gdt) ) {
-        group_names_match_group_cols[i] <- all( unique( gdt[i][ !is.na(gdt[i]) ] ) == group_names )
+        gnu <- unique( gdt[i][ !is.na(gdt[i]) ] )
+        if( length(gnu) != length(group_names) ) {
+          group_names_match_group_cols[i] <- FALSE
+        } else {
+          group_names_match_group_cols[i] <- all( gnu == group_names )
+        }
       }
 
       if( any(group_names_match_group_cols) == TRUE ) {
@@ -3482,29 +4366,129 @@ parse_datatable_group <- function(dt_vector, dt) {
     # this is a SAMPLE-FIRST data table!
     # as this is the format samples data will be stored in, just need to add the data cols
 
-    newCol <- NA_character_ # for adding new cols - all will be character vectors
-    for(i in 2:length(data) ) { # SKIP index 1 - this IS ID COL - which already exists in dt!
+    if(headers[2] == "rep" ) { # if second col is rep, the first col MUST be IDs! No ALL or group-IDs
+      # if there is a rep col, just have to SKIP this entry in data - so start at index 3:length(Data)
 
-      # check dt doesnt already contain col of same name?
-      if( any(names(dt) == data[[i]][1] ) ) {
-        stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
-                     " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
+      #newCol <- NA_character_ # for adding new cols - all will be character vectors
+
+      # extract data_cols
+      data_cols <- c()
+      for( i in 3:length(data ) ) { # SKIP index 1+2 - this IS ID COL & REP COL - which already exist in dt!
+        data_cols[(i-2)] <- data[[i]][1]
       }
 
-      dt <- tibble::add_column( dt, newCol )
-      names(dt)[names(dt) == "newCol"] <- data[[i]][1] # and SET THE NAME IMMEDIATELY!
-      # ADD ALL DATA TO DT: only if lengths are the same
-      # also should CHECK the ID values match between data and dt?
-      # need to check each ID in case only a SUBSET of IDs have data added to them!
-      for( j in 2:length(data[[i]]) ) {
-        ID <- data[[1]][j]
-        index <- match( TRUE, (dt[["ID"]] == ID) )
-        dt[[ data[[i]][1] ]][ index ] <- data[[i]][j]
+      # extract group_names - first entry in each list entry 3:length
+      # NOT USED!
+      group_names <- c()
+      for(i in 3:length(data) ) {
+        #group_names[(2-1)] <- data[[1]][i]
+        group_names <- unique( data[[1]][3:length(data[[1]])] )
       }
-      #above checks each ID index and inserts the data CORRECTLY!
 
-        #dt[[ data[[i]][1] ]] <- data[[i]][2:length( data[[i]] ) ] # and then add data
+      for(i in 3:length(data) ) { # SKIP index 1+2 - this IS ID COL & REP COL - which already exist in dt!
 
+        # check dt doesnt already contain col of same name?
+        if( any(names(dt) == data[[i]][1] ) ) {
+          stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
+                       " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
+        }
+
+        #dt <- tibble::add_column( dt, newCol )
+        #names(dt)[names(dt) == "newCol"] <- data[[i]][1] # and SET THE NAME IMMEDIATELY!
+
+        # ADD ALL DATA TO DT: only if lengths are the same
+        # also should CHECK the ID and rep values match between data and dt!
+        # need to check each ID and rep in case only a SUBSET of IDs or REPS have data added to them!
+        indices <- c()
+        summarise_reps <- FALSE
+        expanded_data <- c()
+
+        for( j in 2:length(data[[i]]) ) {
+
+          ID <- data[[1]][j]
+          rep <- data[[2]][j]
+
+          # expand ID and rep if they are "ALL"
+          if( length(rep) == 1 && rep == "ALL" ) {
+
+            summarise_reps <- TRUE # ALL is one form of summarising reps
+            # will be adding multiple data as expanded_data to dt...
+
+            ID_rep <- check_divisions_ids_reps(dt)
+            # using check_divisions - to OMIT any IDs/REPs that have been divided
+            # resampled, disposed, exported..
+            ID <- ID_rep$IDs
+            rep <- ID_rep$REPs
+
+            for(k in 1:length(ID) ) {
+              # need to loop through each ID now! index [k]
+              index <- match( TRUE, (dt[["ID"]] == ID[k] & dt[["rep"]] == as.character(rep[k]) ) )
+              indices <- c( indices, index )
+            }
+            # AND fill new vector - expanded_data - with REPLICATED DATA
+            expanded_data <- c(expanded_data, rep(data[[i]][j], length(ID) ) )
+
+
+          } else if( grepl(",", rep) || grepl(":", rep) ) { # expand if rep uses the r vector indexing syntax: 1:3,4,8:10 etc
+
+            summarise_reps <- TRUE
+            # expand it in the c() function
+            rep <- eval(parse(text = paste0("c(",rep,")") )  )
+
+            # and expand ID by replicating it by length of rep now:
+            ID <- rep(ID, length(rep) )
+            for(k in 1:length(ID) ) {
+              # need to loop through each ID now! index [k]
+              index <- match( TRUE, (dt[["ID"]] == ID[k] & dt[["rep"]] == as.character(rep[k]) ) )
+              indices <- c( indices, index )
+            }
+            # AND fill new vector - expanded_data - with REPLICATED DATA
+            expanded_data <- c(expanded_data, rep(data[[i]][j], length(ID) ) )
+
+          } else { # ID and rep are single vals - so just process as normal!
+            index <- match( TRUE, (dt[["ID"]] == ID & dt[["rep"]] == rep) )
+            indices <- c( indices, index )
+
+          }
+          #dt[[ data[[i]][1] ]][ index ] <- data[[i]][j]
+        }
+        #this checks each ID and rep index and inserts the data CORRECTLY!
+
+        if( summarise_reps == TRUE ) { # need to rep each element in data[[i]][2:length(data[[i]])] by rep count!
+          dt <- add_data_col_type(dt, data[[i]][1], expanded_data, indices)
+
+        } else { # can add the data as it exists
+          dt <- add_data_col_type(dt, data[[i]][1], data[[i]][2:length(data[[i]])], indices)
+        }
+
+      }
+
+    } else {
+
+      newCol <- NA_character_ # for adding new cols - all will be character vectors
+      for(i in 2:length(data) ) { # SKIP index 1 - this IS ID COL - which already exists in dt!
+
+        # check dt doesnt already contain col of same name?
+        if( any(names(dt) == data[[i]][1] ) ) {
+          stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
+                       " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
+        }
+
+        dt <- tibble::add_column( dt, newCol )
+        names(dt)[names(dt) == "newCol"] <- data[[i]][1] # and SET THE NAME IMMEDIATELY!
+        # ADD ALL DATA TO DT: only if lengths are the same
+        # also should CHECK the ID values match between data and dt?
+        # need to check each ID in case only a SUBSET of IDs have data added to them!
+        for( j in 2:length(data[[i]]) ) {
+          ID <- data[[1]][j]
+          index <- match( TRUE, (dt[["ID"]] == ID) )
+          dt[[ data[[i]][1] ]][ index ] <- data[[i]][j]
+        }
+        #above checks each ID index and inserts the data CORRECTLY!
+
+          #dt[[ data[[i]][1] ]] <- data[[i]][2:length( data[[i]] ) ] # and then add data
+
+      }
     }
 
   } else {
@@ -4034,6 +5018,78 @@ parse_datatable_resample_reps <- function(dt_vector, datatables, table_name) {
     }
 
 
+    # NOW CREATE NEW / ADD TO SUBSAMPLE TIBBLES - and add to datatables
+    rep <- NA_character_ # rep col - will be character vectors
+    ID <- NA_character_ # ID col - will be character vectors
+
+    for( a in 1:length(sub_ids) ) { # loop through sub_ids/rep /dts/reps
+      sid <- sub_ids[[a]]
+      srep <- sub_rep[[a]]
+
+      # for each sub_ids / sub_rep there can be multiple sub_dts / sub_reps
+      for( b in 1:length(sub_dts[[a]]) ) {
+
+        # each [[a]][b] val in sub_dts / sub_reps is a NEW TIBBLE
+
+        # SPLIT whether sub_reps is just 1 for ALL VALS, or not
+        if( length(sub_reps_u) == 1 && as.numeric(sub_reps_u[1]) == 1 ) {
+
+          # only create tibbles with ID cols: NO REPS in this subsampling at all!
+          subtable_name <- paste0(table_name, "-", srep, "_", sub_dts[[a]][b])
+
+          # this tibble MAY ALREADY EXIST - if an ID of same REP NUM has been created
+          if( is.null(datatables[[ subtable_name ]]) == TRUE ) {
+
+            # if the tibble doesnt exist, then create it, add ID col, and add current ID
+            datatables[[ subtable_name ]] <- tibble::tibble()
+            datatables[[ subtable_name ]] <- tibble::add_column(datatables[[ subtable_name ]], ID)
+            datatables[[ subtable_name ]] <- tibble::add_row(datatables[[ subtable_name ]], ID = sid)
+
+          } else { # the tibble DOES EXIST - so just add current ID to ID col of existing tibble
+            datatables[[ subtable_name ]] <- tibble::add_row(datatables[[ subtable_name ]], ID = sid)
+          }
+
+        } else {
+
+          # create tibbles with ID and REPS col:
+
+          # only create tibbles with ID cols: NO REPS in this subsampling at all!
+          subtable_name <- paste0(table_name, "-", srep, "_", sub_dts[[a]][b])
+          sreps <- as.numeric(sub_reps[[a]][b])
+          srepseq <- seq(sreps)
+
+          # this tibble MAY ALREADY EXIST - if an ID of same REP NUM has been created
+          if( is.null(datatables[[ subtable_name ]]) == TRUE ) {
+
+            # if the tibble doesnt exist, then create it, add ID col, and add current ID
+            datatables[[ subtable_name ]] <- tibble::tibble()
+            datatables[[ subtable_name ]] <- tibble::add_column(datatables[[ subtable_name ]], ID)
+            datatables[[ subtable_name ]] <- tibble::add_column(datatables[[ subtable_name ]], rep)
+            for(c in 1:length(srepseq) ) {
+              datatables[[ subtable_name ]] <- tibble::add_row(
+                datatables[[ subtable_name ]],
+                ID = sid,
+                rep = as.character(srepseq[c]) )
+            }
+
+          } else { # the tibble DOES EXIST - so just add current ID and REP col of existing tibble
+
+            for(c in 1:length(srepseq) ) {
+              datatables[[ subtable_name ]] <- tibble::add_row(
+                datatables[[ subtable_name ]],
+                ID = sid,
+                rep = as.character(srepseq[c]) )
+            }
+
+          } # else tibble EXISTS
+        } # else tibbles IDs/REPs
+      } # for b
+    } # for a
+
+
+    # OLD CODE - very complex and DOESNT WORK!!
+
+    if(FALSE) {
     # EXTRACT the data values to form new subsample tibbles:
 
     # lists to store IDs and reps in:
@@ -4239,16 +5295,17 @@ parse_datatable_resample_reps <- function(dt_vector, datatables, table_name) {
     } # end for b - sub_rep_u
     } # end for a - sub_dts
 
+    }
 
-  } else {
 
-    # no resample column exists - this is the FIRST RESAMPLING of this datatable:
-    # so ADD resample and reps, and CREATE ALL THE NEW subsample DTs
+  } else {  # no resample column exists - this is the FIRST RESAMPLING of this datatable:
 
-    # need to CREATE the new data cols in parent sample DT - resample and reps
+      # so ADD resample and reps, and CREATE ALL THE NEW subsample DTs
+
+    # CREATE resample and reps in parent sample DT
+
     newCol <- NA_character_ # for adding new cols - all will be character vectors
-
-    for(i in 3:length(data) ) {
+    for(i in 3:length(data) ) { # resample and reps are indices 3,4 in data
 
       # SKIP index 1 - this IS ID COL - which already exists in dt!
       # AND SKIP INDEX 2 - this is the rep COL - which already exists in dt!
@@ -4273,9 +5330,81 @@ parse_datatable_resample_reps <- function(dt_vector, datatables, table_name) {
         datatables[[ table_name ]][[ data[[i]][1] ]][ index ] <- data[[i]][j] # and then add data val at index j
       }
 
-    }
+    } # THIS WORKS FINE - adds resample and reps cols to parent DT
 
 
+    # NOW CREATE NEW / ADD TO SUBSAMPLE TIBBLES - and add to datatables
+    rep <- NA_character_ # rep col - will be character vectors
+    ID <- NA_character_ # ID col - will be character vectors
+
+    for( a in 1:length(sub_ids) ) { # loop through sub_ids/rep /dts/reps
+      sid <- sub_ids[[a]]
+      srep <- sub_rep[[a]]
+
+      # for each sub_ids / sub_rep there can be multiple sub_dts / sub_reps
+      for( b in 1:length(sub_dts[[a]]) ) {
+
+        # each [[a]][b] val in sub_dts / sub_reps is a NEW TIBBLE
+
+         # SPLIT whether sub_reps is just 1 for ALL VALS, or not
+        if( length(sub_reps_u) == 1 && as.numeric(sub_reps_u[1]) == 1 ) {
+
+          # only create tibbles with ID cols: NO REPS in this subsampling at all!
+          subtable_name <- paste0(table_name, "-", srep, "_", sub_dts[[a]][b])
+
+          # this tibble MAY ALREADY EXIST - if an ID of same REP NUM has been created
+          if( is.null(datatables[[ subtable_name ]]) == TRUE ) {
+
+            # if the tibble doesnt exist, then create it, add ID col, and add current ID
+            datatables[[ subtable_name ]] <- tibble::tibble()
+            datatables[[ subtable_name ]] <- tibble::add_column(datatables[[ subtable_name ]], ID)
+            datatables[[ subtable_name ]] <- tibble::add_row(datatables[[ subtable_name ]], ID = sid)
+
+          } else { # the tibble DOES EXIST - so just add current ID to ID col of existing tibble
+            datatables[[ subtable_name ]] <- tibble::add_row(datatables[[ subtable_name ]], ID = sid)
+          }
+
+        } else {
+
+          # create tibbles with ID and REPS col:
+
+          # only create tibbles with ID cols: NO REPS in this subsampling at all!
+          subtable_name <- paste0(table_name, "-", srep, "_", sub_dts[[a]][b])
+          sreps <- as.numeric(sub_reps[[a]][b])
+          srepseq <- seq(sreps)
+
+          # this tibble MAY ALREADY EXIST - if an ID of same REP NUM has been created
+          if( is.null(datatables[[ subtable_name ]]) == TRUE ) {
+
+            # if the tibble doesnt exist, then create it, add ID col, and add current ID
+            datatables[[ subtable_name ]] <- tibble::tibble()
+            datatables[[ subtable_name ]] <- tibble::add_column(datatables[[ subtable_name ]], ID)
+            datatables[[ subtable_name ]] <- tibble::add_column(datatables[[ subtable_name ]], rep)
+            for(c in 1:length(srepseq) ) {
+              datatables[[ subtable_name ]] <- tibble::add_row(
+                datatables[[ subtable_name ]],
+                ID = sid,
+                rep = as.character(srepseq[c]) )
+            }
+
+          } else { # the tibble DOES EXIST - so just add current ID and REP col of existing tibble
+
+            for(c in 1:length(srepseq) ) {
+              datatables[[ subtable_name ]] <- tibble::add_row(
+                datatables[[ subtable_name ]],
+                ID = sid,
+                rep = as.character(srepseq[c]) )
+            }
+
+          } # else tibble EXISTS
+        } # else tibbles IDs/REPs
+      } # for b
+    } # for a
+
+
+    # OLD CODE - very complex and DOESNT WORK!!
+
+    if(FALSE) {
     # EXTRACT the data values to form new subsample tibbles:
 
     # lists to store IDs and reps in:
@@ -4298,16 +5427,17 @@ parse_datatable_resample_reps <- function(dt_vector, datatables, table_name) {
 
           # if matches the uniqe val
           if(sub_dts_u[a] == sub_dts[[b]][c] ) {
-            #print(sub_dts_u[a])
-            #print(sub_ids[[b]])
-            #print(sub_reps[[b]][c])
-            #print(sub_dts_ind)
+            print(sub_dts_u[a])
+            print(sub_ids[[b]])
+            print(sub_reps[[b]][c])
+            print(sub_dts_ind)
 
             # generate SEQUENCE of reps:
             reps <- seq( as.numeric(sub_reps[[b]][c]) )
             reps_length <- length(reps)
             # add to sub_ids_list & sub_reps_list:
             if(sub_dts_ind == 1) { # create if first index
+
               sub_ids_list[[a]] <- rep(sub_ids[[b]], reps_length)
               sub_rep_list[[a]] <- sub_rep[[b]]
               sub_reps_list[[a]] <- reps
@@ -4348,6 +5478,20 @@ parse_datatable_resample_reps <- function(dt_vector, datatables, table_name) {
       } # for b
     } # for a
 
+
+    # REMOVE all NULL values from sub_sub lists
+    ssrl2 <- list()
+    for(a in 1:length(sub_sub_reps_list) ) {
+      ssrl2[[a]] <- sub_sub_reps_list[[a]][-which(sapply(sub_sub_reps_list[[a]], is.null))]
+    }
+    sub_sub_reps_list <- ssrl2
+
+    ssil2 <- list()
+    for(a in 1:length(sub_sub_ids_list) ) {
+      ssil2[[a]] <- sub_sub_ids_list[[a]][-which(sapply(sub_sub_ids_list[[a]], is.null))]
+    }
+    sub_sub_ids_list <- ssil2
+
     # CREATE new subsample tibbles and ADD to datatables
     # either WITHOUT rep col - if all reps are 1
     # or WITH rep col - if ANY REP is above 1
@@ -4378,7 +5522,6 @@ parse_datatable_resample_reps <- function(dt_vector, datatables, table_name) {
              # OMG this actually works!  MIND BENDING!!!
           }
         }
-
       }
 
 
@@ -4411,6 +5554,8 @@ parse_datatable_resample_reps <- function(dt_vector, datatables, table_name) {
       } # for a
 
     } # end else add ID and rep cols
+
+    }
 
   } # end else no resampling cols exist
 
@@ -5352,6 +6497,121 @@ build_datatable_from_tibble <- function(tb, datatable_name, dt_function = "CREAT
 
   # return
   data_tables
+
+}
+
+
+#' Check Divisions of sample IDs only in a datatable
+#'
+#' check and remove all samples IDs that no longer exist in datatable.  Sample
+#' IDs are excluded if they have been resampled, disposed or exported in the
+#' current datatable.
+#'
+#' This returns a character vector of sample IDs for use in generating a new
+#' datatable consisting of only EXISTING IDs.
+#'
+#' @param df A dataframe derived from Rmd which contains sample IDs from which
+#' a new datatable will be created.  This is screened to remove all IDs that
+#' have been previously resampled, disposed, or exported.
+#'
+#' @return IDs vector.
+#'
+check_divisions_ids <- function( df ) {
+
+  # define IDs
+  IDs <- df$ID
+
+  # check for each column - resample, disposed, exported, split
+  # index all non NA values and REMOVE THESE FROM IDs
+  keep_bool_vector <- rep(TRUE, length(IDs))
+
+  # for each ID that is not NA in each col, set keep_bool_vector to FALSE
+
+  if( any(names( df ) == "resample") ) {
+    keep_bool_vector <- (is.na(df$resample) & keep_bool_vector)
+  }
+
+  if( any(names( df ) == "dispose") ) {
+    keep_bool_vector <- (is.na(df$dispose) & keep_bool_vector)
+  }
+
+  if( any(names( df ) == "export") ) {
+    keep_bool_vector <- (is.na(df$export) & keep_bool_vector)
+  }
+
+  # DEPRECATED
+  #if( any(names( df ) == "split") ) {
+  #  keep_bool_vector <- (is.na(df$split) & keep_bool_vector)
+  #}
+
+  # now keep_bool_vector is only TRUE where all above cols do not exist/are NA
+  # i.e the sample IDs that should be kept!
+
+  # So - filter the IDs with this boolean vector
+  IDs <- IDs[keep_bool_vector]
+
+  # return IDs
+  IDs
+
+}
+
+
+
+#' Check Divisions of sample IDs & reps in a datatable
+#'
+#' check and remove all samples IDs & reps that no longer exist in datatable.
+#' Sample IDs/reps are excluded if they have been resampled, disposed or
+#' exported in the current datatable.
+#'
+#' This returns a list of two character vectors - IDs and REPs - for use in
+#' generating a new datatable consisting of only EXISTING IDs/REPs.
+#'
+#' @param df A dataframe derived from Rmd which contains sample IDs/reps from
+#' which a new datatable will be created.  This is screened to remove all
+#' IDs/REPs that have been previously resampled, disposed, or exported.
+#'
+#' @return A list containing the IDs vector and REPs vector - all IDs/REPs that
+#' still EXIST in the df.
+#'
+check_divisions_ids_reps <- function( df ) {
+
+  # define IDs and REPs
+  IDs <- df$ID
+  REPs <- df$rep
+
+  # check for each column - resample, disposed, exported, split
+  # index all non NA values and REMOVE THESE FROM IDs and REPs
+  keep_bool_vector <- rep(TRUE, length(IDs))
+
+  # for each ID that is not NA in each col, set keep_bool_vector to FALSE
+  if( any(names( df ) == "resample") ) {
+    keep_bool_vector <- (is.na(df$resample) & keep_bool_vector)
+  }
+
+  if( any(names( df ) == "dispose") ) {
+    keep_bool_vector <- (is.na(df$dispose) & keep_bool_vector)
+  }
+
+  if( any(names( df ) == "export") ) {
+    keep_bool_vector <- (is.na(df$export) & keep_bool_vector)
+  }
+
+  # DEPRECATED
+  #if( any(names( df ) == "split") ) {
+  #  keep_bool_vector <- (is.na(df$split) & keep_bool_vector)
+  #}
+
+  # now keep_bool_vector is only TRUE where all above cols do not exist/are NA
+  # i.e the sample IDs/REPs that should be kept!
+
+  # So - filter the IDs and REPs with this boolean vector
+  IDs <- IDs[keep_bool_vector]
+  REPs <- REPs[keep_bool_vector]
+
+  # return as named list:
+  lst <- list(IDs, REPs)
+  names(lst) <- c("IDs", "REPs")
+  lst
 
 }
 

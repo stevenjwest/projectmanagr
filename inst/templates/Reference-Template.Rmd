@@ -58,11 +58,11 @@ reference_preliminary_work_optimisation
 # REFERENCE
 
 
-* The Reference consists one or more Procedures that each achieve a specific goal:
+* Reference_consists_of_Procedures_that_each_achieve_a_specific_goal
 
-    + Each procedure is GENERIC : provides general steps, and parameter maps where necessary for specific instantiation
+    + Each_procedure_is_GENERIC__provides_general_steps_and_parameter_maps_where_necessary_for_specific_instantiation
     
-    + Procedures are INDEPENDENT: They do not have to be followed in order
+    + Procedures_may_be_INDEPENDENT__may_not_have_to_be_followed_in_order
 
 
 ---

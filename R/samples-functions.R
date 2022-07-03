@@ -874,15 +874,18 @@ sample_resample <- function( sampleDataFrame, resample_vector, resample_dt,
 }
 
 
-#' Find Samples Recursively inside a Directory
+
+
+#' Find Samples Recursively inside a Directory from Rmd
 #'
-#' This will identify all samples CSVs inside a Direcotry recursively, presenting
+#' This will identify all samples CSVs inside a Directory recursively, presenting
 #' a summary Tibble containing each EXISTING sample - data including:
 #'
 #' * ID - sample ID
 #' * SAMPLE: Composite of all subsampling
 #' * COUNT: Number of reps of the sample (sections)
 #' * EXP: The experiment PREFIX ID
+#' * TITLE: Fill with Experiment Title - will contain the LAB_TREATMENT
 #' * PATH: The absolute path to the Expeirment DIR
 #'
 #' @param subProgDir a directory that is inside a Programme, which will be searched recursively
@@ -892,6 +895,135 @@ sample_resample <- function( sampleDataFrame, resample_vector, resample_dt,
 sample_find <- function(subProgDir) {
 
   cat( "\nprojectmanagr::sample_find():\n" )
+
+  context <- rstudioapi::getSourceEditorContext()
+  context$path <- path.expand(context$path) # expand "~" HOME
+
+  # get all Project Notes inside subProgDir
+  # they all contain "~_" in filename
+  samplesList <- list.files(subProgDir, full.names = TRUE, recursive=TRUE)
+  samplesList <- samplesList[ regexpr("~_", samplesList) > 0  ]
+
+  if( length(samplesList) == 0 ) {
+    # check if the subProgDir is defined from the orgDir:
+    subProgDir <- paste0(findOrgDir(context$path), .Platform$file.sep, subProgDir )
+
+    # get all Project Notes inside subProgDir
+    # they all contain "~_" in filename
+    samplesList <- list.files(subProgDir, full.names = TRUE, recursive=TRUE)
+    samplesList <- samplesList[ regexpr("~_", samplesList) > 0  ]
+  }
+
+  # check subProgDir - make sure its in a org DIR
+  subProgDir <- checkProgSubDir(subProgDir)
+
+
+  # define a new Summary tibble to hold all samples:
+  # MUST define a STANDARD TEMPLATE to hold SUMMARY DATA on samples
+  # From this summary information, should be possible to select samples, or further explore them
+  ID <- ""      # ID: Each Sample ID
+  SAMPLE <- ""  # SAMPLE: COMPOSITE of all subsampling columns: CNS-RT-MB etc.
+  COUNT <- integer()  # COUNT: How many REPS are there of this sample?
+  EXP <- ""     # EXP: Fill with the Experiment Prefix ID
+  TITLE <- ""   # TITLE: Fill with Experiment Title - will contain the LAB_TREATMENT
+  PATH <- ""    # PATH: Put the absolute PATH to the Project Note Rmd to Navigate to
+
+  samples_summary <- tibble::tibble(ID, SAMPLE, COUNT, EXP, TITLE, PATH)
+
+  for(s in samplesList) {
+
+    # read CSV
+    t <- readr::read_csv(s, col_types = readr::cols( ID = readr::col_character()) )
+
+    # trim the tibble to contain only ID, subsample, resample, export columns:
+    #  -dplyr::ends_with("_rep"),
+    t <- dplyr::select(
+      t,
+      ID,
+      dplyr::starts_with("subsample"),
+      dplyr::matches("resample"), -dplyr::matches("resample_dt"),
+      dplyr::matches("export"), -dplyr::matches("export_dt") )
+
+    # get all colnames
+    cols <- colnames(t)
+
+    # remove all rows with resample col that != NA
+    if( any(cols == "resample") ) {
+      t <- dplyr::filter(t, is.na(resample)) # keep any which are NA - they STILL EXIST!
+      # note although written as "" blank, when saved and loaded by read_csv, blank cols become NA
+    }
+
+    # remove all rows with export col that != NA
+    if( any(cols == "export") ) {
+      t <- dplyr::filter(t, is.na(export)) # keep any which are NA - they STILL EXIST!
+      # note although written as "" blank, when saved and loaded by read_csv, blank cols become NA
+    }
+
+    # remove _rep cols, replace with count:
+    #if( any(endsWith(cols, "_rep")) ) {
+    colsnorep <- cols[!endsWith(cols, "_rep")] # want to group by all EXCEPT _rep
+    tg <- dplyr::group_by_at(t, colsnorep )
+    t <- dplyr::summarise(tg, count=dplyr::n() )
+    t <- dplyr::ungroup(t)
+    #}
+
+    cols <- colnames(t)
+    subscols <- cols[grepl("subsample", cols)]
+    # combine any subsample cols if they exist:
+    if(length(subscols) == 0) {
+      t <- dplyr::mutate(t, subsample="")
+    } else if(length(subscols) == 1) {
+      t <- dplyr::rename(t, subsample=subsample_01)
+    } else if(length(subscols) > 1) {
+      t <- tidyr::unite(t, "subsample", subscols)
+    }
+    # any subsample cols are combined into one col - subsample
+
+    exp <- list.files( dirname(dirname(s)))
+    exp <- exp[endsWith(exp,".Rmd")]
+    exp <- substr(exp, regexpr("~_", exp)+2, regexpr(".Rmd", exp)-1)
+
+    # edit t - mutate to form ID, SAMPLE, COUNT, EXP
+    t <- dplyr::transmute(
+      t,
+      ID=ID,
+      SAMPLE=subsample,
+      COUNT=count,
+      EXP=basename( dirname(s) ),
+      TITLE=exp,
+      PATH = dirname( s ) )
+
+    # bind samples_summary with t:
+    samples_summary <- dplyr::bind_rows(samples_summary, t)
+  }
+
+  # return the samples_summary
+  samples_summary
+
+}
+
+
+
+
+#' Find Samples Recursively inside a Directory from CSVs
+#'
+#' This will identify all samples CSVs inside a Directory recursively, presenting
+#' a summary Tibble containing each EXISTING sample - data including:
+#'
+#' * ID - sample ID
+#' * SAMPLE: Composite of all subsampling
+#' * COUNT: Number of reps of the sample (sections)
+#' * EXP: The experiment PREFIX ID
+#' * TITLE: Fill with Experiment Title - will contain the LAB_TREATMENT
+#' * PATH: The absolute path to the Expeirment DIR
+#'
+#' @param subProgDir a directory that is inside a Programme, which will be searched recursively
+#' to find all files that contain the string glob `__sample*`
+#'
+#' @export
+sample_find_csv <- function(subProgDir) {
+
+  cat( "\nprojectmanagr::sample_find_csv():\n" )
 
   context <- rstudioapi::getSourceEditorContext()
   context$path <- path.expand(context$path) # expand "~" HOME

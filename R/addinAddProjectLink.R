@@ -79,11 +79,12 @@ addinAddProjectLink <- function() {
       # GROUP HEADER: addLinkProjectGroup()
       # PROJECT DOC: addLinkProjectDoc()
 
-      # first, get all open RStudio Doc PATHS:
-      fileList <- getRStudioOpenDocIDs()
-
-      # next, get the currently active document:
+      # FIRST, get the currently active document:
       context <- rstudioapi::getSourceEditorContext()
+
+      # get all open RStudio Doc PATHS:
+      #fileList <- getRStudioOpenDocIDs( getRStudioInternalStateDir(context$path) )
+      fileList <- getRStudioOpenDocIDs()
 
       # get contents:
       openDocContents <- context$contents
@@ -334,7 +335,18 @@ addinAddProjectLink <- function() {
       }
 
 
-      viewer <- dialogViewer("Create New Project Note", width = 1000, height = 800)
+      orgPath <- findOrgDir(context$path)
+      if(orgPath == "") {
+        viewer <- dialogViewer("Add Project Link", width = 1000,
+                               height = 800 )
+      } else {
+        confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+        settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+        settingsContents <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
+        viewer <- dialogViewer("Add Project Link", width = settingsContents$gadgetWidth,
+                               height = settingsContents$gadgetHeight )
+      }
 
       runGadget(ui, server, viewer = viewer)
 

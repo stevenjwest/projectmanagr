@@ -150,7 +150,7 @@ addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNot
   # NB Need to convert the .Rmd links to .html when WRITING the Organisation to a html site!
 
   DocName <- basename(projectDocPath)
-  DocName <- gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4))
+  DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
 
   DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
@@ -215,8 +215,9 @@ addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNot
   # create the projectNoteLink:
   NoteLink <- R.utils::getRelativePath(headerNotePath, relativeTo=projectDocPath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  projectNoteLink <- paste("**[", headerNotePrefix, "~ ", projectNoteTitle, "](", NoteLink, ")**",  sep="")
-  #**[LAB~003-00~ Axonal Projections Hippocampal Entorhinal Pathway](../LAB/LAB~003-00~_axonal_projections_hippocampal_entorhinal_pathway.Rmd)**
+  headerNoteTitle <- substring( basename(headerNotePath), first=1, last=nchar(basename(headerNotePath))-4)
+  projectNoteLink <- paste("**[", headerNoteTitle, "](", NoteLink, ")**",  sep="")
+  #[LAB~003-00~_Axonal_Projections_Hippocampal_Entorhinal_Pathway](../LAB/LAB~003-00~_axonal_projections_hippocampal_entorhinal_pathway.Rmd)
 
   # create the Vector, including Whitespace and Summary information:
   projectNoteLinkVector <- c( "", "", "", projectNoteLink, "" )

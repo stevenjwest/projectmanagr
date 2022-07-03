@@ -11,15 +11,39 @@ output:
 
 
 
-# Introduction:
+# PROJECT SUMMARY
+
+
+{{PROGLINK}}
+
+
+* GOAL_01
+
+* GOAL_02
+
+* GOAL_03
+
+
+----
+
+
+
+# Overview
 
 
 *Welcome to the {{TITLE}} Project!*
 
 
-* Project Goals:
+succinct_description_project_scope
 
-    + SUCCINCTLY_DESCRIBE_AIM
+
+
+KEY AIMS of this project
+
+
+* OBJECTIVE01
+
+
 
 
 ---
@@ -29,21 +53,8 @@ output:
 # Background
 
 
-detail_of_initial_aim_and_background_information_MOTIVATION
+initial_aims_and_background_information_MOTIVATION
 
-
----
-
-
-
-# Objective Summary:
-
-
-* OBJECTIVE:
-    
-    + GOALS
-    
-    + GOALS
 
 
 ---

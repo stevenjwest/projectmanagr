@@ -2,7 +2,7 @@
 % Please edit documentation in R/datatables-functions.R
 \name{datatable_export}
 \alias{datatable_export}
-\title{Export a set of samples}
+\title{Export a set of samples from summary datatable}
 \usage{
 datatable_export()
 }

@@ -5,11 +5,12 @@
 addinAddHyperLink <- function( ) {
 
 
-  # first, get all open RStudio Doc PATHS:
-  fileList <- getRStudioOpenDocIDs()
-
-  # next, get the currently active document:
+  # FIRST, get the currently active document:
   context <- rstudioapi::getSourceEditorContext()
+
+  # get all open RStudio Doc PATHS:
+  #fileList <- getRStudioOpenDocIDs( getRStudioInternalStateDir(context$path) )
+  fileList <- getRStudioOpenDocIDs()
 
   # get contents:
   openDocContents <- context$contents
@@ -128,7 +129,7 @@ addinAddHyperLink <- function( ) {
       DocLink <- substring(DocLink, first=4, last=nchar(DocLink))
 
       DocName <- basename(reorderedFileList[[as.integer(input$select)]])
-      DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=regexpr("\\.[^\\.]*$", DocName)-1 ) )  )
+      DocName <- substring(DocName, first=1, last=regexpr("\\.[^\\.]*$", DocName)-1 )
 
       DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
@@ -157,14 +158,21 @@ addinAddHyperLink <- function( ) {
 
 
   ### VIEW GADGET ###
+  # get config/status.yml to read gadgetWidth/Height preferences
+  orgPath <- findOrgDir(context$path)
+  if(orgPath == "") {
+    viewer <- dialogViewer("Add Hyperlink", width = 1000,
+                           height = 800 )
+  } else {
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settingsContents <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
-  viewer <- dialogViewer("Create New Project Document", width = 800, height = 600)
+  viewer <- dialogViewer("Add Hyperlink", width = settingsContents$gadgetWidth,
+                         height = settingsContents$gadgetHeight )
+  }
 
   runGadget(ui, server, viewer = viewer)
-
-
-
-
 
 }
 

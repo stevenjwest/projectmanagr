@@ -1,5 +1,5 @@
 ---
-title: 'projectmaangr Overview'
+title: 'projectmanagr Overview'
 author: 'Steven J. West'
 output:
   html_document:
@@ -11,64 +11,130 @@ output:
 
 
 
-# Introduction
+# Overview
 
 
-Overview of projectmanagr R package and its use for documenting and managing projects.
+This document gives a new user an introduction to projectmanagr R package and its use for documenting and managing projects.
+
+
+*projectmanagr : R Package for Project Management using R Markdown Documents*
+
+
+```{r}
+ #knitr::include_graphics("docs/images/projectmanagr-overview.svg")
+```
+
+
+* `projectmanagr` Features include:
+    
+    + Filesystem layout:
+    
+        - Series of Rmd documents in directory tree
+        
+        - ORGANISATION -> PROGRAMMES -> PROJECTS -> PROJECT NOTES (Experiments)
+        
+            - Supported with PROTOCOLS (SOPs REFs) & DATABASES (DB) & Samples Management Framework
+            
+        - Projects are defined in Programmes, and Project Notes are created to meet PROJECT DELIVERABLES
+            
+        - Project Notes can 
+        
+            - utilise developed Protocols (SOPs) for rapid documentation of work
+            
+            - Contain SAMPLES and data relating to them for analysis
+            
+            - Import RESOURCES from DATABASES for documenting their usage
+        
+    + SAMPLES : Sample Management Framework 
+        
+        - for managing an inventory of scientific samples 
+            
+        - as well as collecting data on these samples: metadata, procedure-data, experimental-data
+
+    + RESOURCES : DATABASE Creation and Management 
+        
+        - for managing and inventory of antibodies and other important reagents
+
+    + Protocols (SOPs & REFs) Management
+    
+        - REFs : References - used for general documentation of procedures used in SOPs
+        
+        - SOPs : Standard Operating Procedures
+          
+            - Define a series of procedures to achieve a specific aim : for repeated tasks for rapid documentation
+        
+            - Insert into Project Notes for reproducible and documented methods and analysis
+            
+    + Data offset, backup and archiving
+        
+        - Connections to External Volumes (drives and servers) can be established for data management
+            
+        - Archives can be formed of Projects and data for long-term storage
 
 
 ---
 
 
 
-* projectmanagr:
-
-    + An R Package that enables Project Management using R Markdown Documents
-        
-    + `projectmanagr` Features include:
-        
-        - Filesystem layout:  
-            
-            - ORGANISATION -> PROGRAMMES -> PROJECTS -> PROJECT NOTES (Experiments) & PROTOCOLS (SOPs)
-                
-            - Projects are defined in programmes, and project notes are created to meet project deliverables
-                
-            - Project Notes can utilise developed Protocols (SOPs) for reproducible research output
-            
-        - Simple DATABASE Creation and Management 
-            
-            - for managing and inventory of antibodies and other important reagents
-            
-        - Sample Management Framework 
-            
-            - for managing an inventory of scientific samples 
-                
-            - as well as collecting data on these samples: metadata, procedure-data, experimental-data
-                
-        - Protocols (SOPs) Management
-            
-            - Insert into Experiments (Project Notes) for reproducible and documented methods and analysis
-                
-        - Data offset, backup and archiving
-            
-            - Connections to External Volumes (drives and servers) can be established for data management
-                
-            - Archives can be formed of Projects and data for long-term storage
-
-```{r}
- #knitr::include_graphics("docs/images/projectmanagr-overview.svg")
-```
-        
+# Introduction
 
 
-* The ELN is composed of R Markdown Documents:
+All work with specific goals can be modelled as projects.  The principles and insights of project management can aid in successfully meeting these goals.  
+
+
+ProjectManagr wraps these project management principles and insights into an R package that allows a researcher to organise, plan, document, analyse and disseminate project work.  It uses the R Markdown format for documenting & analysing in plain text files, embedded into a filesystem structure for project management.  Rapid documentation is facilitated with user defined Protocols, that can be inserted into project work as needed.  Samples and resources are effectively managed and documented in embedded structures within R Markdown documents.  Data storage are also managed and documented in R Markdown files so large datasets can be stored, backed up, or archived on External Volumes.
+
+
+This document gives a rapid introduction into using ProjectManagr, followed by suggested strategies for productive working within this system.
+
+
+---
+
+
+
+# ProjectManagr Filesystem Organisation
+
+
+ProjectManagr defines a filesystem organisation for effective project management.  
+
+
+* At the heart of the filesystem structure is the R Markdown Document - all documentation occurs in this format, typically in the RStudio IDE.  R Markdown Documents are used to plan, document, analyse and disseminate project work.
+
+
+* R Markdown files exist at different levels in the Filesystem Structure to document work at different levels of abstraction.  Each level defines R Markdown document names & locations throughout the organisation directory tree, and syntax is defined within each R Markdown document type to link between these levels of abstraction.
+
+
+---
+
+
+
+## R Markdown Documents        
+
+
+The ORGANISATION documentation is composed of R Markdown Documents in a directory tree
+
+
+* R Markdown (Rmd) combines **Markdown documentation** with **code chunks** to form REPRODUCIBLE REPORTS for data analysis
+
+
+* Rmd can be used for
+
+    - plan projects & project work : Organisation Programme Project Rmds
     
-        - R Markdown allows the documentation of experiments and data analysis
-        
-        - R Markdown allows the embedding of R, Python, Bash and other code to form REPRODUCIBLE REPORTS for data analysis
-        
-        - See R4DS, R Markdown complete guide, 
+    - conduct & document experiments + data collection : Project Note Rmds
+    
+    - perform data processing & statistical analysis : Project Note Rmds with embedded code chunks
+    
+    - create dissemination material from project work : Project Note Rmds & Rmd output formats
 
+
+* For further details of the power of Rmd see
+
+    - [R Markdown: The Definitive Guide](https://bookdown.org/yihui/rmarkdown/)
+    
+    + [R 4 Data Science](https://r4ds.had.co.nz/)
+
+    
 
 ```{r}
  #knitr::include_graphics("docs/images/rmd-overview.svg")
@@ -76,31 +142,55 @@ Overview of projectmanagr R package and its use for documenting and managing pro
 
 
 
-* The ELN is ORGANISED into PROGRAMMES:
+---
+
+
+
+## Filesystem Structure
+
+
+The Filesystem Structure facilitates the documentation work at different levels of abstraction - allowing the user to move from a high level overview/summary of the Organisation, its Programmes, or the Projects defined within Programmes; down to a low-level view of project work within the Project Notes.
+
+
+
+### Organisation
+
+
+
+
+
+
+### Programmes
+
+
+* The ORGANISATION is organised into PROGRAMMES:
 
     + COMMUNAL PROGRAMMES for Shared Resources and Data:
     
-        - example: [00-NRF-SWC](00-NRF-SWC/00-NRF-SWC_index.Rmd) 
+        - example: 00-NRF-SWC
         
-            - This Programme covers the Neurobiological Research Facility (Animal House)
+            - This Programme covers the Neurobiological Research Facility (Animal House) at SWC
             
-            - Provides Protocols (SOPs) for the histological processing of animals
+            - Provides communal Protocols (SOPs) for the histological processing of animal tissues
             
-            - Serves as a COMMUNAL SOURCE of tissue (Brain Bank) for Histological Experiments
+            - Serves as a COMMUNAL SOURCE of tissue (Tissue Bank) for Histological Experiments
             
     + RESEARCHER PROGRAMMES where each scientist can manage their resources and data:
     
-        - example: [01-SJW-OX](01-SJW-OX/01-SJW-OX_index.Rmd)
+        - example: 01-SJW-OSWC
         
-            - This Programme covers all Histological experimental work performed by Steven J. West in NDCN, Oxford 2011-2019.
+            - This Programme covers all Histological experimental work performed by Steven J. West at SWC, UCL
             
-            - Contains BMS (Biomedical Services - animal house and *in vivo* experiments) and LAB (histological and other *in vitro* experiments) Project Notes and all Project Docs and SOPs from this time.
+            - Contains LAB (histological and other *in vitro* experiments) Project Notes and all Project Docs and SOPs
 
 
 ```{r}
  #knitr::include_graphics("docs/images/projectmanagr-programmes.svg")
 ```
 
+
+
+### Projects
 
 
 * Each PROGRAMME contains PROJECTS:
@@ -114,6 +204,9 @@ Overview of projectmanagr R package and its use for documenting and managing pro
 
 
 
+### Project Notes
+
+
 * Each PROJECT GOALS are met with PROJECT NOTES:
     
     + Project Notes
@@ -124,6 +217,10 @@ Overview of projectmanagr R package and its use for documenting and managing pro
 ```
 
 
+
+### Protocols
+
+
 * Each PROJECT NOTES can utilise documented PROTOCOLS (SOPs):
 
 
@@ -132,10 +229,121 @@ Overview of projectmanagr R package and its use for documenting and managing pro
 ```
 
 
+See [SWC01~002~ SWC Protocols Dev](PROJECTS/SWC01/SWC01~002~_SWC_Protocols_Dev.Rmd)
 
-* [DPhil Thesis](01-SJW-OX/PROJECTS/SW-OX02~_DPhil_Thesis.Rmd)
+
+TWO FORMATS:
+
+* REFERENCES : Define **GENERIC a (SET of) procedure(s) to follow that achieve various aims**
+
+* PROTOCOLS : Define a **single SEQUENCE of procedures to follow to achieve a desired outcome**
 
 
+
+Use a NAMING CONVENTION
+
+* Naming Convention : 
+
+    + USE VERBS to define a hierarchy of protocol definitions
+    
+    + Define based on generic workflow: 
+    
+        - IMPORT (animal data) -> PERFUSE -> DISSECT -> STORE -> MEASURE -> SECTION -> MOUNT -> PROCESS -> STAIN -> CLEAR -> IMAGE
+
+
+
+
+
+---
+
+
+
+# PRODUCTIVE WORKING STRATEGIES
+
+
+
+
+## Principles
+
+
+
+
+### Only Cultivate what is Needed
+
+
+
+
+## Conduct Regular Reviews of Projects
+
+
+Regular reviews on all work are essential for progress:
+
+* Help to achieve a Global Perspective
+
+* Celebrate progress made so far - motivation
+
+* Help to Prioritise future work
+
+
+* When to perform Reviews
+
+    + Best at START OF DAY and START OF WEEK
+    
+    + Monday Morning
+    
+    + This keeps the review fresh in your mind for remainder of the day and week
+    
+    + THIS IS THE MOST IMPORTANT TASK OF THE WEEK
+    
+        - And research shows that you are most focussed in the morning with your first work, and this focus diminishes through the day
+        
+        - So its best to do reviews at the start of the day and week!
+
+
+
+### Weekly Review
+
+
+* Schedule a time to look over all projects across all Programmes
+
+    + Ascertain what the current Goals & Tasks Are
+    
+    + What progress has been made in past week
+    
+    + What should be done in the coming week
+
+
+
+### Quarterly & Annual Review
+
+
+* Schedule a time to look over all projects across all Programmes
+
+    + What progress has been made
+    
+    + What are the next big Goals?  When should they be achieved by?
+
+
+
+
+
+
+## Prioritise Work with TODO Lists
+
+
+
+
+
+
+## Cross Referencing Work
+
+
+
+
+
+
+
+------
 ---
 
 
@@ -159,21 +367,15 @@ ProjectManagr allows a flexible layout of Projects and Project Notes:
 
 * The BASIC LAYOUT IS:
 
-    + CREATE initial ELN ORG:
+    + CREATE initial ORG:
     
         - This will contain all PROGRAMMES:
         
-            - SHARED PROGRAMME for animal experiments -> to allow the sharing of tissues between researchers
+            - SHARED PROGRAMME for shared resources -> to allow the sharing of tissues between users
             
-            - RESEARCHER'S INDIVIDUAL PROGRAMME -> For Histology and other lab work Projects/Experiment Notes
+            - USER'S INDIVIDUAL PROGRAMME -> For individual work : Projects/Experiment Notes
     
-    + Define PROGRAMMES:
-    
-        - NRF Programme to hold all TISSUES that are collected ACROSS the Lab
-        
-        - Each Researcher has their own Programme for their personal projects and histology/other lab experimental notes/data
-        
-    + Researcher defines PROJECTS
+    + User defines PROJECTS
     
         - Under each PROJECT define the PROJECT NOTES that meet the PROJECT GOALS
         

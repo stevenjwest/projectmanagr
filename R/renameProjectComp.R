@@ -1,6 +1,6 @@
-#' Rename a Project Comp
+#' Rename a Project Component
 #'
-#' Renames a Project Comp at oldProjectCompPath with file name (oldProjectCompPath), and newProjectCompTitle.
+#' Renames a Project Component at oldProjectCompPath with file name newProjectCompName, and newProjectCompTitle.
 #'
 #' This also modifies all LINKS to this file throughout the Organisation - updating them to use the new
 #' project Comp name and title.
@@ -9,7 +9,7 @@
 #'
 #'
 #' @param oldProjectCompPath defines the path to the Project Comp - should point to the Project Comp Rmd file
-#' @param oldProjectCompPath defines the NEW Project Comp File name
+#' @param newProjectCompName defines the NEW Project Comp File name
 #' @param newProjectCompTitle defines the NEW Project Comp Title - written to its Rmd file.  By default this
 #' is the oldProjectCompPath, with spaces replacing "-" and "_".
 #'
@@ -63,8 +63,7 @@ renameProjectComp <- function( oldProjectCompPath, newProjectCompName, newProjec
 
   if(done == TRUE) {
     cat( "  Renamed Project Comp file from: ", oldProjectCompName , " to: ", newProjectCompName, "\n" )
-  }
-  else {
+  } else {
     stop( paste0("  Renamed Project Comp file unsuccessful: ", basename(newProjectCompPath) ) )
   }
 
@@ -74,18 +73,22 @@ renameProjectComp <- function( oldProjectCompPath, newProjectCompName, newProjec
   contents <- readLines( fileConn )
   close(fileConn)
 
-  # find title line:
-  line <- grep( paste0("title: '"), contents)
+  # find title line - via getProjCompTitle()
+  line <- grep( paste0("title: '"), contents) # get first instance of line beginning with title:
+  contents[line] <- sub(getProjCompTitle(contents), newProjectCompTitle, contents[line]) # replace old with new title
 
-  # compute old title - +2 as always have "~ " after prefix, -1 as have "'" at end of title
-  oldProjectCompTitle <- substr(contents[line],
-                               regexpr( "~ ", contents[line]) + 2,
-                               nchar(contents[line])-1)
+  # write subNote file to disk:
+  fileConn <- file(newProjectCompPath)
+  writeLines(contents, fileConn)
+  close(fileConn)
 
+  cat( "  Written new Project Comp title to Rmd: ", newProjectCompTitle, "\n" )
 
   ### THIRD - replace oldProjectCompName/Title with newProjectCompName/Title THROUGHOUT the Organisation:
+  updateAllLinks(orgPath, oldProjectCompName, newProjectCompName) # auto-computes the titles now!
+  #updateAllLinks( orgPath, oldProjectCompName, newProjectCompName, oldProjectCompTitle, newProjectCompTitle )
 
-  updateAllLinks( orgPath, oldProjectCompName, oldProjectCompTitle, newProjectCompName, newProjectCompTitle )
-
+  # FINALLY - re-open the file
+  rstudioapi::navigateToFile(newProjectCompPath)
 
 }

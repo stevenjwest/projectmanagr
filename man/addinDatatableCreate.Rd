@@ -8,7 +8,6 @@ addinDatatableCreate()
 }
 \description{
 Generates a Shiny Gadget for initialising
-a new datatable from file  User selects a csv file from
-the file system, and this is converted to datatable format and inserted
-in current Rmd at the current line.
+a new datatable from ID list, plus optional cols with vals.  A datatable
+is formed and inserted in current Rmd at the current line.
 }

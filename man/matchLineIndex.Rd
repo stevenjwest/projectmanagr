@@ -13,6 +13,6 @@ matchLineIndex(line, contents)
 this vector is returned - any leading/trailing whitespace is TRIMMED from each line.}
 }
 \description{
-Returns the index of the first COMPLETE MATCH of line in contents,
+Returns the index of the FIRST COMPLETE MATCH of line in contents,
 if not found returns -1.
 }

@@ -29,7 +29,7 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
 
   cat( "\nprojectmanagr::insertProtocol():\n" )
 
-  # get protocl title from Name - replace _ with ' '
+  # get protocol title from Name - replace _ with ' '
   protocolTitle <- gsub("-", " ", gsub("_", " ", protocolName) )
 
   # Check projectNotePath is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
@@ -183,8 +183,8 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
 
         }
 
-        if( grepl("PREFIX", line) == TRUE ) {
-          protocolContents[i] <- gsub("PREFIX", projectNotePrefix, line)
+        if( grepl("_PREFIX_", line) == TRUE ) {
+          protocolContents[i] <- gsub("_PREFIX_", projectNotePrefix, line)
         }
 
         extractedProtocol <- c(extractedProtocol, protocolContents[i])

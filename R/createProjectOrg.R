@@ -2,23 +2,32 @@
 #'
 #' Generates the layout for a new Project Organisation in the File System.
 #'
-#' The function generates the organisation directory and its initial contents:  config/ direcotry with the
-#' config files and templates/ directory containing component templates.  The volumes/ directory, that will
-#' hold all volumes for managing data storage. The docs/ directory, that will hold documentation for a
-#' projectmanagr usage.   A 00_site/ directory is created next to org, which will contain the generated html
-#' site.
+#' The function generates the organisation directory and its initial contents:
+#'
+#' * `index_<orgName>.Rmd` the landing page for the organisation.
+#'
+#' * `config/`` directory with the config files and templates/ directory containing
+#' component templates.
+#'
+#' * `docs/` directory, that will hold documentation for a
+#' projectmanagr usage.
+#'
+#' * `volumes/` directory, that will hold all volumes for
+#' managing data storage.
+#'
+#' A `<orgName>_site/` directory is created next to org directory, which will
+#' contain the generated html site.
 #'
 #' @param orgName defines the directory name of the Organisation. Default is "00_ORG",
 #'
 #' @param orgTitle defines the title of the Organisation, in its document.  Default is "ORGANISATION",
 #'
-#' @param fileSystemPath defines where the organisation directory is written, Defaultis the working directory
+#' @param fileSystemPath defines where the organisation directory is written, Default is the working directory
 #'
 #' @param orgTemplate defines the template to use from the projectmanagr package.  Default is "Org-Template.Rmd".
 #'
 #' @export
-createProjectOrg <- function( orgName, orgTitle,
-                              fileSystemPath=getwd(), orgTemplate="Org-Template.Rmd" ) {
+createProjectOrg <- function( orgName, orgTitle, fileSystemPath=getwd(), orgTemplate="Org-Template.Rmd" ) {
 
 
   cat( "\nprojectmanagr::createProjectOrg():\n" )
@@ -42,7 +51,7 @@ createProjectOrg <- function( orgName, orgTitle,
     # In future, want to move to using HUGO and Blogdown potentially?
 
   # site dir - placed NEXT TO the orgDir:
-  sitePath <- paste(fileSystemPath, .Platform$file.sep, "00_site" , sep="")
+  sitePath <- paste(fileSystemPath, .Platform$file.sep, orgName, "_site" , sep="")
 
   if( file.exists(sitePath) == TRUE) {
     # do nothing - dir already exists

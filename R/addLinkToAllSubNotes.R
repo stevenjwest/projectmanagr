@@ -73,6 +73,8 @@ addLinkToAllSubNotes <- function( headerNotePath, selection, summaryBullet ) {
     subNoteTitle <- substring( basename(headerNotePath), first=regexpr("~_", basename(headerNotePath), fixed=TRUE)+2 ) # still contains .Rmd!
 
     subNoteName <- substring( gsub("_", " ", subNoteTitle), first=1, last=nchar(subNoteTitle)-4)
+    subNoteTitle <- substring( basename(headerNotePath), first=1, last=nchar(basename(headerNotePath))-4)
+     # this contains the prefix+name with no spaces - new hyperlink format!
 
     # read Sub Note:
     projNoteFileConn <- file( headerNotePath )
@@ -93,7 +95,7 @@ addLinkToAllSubNotes <- function( headerNotePath, selection, summaryBullet ) {
 
     DocName <- basename(projectDocPath)
 
-    DocName <- gsub("-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
+    DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
 
     DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
@@ -165,8 +167,9 @@ addLinkToAllSubNotes <- function( headerNotePath, selection, summaryBullet ) {
     # create the projectNoteLink:
     NoteLink <- R.utils::getRelativePath(headerNotePath, relativeTo=projectDocPath)
     NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-    projectNoteLink <- paste("*[", subNotePrefix, "~ ", subNoteName, "](", NoteLink, ")*",  sep="")
-    #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
+    #projectNoteLink <- paste("*[", subNotePrefix, "~ ", subNoteName, "](", NoteLink, ")*",  sep="")
+    projectNoteLink <- paste("*[", subNoteTitle, "](", NoteLink, ")*",  sep="")  # just use subNoteTitle : prefix+name!
+    #[BMS~314~_AVIL_42SNI_EdU_16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
     # create the Vector, including Whitespace and Summary information:
     projectNoteLinkVector <- c( "", "", "", projectNoteLink, "",

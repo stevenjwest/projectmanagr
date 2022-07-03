@@ -82,7 +82,7 @@ addinAddProjectNote <- function() {
 
         miniContentPanel(
 
-          fillCol(
+          fillCol( #flex=NA, # use the natural size of the elements in col
 
             fillRow( h5("Add a new Sub Note to a Project Note Group.") ),
 
@@ -98,11 +98,11 @@ addinAddProjectNote <- function() {
               helpText( p(taskTitle, align="center") )
             ),
 
-            fillRow(  textInput("projectNoteName", "Sub Note Name:", width="100%")  ),
+            fillRow(  textInput("projectNoteName", "Sub Note Name:", width='100%')  ),
 
             fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
-            fillRow(  textInput("projectNoteTitle", "Sub Note Title:", width="100%")  ),
+            fillRow(  textInput("projectNoteTitle", "Sub Note Title:", width='100%')  ),
 
             # fillRow( flex = c(7, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Parent Directory")  ),
 
@@ -248,7 +248,17 @@ addinAddProjectNote <- function() {
 
       ### VIEW GADGET ###
 
-      viewer <- dialogViewer("Create New Project Document", width = 1000, height = 1000)
+      if(orgPath == "") {
+        viewer <- dialogViewer("Add New Project Note", width = 1000,
+                               height = 1000 )
+      } else {
+        confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+        settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+        settingsContents <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
+        viewer <- dialogViewer("Add New Project Note", width = settingsContents$gadgetWidth,
+                               height = settingsContents$gadgetHeight )
+      }
 
       runGadget(ui, server, viewer = viewer)
 
@@ -266,11 +276,13 @@ addinAddProjectNote <- function() {
 
       ui <- miniPage(
 
+        shinyjs::useShinyjs(),
+
         gadgetTitleBar("Add New Project Note"),
 
         miniContentPanel(
 
-          fillCol(
+          fillCol( #flex=NA, # use the natural size of the elements in col
 
             fillRow( h5("Add a new Project Note to a Project Document.") ),
 
@@ -286,31 +298,35 @@ addinAddProjectNote <- function() {
               helpText( p(taskTitle, align="center") )
             ),
 
-            fillRow(  span( textOutput("warningName"), style="color:red")  ),
-
-            fillRow(  textInput("projectNoteName", "Project Note Name:", value = "Note_Name"), textInput("projectNoteTitle", "Project Note Title:", value = "Note Name")   ),
-
-            fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
-
-            fillRow( flex = c(7, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Parent Directory")  ),
-
-            fillRow(   textOutput("projectNotePath")  ),
-
             fillRow(  selectInput("prefixType", "Select Project Note Type:",
-                          choices = list("Single" = 1, "Group" = 2),
-                          selected = 1)  ),
+                                  choices = list("Single" = 1, "Group" = 2),
+                                  selected = 1, width = '50%')  ),
 
             fillRow( br() ),
 
-            fillRow(  textInput("subNoteName", "Project SubNote Name:")  ),
+            fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
-            fillRow(   span( textOutput("warningSubName"), style="color:red")  ),
+            fillRow(  textInput("projectNoteName", "Project Note Name:", value = "Note_Name", width='95%'),
+                      textInput("projectNoteTitle", "Project Note Title:", value = "Note Name", width='95%')   ),
 
-            fillRow(  textInput("subNoteTitle", "Project SubNote Title:")  ),
+            fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
 
-            fillRow(   textOutput("subNotePath")  )
+            fillRow( flex = c(5, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Parent Directory")  ),
 
-          )
+            fillRow(   textOutput("projectNotePath")  ),
+
+            fillRow( br() ),
+
+            fillRow(  textInput("subNoteName", "Project SubNote Name:", width='95%'),
+                      textInput("subNoteTitle", "Project SubNote Title:", width='95%')  ),
+
+            fillRow( br() ),
+
+            fillRow(   textOutput("subNotePath")  ),
+
+          ),
+
+          padding = 10
 
         )
 
@@ -389,7 +405,7 @@ addinAddProjectNote <- function() {
 
         observe({
 
-          if(input$prefixType == "1") { # SINGLE NOTE selected, render projectNoteName as SINGLE note
+          if(input$prefixType == "1") { # SINGLE NOTE selected, render projectNoteName as SINGLE note then DISABLE subnote names & title inputs
 
             if( global$datapath != "" && input$projectNoteName != "" ) {
 
@@ -409,11 +425,14 @@ addinAddProjectNote <- function() {
 
             }
 
+            shinyjs::disable("subNoteName")
+            shinyjs::disable("subNoteTitle")
+
           }
 
           else if(input$prefixType == "2") { # GROUP NOTE selected,
 
-            # render projectNoteName as GROUP HEADER note, and subNoteName as SUB NOTE
+            # render projectNoteName as GROUP HEADER note, THEN enable subnote name/title and render subNoteName as SUB NOTE
 
             if( global$datapath != "" && input$projectNoteName != "" ) {
 
@@ -432,6 +451,9 @@ addinAddProjectNote <- function() {
               })
 
             }
+
+            shinyjs::enable("subNoteName")
+            shinyjs::enable("subNoteTitle")
 
             if( global$datapath != "" && input$subNoteName != "" ) {
 
@@ -479,12 +501,12 @@ addinAddProjectNote <- function() {
 
           if( grepl("\\s", input$subNoteName)  ) {
             # set the warningSubName TextOutput:
-            output$warningSubName <- renderText({
+            output$warningName <- renderText({
               "SUBNOTE NAME CANNOT CONTAIN SPACES"
             })
           }
           else {
-            output$warningSubName <- renderText({
+            output$warningName <- renderText({
               ""
             })
           }
@@ -590,7 +612,17 @@ addinAddProjectNote <- function() {
 
       ### VIEW GADGET ###
 
-      viewer <- dialogViewer("Create New Project Note", width = 1000, height = 1000)
+      if(orgPath == "") {
+        viewer <- dialogViewer("Add New Project Note", width = 1000,
+                               height = 1000 )
+      } else {
+        confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+        settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+        settingsContents <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
+        viewer <- dialogViewer("Add New Project Note", width = settingsContents$gadgetWidth,
+                               height = settingsContents$gadgetHeight )
+      }
 
       runGadget(ui, server, viewer = viewer)
 

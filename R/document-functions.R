@@ -38,7 +38,7 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
     # NB Need to convert the .Rmd links to .html when WRITING the Organisation to a html site!
 
     DocName <- basename(projectDocPath)
-    DocName <- gsub( "-", " ",  gsub("_", " ", substring(DocName, first=1, last=nchar(DocName)-4) )  )
+    DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
 
     DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
 
@@ -141,17 +141,29 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
 #' to newName.
 #'
 #' @param orgPath defines the path to the Organisation - should point to the root directory of the Organisation.
-#' @param oldName defines the OLD name that will be in Hyperlinks.  Should be the FILE NAME - with no spaces.
-#' @param oldName defines the NEW name to be written into Hyperlinks.  Should be the FILE NAME - with no spaces.
+#' @param oldName defines the OLD name that will be in Hyperlinks.  Should be the FILE NAME - with no spaces,
+#'     including PREFIX and .Rmd EXTENSION
+#' @param newName defines the NEW name to be written into Hyperlinks.  Should be the FILE NAME - with no spaces.
+#' @param oldTitle defines the OLD TITLE that will be in Hyperlinks.  By default replaces - & _ with spaces from name.
+#' @param newTitle defines the NEW TITLE that will be in Hyperlinks.  By default replaces - & _ with spaces from name.
 #'
 #' @export
-updateAllLinks <- function( orgPath, oldName, oldTitle, newName, newTitle ) {
+updateAllLinks <- function( orgPath, oldName, newName, oldTitle="", newTitle="" ) {
 
 
   #cat( "\nprojectmanagr::editProjectOrg():\n" )
 
-  # first, confirm the current orgPath is an organisation:
+  # remove the .Rmd EXTENSION from oldName && newName
+  oldName <- substring(oldName, first=1, last=nchar(oldName)-4)
+  newName <- substring(newName, first=1, last=nchar(newName)-4)
 
+  #oldPrefix <- substring( oldName, first=1, last=regexpr("~_", oldName, fixed=TRUE)-1 )
+  #oldTitle <- substring( oldName, first=regexpr("~_", oldName, fixed=TRUE)+2, last=nchar(oldName)-4 )
+
+  #newPrefix <- substring( newName, first=1, last=regexpr("~_", newName, fixed=TRUE)-1 )
+  #newTitle <- substring( newName, first=regexpr("~_", newName, fixed=TRUE)+2, last=nchar(newName)-4 )
+
+  # replacing oldName with newName in all links!
 
   # Check orgPath is at the root of an ORGANISATION:
 
@@ -178,12 +190,12 @@ updateAllLinks <- function( orgPath, oldName, oldTitle, newName, newTitle ) {
 
 
   # define the old and new titles:
-  if(nchar(oldTitle) == 0) {
-    oldTitle  <- gsub("-", " ", gsub("_", " ", oldName) )
-  }
-  if( nchar(newTitle) == 0) {
-    newTitle  <- gsub("-", " ", gsub("_", " ", newName) )
-  }
+  #if(nchar(oldTitle) == 0) {
+  #  oldTitle  <- gsub("-", " ", gsub("_", " ", oldName) )
+  #}
+  #if( nchar(newTitle) == 0) {
+  #  newTitle  <- gsub("-", " ", gsub("_", " ", newName) )
+  #}
 
 
   # traverse EVERY Rmd file in orgPath dir tree:
@@ -195,20 +207,81 @@ updateAllLinks <- function( orgPath, oldName, oldTitle, newName, newTitle ) {
     contents <- readLines( fileConn )
     close(fileConn)
 
+    # identify all lines with a link in them
+    link_indices <- grep("\\]\\(", contents)
+
     # replace every instance of oldName with newName
     grepName <- any( grepl(oldName, contents, fixed=TRUE ))
     if(grepName) {
+
       contents <- gsub(oldName, newName, contents, fixed=TRUE)
+
+      # ALSO check -
+      prefixOld <- getProjectPrefixFromName(oldName)
+      prefixNew <- getProjectPrefixFromName(newName)
+
+      # IF oldName is a HEADER or SIMPLE note : rename string
+      # DocPrefix01/Note~Prefix
+      if( regexpr("~", prefixOld) != -1) { # if prefix does contain a ~
+        # extract the START of prefix and concat with file.sep with oldName/newName
+        subOldName <- paste0(substr(prefixOld, 1, regexpr("~", prefixOld)-1),
+                             .Platform$file.sep, newName) # use newName as oldName alreayd replaced by newName above!
+        subNewName <- paste0(substr(prefixNew, 1, regexpr("~", prefixNew)-1),
+                             .Platform$file.sep, newName)
+
+        contents <- gsub(subOldName, subNewName, contents, fixed=TRUE)
+        # will rename links that are eg. SJW01/SJW01~001~_FILE_NAME to SJW03/SJW03~001~_FILE_NAME
+        # as opposed to missing the HEADER NOTE PREFIX change
+      }
+
+      # IF oldName is a SUBNOTE : rename the strings
+      # DocPrefix01/HEADER~PREFIX-00/SUBNOTE~PREFIX-001~_SubNote_Name
+      # HEADER~PREFIX-00/SUBNOTE~PREFIX-001~_SubNote_Name
+
+      # CHECK this is a SUBNOTE prefix
+      if( regexpr("-", prefixOld) != -1 && # if prefix does contain a -
+          !endsWith(prefixOld, "-00") ) { # AND it end does NOT with -00 (header note)
+
+        # DocPrefix01/HEADER~PREFIX-00/SUBNOTE~PREFIX-001~_SubNote_Name
+        # extract the START of prefix and concat with file.sep with oldName/newName
+        subOldName <- paste0(substr(prefixOld, 1, regexpr("~", prefixOld)-1),
+                             .Platform$file.sep, substr(prefixOld, 1, regexpr("-", prefixOld)-1), "-00",
+                             .Platform$file.sep, newName ) # use newName as oldName alreayd replaced by newName above!
+
+        subNewName <- paste0(substr(prefixNew, 1, regexpr("~", prefixNew)-1),
+                             .Platform$file.sep, substr(prefixNew, 1, regexpr("-", prefixNew)-1), "-00",
+                             .Platform$file.sep, newName )
+
+        contents <- gsub(subOldName, subNewName, contents, fixed=TRUE)
+        # will rename links that are
+         # eg. SJW01/SJW01~001-00/SJW01~001-001~_FILE_NAME to SJW03/SJW03~001-00/SJW03~001-001~_FILE_NAME
+        # as opposed to missing the PROJ DOC PREFIX change
+
+
+        # HEADER~PREFIX-00/SUBNOTE~PREFIX-001~_SubNote_Name
+        # extract the START and MIDDLE of prefix and concat with file.sep with oldName/newName
+        subOldName <- paste0(substr(prefixOld, 1, regexpr("-", prefixOld)-1), "-00",
+                             .Platform$file.sep, newName) # use newName as oldName alreayd replaced by newName above!
+
+        subNewName <- paste0(substr(prefixNew, 1, regexpr("-", prefixNew)-1), "-00",
+                             .Platform$file.sep, newName)
+
+        contents <- gsub(subOldName, subNewName, contents, fixed=TRUE)
+        # will rename links that are eg. SJW01~001-00/SJW01~001-001~_FILE_NAME to SJW03~001-00/SJW03~001-001~_FILE_NAME
+        # as opposed to missing the HEADER NOTE PREFIX change
+
+      }
     }
 
     # replace every instance of oldtitle with newTitle
-    grepTitle <- any( grepl(oldTitle, contents, fixed=TRUE ))
-    if(grepTitle) {
-      contents <- gsub(oldTitle, newTitle, contents, fixed=TRUE)
-    }
+    #grepTitle <- any( grepl(oldTitle, contents, fixed=TRUE ))
+    #if(grepTitle) {
+    #  contents <- gsub(oldTitle, newTitle, contents, fixed=TRUE)
+    #}
 
     # write file ONLY IF a replacement has been made
-    if(grepTitle || grepName) {
+    #if(grepTitle || grepName) {
+    if(grepName) {
       cat( "    replaced in file:", x ,"\n" )
       fileConn <- file( paste0( orgPath, .Platform$file.sep, x) )
       writeLines(contents, fileConn)
@@ -269,6 +342,8 @@ addSubNoteLinkToDocs <- function(projDocList, subNotePath, headerPath) {
   # Remove - and _ and remove file suffix:
   subNoteTitle <- gsub("-", " ",  gsub("_", " ", substring(subNoteTitle, first=1, last=nchar(subNoteTitle)-4) )  )
 
+  subNoteName <- substring( basename(subNotePath), first=1, last=nchar(basename(subNotePath))-4 ) # file name without Rmd
+
   # first, compute subnote prefix and title:
   #subNotePrefix <- getProjectPrefixFromPath(subNotePath)
   #subNoteName <- substr(basename(subNotePath), 1, nchar(basename(subNotePath))-4 )
@@ -297,7 +372,7 @@ addSubNoteLinkToDocs <- function(projDocList, subNotePath, headerPath) {
     # create the projectNoteLink: projectNotePrefix, "~ ", projectNoteTitle,
     NoteLink <- R.utils::getRelativePath(subNotePath, relativeTo=projectDocPath)
     NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-    projectNoteLink <- paste("*[", subNotePrefix, "~ ", subNoteTitle, "](", NoteLink, ")*",  sep="")
+    projectNoteLink <- paste("*[", subNoteName, "](", NoteLink, ")*",  sep="")
     # output ex.:
     # *[LAB~003-001~ THF MeOH/DCM Clearing Tau Labelling](../LAB/LAB~001-00~_thf_meoh_dcm_clearing_tau_labelling.Rmd)*
 
@@ -474,6 +549,24 @@ computeHeaderLineUnderProjectDocGoalDelTask <- function(headerName, projDocConte
 }
 
 
+#' Get Project Comp title from Project Comp contents
+#'
+#'
+getProjCompTitle <- function(contents) {
+
+  line <- grep( paste0("title: '"), contents) # get first instance of line beginning with title:
+
+  # compute old title - +2 as always have "~ " after prefix, -1 as have "'" at end of title
+  oldProjectCompTitle <- substr(contents[line],
+                                regexpr( "~ ", contents[line]) + 2,
+                                nchar(contents[line])-1)
+
+  # return oldProjectCompTitle
+  oldProjectCompTitle
+
+}
+
+
 #' Get Project Prefix From Path
 #'
 #' Extracts the Project Prefix from the projectPath - all characters before "~_"
@@ -490,8 +583,25 @@ getProjectPrefixFromPath <- function(projectPath) {
 #' Extracts the Project Prefix from the projectName - all characters before "~_"
 #'
 #'
-getProjectPrefixFromName <- function(projectName) {
-  substr(projectName, 1, regexpr("~_", projectName)-1)
+getProjectPrefixFromName <- function(projectCompName) {
+  substr(projectCompName, 1, regexpr("~_", projectCompName)-1)
+}
+
+#' Get Prefix From File Name
+#'
+#' fileName is PREFIX~_COMP_TITLE.Rmd - returned is PREFIX
+#'
+getPrefixFromFileName <- function(fileName) {
+  substr(fileName, 1, regexpr("~_", fileName)-1)
+}
+
+
+#' Get Project TiNametle From File Name
+#'
+#' fileName is PREFIX~_COMP_TITLE.Rmd - returned is COMP_TITLE
+#'
+getNameFromFileName <- function(fileName) {
+  substr(fileName, regexpr("~_", fileName)+2, nchar(fileName)-4)
 }
 
 
@@ -540,7 +650,7 @@ getProtocolSummary <- function(projNotePath, protocolName) {
 
   protocolStartIndex <- matchLineIndex("# SUMMARY", protocolContents)
 
-  # get the NEXT LINE that starts with # - the FIRST HEADER of the actual Protocol
+  # get the NEXT LINE in Protocol
   protocolStartIndex <- computeNextLineIndex((protocolStartIndex+1), protocolContents )-1
 
   # defined as the line starting: # NEXT STEPS
@@ -616,7 +726,7 @@ grepLineIndex <- function(line, contents) {
 
 #' Match Line Index
 #'
-#' Returns the index of the first COMPLETE MATCH of line in contents,
+#' Returns the index of the FIRST COMPLETE MATCH of line in contents,
 #' if not found returns -1.
 #'
 #' @param line a String to be found - any leading/trailing whitespace is TRIMMED.

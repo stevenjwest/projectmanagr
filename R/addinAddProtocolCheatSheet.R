@@ -232,7 +232,18 @@ addinAddProtocolReference <- function() {
 
       ### VIEW GADGET ###
 
-      viewer <- dialogViewer("Create New Project Document", width = 1000, height = 1000)
+      orgPath <- findOrgDir(context$path)
+      if(orgPath == "") {
+        viewer <- dialogViewer("Add Project Link", width = 1000,
+                               height = 1000 )
+      } else {
+        confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+        settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+        settingsContents <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
+        viewer <- dialogViewer("Add Project Link", width = settingsContents$gadgetWidth,
+                               height = settingsContents$gadgetHeight )
+      }
 
       runGadget(ui, server, viewer = viewer)
 
