@@ -91,7 +91,8 @@ addinCreateProjectOrg <- function() {
           projectmanagr::createProjectOrg(
                     orgName = input$organisationName,
                     orgTitle = input$organisationTitle,
-                    fileSystemPath = global$datapath
+                    organisationParentDirectory = global$datapath,
+                    settingsYamlPath = ""
                           )
 
           # navigate to org index file:

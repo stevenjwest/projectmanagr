@@ -13,7 +13,8 @@ addProjectNoteGroup(
   projectNoteTitle = "",
   subNoteTitle = "",
   projNoteTemplate = "Project-Header-Note-Template.Rmd",
-  subNoteTemplate = "Project-Sub-Note-Template.Rmd"
+  subNoteTemplate = "Project-Sub-Note-Template.Rmd",
+  addObjToHeader = TRUE
 )
 }
 \arguments{
@@ -44,6 +45,10 @@ all _ and - with SPACES.}
 
 \item{subNoteTemplate}{Template to use, as found in the `config/templates/` directory.  Default is
 "Project-Sub-Note-Template.Rmd"}
+
+\item{addObjToHeader}{Boolean to indicate whether the Objective from the Project Doc is set in the Header Note.
+True by default.  If False, no Project Doc Goal/Del/Task is inserted into the Header Note, and the first subnote
+is linked in the ProjectDoc G/D/T as a simple note.}
 }
 \description{
 This Function adds a Project Note Group - consisting of one Header

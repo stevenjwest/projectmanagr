@@ -4,10 +4,18 @@
 \alias{datatable_find}
 \title{Find EXISTING Samples in Datatables}
 \usage{
-datatable_find(path, datatable_name_prefix = "samples")
+datatable_find(path, datatable_name_prefix = "samples", updateProgress = NULL)
+}
+\arguments{
+\item{path}{Path in a projectmanagr organisation to search projectmanagr Rmd files.}
+
+\item{datatable_name_prefix}{Prefix for datatables, default `samples`}
+
+\item{updateProgress}{Function to use with shiny progress bar - null by default.}
 }
 \value{
-a tibble containing summary of all EXISTING samples
+a tibble containing summary of all EXISTING samples, with attr "path" - the parent DIR
+from which the samples were acquired.
 }
 \description{
 Search through path recursively to find all Rmd files that contain datatables.
@@ -15,7 +23,7 @@ Summarise all EXISTING samples that are declared in them (not resampled,
 exported, disposed).
 }
 \details{
-Summary tibble includes following columns:
+SUMMARY tibble includes following columns:
 
 * ID - sample ID
 
@@ -30,11 +38,12 @@ James Sleigh, and its GARS mutant or WT control.
 
 * PATH: The absolute path to the Experiment DIR ??
 
-* LOCATION : values of `_location` col IF LAST COL DECLARED - where is the
-sample currently?  Only defined last if currently in storage!
+* LOCATION : values of last `_location` col - where was the samples last known
+  location?  Only defined last if currently in storage!
 
-* CONDITION : value of last `_condition` col - what is sample in?
+* CONDITION : value of last `_condition` col - what was the samples last
+  known condition?
 
-If further metadata is needed - can use `datatable_get_sample_data_history`
+If further metadata is needed - can use `datatable_get_sample_data_history()`
 and filter for relevant information.
 }

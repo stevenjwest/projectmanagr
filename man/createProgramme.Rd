@@ -8,7 +8,7 @@ createProgramme(
   programmeName,
   programmePrefix,
   programmeTitle = "",
-  fileSystemPath = getwd(),
+  organisationPath = getwd(),
   progTemplate = "Programme-Template.Rmd"
 )
 }
@@ -20,7 +20,7 @@ NO NUMBERS.  Must not contain a space. Ideally two or three letters long.}
 
 \item{programmeTitle}{Title of programme - typically the programmeName with "_" & "-" replaced with spaces.}
 
-\item{fileSystemPath}{Path to insert the PROGRAMME into.  If this is not an Organisation Directory, will search up
+\item{organisationPath}{Path to insert the PROGRAMME into.  If this is not an Organisation Directory, will search up
 the directory tree to attempt to find one.  If none found, the method will end without making a PROGRAMME.}
 
 \item{progTemplate}{The Rmd file to use as a template to create the Programme.  This is set to "Programme-Template.Rmd" in
@@ -28,7 +28,7 @@ projectmanagr.}
 }
 \description{
 Generates a new Programme at the top level of the Organisation.  If the
-fileSystemPath is not at the top of the Organisation, will traverse until
+organisationPath is not at the top of the Organisation, will traverse until
 it is found.  This function will halt if no Organisation is found - the
 organisation root is defined by the presence of config/ and config/templates
 dirs at root.
@@ -37,6 +37,6 @@ dirs at root.
 User must supply the programmeName and programmePrefix.  The
 programmeName must NOT contain a space, and programmePrefix should be two to three
 CAPITAL LETTERS.  An optional programmeTitle (which if not supplied will default
-to the programmeName, replacing "_" & "-" with " ").  The default fileSystemPath
+to the programmeName, replacing "_" & "-" with " ").  The default organisationPath
 is the working directory.
 }

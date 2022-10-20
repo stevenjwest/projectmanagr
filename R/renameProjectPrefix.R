@@ -41,20 +41,13 @@ renameProjectDocPrefix <- function( projectDocPath, newProjectDocPrefix, openRmd
   # get Project Comp prefix:
   prefix <- getProjectPrefixFromName(projectDocName)
 
-  # CHECK the new prefix is consistent with the old one - check the CHARACTERS at start of prefix match
-  if( (sub("^([[:alpha:]]*).*", "\\1", newProjectDocPrefix) == sub("^([[:alpha:]]*).*", "\\1", prefix)) == FALSE ) {
-    stop( paste0("  newProjectDocPrefix not consistent with old prefix: ", newProjectDocPrefix, ' old prefix: ', prefix) )
+  # check project prefix
+  check_project_prefix <- checkProjectPrefix(projectDocPath, newProjectDocPrefix)
+
+  if(check_project_prefix != "") {
+    stop( check_project_prefix )
   }
 
-  # CHECK the new prefix is AVAILABLE
-  projectDocDir <- dirname(projectDocPath)
-  projectFiles <- Sys.glob( paste0(projectDocDir, .Platform$file.sep, "*~_*", "*.Rmd") )
-  projectFilesPrefix <-sub("\\~_.*", "", basename(projectFiles))
-
-  # check newProjectDocPrefix is available
-  if(any(projectFilesPrefix == newProjectDocPrefix) == TRUE ) {
-    stop( paste0("  newProjectDocPrefix already in use: ", newProjectDocPrefix) )
-  }
 
   # get name WITHOUT PREFIX
   newProjectDocName <- substr(projectDocName, regexpr("~_", projectDocName)+2, nchar(projectDocName))
@@ -70,8 +63,7 @@ renameProjectDocPrefix <- function( projectDocPath, newProjectDocPrefix, openRmd
 
   if(done == TRUE) {
     cat( "  Renamed Project Doc file from: ", projectDocName , " to: ", newProjectDocName, "\n" )
-  }
-  else {
+  } else {
     stop( paste0("  Renamed Project Doc file unsuccessful: ", basename(newProjectDocPath) ) )
   }
 
@@ -91,10 +83,15 @@ renameProjectDocPrefix <- function( projectDocPath, newProjectDocPrefix, openRmd
                                   regexpr( "~ ", contents[line]) + 2,
                                   nchar(contents[line]) )  )
 
+  # AND replace every instance of old prefix with new prefix
+  contents <- gsub(prefix, newProjectDocPrefix, contents)
+
   # write the file
   projNoteFileConn <- file(newProjectDocPath)
   writeLines(contents, projNoteFileConn)
   close(projNoteFileConn)
+
+  cat( "  Updated Project Doc file prefix in Rmd \n" )
 
 
   # NEXT - rename the Project Doc DIR
@@ -107,14 +104,15 @@ renameProjectDocPrefix <- function( projectDocPath, newProjectDocPrefix, openRmd
 
   if(done == TRUE) {
     cat( "  Renamed Project Doc DIR from: ", basename(oldProjectDocDir) , " to: ", basename(newProjectDocDir), "\n" )
-  }
-  else {
+  } else {
     stop( paste0("  Renamed Project Doc Dir unsuccessful: ", basename(newProjectDocDir) ) )
   }
 
 
   ### NEXT - replace projectDocName/Title with newProjectDocName/Title THROUGHOUT the Organisation:
   updateAllLinks( orgPath, projectDocName, newProjectDocName )
+
+  cat( "  Updated links to Project Doc file: \n" )
 
 
   ### NEXT - rename all Project Notes below the newly renamed Project Doc - update their PREFIX too!
@@ -127,10 +125,13 @@ renameProjectDocPrefix <- function( projectDocPath, newProjectDocPrefix, openRmd
   # AND that start with the old prefix
   file_list <- file_list[ startsWith(file_list, prefix)]
 
+  cat( "  Updating Project Notes - ", length(file_list), " : \n" )
+
   for(fl in file_list) {
     # rename each component
     # form the current path
     projectNotePath <- paste0(newProjectDocDir, .Platform$file.sep, fl)
+    cat( "    Project Note: ", basename(projectNotePath), "\n" )
     # form the new prefix
     newProjectNotePrefix <- sub(prefix, newProjectDocPrefix, getProjectPrefixFromName(fl) )
     updateProjectNotePrefix(projectNotePath, newProjectNotePrefix )
@@ -143,6 +144,103 @@ renameProjectDocPrefix <- function( projectDocPath, newProjectDocPrefix, openRmd
 
 }
 
+
+checkProjectPrefix <- function(projectPath, newProjectPrefix) {
+
+  prefix <- getProjectPrefixFromName(basename(projectPath))
+
+  projectNoteName <- basename(projectPath)
+
+  returnString <- ""
+
+  if( grepl("~", prefix) == FALSE ) {
+    # if prefix doesnt contain a ~ the prefix MUST be a ProjectDoc prefix
+
+    # CHECK the new prefix is consistent with the old one - check the CHARACTERS at start of prefix match
+    if( (sub("^([[:alpha:]]*).*", "\\1", newProjectPrefix) == sub("^([[:alpha:]]*).*", "\\1", prefix)) == FALSE ) {
+      returnString <- paste0("  newProjectDocPrefix not consistent with old prefix: ", newProjectPrefix, ' old prefix: ', prefix)
+    }
+
+    # CHECK the new prefix is AVAILABLE
+    projectDocDir <- dirname(projectPath)
+    projectFiles <- Sys.glob( paste0(projectDocDir, .Platform$file.sep, "*~_*", "*.Rmd") )
+    projectFilesPrefix <-sub("\\~_.*", "", basename(projectFiles))
+
+    # check newProjectPrefix is available
+    if(any(projectFilesPrefix == newProjectPrefix) == TRUE ) {
+      returnString <- paste0("  newProjectDocPrefix already in use: ", newProjectPrefix)
+    }
+
+  } else {
+
+    # it must be a project note
+
+    # CHECK this is not a SUBNOTE prefix - do not allow renaming of subnote prefixes in this method, these must remain
+    # consistent with the HEADER NOTE
+    if( regexpr("-", prefix) != -1 && # if prefix contains a -
+        substring(prefix, regexpr("-", prefix)+1) != "00" ) { # AND it doesnt end with 00 (header note)
+      #initialRename == TRUE ) { # AND this is the initialRename of files
+      returnString <- ( paste0("  Project Note is a SubNote - cannot rename prefix as must remain consistent with HEADER Note Prefix: ", projectNoteName) )
+    }
+
+    # CHECK the new prefix is consistent with the old one - check the CHARACTERS at start of prefix match
+    if( (sub("^([[:alpha:]]*).*", "\\1", newProjectPrefix) == sub("^([[:alpha:]]*).*", "\\1", prefix)) == FALSE ) {
+      returnString <- ( paste0("  newProjectNotePrefix not consistent with old prefix: ", newProjectPrefix, ' old prefix: ', prefix) )
+    }
+
+
+    # CHECK the new prefix is AVAILABLE
+    projectNotePir <- dirname(projectPath) # in directory containing projectNote
+    projectFiles <- Sys.glob( paste0(projectNotePir, .Platform$file.sep, "*~_*", "*.Rmd") )
+    projectFilesPrefix <-sub("\\~_.*", "", basename(projectFiles))
+    # trim any -00 from all prefixes to check just the START and SIMPLE/HEAD components
+    projFilePrefixStartSimple <- substr(projectFilesPrefix, 1,
+                                        ifelse(regexpr("-", projectFilesPrefix) == -1,
+                                               nchar(projectFilesPrefix),
+                                               regexpr("-", projectFilesPrefix)-1) )
+    projNotePrefixStartSimple <- substr(newProjectPrefix, 1,
+                                        ifelse(regexpr("-", newProjectPrefix) == -1,
+                                               nchar(newProjectPrefix),
+                                               regexpr("-", newProjectPrefix)-1) )
+    if(any(projFilePrefixStartSimple == projNotePrefixStartSimple) == TRUE ) {
+      returnString <- ( paste0("  newProjectNotePrefix already in use - select another: ", newProjectPrefix) )
+    }
+
+    # check that the START of the new PREFIX is consistent with the START of prefixes in directory
+    startPrefix <- substr(projectFilesPrefix, 1, regexpr("~", projectFilesPrefix)-1)
+    startPrefixNew <- substr(newProjectPrefix, 1, regexpr("~", newProjectPrefix)-1)
+    if(all(startPrefix == startPrefixNew) == FALSE) {
+      # determine odd one out
+      if( all(startPrefix != startPrefixNew) == TRUE) {
+        # startPrefixNew is the odd one out!
+        returnString <- ( paste0("  newProjectNotePrefix start does not match DIR Prefix: ", newProjectPrefix, " dir prefix start: ", startPrefix[1]))
+      } else {
+        # there is a problem with prefix names in the directory
+        returnString <- ( paste0("  There is a problem with prefixes in selected project note parent : ", projectNotePir))
+      }
+    }
+
+    # check the END of the new PREFIX is a NUMBER if simple prefix
+    midPrefixNew <- substr(newProjectPrefix, regexpr("~", newProjectPrefix)+1, nchar(projectFilesPrefix))
+    # remove -00 if header
+    if( grepl("-00", midPrefixNew) == TRUE) {
+      midPrefixNew <- substr(midPrefixNew, 1, nchar(midPrefixNew)-3)
+    }
+    if( is.na(suppressWarnings( as.integer(midPrefixNew))) == TRUE ) {
+      returnString <- ( paste0("  newProjectNotePrefix numbering is not a number: ", midPrefixNew) )
+
+    }
+
+    # check that the Project Note prefix TYPE is consistent with OLD TYPE - HEADER NOTE or SIMPLE NOTE
+    if( (endsWith(prefix, "-00")) != (endsWith(newProjectPrefix, "-00")) ) {
+      # if prefix and newPrefix do not both end with/out -00, they are not of the same type
+      returnString <- ( paste0("  Prefixes are not of same type - current : ", prefix, " new : ", newProjectPrefix) )
+    }
+
+  }
+
+  returnString
+}
 
 
 #' Update a Project Note Prefix
@@ -203,7 +301,7 @@ updateProjectNotePrefix <- function( projectNotePath, newProjectNotePrefix ) {
   projectFiles <- Sys.glob( paste0(projectNotePir, .Platform$file.sep, "*~_*", "*.Rmd") )
   projectFilesPrefix <-sub("\\~_.*", "", basename(projectFiles))
 
-  # check newProjectDocPrefix is available
+  # check newProjectPrefix is available
   if(any(projectFilesPrefix == newProjectNotePrefix) == TRUE ) {
     stop( paste0("  newProjectNotePrefix already in use: ", newProjectNotePrefix) )
   }
@@ -243,6 +341,9 @@ updateProjectNotePrefix <- function( projectNotePath, newProjectNotePrefix ) {
                            substr(contents[line],
                                   regexpr( "~ ", contents[line]) + 2,
                                   nchar(contents[line]) )  )
+
+  # AND replace every instance of old prefix with new prefix
+  contents <- gsub(prefix, newProjectNotePrefix, contents)
 
   # write the file
   projNoteFileConn <- file(newProjectNotePath)
@@ -351,55 +452,11 @@ renameProjectNotePrefix <- function( projectNotePath, newProjectNotePrefix, open
   # get Project Comp prefix:
   prefix <- getProjectPrefixFromName(projectNoteName)
 
-  # CHECK this is not a SUBNOTE prefix - do not allow renaming of subnote prefixes in this method, these must remain
-  # consistent with the HEADER NOTE
-  if( regexpr("-", prefix) != -1 && # if prefix contains a -
-      substring(prefix, regexpr("-", prefix)+1) != "00" ) { # AND it doesnt end with 00 (header note)
-         #initialRename == TRUE ) { # AND this is the initialRename of files
-    stop( paste0("  Project Note is a SubNote - cannot rename prefix as must remain consistent with HEADER Note Prefix: ", projectNoteName) )
-  }
+  # check project prefix
+  check_project_prefix <- checkProjectPrefix(projectNotePath, newProjectNotePrefix)
 
-  # CHECK the new prefix is consistent with the old one - check the CHARACTERS at start of prefix match
-  if( (sub("^([[:alpha:]]*).*", "\\1", newProjectNotePrefix) == sub("^([[:alpha:]]*).*", "\\1", prefix)) == FALSE ) {
-    stop( paste0("  newProjectNotePrefix not consistent with old prefix: ", newProjectNotePrefix, ' old prefix: ', prefix) )
-  }
-
-
-  # CHECK the new prefix is AVAILABLE
-  projectNotePir <- dirname(projectNotePath) # in directory containing projectNote
-  projectFiles <- Sys.glob( paste0(projectNotePir, .Platform$file.sep, "*~_*", "*.Rmd") )
-  projectFilesPrefix <-sub("\\~_.*", "", basename(projectFiles))
-  # trim any -00 from all prefixes to check just the START and SIMPLE/HEAD components
-  projFilePrefixStartSimple <- substr(projectFilesPrefix, 1,
-                                      ifelse(regexpr("-", projectFilesPrefix) == -1,
-                                             nchar(projectFilesPrefix),
-                                             regexpr("-", projectFilesPrefix)-1) )
-  projNotePrefixStartSimple <- substr(newProjectNotePrefix, 1,
-                                      ifelse(regexpr("-", newProjectNotePrefix) == -1,
-                                             nchar(newProjectNotePrefix),
-                                             regexpr("-", newProjectNotePrefix)-1) )
-  if(any(projFilePrefixStartSimple == projNotePrefixStartSimple) == TRUE ) {
-    stop( paste0("  newProjectNotePrefix already in use - select another: ", newProjectNotePrefix) )
-  }
-
-  # check that the START of the new PREFIX is consistent with the START of prefixes in directory
-  startPrefix <- substr(projectFilesPrefix, 1, regexpr("~", projectFilesPrefix)-1)
-  startPrefixNew <- substr(newProjectNotePrefix, 1, regexpr("~", newProjectNotePrefix)-1)
-  if(all(startPrefix == startPrefixNew) == FALSE) {
-     # determine odd one out
-    if( all(startPrefix != startPrefixNew) == TRUE) {
-      # startPrefixNew is the odd one out!
-      stop( paste0("  newProjectNotePrefix start does not match DIR Prefix: ", newProjectNotePrefix, " dir prefix start: ", startPrefix[1]))
-    } else {
-      # there is a problem with prefix names in the directory
-      stop( paste0("  There is a problem with prefixes in selected project note parent : ", projectNotePir))
-    }
-  }
-
-  # check that the Project Note prefix TYPE is consistent with OLD TYPE - HEADER NOTE or SIMPLE NOTE
-  if( (endsWith(prefix, "-00")) != (endsWith(newProjectNotePrefix, "-00")) ) {
-    # if prefix and newPrefix do not both end with/out -00, they are not of the same type
-    stop( paste0("  Prefixes are not of same type - current : ", prefix, " new : ", newProjectNotePrefix) )
+  if(check_project_prefix != "") {
+    stop( check_project_prefix )
   }
 
   # get name WITHOUT PREFIX
@@ -695,7 +752,7 @@ renameSubNotePrefix <- function( subNotePath, newSubNotePrefix, openRmd=TRUE ) {
   projectFiles <- Sys.glob( paste0(projectNotePir, .Platform$file.sep, "*~_*", "*.Rmd") )
   projectFilesPrefix <-sub("\\~_.*", "", basename(projectFiles))
 
-  # check newProjectDocPrefix is available
+  # check newProjectPrefix is available
   if(any(projectFilesPrefix == newSubNotePrefix) == TRUE ) {
     stop( paste0("  newSubNotePrefix already in use: ", newSubNotePrefix) )
   }

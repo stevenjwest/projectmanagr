@@ -67,6 +67,10 @@ addProjectNote <- function( projectNotePrefix, projectNoteName, projectNotePath,
   confPath <- paste0( orgPath, .Platform$file.sep, "config" )
   tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
 
+  # load settings file for user defined settings
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
   projectNotePath <- normalizePath(projectNotePath)
 
 
@@ -97,10 +101,9 @@ addProjectNote <- function( projectNotePrefix, projectNoteName, projectNotePath,
 
   cat( "  Made Project Note: ", projNotePath, "\n" )
 
-
-  # get creation time - use to write to SUMMARY:
-  summaryBullet <- paste0("* ", as.character(file.info(projNotePath)[,5]) )
-
+  # Use task header from template
+   #summaryBullet < - paste0("* ", as.character(Sys.time()) )
+  summaryBullet <- getTaskSectionHeader(orgPath)
 
   # extract the Author value from the settings.yml file:
   #settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
@@ -112,6 +115,8 @@ addProjectNote <- function( projectNotePrefix, projectNoteName, projectNotePath,
   templateContents <- gsub("{{PREFIX}}", projectNotePrefix, templateContents, fixed=TRUE)
   templateContents <- gsub("{{TITLE}}", projectNoteTitle, templateContents, fixed=TRUE)
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
+  templateContents <- gsub("{{DATA_STORAGE_SECTION}}", settings[["dataStorageSectionValue"]],
+                           templateContents, fixed=TRUE)
 
   # add the current data storage path:
   #templateContents <- gsub("{{D ATASTORAGE}}", projectNotePrefix, templateContents, fixed=TRUE)
@@ -172,7 +177,9 @@ addProjectNote <- function( projectNotePrefix, projectNoteName, projectNotePath,
 
 
   # create DocTitle - DocName plus the Gnum Dnum Tnum
-  DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  # create DocTitle - DocName plus the TaskTitle
+  DocTitle <- paste( "## ", DocName, " : ", taskTitle, sep="")
 
 
   templateContents <- gsub("{{PROJECT_DOC_TITLE}}", DocTitle, templateContents, fixed=TRUE)
@@ -184,7 +191,9 @@ addProjectNote <- function( projectNotePrefix, projectNoteName, projectNotePath,
   templateContents <- gsub("{{PROJECT_DOC_LINK_TASK}}", TaskTitleLink, templateContents, fixed=TRUE)
 
   # insert the summaryBullet into SUMMARY_INFO field:
-  templateContents <- gsub("{{SUMMARY_INFO}}", summaryBullet, templateContents, fixed=TRUE)
+  #templateContents <- gsub("{{SUMMARY_INFO}}", summaryBullet, templateContents, fixed=TRUE)
+  # replace:
+  templateContents <- replaceAndInsertVector("{{SUMMARY_INFO}}", summaryBullet, templateContents)
 
 
   # write to projFile
@@ -209,8 +218,16 @@ addProjectNote <- function( projectNotePrefix, projectNoteName, projectNotePath,
   projectNoteLink <- paste("**[", noteName, "](", NoteLink, ")**",  sep="")
   #[BMS~314~_AVIL_42SNI_EdU_16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
-  # create the Vector, including Whitespace and Summary information:
-  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryBullet, "" )
+  # edit the summary information - if TaskTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
+  # get TaskTodoSectionHeader value
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  todoValue <- settings[["TaskTodoSectionHeader"]]
+  # get new summary info - WITHOUT the TaskTodoSectionHeader plus excess whitespace
+  summaryInfo <- summaryBullet[1: computePreviousLineIndex(grep(todoValue, summaryBullet, fixed=TRUE)-1, summaryBullet)+1 ]
+
+  # create the Vector, including Whitespace and Summary information ONLY - without Task TODO Section :
+  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryInfo, "" )
 
   # compute place to insert the project note link:
     # get the line selected in the projectDoc - [["originalLine"]]

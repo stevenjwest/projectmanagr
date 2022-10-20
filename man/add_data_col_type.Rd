@@ -15,4 +15,7 @@ finally converts data to correct datatype and inserts into datatable.
 \details{
 DT row length MUST equal the length of data.  `data` and `name` must be
 character vectors.
+
+Can optionally use indices to insert data into specific row indices in new col
+in dt.
 }

@@ -7,26 +7,48 @@
 createProjectOrg(
   orgName,
   orgTitle,
-  fileSystemPath = getwd(),
+  organisationParentDirectory = getwd(),
+  settingsYamlPath = "",
   orgTemplate = "Org-Template.Rmd"
 )
 }
 \arguments{
-\item{orgName}{defines the directory name of the Organisation. Default is "00_ORG",}
+\item{orgName}{defines the directory name of the Organisation.}
 
-\item{orgTitle}{defines the title of the Organisation, in its document.  Default is "ORGANISATION",}
+\item{orgTitle}{defines the title of the Organisation, in its document.}
 
-\item{fileSystemPath}{defines where the organisation directory is written, Defaultis the working directory}
+\item{organisationParentDirectory}{defines where the organisation directory is
+written, Default is the working directory.}
 
-\item{orgTemplate}{defines the template to use from the projectmanagr package.  Default is "Org-Template.Rmd".}
+\item{settingsYamlPath}{A VALID YAML file for establishing the projectmanagr
+organisation layout.  For this function the SitePath VolumesDir DocsDir ConfigDir
+& OrgIndexFileName params MUST be set.  Optionally all other params for the
+projectmanagr settings yaml file can be set, or they are set to default
+values.}
+
+\item{orgTemplate}{defines the template to use from the projectmanagr package.
+Default is "Org-Template.Rmd".}
+
+\item{organisationSiteDirectory}{an absolute path that defines where the compiled
+HTML from the organisation is written. If left blank, the default site directory
+will be the organisation directory path, with directory name suffixed with `_site`.}
 }
 \description{
 Generates the layout for a new Project Organisation in the File System.
 }
 \details{
-The function generates the organisation directory and its initial contents:  config/ directory with the
-config files and templates/ directory containing component templates.  The volumes/ directory, that will
-hold all volumes for managing data storage. The docs/ directory, that will hold documentation for a
-projectmanagr usage.   A 00_site/ directory is created next to org, which will contain the generated html
-site.
+The function generates the organisation directory and its initial contents:
+
+* `index_<orgName>.Rmd` the landing page for the organisation.
+
+* `config/` directory with the config files and templates/ directory containing
+component templates.
+
+* `docs/` directory, that will hold documentation for a projectmanagr usage.
+
+* `volumes/` directory, that will hold all volumes for managing data storage.
+
+A HTML site directory is created which will contain the generated html site.
+By default this directory will exist next to org directory, suffixed with
+`_site`.  This can be modified with the `organsiationSiteDirectory` parameter.
 }

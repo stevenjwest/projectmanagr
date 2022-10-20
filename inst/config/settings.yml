@@ -1,8 +1,22 @@
 |
+  SitePath: ~/site/
+  VolumesDir: volumes
+  VolumesFile: volumes.Rmd
+  DocsDir: docs
+  ConfigDir: config
+  ConfigSettingsYamlFile: settings.yml
+  ConfigStatusYamlFile: status.yml
+  TemplatesDir: templates
+  OrgIndexFileName: index_ORG.Rmd
   RunUpdateOnStartup: yes
   RunCompileWithUpdate: yes
-  htmlDocTheme: united
-  site: ~/site/
-  gadgetWidth: 1000
-  gadgetHeight: 800
+  TaskTodoSectionHeader: '**TODO**'
+  GoalHeader: '* [GOAL'
+  DeliverableHeader: '    + [DELIVERABLE'
+  TaskHeader: '        - [TASK'
+  dataStorageSectionValue: '# DATA STORAGE'
+  subNoteContentsSectionValue: '# GROUP CONTENTS'
+  headerNoteContentsSectionValue: '# CONTENTS'
+  gadgetWidth: 1200
+  gadgetHeight: 1200
   rstudioInternalStateDir: ~/.local/share/rstudio

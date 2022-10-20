@@ -208,7 +208,8 @@ datatable_insert_from_dataframe <- function( df,
 
   # write these to the file:
   cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
-  rmd_contents <- c( rmd_contents[1:rmd_line], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
+  rmd_contents <- c( rmd_contents[1:(rmd_line-1)], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
+   # rmd_line-1 to REMOVE CURRENT LINE
 
   rmd_file_conn <- file( rmd_path )
   writeLines(rmd_contents, rmd_file_conn)

@@ -9,7 +9,7 @@ addinDatatableImport()
 \description{
 Generates a Shiny Gadget for importing existing samples and reps derived from
 datatables that exist in a source Project Note into the currently active
-desintation Project Note.
+destination Project Note.
 }
 \details{
 * User selects the line in the current Project Note where the IMPORT will
@@ -30,7 +30,7 @@ selected sample rows.
 * User selects DONE : samples/reps are first
 
   + EXPORTED from the source Project Note : Export datatable is updated/written
-    as needed in the source note, pointing to the desintation Project Note
+    as needed in the source note, pointing to the destination Project Note
 
   + IMPORTED to the destination Project Note : Import datatable is written
     which includes the samples/reps selected, pointing to the source Project

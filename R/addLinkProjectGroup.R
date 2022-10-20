@@ -56,10 +56,9 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
   # set confPath:
   confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
 
-
-  # Use current time as initial summary bullet - use to write to SUMMARY:
-  summaryBullet <- paste0("* ", as.character( Sys.time() ) )
-
+  # Use task header from template
+   #summaryBullet < - paste0("* ", as.character(Sys.time()) )
+  summaryBullet <- getTaskSectionHeader(orgPath)
 
   # read Project Note:
   projNoteFileConn <- file( headerNotePath )
@@ -112,7 +111,9 @@ addLinkProjectGroup <- function( headerNotePath, selection ) {
   TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
   # create DocTitle - DocName plus the Gnum Dnum Tnum
-  DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  # create DocTitle - DocName plus the TaskTitle
+  DocTitle <- paste( "## ", DocName, " : ", taskTitle, sep="")
 
   # form the objectivesContents:
   objectivesContents <- c("----","","","",DocTitle,"","",DocTitleLink,"","",

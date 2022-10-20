@@ -26,21 +26,226 @@ addinAddProjectNote <- function() {
       # a GROUP NOTE (HEADER or SUBNOTE) -> addSubNoteToGroup()
       # TASK or within bounds of a TASK - addProjectNote() OR addProjectNoteGroup()
   selection <- cursorSelection()
+  context <- rstudioapi::getSourceEditorContext()
 
   # get the orgPath:
-  orgPath <- findOrgDir(selection[["projectDocPath"]])
+  orgPath <- findOrgDir(context$path) # using context$path rather than selection[["projectDocPath"]], as Rmd may be projectdoc OR headerNote
 
   # get progPath
-  progPath <- findProgDir(selection[["projectDocPath"]])
+  progPath <- findProgDir(context$path) # using context$path rather than selection[["projectDocPath"]], as Rmd may be projectdoc OR headerNote
   progPath <- normalizePath(progPath)
 
   # If no project Task is selected, present ERROR MESSAGE:
 
   if( selection[[1]] == "FALSE" ) {
 
+    # check if the active Rmd is a HEADER NOTE
+    context <- rstudioapi::getSourceEditorContext()
+
+    # first ENSURE the current file is saved:
+    rstudioapi::documentSave(context$id)
+
+    # recapture, to ensure the path is retrieved!
+    context <- rstudioapi::getSourceEditorContext()
+
+    rmdType <- getFileType( context$path )
+
+
+    if( rmdType == "HEAD" ) { # can add subnotes to HEADER notes without any Goal/Del/Task selection
+
+
+      ### CREATE GADGET ###
+
+      ui <- miniPage(
+
+        gadgetTitleBar("Add New Sub Note"),
+
+        miniContentPanel(
+
+          fillCol( #flex=NA, # use the natural size of the elements in col
+
+            fillRow( h5("Add a new Sub Note to a Project Note Group.") ),
+
+            #fillRow(
+            #  helpText(  h3(  paste("GOAL", goalNum), align="center" )   ),
+            #  helpText(  h3(  paste("DELIVERABLE", delNum), align="center" )   ),
+            #  helpText(  h3(  paste("TASK", taskNum) ), align="center"   )
+            #),
+
+            #fillRow(
+            #  helpText( p(goalTitle, align="center") ),
+            #  helpText( p(delTitle, align="center") ),
+            #  helpText( p(taskTitle, align="center") )
+            #),
+
+            fillRow(  textInput("projectNoteName", "Sub Note Name:", width='100%')  ),
+
+            fillRow(  span( textOutput("warningName"), style="color:red")  ),
+
+            fillRow(  textInput("projectNoteTitle", "Sub Note Title:", width='100%')  ),
+
+            # fillRow( flex = c(7, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Parent Directory")  ),
+
+            fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
+
+            fillRow(   textOutput("projectNotePath")  )
+
+          )
+
+        )
+
+      )
+
+
+      ### ENCODE BEHAVIOUR ###
+
+      server <- function(input, output, session) {
+
+        # update projectNoteTitle when projectNoteName is changed:
+        observe({
+
+          updateTextInput(session, "projectNoteTitle", value = gsub("-", " ", gsub("_", " ", input$projectNoteName) )  )
+
+        })
+
+        # compute Dir selection:
+        #global <- reactiveValues(   datapath = findOrgDir(  selection[["projectDocPath"]]  )   )
+
+        #observe({
+        #  if(global$datapath == "") {
+        #    output$warningDirectory <- renderText({
+        #      "PROJECT DOC NOT INSIDE PROJECT ORGANISATION"
+        #    })
+        #  }
+        #  else {
+        #    output$warningDirectory <- renderText({
+        #      ""
+        #    })
+        #  }
+        #})
+
+
+        observe({
+
+          if( input$projectNoteName != "" ) {
+
+            # form the subnote path
+            subNotePath <- getSubNotePathFromHead( context$path, input$projectNoteName)
+
+            output$projectNotePath <- renderText({
+              subNotePath
+            })
+
+          }
+
+          else {
+
+            output$projectNotePath <- renderText({
+              ""
+            })
+
+          }
+        })
+
+
+        observe({
+
+          if( grepl("\\s", input$projectNoteName)  ) {
+            # set the warningName TextOutput:
+            output$warningName <- renderText({
+              "PROJECT NAME CANNOT CONTAIN SPACES"
+            })
+          }
+          else {
+            output$warningName <- renderText({
+              ""
+            })
+          }
+        })
+
+
+
+        # perform computations to create new Programme:
+        observeEvent(input$done, {
+
+          if(input$projectNoteName == "") {
+            # set the warningName TextOutput:
+            output$warningName <- renderText({
+              "*** PROVIDE PROJECT NAME ***"
+            })
+          }
+          else if( grepl("\\s", input$projectNoteName)  ) {
+            # set the warningName TextOutput:
+            output$warningName <- renderText({
+              "*** PROJECT NAME CANNOT CONTAIN SPACES ***"
+            })
+          }
+          #else if(global$datapath == "") {
+          #  output$warningDirectory <- renderText({
+          #    "*** DIR PATH NOT VALID PROGRAMME ***"
+          #  })
+          #}
+          else {
+
+            # compute the headerDirPath and nextSubNotePrefix:
+            #headerNotePath <- computePath(
+            #  selection[["projectDocPath"]],
+            #  substring(  selection[["headerNoteLink"]],
+            #              first=(regexpr("](", selection[["headerNoteLink"]], fixed=TRUE)+2 ),
+            #              last=nchar(selection[["headerNoteLink"]])-3 )
+            #)
+            headerNotePath <- normalizePath(context$path)
+
+            headerDirPath <- substring(headerNotePath, first=1, last=(regexpr("~_", headerNotePath, fixed=TRUE) -1 ))
+
+            nextSubNotePrefix <- getNextGroupPrefix(headerDirPath)
+
+            projectmanagr::addSubNoteToGroup(
+              subNotePrefix = nextSubNotePrefix,
+              subNoteName = input$projectNoteName,
+              subNoteDir = headerDirPath,
+              selection = selection,
+              subNoteTitle = input$projectNoteTitle,
+              subNoteTemp="Project-Sub-Note-Template.Rmd")
+
+            rstudioapi::navigateToFile( paste( headerDirPath, .Platform$file.sep, nextSubNotePrefix, "~_", input$projectNoteName, ".Rmd", sep="") )
+
+            # navigate to containing dir
+            #rstudioapi::filesPaneNavigate(  paste( headerDirPath, sep="") )
+
+            # Close Gadget after computations are complete:
+            stopApp()
+
+          }
+
+        })
+
+      }
+
+
+      ### VIEW GADGET ###
+
+      if(orgPath == "") {
+        viewer <- dialogViewer("Add New Project Note", width = 1000,
+                               height = 1000 )
+      } else {
+        confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+        settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+        settingsContents <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
+        viewer <- dialogViewer("Add New Project Note", width = settingsContents$gadgetWidth,
+                               height = settingsContents$gadgetHeight )
+      }
+
+      runGadget(ui, server, viewer = viewer)
+
+
+    } else { # cannot add any Project Notes - show error
+
     ui <- miniPage(
       gadgetTitleBar("Add New Project Note"),
-      h2("Select a Task OR Project Header Link in a Project Document.", align="center", style="color:red")
+      h2("Select a Task OR Project Header Link in a Project Document Rmd.", align="center", style="color:red"),
+      h2("OR Select a Project Header Note Rmd.", align="center", style="color:red")
     )
 
     server <- function(input, output, session) {
@@ -54,6 +259,8 @@ addinAddProjectNote <- function() {
     viewer <- dialogViewer("Add New Project Note", width = 500, height = 300)
 
     runGadget(ui, server, viewer = viewer)
+
+    }
 
   }
   else {
@@ -154,7 +361,7 @@ addinAddProjectNote <- function() {
                                              first=(regexpr("](", selection[["headerNoteLink"]], fixed=TRUE)+2 ),
                                              last=nchar(selection[["headerNoteLink"]])-3 )
 
-            subNotePath <- getSubNotePath(selection[["projectDocPath"]], headerNoteRelPath, input$projectNoteName )
+            subNotePath <- getSubNotePathFromDoc(selection[["projectDocPath"]], headerNoteRelPath, input$projectNoteName )
 
             output$projectNotePath <- renderText({
               subNotePath
@@ -320,7 +527,7 @@ addinAddProjectNote <- function() {
             fillRow(  textInput("subNoteName", "Project SubNote Name:", width='95%'),
                       textInput("subNoteTitle", "Project SubNote Title:", width='95%')  ),
 
-            fillRow( br() ),
+            fillRow( checkboxInput("addObjToHeader", 'Add Objective to Header', width='95%') ),
 
             fillRow(   textOutput("subNotePath")  ),
 
@@ -427,6 +634,7 @@ addinAddProjectNote <- function() {
 
             shinyjs::disable("subNoteName")
             shinyjs::disable("subNoteTitle")
+            shinyjs::disable("addObjToHeader")
 
           }
 
@@ -454,6 +662,7 @@ addinAddProjectNote <- function() {
 
             shinyjs::enable("subNoteName")
             shinyjs::enable("subNoteTitle")
+            shinyjs::enable("addObjToHeader")
 
             if( global$datapath != "" && input$subNoteName != "" ) {
 
@@ -582,8 +791,10 @@ addinAddProjectNote <- function() {
                                                projectNoteTitle = input$projectNoteTitle,
                                                subNoteTitle = input$subNoteTitle,
                                                projNoteTemplate="Project-Header-Note-Template.Rmd",
-                                               subNoteTemplate="Project-Sub-Note-Template.Rmd"
+                                               subNoteTemplate="Project-Sub-Note-Template.Rmd",
+                                               addObjToHeader = input$addObjToHeader
                              )
+
                 rstudioapi::navigateToFile( paste(
                           paste( global$datapath, .Platform$file.sep,
                                  paste(nextNotePrefix, "-00", sep=""), sep=""),

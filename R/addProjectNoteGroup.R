@@ -32,11 +32,15 @@
 #' @param subNoteTemplate Template to use, as found in the `config/templates/` directory.  Default is
 #' "Project-Sub-Note-Template.Rmd"
 #'
+#' @param addObjToHeader Boolean to indicate whether the Objective from the Project Doc is set in the Header Note.
+#' True by default.  If False, no Project Doc Goal/Del/Task is inserted into the Header Note, and the first subnote
+#' is linked in the ProjectDoc G/D/T as a simple note.
+#'
 #' @export
 addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNoteDir, selection,
                                   subNoteName, projectNoteTitle="", subNoteTitle="",
                                   projNoteTemplate="Project-Header-Note-Template.Rmd",
-                                  subNoteTemplate="Project-Sub-Note-Template.Rmd" ) {
+                                  subNoteTemplate="Project-Sub-Note-Template.Rmd", addObjToHeader=TRUE ) {
 
   cat( "\nprojectmanagr::addProjectNoteGroup():\n" )
 
@@ -78,6 +82,9 @@ addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNot
   confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
   tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
 
+  # load settings file for user defined settings
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
   ### HEADER NOTE ###
 
@@ -112,8 +119,8 @@ addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNot
 
   cat( "  Made Project Header Note: ", headerNotePath, "\n" )
 
-  # get creation time - use to write to SUMMARY:
-  # summaryBullet <- paste0("* ", as.character(file.info(headerNotePath)[,5]) )
+  # Use task header from template
+  #summaryBullet <- getTaskSectionHeader(orgPath)
     # NO LONGER putting summary bullet in header note - the summaries only exist for concrete SUBNOTES!
 
   # extract the Author value from the settings.yml file:
@@ -126,6 +133,10 @@ addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNot
   templateContents <- gsub("{{PREFIX}}", projectNotePrefix, templateContents, fixed=TRUE)
   templateContents <- gsub("{{TITLE}}", projectNoteTitle, templateContents, fixed=TRUE)
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
+  templateContents <- gsub("{{DATA_STORAGE_SECTION}}", settings[["dataStorageSectionValue"]],
+                           templateContents, fixed=TRUE)
+  templateContents <- gsub("{{HEADER_NOTE_CONTENTS_SECTION}}", settings[["headerNoteContentsSectionValue"]],
+                           templateContents, fixed=TRUE)
 
 
   # replace the {{OBJECTIVES}} part of the template with the Objectives Template:
@@ -183,8 +194,12 @@ addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNot
   TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
   # create DocTitle - DocName plus the Gnum Dnum Tnum
-  DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  # create DocTitle - DocName plus the TaskTitle
+  DocTitle <- paste( "## ", DocName, " : ", taskTitle, sep="")
 
+  # ONLY ADD if addObjToHeader is TRUE
+  if( addObjToHeader == TRUE) {
   templateContents <- gsub("{{PROJECT_DOC_TITLE}}", DocTitle, templateContents, fixed=TRUE)
 
   templateContents <- gsub("{{PROJECT_DOC_LINK}}", DocTitleLink, templateContents, fixed=TRUE)
@@ -192,6 +207,20 @@ addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNot
   templateContents <- gsub("{{PROJECT_DOC_LINK_GOAL}}", GoalTitleLink, templateContents, fixed=TRUE)
   templateContents <- gsub("{{PROJECT_DOC_LINK_DEL}}", DelTitleLink, templateContents, fixed=TRUE)
   templateContents <- gsub("{{PROJECT_DOC_LINK_TASK}}", TaskTitleLink, templateContents, fixed=TRUE)
+
+  } else { # set these all to BLANK FIELDS
+
+    templateContents <- gsub("{{PROJECT_DOC_TITLE}}", "", templateContents, fixed=TRUE)
+
+    templateContents <- gsub("{{PROJECT_DOC_LINK}}", "", templateContents, fixed=TRUE)
+
+    templateContents <- gsub("{{PROJECT_DOC_LINK_GOAL}}", "", templateContents, fixed=TRUE)
+    templateContents <- gsub("{{PROJECT_DOC_LINK_DEL}}", "", templateContents, fixed=TRUE)
+    templateContents <- gsub("{{PROJECT_DOC_LINK_TASK}}", "", templateContents, fixed=TRUE)
+
+    # CROP OUT EXCESS WHITESPACE
+    templateContents <- c(templateContents[1:17], templateContents[30:length(templateContents)])
+  }
 
   # insert the summaryBullet into SUMMARY_INFO field:
   #templateContents <- gsub("{{SUMMARY_INFO}}", summaryBullet, templateContents, fixed=TRUE) # NO LONGER USING!
@@ -207,37 +236,38 @@ addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNot
 
   ### INSERT LINK FROM PROJECT NOTE INTO PROJECT DOC:
 
-  # read Project Doc:
-  projDocFileConn <- file( projectDocPath )
-  projDocContents <- readLines( projDocFileConn )
-  close(projDocFileConn)
+  # ONLY ADD if addObjToHeader is TRUE
+  if( addObjToHeader == TRUE) {
 
-  # create the projectNoteLink:
-  NoteLink <- R.utils::getRelativePath(headerNotePath, relativeTo=projectDocPath)
-  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  headerNoteTitle <- substring( basename(headerNotePath), first=1, last=nchar(basename(headerNotePath))-4)
-  projectNoteLink <- paste("**[", headerNoteTitle, "](", NoteLink, ")**",  sep="")
-  #[LAB~003-00~_Axonal_Projections_Hippocampal_Entorhinal_Pathway](../LAB/LAB~003-00~_axonal_projections_hippocampal_entorhinal_pathway.Rmd)
+    # read Project Doc:
+    projDocFileConn <- file( projectDocPath )
+    projDocContents <- readLines( projDocFileConn )
+    close(projDocFileConn)
 
-  # create the Vector, including Whitespace and Summary information:
-  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "" )
+    # create the projectNoteLink:
+    NoteLink <- R.utils::getRelativePath(headerNotePath, relativeTo=projectDocPath)
+    NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+    headerNoteTitle <- substring( basename(headerNotePath), first=1, last=nchar(basename(headerNotePath))-4)
+    projectNoteLink <- paste("**[", headerNoteTitle, "](", NoteLink, ")**",  sep="")
+    #[LAB~003-00~_Axonal_Projections_Hippocampal_Entorhinal_Pathway](../LAB/LAB~003-00~_axonal_projections_hippocampal_entorhinal_pathway.Rmd)
 
-  # compute place to insert the project note link:
-  # get the line selected in the projectDoc - [["originalLine"]]
-  line <- computeNextLine(selection[["originalLineNumber"]], projDocContents)
+    # create the Vector, including Whitespace and Summary information:
+    projectNoteLinkVector <- c( "", "", "", projectNoteLink, "" )
 
-  # Insert projectNoteLinkVector to projDocContents:
-  projDocContents <- c(projDocContents[1:(line-1)], projectNoteLinkVector, projDocContents[(line+1):length(projDocContents)])
+    # compute place to insert the project note link:
+    # get the line selected in the projectDoc - [["originalLine"]]
+    line <- computeNextLine(selection[["originalLineNumber"]], projDocContents)
 
-
-  # write to projFile
-  projDocFileConn <- file( projectDocPath )
-  writeLines(projDocContents, projDocFileConn)
-  close(projDocFileConn)
-
-  cat( "  Written Project Header Note Link to Project Doc: ", projectDocPath," at line: ", line, "\n" )
+    # Insert projectNoteLinkVector to projDocContents:
+    projDocContents <- c(projDocContents[1:(line-1)], projectNoteLinkVector, projDocContents[(line+1):length(projDocContents)])
 
 
+    # write to projFile
+    projDocFileConn <- file( projectDocPath )
+    writeLines(projDocContents, projDocFileConn)
+    close(projDocFileConn)
+
+    cat( "  Written Project Header Note Link to Project Doc: ", projectDocPath," at line: ", line, "\n" )
 
   ### WRITE HEADER NOTE TO PROGRAMME INDEX FILE:  NOT USED
 
@@ -320,5 +350,18 @@ addProjectNoteGroup  <- function( projectNotePrefix, projectNoteName, projectNot
 
   # now run addSubNoteToGroup using subNotePrefix and new selection:
   addSubNoteToGroup( subNotePrefix, subNoteName, headerNoteDir, selection, subNoteTemp = subNoteTemplate )
+
+  } else { # if addObjToHeader is FALSE addSubNoteToGroup but link the subnote to ProjectDoc as a SIMPLE NOTE
+
+
+    ###  SUB NOTE  ###
+
+    # create the subNotePrefix:
+    subNotePrefix <- paste(projectNotePrefix, "-001", sep="")
+
+    # now run addSubNoteToGroup using subNotePrefix and new selection:
+    addSubNoteToGroup( subNotePrefix, subNoteName, headerNoteDir, selection, subNoteTemp = subNoteTemplate )
+
+  }
 
 }

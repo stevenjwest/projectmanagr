@@ -1,4 +1,4 @@
-#' Add a New Link from a Project Doc to a Project Note
+#' Add a New Link from a Project Note to a Project Doc
 #'
 #' This Function adds a new Link from an Existing (SINGLE or SUBNOTE) Project Note to a Project Doc.  The link
 #' is made to a Project Doc GOAL/DEL/TASK, and this GOAL/DEL/TASK is added to the Project Notes' OBJECTIVES.
@@ -52,9 +52,9 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   # set confPath:
   confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
 
-  # Use current time as initial summary bullet - use to write to SUMMARY:
-  summaryBullet <- paste0("* ", as.character(Sys.time()) )
-
+  # Use task header from template
+   #summaryBullet < - paste0("* ", as.character(Sys.time()) )
+  summaryBullet <- getTaskSectionHeader(orgPath)
 
   # read Project Note:
   projNoteFileConn <- file( projectNotePath )
@@ -110,7 +110,9 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
   # create DocTitle - DocName plus the Gnum Dnum Tnum
-  DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  # create DocTitle - DocName plus the TaskTitle
+  DocTitle <- paste( "## ", DocName, " : ", taskTitle, sep="")
 
   # form the objectivesContents:
   objectivesContents <- c("----","","","",DocTitle,"","",DocTitleLink,"","",
@@ -151,9 +153,16 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
   projectNoteLink <- paste("**[", projectNoteTitle, "](", NoteLink, ")**",  sep="")
   #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
 
-  # create the Vector, including Whitespace and Summary information:
-  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "",
-                              summaryBullet, "" )
+  # edit the summary information - if TaskTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
+  # get TaskTodoSectionHeader value
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  todoValue <- settings[["TaskTodoSectionHeader"]]
+  # get new summary info - WITHOUT the TaskTodoSectionHeader plus excess whitespace
+  summaryInfo <- summaryBullet[1: computePreviousLineIndex(grep(todoValue, summaryBullet, fixed=TRUE)-1, summaryBullet)+1 ]
+
+  # create the Vector, including Whitespace and Summary information ONLY - without Task TODO Section :
+  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryInfo, "" )
 
   # compute place to insert the project note link:
   # get the line selected in the projectDoc - [["originalLine"]]
@@ -295,5 +304,189 @@ addLinkProjectNote <- function( projectNotePath, selection ) {
 
     #}
   #}
+
+}
+
+
+
+#' Write a New Link from a Project Note to a Project Doc
+#'
+#' This Function adds a new Link from an Existing (SINGLE or SUBNOTE) Project Note to a Project Doc.  The link
+#' is made to a Project Doc GOAL/DEL/TASK, but this GOAL/DEL/TASK is NOT added to the Project Notes' OBJECTIVES.
+#'
+#' @param projectNotePath The path to the Project Note.  This MUST be a sub-directory or lower inside a
+#'   PROGRAMME Directory.
+#' @param selection List containing the Goal, Del, Task selected from the Project Doc, as well as other useful
+#'   information - lines of Task/Del/Goal, projectDoc path, content of selection line.  See cursorSelection()
+#'   or userSelection().
+#'
+writeLinkProjectNote <- function( projectNotePath, selection ) {
+
+  cat( "\nprojectmanagr::writeLinkProjectNote():\n" )
+
+  # confirm projectNotePath is a valid path - contains "~_"
+  if( !grepl("~_", projectNotePath) ) {
+    stop( paste0("  projectNotePath is not valid - no '~_' separator: ", projectNotePath) )
+  }
+
+  # set projectDocPath
+  projectDocPath <- selection[["projectDocPath"]]
+
+  # Find programme DIR from projectDocPath:
+  progPath <- findProgDir(projectDocPath)
+
+  # Determine projectNote PREFIX (get TITLE from contents below):
+  projectNotePrefix <- substring( basename(projectNotePath), first=1, last=regexpr("~_", basename(projectNotePath), fixed=TRUE)-1 )
+
+
+  # Check projectNoteDir is a sub-dir in a Programme DIR, which itself is a sub-dir to the root of an ORGANISATION:
+  # run dirname TWICE as want to ensure projectNoteDir is a sub-dir in a Programme!
+  orgPath <- dirname( dirname(projectNotePath) )
+
+  orgPath <- findOrgDir(orgPath)
+
+  if(orgPath == "" ) {
+    # the search reached the root of the filesystem without finding the Organisation files,
+    # therefore, projectNoteDir is not inside a PROGRAMME sub-dir!  STOP:
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNoteDir) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # Check projectNotePrefix is NOT a HEADER NOTE (ending with "-00"):
+  if( regexpr("-", projectNotePrefix) != -1 && substring(projectNotePrefix, regexpr("-", projectNotePrefix)+1) == "00" ) {
+    # HEADER NOTE:  This method is not designed to deal with Header Notes - STOP:
+    stop( paste0("  projectNotePath is to a Header Note of a Group Project Note: ", projectNotePath, " Use addLinkProjectGroup() Function.") )
+  }
+
+
+  # set confPath:
+  confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
+
+  # Use current time as initial summary bullet - use to write to SUMMARY:
+  #summaryBullet <- paste0("* ", as.character(Sys.time()) )
+  summaryBullet <- getTaskSectionHeader(orgPath)
+
+  # read Project Note:
+  projNoteFileConn <- file( projectNotePath )
+  projNoteContents <- readLines( projNoteFileConn )
+  close(projNoteFileConn)
+
+  # read project note title
+  #projectNoteTitle <- getProjCompTitle(projNoteContents)
+  projectNoteTitle <- substring(basename(projectNotePath), first=1, last=nchar(basename(projectNotePath))-4) # ACTUALLY better to link with note file name!
+  # avoids bug where old links made with old Titles would be missed if title is edited in note in meantime..
+
+  # modify the Project Note to add the new Project Doc GOAL/DEL/TASK:
+
+  # compute Project Source Doc RELATIVE LINK:
+  DocLink <- R.utils::getRelativePath(projectDocPath, relativeTo=projectNotePath)
+  DocLink <- substring(DocLink, first=4, last=nchar(DocLink)) # remove first `../`
+  # DocLink <- paste( substring(DocLink, first=1, last=nchar(DocLink)-4), "/", sep="")
+  # for now have left links as ".Rmd", but this needs to be ".html", or "/" in a rendered website!
+  # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!
+
+  DocName <- basename(projectDocPath)
+  DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
+
+  DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
+
+  # GOAL:
+  goal <- substring(selection[["goal"]], first=4)
+  goalTitle <- substring(goal,  first=(regexpr(":", goal)+2 ) )
+  goalNum <- as.integer(  substring(goal,  first=5, last=(regexpr(":", goal)-1) )  )
+
+  goalTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal) ) ), ")", sep="" )
+
+  GoalTitleLink <- paste("* [", goal, "](", DocLink, goalTag, sep="")
+
+
+  # DEL:
+  del <- substring(selection[["deliverable"]], first=5)
+  delTitle <- substring(del,  first=(regexpr(":", del)+2 ) )
+  delNum <- as.integer(  substring(del,  first=12, last=(regexpr(":", del)-1) )  )
+
+  delTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del) ) ), ")", sep="" )
+
+  DelTitleLink <- paste("    + [", del, "](", DocLink, delTag, sep="")
+
+
+  # TASK:
+  task <- substring(selection[["task"]], first=6)
+  taskTitle <- substring(task,  first=(regexpr(":", task)+2 ) )
+  taskNum <- as.integer(  substring(task,  first=5, last=(regexpr(":", task)-1) )  )
+
+  taskTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task) ) ), ")", sep="" )
+
+  TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
+
+  # create DocTitle - DocName plus the Gnum Dnum Tnum
+  #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  # create DocTitle - DocName plus the TaskTitle
+  DocTitle <- paste( "## ", DocName, " : ", taskTitle, sep="")
+
+  # form the objectivesContents:
+  objectivesContents <- c("----","","","",DocTitle,"","",DocTitleLink,"","",
+                          GoalTitleLink,"",
+                          DelTitleLink,"",
+                          TaskTitleLink,"","",
+                          summaryBullet,"","")
+
+  # insert objectivesContents into the first line that matches the string "------"
+  # "------" (6 x '-') denotes the END of the objectives section
+
+  # compute place to insert the project note link:
+  # get the line selected in the projectDoc - [["originalLine"]]
+  line <- computeLineIndex("------", projNoteContents)
+
+  # Insert projectNoteLinkVector to projNoteContents:
+  projNoteContents <- c(projNoteContents[1:(line-1)], objectivesContents, projNoteContents[(line):length(projNoteContents)])
+
+
+  # DO NOT write to projFile
+  #fileConn <- file(projectNotePath)
+  #writeLines(projNoteContents, fileConn)
+  #close(fileConn)
+
+  #cat( "  Written Goal Del Task to Project Note file: ", basename(projectNotePath), "\n" )
+
+
+  ### INSERT LINK FROM PROJECT NOTE INTO PROJECT DOC:
+
+  # read Project Doc:
+  projDocFileConn <- file( projectDocPath )
+  projDocContents <- readLines( projDocFileConn )
+  close(projDocFileConn)
+
+  # create the projectNoteLink:
+  NoteLink <- R.utils::getRelativePath(projectNotePath, relativeTo=projectDocPath)
+  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  projectNoteLink <- paste("**[", projectNoteTitle, "](", NoteLink, ")**",  sep="")
+  #[BMS~314~ AVIL 42SNI EdU 16wks](../BMS/BMS~314~_AVIL_42SNI_EdU_16wks/)
+
+  # edit the summary information - if TaskTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
+  # get TaskTodoSectionHeader value
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  todoValue <- settings[["TaskTodoSectionHeader"]]
+  # get new summary info - WITHOUT the TaskTodoSectionHeader plus excess whitespace
+  summaryInfo <- summaryBullet[1: computePreviousLineIndex(grep(todoValue, summaryBullet, fixed=TRUE)-1, summaryBullet)+1 ]
+
+  # create the Vector, including Whitespace and Summary information ONLY - without Task TODO Section :
+  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryInfo, "" )
+
+  # compute place to insert the project note link:
+  # get the line selected in the projectDoc - [["originalLine"]]
+  line <- computeNextLine(selection[["originalLineNumber"]], projDocContents)
+
+  # Insert projectNoteLinkVector to projDocContents:
+  projDocContents <- c(projDocContents[1:(line-1)], projectNoteLinkVector, projDocContents[(line+1):length(projDocContents)])
+
+
+  # write to projFile
+  projDocFileConn <- file( projectDocPath )
+  writeLines(projDocContents, projDocFileConn)
+  close(projDocFileConn)
+
+  cat( "  Written Project Note Link to Project Doc: ", basename(projectDocPath), "\n" )
 
 }

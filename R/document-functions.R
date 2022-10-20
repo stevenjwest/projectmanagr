@@ -1,3 +1,31 @@
+#' Get Task Section Header
+#'
+#' Retrieves the Task Section Header from template: Task-Section-Header.Rmd
+#'
+#'
+getTaskSectionHeader <- function(orgPath, taskSectionHeaderTemplate="Task-Section-Header.Rmd") {
+
+  if(orgPath == "" ) {
+    # the search reached the root of the filesystem without finding the Organisation files,
+    # therefore, projectNotePath is not inside a PROGRAMME sub-dir!
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNotePath) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # set confPath + tempPath:
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+
+  templateFileConn <- file( paste( tempPath, .Platform$file.sep, taskSectionHeaderTemplate, sep="") )
+  templateContents <- readLines( templateFileConn )
+  close(templateFileConn)
+
+  # return
+  templateContents
+
+}
+
+
 #' Add Project Doc Links to Project Note.
 #'
 #' Assumes the Project Note MAY not have ANY Project Doc links written to it, and
@@ -10,7 +38,6 @@
 #' @param projNotePath ABSOLUTE path to the location on the filesystem where project note will be saved.
 #' @param projDocList List containing all Project Docs - Absolute path, Goal/Del/Task.  Like the list
 #' returned by getProjectNoteDocLinkList().
-#' @param summaryBullet The Contents of the Summary Bullet - initial default is "* [POSIXct date-time]"
 #'
 #'
 addLinks <- function(projNoteContents, projNotePath, projDocList) {
@@ -19,9 +46,9 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
 
     projectDocPath <- projDocList[[i]][[1]]
 
-    # generate the summaryBullets from the projDocList:
-    #summaryBullets <- spaceSummaryBulletPoints(projDocList[[i]][[5]])
-    summaryBullets <- paste0("* ", as.character(file.info(projNotePath)[,5]) )
+    # generate Task Header from template
+    orgPath <- findOrgDir(projectDocPath)
+    summaryBullet <- getTaskSectionHeader(orgPath)
 
     #cat("summar projDocList:", projDocList[[i]][[5]], "\n")
     #cat("summar projDocList length:", length(projDocList[[i]][[5]]), "\n")
@@ -76,7 +103,9 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
     TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
     # create DocTitle - DocName plus the Gnum Dnum Tnum
-    DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+    #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+    # create DocTitle - DocName plus the TaskTitle
+    DocTitle <- paste( "## ", DocName, " : ", taskTitle, sep="")
 
     if( is.element("{{PROJECT_DOC_LINK}}", projNoteContents) ) { # if the OBJECTIVES VARIABLES are in contents:
 
@@ -99,8 +128,8 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
       #cat("sb:", sb, "\n")
       #cat("sb length:", length(sb), "\n")
 
-      # summaryBullets is just the datetime of creation of projNote:
-      projNoteContents <- replaceAndInsertVector("{{SUMMARY_INFO}}", summaryBullets, projNoteContents)
+      # summaryBullet is from template Task-Section-Header.Rmd
+      projNoteContents <- replaceAndInsertVector("{{SUMMARY_INFO}}", summaryBullet, projNoteContents)
 
     }
     else { # if not first set of link must insert the links at END of OBJECTIVES Section - marked by "------"
@@ -110,7 +139,7 @@ addLinks <- function(projNoteContents, projNotePath, projDocList) {
                               GoalTitleLink,"",
                               DelTitleLink,"",
                               TaskTitleLink,"","",
-                              summaryBullets,"","")
+                              summaryBullet,"","")
 
       # insert objectivesContents into the first line that matches the string "------"
       # "------" (6 x '-') denotes the END of the objectives section
@@ -359,10 +388,10 @@ addSubNoteLinkToDocs <- function(projDocList, subNotePath, headerPath) {
 
     projectDocPath <- projDocList[[i]][[1]]
 
-    # generate the summaryBullets from the projDocList:
-    #summaryBullets <- spaceSummaryBulletPoints(projDocList[[i]][[5]])
-    summaryBullets <- paste0("* ", as.character(file.info(subNotePath)[,5]) )
-      # NO LONGER using headerNote summary bullets - use fresh bullet with datetime of subnote
+    # generate Task Header from template
+    orgPath <- findOrgDir(projectDocPath)
+    confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
+    summaryBullet <- getTaskSectionHeader(orgPath)
 
     # read Project Doc:
     projDocFileConn <- file( projectDocPath )
@@ -382,7 +411,17 @@ addSubNoteLinkToDocs <- function(projDocList, subNotePath, headerPath) {
     #cat("sb length:", length(sb), "\n")
 
     # create the Vector, including summaryBullets (these have appropriate whitespace):
-    projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryBullets, "" )
+    #projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryBullets, "" )
+    # edit the summary information - if TaskTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
+    # get TaskTodoSectionHeader value
+    settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+    settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+    todoValue <- settings[["TaskTodoSectionHeader"]]
+    # get new summary info - WITHOUT the TaskTodoSectionHeader plus excess whitespace
+    summaryInfo <- summaryBullet[1: computePreviousLineIndex(grep(todoValue, summaryBullet, fixed=TRUE)-1, summaryBullet)+1 ]
+
+    # create the Vector, including Whitespace and Summary information ONLY - without Task TODO Section :
+    projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryInfo, "" )
 
     # compute place to insert the project note link:
     line <- computeHeaderLineUnderProjectDocGoalDelTask(headerName,
@@ -789,15 +828,22 @@ grepLineIndexFrom <- function(line, contents, initialIndex) {
 #'
 #' contents - a vector of strings, the index of the first instance of line in this vector is returned.
 #'
+#' Set sep to TRUE to include searches for separation lines (---) in Rmd doc.
 #'
-computeLastLineIndex <- function(contents) {
+computeLastLineIndex <- function(contents, sep=FALSE) {
 
   returnVal <- 1
+
+  if( sep==FALSE) {
+    grepStr <- "[A-z,0-9]"
+  } else {
+    grepStr <- "[A-z,0-9,-]"
+  }
 
   # start at the END of contents:
   for( l in length(contents):1 ) {
 
-    if( grepl("[A-z,0-9]", contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
+    if( grepl(grepStr, contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
 
       returnVal <- (l+1) # return the NEXT LINE after the line which contains content
       break
@@ -905,13 +951,13 @@ computeNextHeaderLine <- function(lineIndex, headerContents) {
 #'
 #'  list[[i]] : A VECTOR that includes the Project Doc ABSOLUTE Link, GOAL Num, DEL Num, TASK Num.
 #'
-#'  list[[i]][1] : Project Doc ABSOLUTE Link
+#'  list[[i]][[1]] : Project Doc ABSOLUTE Link
 #'
-#'  list[[i]][2] : Project Doc GOAL - number plus title
+#'  list[[i]][[2]] : Project Doc GOAL - number plus title
 #'
-#'  list[[i]][3] : Project Doc DELIVERABLE - number plus title
+#'  list[[i]][[3]] : Project Doc DELIVERABLE - number plus title
 #'
-#'  list[[i]][4] : Project Doc TASK - number plus title
+#'  list[[i]][[4]] : Project Doc TASK - number plus title
 #'
 #'  list[[i]][[5]] : LIST containing all summary information in Project Note for this
 #'                   Project Doc GOAL/DEL/TASK
@@ -923,13 +969,19 @@ computeNextHeaderLine <- function(lineIndex, headerContents) {
 #'
 #'  @param projectNotePath the FULL PATH to the project note, from which the contents is derived.
 #'
+#'  @param todoHeader The header of any TODO section that may be defined under the project note summary.  This Header
+#'  and remaining content of a summary should be saved SEPARATELY to the summaryVector.
 #'
-getProjectNoteDocLinkList <- function(projectNoteContents, projectNotePath) {
+#'
+getProjectNoteDocLinkList <- function(projectNoteContents, projectNotePath, todoHeader) {
 
   # instantiate a list to store links
   linkList <- list()
 
   summaryVector <- c()
+
+  todoVector <- c()
+  todoFound <- FALSE
 
   # start indices at 1:
   linkIndex <- 1
@@ -1049,7 +1101,7 @@ getHeaderNoteDocLinkList <- function(projectNoteContents, projectNotePath) {
   # From OBJECTIVES up to line "------" - which marks the end of the Project Doclinks
 
   for( l in ( grep("# OBJECTIVES", projectNoteContents, fixed=TRUE) +1 ):
-       ( grep("------", projectNoteContents) )  ) {
+       ( grep("------", projectNoteContents)[1] )  ) {
 
     # check for Project Doc link, plus GOAL, DEL, TASK
     # First will encounter Project Doc Link, then GOAL, DEL, TASK
@@ -1104,6 +1156,10 @@ getHeaderNoteDocLinkList <- function(projectNoteContents, projectNotePath) {
     }
 
   }
+
+  # remove any NULL references from list
+   # this can happen if for example a line separator was placed between OBJECTIVES_HEADER and ProjectDocLinkGDT
+  linkList <- linkList[-which(sapply(linkList, is.null))]
 
   #return the linkList
   linkList
@@ -1352,7 +1408,7 @@ computeNextSubNoteLine <- function(line, projDocContents) {
 #' [[1]] - contains the String "FALSE"
 #' [[2]] - contains the errorMessage - a String indicating why the method failed.
 #'
-#'
+#' @export
 cursorSelection <- function() {
 
   taskRetrieved <- TRUE
@@ -1837,4 +1893,115 @@ replaceAndInsertVector <- function( pattern, values, x ) {
 
 }
 
+
+#' Replace SEP Values
+#'
+#' In a string vector, replace every instance of SEP values - syntax used to denote
+#' separators between document sections in projectmanagr templates.
+#'
+#' * Six separators strings are defined in config/templates in projectmanagr org
+#' in the files: `SEP01.txt` to `SEP06.txt`
+#'
+#' * Syntax in projectmanagr templates for inserting the separators in projectmanagr
+#' templates: `{{SEP01}}` to `{{SEP06}}`
+#'
+#'
+replaceSepValues <- function(templateContents, orgPath) {
+
+  # check orgPAth
+
+  # look for the .config/ and templates/ dirs:
+  confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
+  tempPath = paste(confPath, .Platform$file.sep, "templates" , sep="")
+
+  while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
+    orgPath <- dirname(orgPath)
+    if(nchar(orgPath) <=1) {
+      stop( paste0("  Could not identify ORGANISATION in orgPath: ",orgPath) )
+    }
+    confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
+    tempPath = paste(confPath, .Platform$file.sep, "templates", sep="")
+  }
+
+  # get all SEP files form tempPath
+  sepFiles <- list.files(tempPath)[ startsWith(list.files(tempPath), "SEP") ]
+
+  # read all SEP values
+  SEPS <- list()
+  for( s in 1:length(sepFiles) ) {
+    templateFileConn <- file( paste( tempPath, .Platform$file.sep, sepFiles[s], sep="") )
+    SEPS[[s]] <- readLines( templateFileConn )
+    close(templateFileConn)
+  }
+
+  # replace SEP values in templateContents with appropriate SEP values
+
+  sep01indices <- grep("{{SEP01}}", templateContents, fixed=TRUE)
+  templateContents <- replaceAtIndices(templateContents, sep01indices, SEPS[[1]])
+
+  sep02indices <- grep("{{SEP02}}", templateContents, fixed=TRUE)
+  templateContents <- replaceAtIndices(templateContents, sep02indices, SEPS[[2]])
+
+  sep03indices <- grep("{{SEP03}}", templateContents, fixed=TRUE)
+  templateContents <- replaceAtIndices(templateContents, sep03indices, SEPS[[3]])
+
+  sep04indices <- grep("{{SEP04}}", templateContents, fixed=TRUE)
+  templateContents <- replaceAtIndices(templateContents, sep04indices, SEPS[[4]])
+
+  sep05indices <- grep("{{SEP05}}", templateContents, fixed=TRUE)
+  templateContents <- replaceAtIndices(templateContents, sep05indices, SEPS[[5]])
+
+  sep06indices <- grep("{{SEP06}}", templateContents, fixed=TRUE)
+  templateContents <- replaceAtIndices(templateContents, sep06indices, SEPS[[6]])
+
+  templateContents
+
+}
+
+
+replaceMarkdownHeader  <- function(templateContents, orgPath) {
+
+  # check orgPAth
+
+  # look for the .config/ and templates/ dirs:
+  confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
+  tempPath = paste(confPath, .Platform$file.sep, "templates" , sep="")
+
+  while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
+    orgPath <- dirname(orgPath)
+    if(nchar(orgPath) <=1) {
+      stop( paste0("  Could not identify ORGANISATION in orgPath: ",orgPath) )
+    }
+    confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
+    tempPath = paste(confPath, .Platform$file.sep, "templates", sep="")
+  }
+
+  # get all SEP files form tempPath
+  htmlHeaderFile <- file( paste0(tempPath, .Platform$file.sep, "rmarkdown-html-header.txt") )
+  htmlHeader <- readLines( htmlHeaderFile )
+  close(htmlHeaderFile)
+
+  # replace HTML_HEADER in templateContents with header
+  htmlHeaderIndex <- grep("{{HTML_HEADER}}", templateContents, fixed=TRUE)
+  templateContents <- replaceAtIndices(templateContents, htmlHeaderIndex, htmlHeader)
+
+  templateContents
+
+}
+
+
+#' Replace with VECTOR at indices in contents
+#'
+#'
+replaceAtIndices <- function(templateContents, indices, replacementVector) {
+
+  indices <- sort(indices, decreasing=TRUE) # work from END to START so indices remain VALID
+  for( i in indices) {
+    max <- length(templateContents)
+    templateContents <- c(templateContents[1:(i-1)], replacementVector, templateContents[(i+1):max])
+  }
+
+  templateContents
+
+}
 

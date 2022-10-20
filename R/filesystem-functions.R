@@ -585,6 +585,34 @@ getProjectPath <- function( fileSystemPath, projectName ) {
 }
 
 
+#' Get Sub Note Path form Project Doc
+#'
+#' Assumes projectDocPath is the path to the Project Doc.
+#'
+#' The headerNoteRelPath is assumed to be the RELATIVE path from projectDocPath
+#' to the headerNote.
+#'
+#'
+getSubNotePathFromDoc <- function( projectDocPath, headerNoteRelPath, subNoteName ) {
+
+  # compute the headerNotePath from projectDocPath and headerNoteRelPath (rel to ProjectDocPath!)
+  headerNotePath <- computePath(projectDocPath, headerNoteRelPath)
+
+  # extract headerNoteDir from path - from the ~_ separator, replace fileName with file.sep
+  headerNoteDir <- paste( substring(headerNotePath, 1, regexpr("~_", headerNotePath, fixed=TRUE)-1 ), sep="")
+
+  # get the NEXT subNote Prefix:
+  subNotePrefix <- getNextGroupPrefix(headerNoteDir)
+
+  # SubNote will be in the headerNoteDir:
+  subNotePath <- paste(headerNoteDir, .Platform$file.sep, subNotePrefix, "~_", subNoteName, ".Rmd", sep="" )
+
+  subNotePath
+
+
+}
+
+
 #' Get Sub Note Path
 #'
 #' Assumes projectDocPath is the path to the Project Doc.
@@ -593,10 +621,10 @@ getProjectPath <- function( fileSystemPath, projectName ) {
 #' to the headerNote.
 #'
 #'
-getSubNotePath <- function( projectDocPath, headerNoteRelPath, subNoteName ) {
+getSubNotePathFromHead <- function( headerNotePath, subNoteName ) {
 
   # compute the headerNotePath from projectDocPath and headerNoteRelPath (rel to ProjectDocPath!)
-  headerNotePath <- computePath(projectDocPath, headerNoteRelPath)
+  #headerNotePath <- computePath(projectDocPath, headerNoteRelPath)
 
   # extract headerNoteDir from path - from the ~_ separator, replace fileName with file.sep
   headerNoteDir <- paste( substring(headerNotePath, 1, regexpr("~_", headerNotePath, fixed=TRUE)-1 ), sep="")

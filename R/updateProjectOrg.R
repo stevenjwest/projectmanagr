@@ -6,6 +6,11 @@
 #' Note summary content.  If different, the Project Doc content is updated with the new Project
 #' Note summary content.
 #'
+#' The summary information contains an executive summary of progress on the current project
+#' notes work on the Project Doc TASK it is linked to.  It may ALSO contain a TODO section
+#' (by default denoted by the delimiter **TODO**), which this method will cache in `config/todo-cache`
+#' in the orgPath.  This is then retrieved when calling the summariseToDo() method.
+#'
 #' @param fileSystemPath an absolute path in the filesystem - should be within an Organisation.
 #'
 #' @export
@@ -23,9 +28,18 @@ updateProjectOrg <- function( fileSystemPath=getwd()  ) {
   # now, orgPath should be the root dir of the organisation
 
   confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  todoPath <- paste0( confPath, .Platform$file.sep, "todo-cache" )
+
+  # get TaskTodoSectionHeader value && goal del task Headers values
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  todoHeader <- settings[["TaskTodoSectionHeader"]]
+  goalHeader <- settings[["GoalHeader"]]
+  delHeader <- settings[["DeliverableHeader"]]
+  taskHeader <- settings[["TaskHeader"]]
 
   # get config/status.yml and read updateTime:
-  statusFile = paste( confPath, .Platform$file.sep, "status.yml", sep="" )
+  statusFile <- paste( confPath, .Platform$file.sep, "status.yml", sep="" )
   status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
   updateTime <- as.POSIXct(status$updateTime)
@@ -39,7 +53,7 @@ updateProjectOrg <- function( fileSystemPath=getwd()  ) {
   progList <- list.dirs(orgPath, recursive=FALSE)
 
   # remove standard DIRS:
-    # config, site, todo (dives/pomodoros), volumes:
+    # config, docs, volumes:
   progList <- progList[ !endsWith(progList, "config" ) &
                         !endsWith(progList, "docs" ) &
                         !endsWith(progList, "volumes" ) ]
@@ -62,6 +76,12 @@ updateProjectOrg <- function( fileSystemPath=getwd()  ) {
     dirsList <- c(dirsList, dirList, projList)
 
   }
+
+  # remove standard DIRS:
+  # REF SOP DB
+  dirsList <- dirsList[ !endsWith(dirsList, "REF" ) &
+                          !endsWith(dirsList, "SOP" ) &
+                          !endsWith(dirsList, "DB" ) ]
 
 
 
@@ -87,8 +107,8 @@ updateProjectOrg <- function( fileSystemPath=getwd()  ) {
         # check the summary information for each Project Doc Link in each Project Note:
         for(j in 1:length(fileList) ) {
 
-          #cat( "    checking Project Note -", j, ":", basename(fileList[j]),"\n" )
-          checkProjectNote(fileList[j])
+          cat( "    checking Project Note -", j, ":", basename(fileList[j]),"\n" )
+          checkProjectNote(fileList[j], todoHeader, goalHeader, delHeader, taskHeader)
 
         }
 
@@ -112,14 +132,15 @@ updateProjectOrg <- function( fileSystemPath=getwd()  ) {
 #' the Summary information between the Note and its Doc Links.
 #'
 #'
-checkProjectNote <- function(path) {
+checkProjectNote <- function(path, todoHeader, goalHeader, delHeader, taskHeader) {
 
   # open project note:
   fileConn <- file(path)
   contents <- readLines(fileConn)
   close(fileConn)
 
-  projDocs <- getProjectNoteDocLinkList(contents, path)
+  #projDocs <- getProjectNoteDocLinkList(contents, path, todoHeader, goalHeader, delHeader, taskHeader)
+  projDocs <- getProjectNoteSummaryTodoList(contents, path, todoHeader, goalHeader, delHeader, taskHeader)
 
   # check summary contents (projDocs[[i]][[5]] list) against the summary in each Project Doc:
 
@@ -129,6 +150,129 @@ checkProjectNote <- function(path) {
 
   }
 
+}
+
+
+
+#' Get Project Note Summary and Todo Link List
+#'
+#' Returns a list of VECTORS:
+#'
+#'  list[[i]] : A VECTOR that includes the Project Doc ABSOLUTE Link, GOAL Num, DEL Num, TASK Num.
+#'
+#'  list[[i]][[1]] : Project Doc ABSOLUTE Link
+#'
+#'  list[[i]][[2]] : Project Doc GOAL - number plus title
+#'
+#'  list[[i]][[3]] : Project Doc DELIVERABLE - number plus title
+#'
+#'  list[[i]][[4]] : Project Doc TASK - number plus title
+#'
+#'  list[[i]][[5]] : Vector containing all summary information in Project Note for this
+#'                   Project Doc GOAL/DEL/TASK
+#'  list[[i]][[6]] : Vector containing all TODO information in Project Note for this
+#'                   Project Doc GOAL/DEL/TASK
+#'
+#'  length( list ) returns the number of Project Doc links in the returned list.
+#'
+#'  @param projectNoteContents Character vector containing the contents of a Project Note, which includes links to
+#'  at least one ProjectDoc, separated by "----", and ended with "------".
+#'
+#'  @param projectNotePath the FULL PATH to the project note, from which the contents is derived.
+#'
+#'  @param todoHeader The header of any TODO section that may be defined under the project note summary.  This Header
+#'  and remaining content of a summary should be saved SEPARATELY to the summaryVector.
+#'
+getProjectNoteSummaryTodoList <- function(contents, projectNotePath, todoHeader, goalHeader, delHeader, taskHeader) {
+
+
+  # instantiate a list to store links
+  linkList <- list()
+
+  summaryVector <- c()
+  todoVector <- c()
+
+  # start indices at 1:
+  linkIndex <- 1
+  goaldeltaskIndex <- 1
+
+  orgPath <- findOrgDir(fileSystemPath)
+
+  if(orgPath == "" ) {
+    # the search reached the root of the filesystem without finding the Organisation files,
+    # therefore, projectNotePath is not inside a PROGRAMME sub-dir!
+    stop( paste0("  fileSystemPath is not in an ORGANISATION Directory: ", fileSystemPath) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  todoPath <- paste0( confPath, .Platform$file.sep, "todo-cache" )
+
+  # get all objectives as vector
+  objectives <- contents[ ( grep("# OBJECTIVES", contents, fixed=TRUE) +1 ):( grep("------", contents)[1] -1 ) ]
+
+  objs <- splitAt(objectives, grep("----", objectives))
+
+  for( o in objs) {
+
+    # get FIRST INSTANCE of a link - this will be ProjectDocLink
+    pnc <- o[which(startsWith(o, "["))[1]]
+    projDocRelLink <- substring(pnc, first=regexpr("\\(", pnc)+1, last=regexpr("\\)", pnc)-1 )
+    linkList[[linkIndex]] <- computePath(projectNotePath, projDocRelLink)
+    goaldeltaskIndex <- goaldeltaskIndex +1 # increment goalDelTask index to 2
+
+    # Get GOAL Title
+    pnc <- o[which(startsWith(o, goalHeader))[1]]
+    linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "## ", substring(pnc, first=4, last=regexpr("]", pnc)-1 ) )
+    goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+
+    # Get DELIVERABLE Title
+    pnc <- o[which(startsWith(o, delHeader))[1]]
+    linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "## ", substring(pnc, first=8, last=regexpr("]", pnc)-1 ) )
+    goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+
+    # Get TASK Title
+    pnc <- o[which(startsWith(o, taskHeader))[1]]
+    linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "## ", substring(pnc, first=12, last=regexpr("]", pnc)-1 ) )
+    goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+
+    # from Task Title index to end of o extract summary and TODO
+    taskIndex <- which(startsWith(o, taskHeader))[1]
+    todoIndex <-which(startsWith(o, todoHeader))[1]
+
+    if( is.na(todoIndex) == TRUE ) {
+      # no todo header in summary, so extract ALL REMAINING vector to summaryVector
+      summaryVector <- o[ (taskIndex+1) : length(o) ]
+      linkList[[linkIndex]][goaldeltaskIndex] <- list(summaryVector)
+      goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+      linkList[[linkIndex]][goaldeltaskIndex] <- list(c("")) # insert a blank vector in place of TODO Vector
+
+    } else {
+      # todo was found! split at todo
+      summaryVector <- o[ (taskIndex+1) : (todoIndex-1) ] # remove TODO HEADER
+      linkList[[linkIndex]][goaldeltaskIndex] <- list(summaryVector)
+      goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
+      todoVector <- o[ (todoIndex) : length(o) ] # keep TODO HEADER
+      linkList[[linkIndex]][goaldeltaskIndex] <- list(todoVector)
+    }
+
+    # adjust indices
+    linkIndex <- linkIndex + 1
+    goaldeltaskIndex <- 1
+
+  }
+
+  #return the linkList
+  linkList
+
+}
+
+
+#' Split Vector at positions
+#'
+#'
+splitAt <- function(x, pos) {
+  unname(split(x, cumsum(seq_along(x) %in% pos)))
 }
 
 

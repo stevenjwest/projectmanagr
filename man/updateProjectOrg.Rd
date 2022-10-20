@@ -16,3 +16,9 @@ If there is content, navigates to the Project Doc and compares its content with 
 Note summary content.  If different, the Project Doc content is updated with the new Project
 Note summary content.
 }
+\details{
+The summary information contains an executive summary of progress on the current project
+notes work on the Project Doc TASK it is linked to.  It may ALSO contain a TODO section
+(by default denoted by the delimiter **TODO**), which this method will cache in `config/todo-cache`
+in the orgPath.  This is then retrieved when calling the summariseToDo() method.
+}

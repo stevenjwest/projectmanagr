@@ -4,8 +4,42 @@
 \alias{datatable_import}
 \title{Import a set of samples and reps from a summary datatable}
 \usage{
-datatable_import()
+datatable_import(
+  export_datatables,
+  destination_note_path,
+  destination_note_line,
+  datetime = "",
+  summarise_reps = FALSE,
+  dt_length = 120
+)
+}
+\arguments{
+\item{export_datatables}{A list of generated data_tables that were exported - to retrieve any
+rep indexes as needed for generating the import datatable(s).}
+
+\item{destination_note_path}{Path within a projectmanagr organisation where the imported samples/reps
+will be moved to.}
+
+\item{destination_note_line}{Line within `destination_note_path` where the imported samples/reps
+will be copied to.}
+
+\item{datetime}{The datetime of import - if blank, current datetime is generated automatically.}
+
+\item{summarise_reps}{If true all import datatables generated with summarise the imported reps, so
+each sample ID appears once in import datatable, and reps are abbreviated as 1:3, 4:5, etc (depending
+on which reps are imported). FALSE by default - so each rep is on its own line.}
+
+\item{dt_length}{Int of data table max length in characters - default 120.}
+
+\item{samples_summary}{A summary tibble from datatable_find, with the final IMPORT column
+curated to include the number of reps to export from each sample/rep.}
 }
 \description{
-Import a set of samples and reps from a summary datatable
+Export a set of samples from summary datatable
+}
+\details{
+This function will write an IMPORT table to the end of each project note Rmd
+in samples_summary table, exporting the samples and reps declared in the
+samples_summary table.  Only samples which have IMPORT col set to above 1
+are exported - the number in this col declares the number of reps to be exported.
 }

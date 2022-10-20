@@ -4,8 +4,36 @@
 \alias{datatable_export}
 \title{Export a set of samples from summary datatable}
 \usage{
-datatable_export()
+datatable_export(
+  samples_summary,
+  destination_note_path,
+  datetime = "",
+  summarise_reps = TRUE,
+  dt_length = 120
+)
+}
+\arguments{
+\item{samples_summary}{A summary tibble from datatable_find, with the final IMPORT column
+curated to include the number of reps to export from each sample/rep.}
+
+\item{destination_note_path}{Path within a projectmanagr organisation where the exported samples/reps
+will be moved to.}
+
+\item{datetime}{The datetime of export - if blank, current datetime is generated automatically.}
+
+\item{summarise_reps}{If true all export datatables generated with summarise the exported reps, so
+each sample ID appears once in export datatable, and reps are abbreviated as 1:3, 4:5, etc (depending
+on which reps are exported). True by default.}
+
+\item{dt_length}{Int of data table max length in characters - default 120.}
+}
+\value{
+List of all character vectors of EXPORT datatables inserted into notes, with attr "path" that
+contains the absolute path of the source note.
 }
 \description{
-This function will write an EXPORT table to the end of
+This function will write an EXPORT table to the end of each project note Rmd
+in samples_summary table, exporting the samples and reps declared in the
+samples_summary table.  Only samples which have IMPORT col set to above 1
+are exported - the number in this col declares the number of reps to be exported.
 }

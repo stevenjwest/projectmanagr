@@ -114,12 +114,14 @@ addinDatatableAddData <- function() {
 
         x <- input$dt # returns CHARACTER - cast to numeric to use as index!!
 
-        #print( paste0("x: ", x) )
+        print( paste0("x: ", x) )
 
         if( is.null(x) ) {
           # do nothing
         } else {
-          #print( paste0("x: ", x) )
+          print( paste0("x: ", x) )
+          print( paste0( "x type: ", typeof(x)))
+          print(dts)
            # must convert x to numeric as its returned as a character!
           gdt <- dplyr::select( dts[[ as.numeric(x) ]], dplyr::starts_with("group-") )
           ltid <- as.list(1:(length(gdt)+2) )
@@ -146,9 +148,9 @@ addinDatatableAddData <- function() {
           } else {
              xn <- as.numeric(x)
              if( xn == 2 || xn == 3 ) {
-                # must convert x to numeric as its returned as a character!
-                gdt <- dplyr::select( dts[[ as.numeric(x) ]], dplyr::starts_with("group-") )
-                ltid <- as.list(1:(length(gdt)+2) )
+                # must convert input$dt to numeric as its returned as a character!
+                gdt <- dplyr::select( dts[[ as.numeric(input$dt) ]], dplyr::starts_with("group-") )
+                ltid <- as.list(1:(length(gdt)+1) )
                 names(ltid) <- c("ALL", names(gdt))
                 # update select input with new ltid:
                 updateSelectInput(session, "id",
@@ -157,8 +159,8 @@ addinDatatableAddData <- function() {
                                   selected = 1
                 )
              } else {
-                # must convert x to numeric as its returned as a character!
-                gdt <- dplyr::select( dts[[ as.numeric(x) ]], dplyr::starts_with("group-") )
+                # must convert input$dt to numeric as its returned as a character!
+                gdt <- dplyr::select( dts[[ as.numeric(input$dt) ]], dplyr::starts_with("group-") )
                 ltid <- as.list(1:(length(gdt)+2) )
                 names(ltid) <- c("ALL", "all-IDs", names(gdt))
                 # update select input with new ltid:
@@ -211,10 +213,28 @@ addinDatatableAddData <- function() {
               group_vector <- ids_vector
 
             } else if( as.numeric(input$id) == 2 ) { # names(ltid)[as.numeric(input$id)] == "all-IDs" ) { # sample IDs
-               cat( "\n  group_vector : ID" )
-              ids_vector <- dts[[ as.numeric(input$dt) ]]$ID
-              group_vector <- ids_vector
-              cat( "\n  group_vector : ", group_vector )
+
+              if( as.numeric(input$type) == 1 ) { # all IDs can only be selected for sample-first
+
+                cat( "\n  group_vector : ID" )
+                ids_vector <- dts[[ as.numeric(input$dt) ]]$ID
+                group_vector <- ids_vector
+                cat( "\n  group_vector : ", group_vector )
+
+              } else { # grab the group col for variable-first or timetable
+
+                # retrieve the group names AGAIN - as its not updated globally from previous observation function!
+                gdt <- dplyr::select( dts[[ as.numeric(input$dt) ]], dplyr::starts_with("group-") )
+                ltid <- as.list(1:(length(gdt)+1) )
+                names(ltid) <- c("ALL", names(gdt))
+                # now get ids vector:
+                ids_vector <- unique( dts[[ as.numeric(input$dt) ]][[ names(ltid)[ as.numeric(input$id) ] ]] )
+                group_vector <- ids_vector
+                cat( "\n  group_vector : ", group_vector )
+                cat( "\n  ids_vector - COL : ", names(ltid)[ as.numeric(input$id) ] )
+                cat( "\n  ids_vector : ", ids_vector, "  \n\n" )
+
+              }
 
             } else { # a group col has been selected
 
@@ -256,6 +276,13 @@ addinDatatableAddData <- function() {
                 )
 
             } else if( as.numeric(input$type) == 2 ) {
+
+              cat( "\nVARIABLE-FIRST LAYOUT")
+              cat( "\npath: ", path)
+              cat( "\nline: ", row)
+              cat( "\ndata_cols: ", data_cols)
+              cat( "\ndatatable_name: ", names(dts)[ as.numeric(input$dt) ])
+              cat( "\ngroup_names: ", group_vector)
 
               # variable-first
               projectmanagr::datatable_add_data_variables_rmd(

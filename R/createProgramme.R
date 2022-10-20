@@ -1,7 +1,7 @@
 #' Create a New Programme
 #'
 #' Generates a new Programme at the top level of the Organisation.  If the
-#' fileSystemPath is not at the top of the Organisation, will traverse until
+#' organisationPath is not at the top of the Organisation, will traverse until
 #' it is found.  This function will halt if no Organisation is found - the
 #' organisation root is defined by the presence of config/ and config/templates
 #' dirs at root.
@@ -9,7 +9,7 @@
 #' User must supply the programmeName and programmePrefix.  The
 #' programmeName must NOT contain a space, and programmePrefix should be two to three
 #' CAPITAL LETTERS.  An optional programmeTitle (which if not supplied will default
-#' to the programmeName, replacing "_" & "-" with " ").  The default fileSystemPath
+#' to the programmeName, replacing "_" & "-" with " ").  The default organisationPath
 #' is the working directory.
 #'
 #' @param programmeName Name of Progamme - must NOT contain a space.
@@ -19,14 +19,14 @@
 #'
 #' @param programmeTitle Title of programme - typically the programmeName with "_" & "-" replaced with spaces.
 #'
-#' @param fileSystemPath Path to insert the PROGRAMME into.  If this is not an Organisation Directory, will search up
+#' @param organisationPath Path to insert the PROGRAMME into.  If this is not an Organisation Directory, will search up
 #' the directory tree to attempt to find one.  If none found, the method will end without making a PROGRAMME.
 #'
 #' @param progTemplate The Rmd file to use as a template to create the Programme.  This is set to "Programme-Template.Rmd" in
 #' projectmanagr.
 #'
 #' @export
-createProgramme <- function(programmeName, programmePrefix, programmeTitle="", fileSystemPath=getwd(),
+createProgramme <- function(programmeName, programmePrefix, programmeTitle="", organisationPath=getwd(),
                             progTemplate="Programme-Template.Rmd" ) {
 
   cat( "\nprojectmanagr::createProgramme():\n" )
@@ -44,20 +44,20 @@ createProgramme <- function(programmeName, programmePrefix, programmeTitle="", f
   # Search for root of an ORGANISATION:
 
   # look for the .config/ and templates/ dirs:
-  confPath = paste(fileSystemPath, .Platform$file.sep, "config" , sep="")
+  confPath = paste(organisationPath, .Platform$file.sep, "config" , sep="")
   tempPath = paste(confPath, .Platform$file.sep, "templates" , sep="")
 
   while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
-    fileSystemPath <- dirname(fileSystemPath)
-    if(nchar(fileSystemPath) <=1) {
-      stop( paste0("  Could not identify ORGANISATION in fileSystemPath: ",fileSystemPath) )
+    organisationPath <- dirname(organisationPath)
+    if(nchar(organisationPath) <=1) {
+      stop( paste0("  Could not identify ORGANISATION in organisationPath: ",organisationPath) )
     }
-    confPath = paste(fileSystemPath, .Platform$file.sep, "config" , sep="")
+    confPath = paste(organisationPath, .Platform$file.sep, "config" , sep="")
     tempPath = paste(confPath, .Platform$file.sep, "templates", sep="")
   }
 
-  # now fileSystemPath should contain the path to the ORG ROOT DIR
-  orgPath <- fileSystemPath
+  # now organisationPath should contain the path to the ORG ROOT DIR
+  orgPath <- organisationPath
 
 
   ### CREATING A PROGRAMME: ###

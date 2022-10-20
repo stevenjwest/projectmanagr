@@ -34,7 +34,7 @@ addinRenameComp <- function( ) {
 
     }
 
-    viewer <- dialogViewer("Add New Project Note", width = 500, height = 300)
+    viewer <- dialogViewer("Rename Component", width = 500, height = 300)
 
     runGadget(ui, server, viewer = viewer)
 
@@ -43,35 +43,77 @@ addinRenameComp <- function( ) {
   else {
 
 
+    # variable to decide whether ui is name or prefix
+    ui_type <- "name"
+
   # UI:
 
   ui <- miniPage(
 
     gadgetTitleBar("Rename Component"),
 
-    miniContentPanel(
+    miniTabstripPanel(
 
-      fillCol(
+      miniTabPanel("name",
 
-        fillRow( h5("Add a new Hyperlink:") ),
+        miniContentPanel(
 
-        fillRow(
-          h3(  paste("TO:", contextName ), align="center"  )
+          fillCol(
+
+            fillRow( h5("Rename component: Name") ),
+
+            fillRow(
+              h3(  paste("TO:", contextName ), align="center"  )
+            ),
+
+            fillRow(
+              h5(  paste("Line:", line ), align="center"  ),
+              h5(  paste("Column:", column ), align="center"  )
+            ),
+
+            fillRow(  textInput("newName", "New Name:", width="100%")  ),
+
+            fillRow(  span( textOutput("warningName"), style="color:red")  ),
+
+            fillRow(  textInput("newTitle", "New Title:", width="100%")  )
+
+           )
         ),
 
-        fillRow(
-          h5(  paste("Line:", line ), align="center"  ),
-          h5(  paste("Column:", column ), align="center"  )
-        ),
+        value = "name"
+    ),
 
-        fillRow(  textInput("newName", "New Name:", width="100%")  ),
+    miniTabPanel("prefix",
 
-        fillRow(  span( textOutput("warningName"), style="color:red")  ),
+       miniContentPanel(
 
-        fillRow(  textInput("newTitle", "New Title:", width="100%")  )
+         fillCol(
 
-      )
+           fillRow( h5("Rename component: Prefix") ),
+
+           fillRow(
+             h3(  paste("TO:", contextName ), align="center"  )
+           ),
+
+           fillRow(
+             h5(  paste("Line:", line ), align="center"  ),
+             h5(  paste("Column:", column ), align="center"  )
+           ),
+
+           fillRow(  textInput("newPrefix", "New Prefix:", width="100%")  ),
+
+           fillRow(  span( textOutput("warningPrefix"), style="color:red")  )
+
+         )
+       ),
+
+       value = "prefix"
+    ),
+
+    id = "strippanel"
+
     )
+
   )
 
 
@@ -103,10 +145,26 @@ addinRenameComp <- function( ) {
       }
     })
 
+    observe({
+
+      if(  ( checkProjectPrefix(context$path, input$newPrefix) != "" ) && ( input$newPrefix != "" )  ) {
+        # set the warningName TextOutput:
+        output$warningPrefix <- renderText({
+          paste0("*** ", checkProjectPrefix(context$path, input$newPrefix), " ***" )
+        })
+      } else {
+        output$warningPrefix <- renderText({
+          ""
+        })
+      }
+    })
 
     # perform computations to form new hyperlink
     observeEvent(input$done, {
 
+      cat( "  input strippanel : ", input$strippanel)
+
+     if( input$strippanel == "name" ) {
 
       if(input$newName == "") {
         # set the warningName TextOutput:
@@ -122,13 +180,52 @@ addinRenameComp <- function( ) {
       }
       else {
 
-
         renameProjectComp( context$path, input$newName, newProjectCompTitle=input$newTitle )
 
         # Close Gadget after computations are complete:
         stopApp()
 
       }
+
+     } else if( input$strippanel == "prefix" ) {
+
+       if(input$newPrefix == "") {
+         # set the warningName TextOutput:
+         output$warningPrefix <- renderText({
+           "*** PROVIDE NEW PREFIX ***"
+         })
+       } else if( (checkProjectPrefix(context$path, input$newPrefix) != "") && (input$newPrefix != "")  ) {
+         # set the warningName TextOutput:
+         output$warningPrefix <- renderText({
+           paste0("*** ", checkProjectPrefix(context$path, input$newPrefix), " ***" )
+         })
+
+       } else {
+
+         file_type <- getFileType( context$path )
+
+         cat( "  file type : ", file_type )
+
+         if( file_type == "DOC" ) {
+
+           renameProjectDocPrefix( context$path, input$newPrefix )
+
+         } else if( file_type == "HEAD" ) {
+
+           renameProjectNotePrefix( context$path, input$newPrefix )
+
+         } else if( file_type == "NOTE" ) {
+
+           renameProjectNotePrefix( context$path, input$newPrefix )
+
+         }
+
+         # Close Gadget after computations are complete:
+         stopApp()
+
+       }
+
+     }
 
 
     })
@@ -138,7 +235,14 @@ addinRenameComp <- function( ) {
 
   ### VIEW GADGET ###
 
-  viewer <- dialogViewer("Create New Project Document", width = 800, height = 600)
+  # get config/status.yml to read gadgetWidth/Height preferences
+  orgPath <- findOrgDir(context$path)
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settingsContents <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
+  viewer <- dialogViewer("Rename Component", width = settingsContents$gadgetWidth,
+                                             height = settingsContents$gadgetHeight )
 
   runGadget(ui, server, viewer = viewer)
 

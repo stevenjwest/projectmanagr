@@ -55,10 +55,20 @@ Description: Create a datatable from a data file (such as CSV).
 Binding: addinDatatableCreateFromFile
 Interactive: true
 
+Name: ProjectManagr: Datatable Import
+Description: Import samples from srouce note(s) via addin: select samples & reps from source DIR tree, export from source notes, import to destination note
+Binding: addinDatatableImport
+Interactive: true
+
 Name: ProjectManagr: Datatable Resample
 Description: Resample a datatable via addin: select samples to resample, and optionally add resample codes.
 Binding: addinDatatableResample
 Interactive: true
+
+Name: ProjectManagr: Insert ToDo
+Description: Insert ToDo at the cursor location.
+Binding: addinInsertToDoString
+Interactive: false
 
 Name: ProjectManagr: Insert DateTime
 Description: Insert DateTime at the cursor location.
@@ -79,6 +89,11 @@ Name: ProjectManagr: Rename Project Doc or Note
 Description: Rename a Project Doc or Note in the Project Organisation.
 Binding: addinRenameComp
 Interactive: true
+
+Name: ProjectManagr: Set Selection Next Horizontal Rule
+Description: Set Selection from current line to next line with same number of dashes as current line.
+Binding: setSelectionNextHorizontalRule
+Interactive: false
 
 Name: ProjectManagr: Set WD Active Doc
 Description: Set the working directory to the active doc's parent directory.

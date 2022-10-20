@@ -4,11 +4,13 @@
 \alias{computeLastLineIndex}
 \title{Compute Last Line Index}
 \usage{
-computeLastLineIndex(contents)
+computeLastLineIndex(contents, sep = FALSE)
 }
 \description{
 Returns the index of the LAST Line in contents that contains any content ("[A-z,0-9]")
 }
 \details{
 contents - a vector of strings, the index of the first instance of line in this vector is returned.
+
+Set sep to TRUE to include searches for separation lines (---) in Rmd doc.
 }

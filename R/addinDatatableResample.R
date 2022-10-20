@@ -106,9 +106,7 @@ addinDatatableResample <- function() {
                rmd_path = path,
                rmd_line = row,
                datatable_name = names(dts)[ as.numeric(input$dt) ],
-               IDs = "ALL", # from here there are default values for all params
                resample_vector = data_cols,
-               rep_vector = c(1),
                dt_length = 120 )
 
 

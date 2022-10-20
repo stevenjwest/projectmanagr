@@ -17,14 +17,21 @@ output:
 {{PROGLINK}}
 
 
-* GOAL_01
+* _PROJECT_AIM_01_MAP_DEVELOP_BUILD_
 
-* GOAL_02
+* _PROJECT_AIM_02_PROCESS_ANALYSE_
 
-* GOAL_03
+* _PROJECT_AIM_03_DEPLOY_DISSEMINATE_
 
 
-----
+>>> copy summary bullets from Project Aims defined below
+>>> This will be copied under project link in Programme Index page to summarise this project
+>>> Consider expanding with summary of achievements of progress in this project as work is completed
+>>> Consider adding a summary GRAPHIC to insert.
+
+
+--------
+--------
 
 
 
@@ -34,47 +41,42 @@ output:
 *Welcome to the {{TITLE}} Project!*
 
 
-succinct_description_project_scope
+>>> succinct description of project scope in one sentence
+>>> Bullet list of how this scope will be achieved
+>>> Consider DPD Workflow : Develop > Process > Disseminate
+>>> DETAILS of actual workflow given in GOAL DELIVERABLE & TASK Sections throughout Project Note
 
 
-
-KEY AIMS of this project
-
-
-* OBJECTIVE01
+_succinct_description_project_scope__EG__DEMONSTRATE_Mouse_CNS_Clearing_and_Histology_Principles_empirically_and_apply_these_to_study_mouse_CNS_3D_structure_
 
 
-
-
----
+----
 
 
 
 # Background
 
-
-initial_aims_and_background_information_MOTIVATION
-
-
-
----
+>>> Provide background and context to reader
+>>> Provide links to other relevant projects
+>>> Keep notes on project research which do not have a note to go into yet..
 
 
+_initial_aims_background_information_MOTIVATION_Notes_
 
-# GOALS:
 
-
----
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 
 
-## GOAL 1: MAP_DEVELOP_BUILD
+## GOAL 1: SECTION
 
 
-Map_Develop_Build_project_DESCRIBE_PLAN_HERE
+SECTION_DESCRIBE_PLAN_HERE
 
 
----
+----------------------------------------
+----------------------------------------
 
 
 
@@ -84,21 +86,45 @@ Map_Develop_Build_project_DESCRIBE_PLAN_HERE
 DELIVERABLE_AIMS
 
 
----
+--------------------
+--------------------
 
 
 
 #### TASK 1:
 
 
----
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+----
 
 
 
 #### TASK 2:
 
 
----
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+----------------------------------------
+----------------------------------------
 
 
 
@@ -108,31 +134,56 @@ DELIVERABLE_AIMS
 DELIVERABLE_AIMS
 
 
----
+--------------------
+--------------------
 
 
 
 #### TASK 1:
 
 
----
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+----
 
 
 
 #### TASK 2:
 
 
----
+
+_OVERVIEW_
 
 
 
-## GOAL 2: DEPLOY_DISSEMINATE
 
 
-Deploy_disseminate_project
+_LOG_
 
 
----
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+## GOAL 2: SECTION
+
+
+SECTION_DESCRIBE_PLAN_HERE
+
+
+----------------------------------------
+----------------------------------------
 
 
 
@@ -142,21 +193,45 @@ Deploy_disseminate_project
 DELIVERABLE_AIMS
 
 
----
+--------------------
+--------------------
 
 
 
 #### TASK 1:
 
 
----
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+----
 
 
 
 #### TASK 2:
 
 
----
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+----------------------------------------
+----------------------------------------
 
 
 ### DELIVERABLE 2:
@@ -165,21 +240,152 @@ DELIVERABLE_AIMS
 DELIVERABLE_AIMS
 
 
----
+--------------------
+--------------------
 
 
 
 #### TASK 1:
 
 
----
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+----
 
 
 
 #### TASK 2:
 
 
----
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+## GOAL 3: SECTION
+
+
+SECTION_DESCRIBE_PLAN_HERE
+
+
+----------------------------------------
+----------------------------------------
+
+
+
+### DELIVERABLE 1:
+
+
+DELIVERABLE_AIMS
+
+
+--------------------
+--------------------
+
+
+
+#### TASK 1:
+
+
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+----
+
+
+
+#### TASK 2:
+
+
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+----------------------------------------
+----------------------------------------
+
+
+### DELIVERABLE 2:
+
+
+DELIVERABLE_AIMS
+
+
+--------------------
+--------------------
+
+
+
+#### TASK 1:
+
+
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+----
+
+
+
+#### TASK 2:
+
+
+
+_OVERVIEW_
+
+
+
+
+
+_LOG_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 
 
 

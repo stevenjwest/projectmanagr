@@ -25,58 +25,124 @@ getRStudioOpenDocIDs <- function() {
   if( file.exists( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources") ) ) {
 
     # check if a DIR exists which STARTS WITH "s-" (remainder is unique RStudio session ID)
-    if ( file.exists(  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  )  )  ) {
+    # first handle NEW rstudio session directory layout
+    if( !identical(character(0),
+                  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  ) )) {
 
-      # get file list
-      fileIDs <- list.files(  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  )  )
-      # look in the "s-*" DIR for every file that does NOT end in "-contents"
-      fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("-contents",x,value=FALSE))) == 0]
-      # nor have name "lock_file"
-      fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("lock_file",x,value=FALSE))) == 0]
+      if ( file.exists(  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )  )  ) {
 
-      # convert to full path:
-      filePath <- paste0(Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  ), .Platform$file.sep, fileIDs)
+        # get file list
+        fileIDs <- list.files(  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )  )
+        # look in the "session-*" DIR for every file that does NOT end in "-contents"
+        fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("-contents",x,value=FALSE))) == 0]
+        # nor have name "lock_file"
+        fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("lock_file",x,value=FALSE))) == 0]
 
-      # inside remaining files, if saved to disk, will be a line starting 'path" : "[path_to_file]",'
-      # if not saved to disk, will contain the line '"path" : null,'
-      # Extract the value of path for each entry in filePath:
-      fileList <- list()
-      relVector <- vector()
-      for (i in 1:length(filePath) ) {
+        # convert to full path:
+        filePath <- paste0(Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  ), .Platform$file.sep, fileIDs)
 
-        # put ID into fileList
-        fileList[[i]] <- fileIDs[i]
+        # inside remaining files, if saved to disk, will be a line starting 'path" : "[path_to_file]",'
+        # if not saved to disk, will contain the line '"path" : null,'
+        # Extract the value of path for each entry in filePath:
+        fileList <- list()
+        relVector <- vector()
+        for (i in 1:length(filePath) ) {
 
-        # open file
-        FileConn <- file( filePath[i] )
-        lines <- readLines( FileConn, warn = FALSE )
-        close(FileConn)
+          # put ID into fileList
+          fileList[[i]] <- fileIDs[i]
 
-        # extract path string:
-        pathLine <- lines[grepl("    \"path\"*", lines)]
+          # open file
+          FileConn <- file( filePath[i] )
+          lines <- readLines( FileConn, warn = FALSE )
+          close(FileConn)
 
-        if( grepl("\"path\" : null,", pathLine) || grepl("\"path\": null,", pathLine) ) {
-          # path is null - file has not been saved - store "null" in fileList:
-          fileList[[i]][2] <- "null"
+          # extract path string:
+          pathLine <- lines[grepl("    \"path\"*", lines)]
+
+          if( grepl("\"path\" : null,", pathLine) || grepl("\"path\": null,", pathLine) ) {
+            # path is null - file has not been saved - store "null" in fileList:
+            fileList[[i]][2] <- "null"
+          }
+          else {
+            # copy path into fileList - second index
+            fileList[[i]][2] <- substring(pathLine, regexpr(": \"", pathLine)+3, nchar(pathLine)-2)
+          }
+
+          # extract relative order string:
+          relOrderLine <- lines[grepl("    \"relative_order\"*", lines)]
+          # copy order into relVector:
+          relVector[i] <- as.integer( substring(relOrderLine, regexpr("order", relOrderLine)+8, nchar(relOrderLine)-1) )
+
         }
-        else {
-          # copy path into fileList - second index
-          fileList[[i]][2] <- substring(pathLine, regexpr(": \"", pathLine)+3, nchar(pathLine)-2)
-        }
 
-        # extract relative order string:
-        relOrderLine <- lines[grepl("    \"relative_order\"*", lines)]
-        # copy order into relVector:
-        relVector[i] <- as.integer( substring(relOrderLine, regexpr("order", relOrderLine)+8, nchar(relOrderLine)-1) )
+      }
+      else {
+
+        # no files match pattern : paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")
+        stop( paste0("No Active RStudio Session") )
 
       }
 
-    }
-    else {
 
-      # no files match pattern : paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")
-      stop( paste0("No Active RStudio Session") )
+    } else if( !identical(character(0),
+                          Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  ) ) ) {
 
+      # next handle OLD rstudio session directory layout
+      if ( file.exists(  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  )  )  ) {
+
+        # get file list
+        fileIDs <- list.files(  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  )  )
+        # look in the "s-*" DIR for every file that does NOT end in "-contents"
+        fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("-contents",x,value=FALSE))) == 0]
+        # nor have name "lock_file"
+        fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("lock_file",x,value=FALSE))) == 0]
+
+        # convert to full path:
+        filePath <- paste0(Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  ), .Platform$file.sep, fileIDs)
+
+        # inside remaining files, if saved to disk, will be a line starting 'path" : "[path_to_file]",'
+        # if not saved to disk, will contain the line '"path" : null,'
+        # Extract the value of path for each entry in filePath:
+        fileList <- list()
+        relVector <- vector()
+        for (i in 1:length(filePath) ) {
+
+          # put ID into fileList
+          fileList[[i]] <- fileIDs[i]
+
+          # open file
+          FileConn <- file( filePath[i] )
+          lines <- readLines( FileConn, warn = FALSE )
+          close(FileConn)
+
+          # extract path string:
+          pathLine <- lines[grepl("    \"path\"*", lines)]
+
+          if( grepl("\"path\" : null,", pathLine) || grepl("\"path\": null,", pathLine) ) {
+            # path is null - file has not been saved - store "null" in fileList:
+            fileList[[i]][2] <- "null"
+          }
+          else {
+            # copy path into fileList - second index
+            fileList[[i]][2] <- substring(pathLine, regexpr(": \"", pathLine)+3, nchar(pathLine)-2)
+          }
+
+          # extract relative order string:
+          relOrderLine <- lines[grepl("    \"relative_order\"*", lines)]
+          # copy order into relVector:
+          relVector[i] <- as.integer( substring(relOrderLine, regexpr("order", relOrderLine)+8, nchar(relOrderLine)-1) )
+
+        }
+
+      }
+      else {
+
+        # no files match pattern : paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")
+        stop( paste0("No Active RStudio Session") )
+
+      }
+    } else {
+      stop( paste0("No RStudio Session identified in : ", paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources"), " update ORG/config/settings.yml rstudioInternalStateDir parameter \n  see https://support.rstudio.com/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State" ) )
     }
   }
   else {
@@ -160,6 +226,52 @@ setwdActiveDoc <- function( ) {
 
 }
 
+
+
+#' Set Selection to Next Horizontal Rule
+#'
+#' Set Selection from current line to next line with same number of dashes as
+#' current line.
+#'
+#'
+#'@export
+setSelectionNextHorizontalRule <- function( ) {
+
+  context <- rstudioapi::getSourceEditorContext() # use this to always get the active document in the source editor
+
+  cat( "\nprojectmanagr::setSelectionNextHorizontalRule():\n" )
+
+  cursor <- rstudioapi::primary_selection(context)
+  line <- (cursor$range[[1]])[1] # get the line number of cursor
+
+  if( startsWith(context$contents[line], "---") == TRUE ) {
+    # can only make selection if current lien is horizontal rule!
+
+    for(l in (line+2):length(context$contents) ) {
+      # find the next line that starts with the same number or more dashes as current line ---
+      # SKIP line itself AND the next line - as use two lines of dashes for them to show up in RStudio Outline for whitespace
+      if( startsWith(context$contents[l], context$contents[line]) == TRUE ) {
+        endLine <- l
+        break # out of for loop
+      }
+    }
+    # set selection
+    ranges <- lapply(seq(line, by = 1, length.out = (endLine-line) ), function(start) {
+      rstudioapi::document_range(
+        c(start, 0),
+        c(start, Inf)
+      )
+    })
+    ranges <- rstudioapi::document_range( c(line, 0), c( (endLine-1), Inf) )
+
+    cat( "  Set selection from: ", line, " to: ", endLine, "\n" )
+    rstudioapi::setSelectionRanges(ranges, id=context$id)
+
+  } else {
+    cat( "  No selection can be made - current line does not contain a horizontal rule: ---\n" )
+  }
+
+}
 
 
 

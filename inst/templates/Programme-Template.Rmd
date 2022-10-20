@@ -17,10 +17,20 @@ output:
 {{ORGLINK}}
 
 
-* SUMMARY
+* _eg_Develop_Histology_Pipelines_
+
+* _eg_Conduct_IBL_Histology_
+
+* _eg_Cultivate_collaborations_
 
 
-----
+>>> copy summary bullets from Programme Objectives defined below
+>>> This will be copied under programme link in Organisation Index page to summarise this programme
+>>> Consider expanding with summary of achievements of progress in this programme as work is completed
+>>> Consider adding a summary GRAPHIC to insert.
+
+
+------
 
 
 
@@ -30,15 +40,9 @@ output:
 *Welcome to the {{TITLE}} Programme!*
 
 
-This Programme serves as the primary Documentation for Programme_scope
+_one_sentence_summary_of_programme_scope__EG__DEMONSTRATE_Mouse_CNS_Clearing_and_Histology_Principles_empirically_and_apply_these_to_study_mouse_CNS_3D_structure_
 
-
-
-Programme Aims:
-
-
-* SUCCINCTLY DESCRIBE_AIMS
-
+This Programme serves as the primary Documentation for _programme_scope_
 
 
 
@@ -46,31 +50,60 @@ Programme Aims:
 
 
 
-# Background
+# {{TITLE}} Programme Objectives
 
 
-initial_aims_and_background_information_MOTIVATION
+* _eg_Conduct_IBL_Histology_
+
+* _eg_Develop_Histology_Pipelines_
+
+* _eg_Cultivate_collaborations_
 
 
 
----
+## _eg_Conduct_IBL_Histology_
 
 
 
-This Programme comprises the following projects
+
+## _eg_Develop_Histology_Pipelines_
 
 
-----
+
+
+## _eg_Cultivate_collaborations_
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# Programme Background
+
+
+_initial_aims_background_information_MOTIVATION_Notes_
+
+
+
+>>> Provide background and context to reader
+>>> Provide links to other relevant projects
+>>> Keep notes on project research which do not have a note to go into yet..
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 
 
 # PROJECTS:
 
 
-------
 
 
-
-# TO DO:
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 

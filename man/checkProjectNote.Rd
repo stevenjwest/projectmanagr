@@ -4,7 +4,7 @@
 \alias{checkProjectNote}
 \title{Check Project Note}
 \usage{
-checkProjectNote(path)
+checkProjectNote(path, todoHeader, goalHeader, delHeader, taskHeader)
 }
 \description{
 Opens Project Note, collects its Project Doc Links, and then compares

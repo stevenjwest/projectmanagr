@@ -4,7 +4,7 @@
 \alias{getProjectNoteDocLinkList}
 \title{Get Project Note Doc Link List}
 \usage{
-getProjectNoteDocLinkList(projectNoteContents, projectNotePath)
+getProjectNoteDocLinkList(projectNoteContents, projectNotePath, todoHeader)
 }
 \description{
 Returns a list of VECTORS:
@@ -12,13 +12,13 @@ Returns a list of VECTORS:
 \details{
 list[[i]] : A VECTOR that includes the Project Doc ABSOLUTE Link, GOAL Num, DEL Num, TASK Num.
 
- list[[i]][1] : Project Doc ABSOLUTE Link
+ list[[i]][[1]] : Project Doc ABSOLUTE Link
 
- list[[i]][2] : Project Doc GOAL - number plus title
+ list[[i]][[2]] : Project Doc GOAL - number plus title
 
- list[[i]][3] : Project Doc DELIVERABLE - number plus title
+ list[[i]][[3]] : Project Doc DELIVERABLE - number plus title
 
- list[[i]][4] : Project Doc TASK - number plus title
+ list[[i]][[4]] : Project Doc TASK - number plus title
 
  list[[i]][[5]] : LIST containing all summary information in Project Note for this
                   Project Doc GOAL/DEL/TASK
@@ -29,4 +29,7 @@ list[[i]] : A VECTOR that includes the Project Doc ABSOLUTE Link, GOAL Num, DEL 
  at least one ProjectDoc, separated by "----", and ended with "------".
 
  @param projectNotePath the FULL PATH to the project note, from which the contents is derived.
+
+ @param todoHeader The header of any TODO section that may be defined under the project note summary.  This Header
+ and remaining content of a summary should be saved SEPARATELY to the summaryVector.
 }

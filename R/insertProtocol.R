@@ -52,8 +52,9 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
   # normalize path - remove HOME REF ~
   projectNotePath <- normalizePath(projectNotePath)
 
-  # get projectNotePrefix form path
+  # get projectNotePrefix from path
   projectNotePrefix <- substring( basename(projectNotePath), first=1, last=regexpr("~_", basename(projectNotePath), fixed=TRUE)-1 )
+  projectNoteDir <- projectNotePrefix
 
   # read projectNote file:
   projNoteFileConn <- file( projectNotePath )
@@ -83,7 +84,8 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
 
   DocTitleLink <- paste( "[", protocolTitle, "](", DocLink, ")", sep="" )
 
-  extractedProtocol <- c(DocTitleLink, "", "", "---", "", "", "") # begin with link to Protocol
+  extractedProtocol <- c(DocTitleLink, "", "", "--------", "--------", "", "", "") # begin with link to Protocol
+   # TODO move the double line separator to EDITABLE TEXT FILE for user to change
 
 
   if( includeEquip == TRUE ) {
@@ -183,8 +185,12 @@ insertProtocol <- function( projectNotePath, projectNoteRow, protocolName,
 
         }
 
-        if( grepl("_PREFIX_", line) == TRUE ) {
-          protocolContents[i] <- gsub("_PREFIX_", projectNotePrefix, line)
+        # replace variables with values
+        if( grepl("PREFIX", line) == TRUE ) {
+          protocolContents[i] <- gsub("PREFIX", projectNotePrefix, line)
+        }
+        if( grepl("PROJECT_NOTE_DIR", line) == TRUE ) {
+          protocolContents[i] <- gsub("PROJECT_NOTE_DIR", projectNoteDir, line)
         }
 
         extractedProtocol <- c(extractedProtocol, protocolContents[i])

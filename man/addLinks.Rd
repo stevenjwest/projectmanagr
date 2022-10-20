@@ -13,8 +13,6 @@ addLinks(projNoteContents, projNotePath, projDocList)
 
 \item{projDocList}{List containing all Project Docs - Absolute path, Goal/Del/Task.  Like the list
 returned by getProjectNoteDocLinkList().}
-
-\item{summaryBullet}{The Contents of the Summary Bullet - initial default is "* [POSIXct date-time]"}
 }
 \description{
 Assumes the Project Note MAY not have ANY Project Doc links written to it, and

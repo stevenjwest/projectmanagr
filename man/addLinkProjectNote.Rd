@@ -2,7 +2,7 @@
 % Please edit documentation in R/addLinkProjectNote.R
 \name{addLinkProjectNote}
 \alias{addLinkProjectNote}
-\title{Add a New Link from a Project Doc to a Project Note}
+\title{Add a New Link from a Project Note to a Project Doc}
 \usage{
 addLinkProjectNote(projectNotePath, selection)
 }

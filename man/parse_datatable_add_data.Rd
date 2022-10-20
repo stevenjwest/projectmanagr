@@ -4,7 +4,7 @@
 \alias{parse_datatable_add_data}
 \title{ADD DATA to a tibble from a datatable vector}
 \usage{
-parse_datatable_add_data(dt_vector, dt)
+parse_datatable_add_data(dt_vector, dt, table_name)
 }
 \description{
 This datatable has the FUNCTION : ADD_DATA

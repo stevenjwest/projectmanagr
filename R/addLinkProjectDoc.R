@@ -49,10 +49,9 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
   # set confPath:
   confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
 
-
-  # Use current time as initial summary bullet - use to write to SUMMARY:
-  summaryBullet <- paste0("* ", as.character(Sys.time()) )
-
+  # Use task header from template
+  #summaryBullet < - paste0("* ", as.character(Sys.time()) )
+  summaryBullet <- getTaskSectionHeader(orgPath)
 
   # read DESTINATION Project Doc:
   destProjDocFileConn <- file( destProjectDocPath )
@@ -110,9 +109,11 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
   TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
 
   # create DocTitle - DocName plus the Gnum Dnum Tnum
-  DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  # create DocTitle - DocName plus the TaskTitle
+  DocTitle <- paste( "## ", DocName, " : ", taskTitle, sep="")
 
-  # insert objectivesContents into the first line that matches the string "------"
+    # insert objectivesContents into the first line that matches the string "------"
       # "------" (6 x '-') denotes the END of the objectives section
   line <- computeLineIndex("------", destProjDocContents)
 
@@ -171,9 +172,16 @@ addLinkProjectDoc <- function( projectDocPath, selection ) {
 
   projectNoteLink <- paste("**[", destProjectDocName, "](", NoteLink, ")**",  sep="")
 
-  # create the Vector, including Whitespace and Summary information:
-  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "",
-                              summaryBullet, "")
+  # edit the summary information - if TaskTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
+  # get TaskTodoSectionHeader value
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  todoValue <- settings[["TaskTodoSectionHeader"]]
+  # get new summary info - WITHOUT the TaskTodoSectionHeader plus excess whitespace
+  summaryInfo <- summaryBullet[1: computePreviousLineIndex(grep(todoValue, summaryBullet, fixed=TRUE)-1, summaryBullet)+1 ]
+
+  # create the Vector, including Whitespace and Summary information ONLY - without Task TODO Section :
+  projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryInfo, "" )
 
   # compute place to insert the project note link:
   # get the line selected in the projectDoc - [["originalLine"]]
