@@ -184,9 +184,15 @@ getRStudioInternalStateDir <- function() {
     rstudio_internal_state_dir <- "~/.local/share/rstudio" # path on LINUX/MAC OS
   } else {
     allDirs <- list.dirs(paste0(getwd(),"/.Rproj.user"), recursive = F)
-    allDirs <- allDirs[ !grepl("shared", allDirs) ]
-    allDirs <- file.info(allDirs)
-    rstudio_internal_state_dir <- rownames(allDirs)[order(allDirs$mtime)][nrow(allDirs)]
+    if(length(allDirs)>0){
+      #if we're within an rstudio project, we'll be here
+      allDirs <- allDirs[ !grepl("shared", allDirs) ]
+      allDirs <- file.info(allDirs)
+      rstudio_internal_state_dir <- rownames(allDirs)[order(allDirs$mtime)][nrow(allDirs)]
+    }else{
+      #not in an rstudio proj will be here
+      rstudio_internal_state_dir <- paste0(Sys.getenv("LOCALAPPDATA"), .Platform$file.sep, "RStudio")
+    }
   }
   # return
   rstudio_internal_state_dir
