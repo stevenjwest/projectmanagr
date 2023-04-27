@@ -27,20 +27,29 @@ getRStudioOpenDocIDs <- function() {
     # check if a DIR exists which STARTS WITH "s-" (remainder is unique RStudio session ID)
     # first handle NEW rstudio session directory layout
     if( !identical(character(0),
-                  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  ) )) {
+                   Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  ) )) {
 
-      if ( file.exists(  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )  )  ) {
-
+      if ( any(file.exists(  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )  )  ) ){
         # get file list
-        fileIDs <- list.files(  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )  )
+        if( .Platform$OS.type == "unix"){
+          fileIDs <- list.files(  Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )  )
+        }else{
+          allSess <- Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )
+          allSess <- file.info(allSess)
+          recentSess <- rownames(allSess)[order(allSess$mtime)][nrow(allSess)]
+          fileIDs <- list.files( recentSess  )
+        }
         # look in the "session-*" DIR for every file that does NOT end in "-contents"
         fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("-contents",x,value=FALSE))) == 0]
         # nor have name "lock_file"
         fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("lock_file",x,value=FALSE))) == 0]
 
-        # convert to full path:
-        filePath <- paste0(Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  ), .Platform$file.sep, fileIDs)
-
+        if( .Platform$OS.type == "unix"){
+          # convert to full path:
+          filePath <- paste0(Sys.glob( paste0(rstudio_internal_state_dir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  ), .Platform$file.sep, fileIDs)
+        }else{
+          filePath <- paste0(recentSess, .Platform$file.sep, fileIDs)
+        }
         # inside remaining files, if saved to disk, will be a line starting 'path" : "[path_to_file]",'
         # if not saved to disk, will contain the line '"path" : null,'
         # Extract the value of path for each entry in filePath:
@@ -171,11 +180,14 @@ getRStudioOpenDocIDs <- function() {
 getRStudioInternalStateDir <- function() {
 
   # get rstudio_internal_state_dir from config OR use default
-    if( .Platform$OS.type == "unix") {
-      rstudio_internal_state_dir <- "~/.local/share/rstudio" # path on LINUX/MAC OS
-    } else {
-      rstudio_internal_state_dir <- paste0("%localappdata%", .Platform$file.sep, "RStudio") # path on WINDOWS ???
-    }
+  if( .Platform$OS.type == "unix") {
+    rstudio_internal_state_dir <- "~/.local/share/rstudio" # path on LINUX/MAC OS
+  } else {
+    allDirs <- list.dirs(paste0(getwd(),"/.Rproj.user"), recursive = F)
+    allDirs <- allDirs[ !grepl("shared", allDirs) ]
+    allDirs <- file.info(allDirs)
+    rstudio_internal_state_dir <- rownames(allDirs)[order(allDirs$mtime)][nrow(allDirs)]
+  }
   # return
   rstudio_internal_state_dir
 }
@@ -272,7 +284,6 @@ setSelectionNextHorizontalRule <- function( ) {
   }
 
 }
-
 
 
 
