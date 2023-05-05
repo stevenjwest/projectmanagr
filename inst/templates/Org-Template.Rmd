@@ -10,11 +10,10 @@ author: '{{AUTHOR}}'
 
 
 
-*Welcome to the {{TITLE}} ORGANISATION!*
+*Welcome to the {{TITLE}} ORGANISATION*
 
 
-
-SUMMARY_STATEMENT_eg__Sainsbury_Wellcome_Centre_Electronic_Lab_Notebook_:_Documentation_of_all_lab_work_at_SWC
+_one_sentence_summary_statement_of_organisation_scope_
 
 
 
@@ -25,33 +24,87 @@ SUMMARY_STATEMENT_eg__Sainsbury_Wellcome_Centre_Electronic_Lab_Notebook_:_Docume
 # {{TITLE}} : Purpose Statement
 
 
-
-*Vision* : eg_to_deliver_new_scientific_pipelines_and_MAP_Biological_Structures
-
+{{TITLE}} organisation aims 
 
 
-*Mission* : eg_to_provide_reproducible_PROTOCOLS_and_high_quality_Biological_Structural_DATASETS_to_the_scientific_community
+* _org_vision_summary_
+
+* _org_mission_summary_
+
+* _org_purpose_summary_
+
+
+----
+
+
+* Useful to define Vision, Mission and/or Statement of Purpose 
+
+    + to guide the overall direction of the Organisation : to develop Programmes & Projects
+    
+    + to help prioritise work
+
+
+https://www.effectivegovernance.com.au/page/knowledge-centre/news-articles/vision-mission-and-purpose-statements-%E2%80%93-what-is-the-difference
+
+* Vision : The organisation's aspiration
+* Mission : What the organisation does
+* Purpose : Why the organisation does it
+
+
+https://en.wikipedia.org/wiki/Strategic_planning
+
+* strategic planning : an organization's process of defining its strategy or direction
+
+
+https://en.wikipedia.org/wiki/Strategy
+
+* strategy : a general plan to achieve goals under conditions of uncertainty & limited resources
+
+
+----
 
 
 
-*Statement of Purpose* : eg_to_build_a_deeper_understanding_of_biological_structure_and_function
+## Vision
 
 
->>> 
->>> It is useful to define Vision, Mission and/or Statement of Purpose to guide the overall direction of the Organisation
->>> 
->>> https://www.effectivegovernance.com.au/page/knowledge-centre/news-articles/vision-mission-and-purpose-statements-%E2%80%93-what-is-the-difference
->>> 
->>> Vision : Aspiration
->>> Mission : What org does
->>> Purpose : Why org does it
->>> 
->>> https://en.wikipedia.org/wiki/Strategic_planning
->>> strategic planning : an organization's process of defining its strategy or direction
->>> 
->>> https://en.wikipedia.org/wiki/Strategy
->>> strategy : a general plan to achieve goals under conditions of uncertainty & limited resources
->>> 
+*The organisations aspiration : to achieve specific objectives*
+
+
+
+* _breakdown_of_organisation_aspiration_
+
+
+
+----
+
+
+
+## Mission
+
+
+*What the organisations does : to produce protocols datasets knowledge in domain*
+
+
+
+* _breakdown_of_organisation_mission_
+
+
+
+----
+
+
+
+## Statement of Purpose
+
+
+*Why the organisation does it : deeper reason why organisation work is useful important*
+
+
+
+* _statement_of_organisation_purpose_
+
+
 
 
 {{SEP02}}
@@ -68,9 +121,11 @@ Uncreative writing : managing language in the digital age, 2011
 
 *Impact can only be made on the world through the dissemination of work.*
 
+
 >>> 
->>> Notes on ideas to disseminate work from this organisation, including resources and how to execute the dissemination.
+>>> Notes on ideas to disseminate work from this organisation, including resources and how to disseminate work
 >>> 
+
 
 
 {{SEP02}}
@@ -80,7 +135,7 @@ Uncreative writing : managing language in the digital age, 2011
 # projectmanagr documentation
 
 
-The Organisation is managed using `projectmanagr`
+This Organisation is managed using `projectmanagr`
 
 
 * ProjectManagr : R Package for Project Management using R Markdown Documents
@@ -88,9 +143,9 @@ The Organisation is managed using `projectmanagr`
     + See [projectmanagr overview](docs/projectmanagr_overview.Rmd) for usage instructions
 
 
-* ProjectManagr offers support for working with external drives and data servers for external data storage:
+* ProjectManagr supports external drives and data servers for external data storage:
 
-    + See [volumes](volumes/volumes.Rmd) for introduction.
+    + See [volumes](volumes/volumes.Rmd) for introduction
 
 
 
@@ -98,14 +153,14 @@ The Organisation is managed using `projectmanagr`
 
 
 
-# PROGRAMMES
+{{PROGRAMME_HEADER}}
 
 
-This Organisation defines the following PROGRAMMES that encompass DOMAINS OF PROJECT WORK.
+This Organisation defines the following PROGRAMMES that encompass a DOMAINS OF WORK.
 
 
 
-----
+{{PROGRAMME_FOOTER}}
 
 
 

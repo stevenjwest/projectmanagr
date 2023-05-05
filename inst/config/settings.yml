@@ -1,22 +1,102 @@
 |
-  SitePath: ~/site/
+  SiteDir: site
+  FileType: 'Rmd'
   VolumesDir: volumes
   VolumesFile: volumes.Rmd
   DocsDir: docs
-  ConfigDir: config
-  ConfigSettingsYamlFile: settings.yml
   ConfigStatusYamlFile: status.yml
-  TemplatesDir: templates
-  OrgIndexFileName: index_ORG.Rmd
+  OrgIndexFileNamePrefix: index_
+  OrgProgrammeHeader: '# PROGRAMMES'
+  OrgProgrammeFooter: 'template:SEP01.txt'
+  OrgProgrammeSummarySep: 'template:SEP02.txt'
+  ProgrammeProjectsDir: PROJECTS
+  ProgrammeProtocolsDir: protocols
+  ProgIndexFileNamePrefix: index_
+  ProgSummaryHeader: '# PROGRAMME OVERVIEW'
+  ProgSummaryTitle: '# '
+  ProgSummaryFooter: 'template:SEP01.txt'
+  ProgProjectsHeader: '# PROJECTS'
+  ProgProjectsFooter: 'template:SEP01.txt'
+  ProgProjectSummarySep: 'template:SEP02.txt'
+  ProjectPrefixSep: '~_'
+  ProjectIdentifierSep: '_'
+  ProjectIndexSep: '~'
+  ProjectSummaryHeader: '# PROJECT SUMMARY'
+  ProjectSummaryTitle: '# '
+  ProjectSummaryFooter: 'template:SEP01.txt'
+  ProjectGoalHeader: '# GOAL'
+  ProjectGoalTitle: 'GOAL'
+  ProjectGoalDivider: ':'
+  ProjectGoalSep: 'template:SEP01.txt'
+  ProjectDeliverableHeader: '## DELIVERABLE'
+  ProjectDeliverableTitle: 'DELIVERABLE'
+  ProjectDeliverableDivider: ':'
+  ProjectDeliverableSep: 'template:SEP02.txt'
+  ProjectTaskHeader: '### TASK'
+  ProjectTaskTitle: 'TASK'
+  ProjectTaskDivider: ':'
+  ProjectTaskSep: 'template:SEP03.txt'
+  ProjectTaskFooter: 'template:SEP04.txt'
+  ProjectLinkFormat: ''
+  ProjectTaskOverviewHeader: '**OVERVIEW**'
+  ProjectTaskLogHeader: '**LOG**'
+  ProjectTaskLogSep: '------------'
+  NoteObjectivesSummarySectionHeader: '**SUMMARY**'
+  NoteObjectivesTodoSectionHeader: '**TODO**'
+  NoteObjectivesHeader: '# OBJECTIVES'
+  NoteObjectivesSep: 'template:SEP02.txt'
+  NoteObjectivesFooter: 'template:SEP01.txt'
+  NoteStorageHeader: '# DATA STORAGE'
+  NoteStorageFooter: 'template:SEP02.txt'
+  NoteLinkFormat: '**'
+  GroupNotePrefixSep: '-'
+  HeaderNotePrefix: '00'
+  HeaderNoteContentsHeader: '# CONTENTS'
+  HeaderNoteContentsFooter: 'template:SEP03.txt'
+  HeaderLinkFormat: '**'
+  SubNotePrefixSep: '-'
+  SubNoteContentsHeader: '# GROUP CONTENTS'
+  SubNoteContentsFooter: 'template:SEP03.txt'
+  SubNoteLinkFormat: '*'
+  NoteSummaryTitle: '## '
+  NoteGoalLinkLine: '* [GOAL'
+  NoteDeliverableLinkLine: '    + [DELIVERABLE'
+  NoteTaskLinkLine: '        - [TASK'
+  ProtocolLinkFormat: '**'
+  ProtocolNameSuffix: '_Protocol'
+  ProtocolSummaryHeader: '# SUMMARY'
+  ProtocolSummaryFooter: 'template:SEP01.txt'
+  ProtocolGraphicalAbstractHeader: '# Graphical Abstract'
+  ProtocolGraphicalAbstractSvg: 'graphical-abstract.svg'
+  ProtocolGraphicalAbstractFooter: 'template:SEP02.txt'
+  ProtocolBackgroundHeader: '# Background'
+  ProtocolBackgroundFooter: 'template:SEP02.txt'
+  ProtocolMaterialsHeader: '# EQUIPMENT & MATERIAL'
+  ProtocolMaterialsFooter: 'template:SEP01.txt'
+  ProtocolEquipmentSvg: '00-equipment-material.svg'
+  ProtocolProcedureTemplateSvg: '01-procedure-schematic.svg'
+  ProtocolResultsLogHeader: '# RESULTS LOG'
+  ProtocolResultsLogFooter: 'template:SEP01.txt'
+  ProtocolTroubleshootingHeader: '# TROUBLESHOOTING GUIDE'
+  ProtocolTroubleshootingFooter: 'template:SEP01.txt'
+  ProtocolHeader: '# PROTOCOL'
+  ProtocolSopHeader: 'template:SEP03.txt'
+  ProtocolLogHeader: 'template:SEP02.txt'
+  ProtocolLogSep: 'template:SEP03.txt'
+  ProtocolFooter: 'template:SEP01.txt'
+  ProtocolInsertionSep: 'template:SEP01.txt'
+  ProtocolInsertionTitle: '# '
+  TodoItemHeaderTemplate: '* [] **TODO_DESCRIPTION**:'
+  TodoItemHeaderComplete: '* [x]'
+  TodoItemHeader: '* ['
+  TodoCollectionDir: todo
+  TodoProgrammeSep: 'template:SEP02.txt'
+  DateTimeZone: 'UTC'
+  DateSplit: '/'
+  DateTimeSplit: ':'
   RunUpdateOnStartup: yes
   RunCompileWithUpdate: yes
-  TaskTodoSectionHeader: '**TODO**'
-  GoalHeader: '* [GOAL'
-  DeliverableHeader: '    + [DELIVERABLE'
-  TaskHeader: '        - [TASK'
-  dataStorageSectionValue: '# DATA STORAGE'
-  subNoteContentsSectionValue: '# GROUP CONTENTS'
-  headerNoteContentsSectionValue: '# CONTENTS'
-  gadgetWidth: 1200
-  gadgetHeight: 1200
+  FileTypeSuffix: 'Rmd'
+  GadgetWidth: 1200
+  GadgetHeight: 1200
   rstudioInternalStateDir: ~/.local/share/rstudio

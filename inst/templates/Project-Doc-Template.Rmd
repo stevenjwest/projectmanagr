@@ -1,390 +1,408 @@
 ---
 title: '{{PREFIX}}~ {{TITLE}}'
 author: '{{AUTHOR}}'
-output:
-  html_document:
-    theme: united
-    toc: yes
-    toc_depth: 5
-    toc_float: yes
+{{HTML_HEADER}}
 ---
 
 
 
-# PROJECT SUMMARY
+{{SUMMARY_HEADER}}
 
 
 {{PROGLINK}}
 
 
-* _PROJECT_AIM_01_MAP_DEVELOP_BUILD_
-
-* _PROJECT_AIM_02_PROCESS_ANALYSE_
-
-* _PROJECT_AIM_03_DEPLOY_DISSEMINATE_
-
-
->>> copy summary bullets from Project Aims defined below
->>> This will be copied under project link in Programme Index page to summarise this project
->>> Consider expanding with summary of achievements of progress in this project as work is completed
->>> Consider adding a summary GRAPHIC to insert.
-
-
---------
---------
-
-
-
-# Overview
-
 
 *Welcome to the {{TITLE}} Project!*
 
 
->>> succinct description of project scope in one sentence
->>> Bullet list of how this scope will be achieved
->>> Consider DPD Workflow : Develop > Process > Disseminate
->>> DETAILS of actual workflow given in GOAL DELIVERABLE & TASK Sections throughout Project Note
+>>>> succinct description of project scope in one sentence - what does this project hope to achieve?
+>>>> Complete the sentence: "This project..."
 
 
-_succinct_description_project_scope__EG__DEMONSTRATE_Mouse_CNS_Clearing_and_Histology_Principles_empirically_and_apply_these_to_study_mouse_CNS_3D_structure_
+_one_sentence_summary_statement_of_project_scope__This_Project__
 
 
-----
+>>>>
+>>>> Summarise Project Goals below
+>>>> This Summary will be copied to Project Summary on Programme Index page
+>>>> Record key achievements & progress in this project here
+>>>>   - Consider adding a summary GRAPHIC to insert.
+>>>>
+
+
+## _PROJECT_GOAL_01_TITLE_
 
 
 
-# Background
+
+
+
+## _PROJECT_GOAL_02_TITLE_
+
+
+
+
+
+
+## _PROJECT_GOAL_03_TITLE_
+
+
+
+
+
+
+{{SUMMARY_FOOTER}}
+
+
+
+# Project Background Information
+
+
 
 >>> Provide background and context to reader
 >>> Provide links to other relevant projects
->>> Keep notes on project research which do not have a note to go into yet..
-
-
-_initial_aims_background_information_MOTIVATION_Notes_
-
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+>>> Keep notes on project ideas & research which do not have a note to go into yet..
 
 
 
-## GOAL 1: SECTION
+{{GOAL_SEP}}
 
 
-SECTION_DESCRIBE_PLAN_HERE
+>>>>
+>>>> Breakdown work into GOALS : logical DOMAINS or VIEWS of this Project
+>>>>    Consider DPAD Workflow : Develop > Process > Analyse > Disseminate
+>>>>    GOALS capture DOMAINS of work 
+>>>>    DELIVERABLES Capture a well-defined achievement in a domain 
+>>>>    TASKS capture individual steps/iterations on a deliverable
+>>>>
+>>>>    REMEMBER : Each project note can be assigned MORE THAN ONE PROJECT GOAL > DELIVERABLE > TASK (GDT)
+>>>>      This mechanism is the heart of how projectmaangr EFFICIENTLY MAPS WORK ACROSS MULTIPLE GOALS
+>>>>      relevant work in each note can be effectively CROSS-REFERENCED to all relevant GDTs
+>>>>
 
 
-----------------------------------------
-----------------------------------------
+{{GOAL_HEADER}} 1: _GOAL_DESCRIPTIVE_TITLE_
 
 
 
-### DELIVERABLE 1: 
+GOAL_AIMS
+
+
+
+{{DELIVERABLE_SEP}}
+
+
+
+{{DELIVERABLE_HEADER}} 1: _DELIVERABLE_DESCRIPTIVE_TITLE_
+
 
 
 DELIVERABLE_AIMS
 
 
---------------------
---------------------
+
+{{TASK_SEP}}
 
 
 
-#### TASK 1:
+{{TASK_HEADER}} 1: _TASK_TITLE_
 
 
 
-_OVERVIEW_
-
-
-
-
-
-_LOG_
-
-
-
-----
-
-
-
-#### TASK 2:
-
-
-
-_OVERVIEW_
+{{PROJECT_TASK_OVERVIEW}}
 
 
 
 
 
-_LOG_
+{{PROJECT_TASK_LOG}}
 
 
 
-----------------------------------------
-----------------------------------------
+{{TASK_FOOTER}}
 
 
 
-### DELIVERABLE 2:
+{{TASK_HEADER}} 2: _TASK_TITLE_
+
+
+
+{{PROJECT_TASK_OVERVIEW}}
+
+
+
+
+
+{{PROJECT_TASK_LOG}}
+
+
+
+{{DELIVERABLE_SEP}}
+
+
+
+{{DELIVERABLE_HEADER}} 2: _DELIVERABLE_DESCRIPTIVE_TITLE_
+
 
 
 DELIVERABLE_AIMS
 
 
---------------------
---------------------
+
+{{TASK_SEP}}
 
 
 
-#### TASK 1:
+{{TASK_HEADER}} 1: _TASK_TITLE_
 
 
 
-_OVERVIEW_
-
-
-
-
-
-_LOG_
-
-
-
-----
-
-
-
-#### TASK 2:
-
-
-
-_OVERVIEW_
+{{PROJECT_TASK_OVERVIEW}}
 
 
 
 
 
-_LOG_
+{{PROJECT_TASK_LOG}}
 
 
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+{{TASK_FOOTER}}
 
 
 
-## GOAL 2: SECTION
-
-
-SECTION_DESCRIBE_PLAN_HERE
-
-
-----------------------------------------
-----------------------------------------
+{{TASK_HEADER}} 2: _TASK_TITLE_
 
 
 
-### DELIVERABLE 1:
+{{PROJECT_TASK_OVERVIEW}}
+
+
+
+
+
+{{PROJECT_TASK_LOG}}
+
+
+
+{{GOAL_SEP}}
+
+
+
+{{GOAL_HEADER}} 2: _GOAL_DESCRIPTIVE_TITLE_
+
+
+
+GOAL_AIMS
+
+
+
+{{DELIVERABLE_SEP}}
+
+
+
+{{DELIVERABLE_HEADER}} 1: _DELIVERABLE_DESCRIPTIVE_TITLE_
+
 
 
 DELIVERABLE_AIMS
 
 
---------------------
---------------------
+
+{{TASK_SEP}}
 
 
 
-#### TASK 1:
+{{TASK_HEADER}} 1: _TASK_TITLE_
 
 
 
-_OVERVIEW_
-
-
-
-
-
-_LOG_
-
-
-
-----
-
-
-
-#### TASK 2:
-
-
-
-_OVERVIEW_
+{{PROJECT_TASK_OVERVIEW}}
 
 
 
 
 
-_LOG_
+{{PROJECT_TASK_LOG}}
 
 
 
-----------------------------------------
-----------------------------------------
+{{TASK_FOOTER}}
 
 
-### DELIVERABLE 2:
+
+{{TASK_HEADER}} 2: _TASK_TITLE_
+
+
+
+{{PROJECT_TASK_OVERVIEW}}
+
+
+
+
+
+{{PROJECT_TASK_LOG}}
+
+
+
+{{DELIVERABLE_SEP}}
+
+
+
+{{DELIVERABLE_HEADER}} 2: _DELIVERABLE_DESCRIPTIVE_TITLE_
+
 
 
 DELIVERABLE_AIMS
 
 
---------------------
---------------------
+
+{{TASK_SEP}}
 
 
 
-#### TASK 1:
+{{TASK_HEADER}} 1: _TASK_TITLE_
 
 
 
-_OVERVIEW_
-
-
-
-
-
-_LOG_
-
-
-
-----
-
-
-
-#### TASK 2:
-
-
-
-_OVERVIEW_
+{{PROJECT_TASK_OVERVIEW}}
 
 
 
 
 
-_LOG_
+{{PROJECT_TASK_LOG}}
 
 
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+{{TASK_FOOTER}}
 
 
 
-## GOAL 3: SECTION
-
-
-SECTION_DESCRIBE_PLAN_HERE
-
-
-----------------------------------------
-----------------------------------------
+{{TASK_HEADER}} 2: _TASK_TITLE_
 
 
 
-### DELIVERABLE 1:
+{{PROJECT_TASK_OVERVIEW}}
+
+
+
+
+
+{{PROJECT_TASK_LOG}}
+
+
+
+{{GOAL_SEP}}
+
+
+
+{{GOAL_HEADER}} 3: _GOAL_DESCRIPTIVE_TITLE_
+
+
+
+GOAL_AIMS
+
+
+
+{{DELIVERABLE_SEP}}
+
+
+
+{{DELIVERABLE_HEADER}} 1: _DELIVERABLE_DESCRIPTIVE_TITLE_
+
 
 
 DELIVERABLE_AIMS
 
 
---------------------
---------------------
+
+{{TASK_SEP}}
 
 
 
-#### TASK 1:
+{{TASK_HEADER}} 1: _TASK_TITLE_
 
 
 
-_OVERVIEW_
-
-
-
-
-
-_LOG_
-
-
-
-----
-
-
-
-#### TASK 2:
-
-
-
-_OVERVIEW_
+{{PROJECT_TASK_OVERVIEW}}
 
 
 
 
 
-_LOG_
+{{PROJECT_TASK_LOG}}
 
 
 
-----------------------------------------
-----------------------------------------
+{{TASK_FOOTER}}
 
 
-### DELIVERABLE 2:
+
+{{TASK_HEADER}} 2: _TASK_TITLE_
+
+
+
+{{PROJECT_TASK_OVERVIEW}}
+
+
+
+
+
+{{PROJECT_TASK_LOG}}
+
+
+
+{{DELIVERABLE_SEP}}
+
+
+
+{{DELIVERABLE_HEADER}} 2: _DELIVERABLE_DESCRIPTIVE_TITLE_
+
 
 
 DELIVERABLE_AIMS
 
 
---------------------
---------------------
+
+{{TASK_SEP}}
 
 
 
-#### TASK 1:
+{{TASK_HEADER}} 1: _TASK_TITLE_
 
 
 
-_OVERVIEW_
-
-
-
-
-
-_LOG_
-
-
-
-----
-
-
-
-#### TASK 2:
-
-
-
-_OVERVIEW_
+{{PROJECT_TASK_OVERVIEW}}
 
 
 
 
 
-_LOG_
+{{PROJECT_TASK_LOG}}
 
 
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+{{TASK_FOOTER}}
+
+
+
+{{TASK_HEADER}} 2: _TASK_TITLE_
+
+
+
+{{PROJECT_TASK_OVERVIEW}}
+
+
+
+
+
+{{PROJECT_TASK_LOG}}
+
+
+
+{{GOAL_SEP}}
 
 
 

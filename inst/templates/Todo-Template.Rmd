@@ -1,0 +1,5 @@
+
+{{TODO_ITEM_HEADER_TEMPLATE}}
+
+    + _details_of_todo_
+

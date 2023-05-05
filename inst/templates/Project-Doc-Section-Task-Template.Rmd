@@ -1,0 +1,18 @@
+{{TASK_FOOTER}}
+
+
+
+{{TASK_HEADER}} {{TASK_NUMBER}}: _TASK_TITLE_
+
+
+
+{{PROJECT_TASK_OVERVIEW}}
+
+
+
+
+
+{{PROJECT_TASK_LOG}}
+
+
+

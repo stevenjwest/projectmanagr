@@ -1,736 +1,493 @@
-#' Get Task Section Header
-#'
-#' Retrieves the Task Section Header from template: Task-Section-Header.Rmd
-#'
-#'
-getTaskSectionHeader <- function(orgPath, taskSectionHeaderTemplate="Task-Section-Header.Rmd") {
 
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, projectNotePath is not inside a PROGRAMME sub-dir!
-    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNotePath) )
-  }
-  # now, orgPath should be the root dir of the organisation
+#' Compute Project Doc Goal Del Task Link
+#'
+#' Compute the components that form the Project Doc Goal Del Task Link, for
+#' insertion into a linked Project Note.
+#'
+compute_doc_GDT_link <- function(projectDocPath, projNoteRmdPath, settings,
+                                      goal, deliverable, task) {
 
-  # set confPath + tempPath:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
 
-  templateFileConn <- file( paste( tempPath, .Platform$file.sep, taskSectionHeaderTemplate, sep="") )
-  templateContents <- readLines( templateFileConn )
-  close(templateFileConn)
+  #### instance variables ####
+
+  DocLink <- R.utils::getRelativePath(projectDocPath, relativeTo=projNoteRmdPath)
+  DocLink <- substring(DocLink, first=4, last=nchar(DocLink)) # remove first `../`
+  # DocLink <- paste( substring(DocLink, first=1, last=nchar(DocLink)-4), "/", sep="")
+  # for now have left links as ".Rmd", but this needs to be ".html", or "/" in a rendered website!
+  # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!  CONVERT LINKS in update() function
+
+  DocName <- basename(projectDocPath)
+  DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
+
+
+  #### link ####
+
+  DocTitleLink <- paste0( settings[["ProjectLinkFormat"]],
+                          "[", DocName, "](", DocLink, ")", settings[["ProjectLinkFormat"]])
+
+
+  #### GOAL ####
+
+  GoalTitleLink <- compute_goal_link(goal, DocLink, settings)
+
+
+  #### DEL ####
+
+  DelTitleLink <- compute_deliverable_link(deliverable, DocLink, settings)
+
+
+  #### TASK ####
+
+  TaskTitleLink <- compute_task_link(task, DocLink, settings)
+
+
+  #### TITLE ####
+
+  # create DocTitle - DocName plus the Gnum Dnum Tnum
+  #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  # create DocTitle - DocName plus the TaskTitle
+  DocTitle <- paste0( settings[["NoteSummaryTitle"]] ,
+                      DocName, " : ", get_task_title(task, settings) )
 
   # return
-  templateContents
+  l <- list(DocTitle, DocTitleLink, GoalTitleLink, DelTitleLink, TaskTitleLink)
+  names(l) <- c("title", "link", "goal", "del", "task")
+  l
 
 }
 
 
-#' Add Project Doc Links to Project Note.
+#' compute goal link
 #'
-#' Assumes the Project Note MAY not have ANY Project Doc links written to it, and
-#' therefore still contain the original Objective.Rmd template Variables.
+#' generate new link from project doc with html # tag for goal section.
+compute_goal_link <- function(goal, DocLink, settings) {
+
+
+  #### goal link ####
+
+  # get start of goal link line WITHOUT [+GoalTitle - will use goal_trim to fill link title
+  goalLinkLineStart <- unlist(strsplit(settings[["NoteGoalLinkLine"]],
+                                       split=paste0("[",settings[["ProjectGoalTitle"]]), fixed=TRUE))
+
+  # identify the length of goal header - default '# GOAL' minus GoalTitle - default 'GOAL'
+  # +1 for substring
+  glen <- nchar(unlist(strsplit(settings[["ProjectGoalHeader"]],
+                                split=settings[["ProjectGoalTitle"]], fixed=TRUE)))+1
+
+  # get goal without the header portion
+  goal_trim <- substring(goal, first=glen)
+
+  # create html tag to section - START #, replace space & _ with -, remove :, all lower case
+  goalTag <- paste0("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal_trim) ) ), ")" )
+
+  # return formatted link with title goal_trim & link to doc + goalTag
+  paste0(goalLinkLineStart, "[", goal_trim, "](", DocLink, goalTag)
+
+}
+
+#' get goal title
 #'
-#' This is exclusively used for adding subnotes to a group, and so will add all header note
-#' Goal-Del-Tasks to the new subnote.
+#' `goal` as collected from selection[["goal"]] - fitting the format specified
+#' in settings[["ProjectGoalHeader"]].
 #'
-#' @param projNoteContents character vector containing the initial contents of a project note.
-#' @param projNotePath ABSOLUTE path to the location on the filesystem where project note will be saved.
-#' @param projDocList List containing all Project Docs - Absolute path, Goal/Del/Task.  Like the list
-#' returned by getProjectNoteDocLinkList().
+get_goal_title <- function(goal, settings) {
+
+  # return the goal's Title : everything after ProjectGoalDivider - with whitespace removed
+  trimws(substring(goal,  first=(regexpr(settings[["ProjectGoalDivider"]], goal)+1 ) ))
+
+}
+
+#' get goal number
 #'
+#' `goal` as collected from selection[["goal"]] - fitting the format specified
+#' in settings[["ProjectGoalHeader"]].
 #'
-addLinks <- function(projNoteContents, projNotePath, projDocList) {
+get_goal_number <- function(goal, settings) {
 
-  for( i in 1:length(projDocList) ) {
+  # return the goal's Number : everything after ProjectGoalHeader & before ProjectGoalDivider - with whitespace removed
+  as.integer( trimws(  substring(goal,
+               first=(regexpr(settings[["ProjectGoalHeader"]],goal) + nchar(settings[["ProjectGoalHeader"]])),
+               last=(regexpr(settings[["ProjectGoalDivider"]],goal)-1) )  )   )
 
-    projectDocPath <- projDocList[[i]][[1]]
-
-    # generate Task Header from template
-    orgPath <- findOrgDir(projectDocPath)
-    summaryBullet <- getTaskSectionHeader(orgPath)
-
-    #cat("summar projDocList:", projDocList[[i]][[5]], "\n")
-    #cat("summar projDocList length:", length(projDocList[[i]][[5]]), "\n")
-    #cat("summaryBullets:", summaryBullets, "\n")
-    #cat("summaryBullets length:", length(summaryBullets), "\n")
-
-    # compute Project Source Doc RELATIVE LINK:
-    DocLink <- R.utils::getRelativePath(projectDocPath, relativeTo=projNotePath)
-    DocLink <- substring(DocLink, first=4, last=nchar(DocLink)) # remove first `../`
-    # DocLink <- paste( substring(DocLink, first=1, last=nchar(DocLink)-4), "/", sep="")
-    # for now have left links as ".Rmd", but this needs to be ".html", or "/" in a rendered website!
-    # Its set as ".Rmd" as ".Rmd" links can be navigated in RStudio!
-
-    # NB Need to convert the .Rmd links to .html when WRITING the Organisation to a html site!
-
-    DocName <- basename(projectDocPath)
-    DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
-
-    DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
+}
 
 
-    # GOAL:
-
-    goal <- substring(projDocList[[i]][[2]], first=4)
-    goalTitle <- substring(goal,  first=(regexpr(":", goal)+2 ) )
-    goalNum <- as.integer(  substring(goal,  first=5, last=(regexpr(":", goal)-1) )  )
-
-    goalTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal) ) ), ")", sep="" )
-
-    GoalTitleLink <- paste("* [", goal, "](", DocLink, goalTag, sep="")
+#' compute deliverable link
+#'
+#' generate new link from project doc with html # tag for deliverable section.
+compute_deliverable_link <- function(del, DocLink, settings) {
 
 
-    # DEL:
+  #### deliverable link ####
 
-    del <- substring(projDocList[[i]][[3]], first=5)
-    delTitle <- substring(del,  first=(regexpr(":", del)+2 ) )
-    delNum <- as.integer(  substring(del,  first=12, last=(regexpr(":", del)-1) )  )
+  # get start of del link line WITHOUT [+DelTitle - will use del_trim to fill link title
+  delLinkLineStart <- unlist(strsplit(settings[["NoteDeliverableLinkLine"]],
+                                      split=paste0("[",settings[["ProjectDeliverableTitle"]]), fixed=TRUE))
 
-    delTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del) ) ), ")", sep="" )
+  # identify the length of del header - default '# DELIVERABLE' minus DelTitle - default 'DELIVERABLE'
+  # +1 for substring
+  dlen <- nchar(unlist(strsplit(settings[["ProjectDeliverableHeader"]],
+                                split=settings[["ProjectDeliverableTitle"]], fixed=TRUE)))+1
 
-    DelTitleLink <- paste("    + [", del, "](", DocLink, delTag, sep="")
+  # get del without the header portion
+  del_trim <- substring(del, first=dlen)
 
+  # create html tag to section
+  delTag <- paste0("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del_trim) ) ), ")" )
 
-    # TASK:
+  # return formatted link with title del_trim & link to doc + delTag
+  paste0(delLinkLineStart, "[", del_trim, "](", DocLink, delTag)
 
-    task <- substring(projDocList[[i]][[4]], first=6)
-    taskTitle <- substring(task,  first=(regexpr(":", task)+2 ) )
-    taskNum <- as.integer(  substring(task,  first=5, last=(regexpr(":", task)-1) )  )
+}
 
-    taskTag <- paste("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task) ) ), ")", sep="" )
+#' get deliverable title
+#'
+#' `deliverable` as collected from selection[["deliverable"]] - fitting the format specified
+#' in settings[["ProjectDeliverableHeader"]].
+#'
+get_deliverable_title <- function(deliverable, settings) {
 
-    TaskTitleLink <- paste("        - [", task, "](", DocLink, taskTag, sep="")
+  # return the del's Title : everything after ProjectGoalDivider - with whitespace removed
+  trimws(substring(deliverable,  first=(regexpr(settings[["ProjectDeliverableDivider"]], deliverable)+1 ) ))
 
-    # create DocTitle - DocName plus the Gnum Dnum Tnum
-    #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
-    # create DocTitle - DocName plus the TaskTitle
-    DocTitle <- paste( "## ", DocName, " : ", taskTitle, sep="")
+}
 
-    if( is.element("{{PROJECT_DOC_LINK}}", projNoteContents) ) { # if the OBJECTIVES VARIABLES are in contents:
+#' get deliverable number
+#'
+#' `deliverable` as collected from selection[["deliverable"]] - fitting the format specified
+#' in settings[["ProjectDeliverableHeader"]].
+#'
+get_deliverable_number <- function(deliverable, settings) {
 
-      projNoteContents <- gsub("{{PROJECT_DOC_TITLE}}", DocTitle, projNoteContents, fixed=TRUE)
-
-      projNoteContents <- gsub("{{PROJECT_DOC_LINK}}", DocTitleLink, projNoteContents, fixed=TRUE)
-
-      projNoteContents <- gsub("{{PROJECT_DOC_LINK_GOAL}}", GoalTitleLink, projNoteContents, fixed=TRUE)
-      projNoteContents <- gsub("{{PROJECT_DOC_LINK_DEL}}", DelTitleLink, projNoteContents, fixed=TRUE)
-      projNoteContents <- gsub("{{PROJECT_DOC_LINK_TASK}}", TaskTitleLink, projNoteContents, fixed=TRUE)
-
-      # insert the projDocList[[i]][[5]] vector - it should be a single String, and inserted correctly:
-      #projNoteContents <- gsub("{{SUMMARY_INFO}}",
-      #                         projDocList[[i]][[5]],
-      #                         projNoteContents, fixed=TRUE )
-
-      # use replaceAndInsertVector ??
-      #sb <- summaryBullets[3:(length(summaryBullets)-3)]
-
-      #cat("sb:", sb, "\n")
-      #cat("sb length:", length(sb), "\n")
-
-      # summaryBullet is from template Task-Section-Header.Rmd
-      projNoteContents <- replaceAndInsertVector("{{SUMMARY_INFO}}", summaryBullet, projNoteContents)
-
-    }
-    else { # if not first set of link must insert the links at END of OBJECTIVES Section - marked by "------"
-
-      # form the objectivesContents:
-      objectivesContents <- c("----","","","",DocTitle,"","",DocTitleLink,"","",
-                              GoalTitleLink,"",
-                              DelTitleLink,"",
-                              TaskTitleLink,"","",
-                              summaryBullet,"","")
-
-      # insert objectivesContents into the first line that matches the string "------"
-      # "------" (6 x '-') denotes the END of the objectives section
-
-      # compute place to insert the project note link:
-      # get the line selected in the projectDoc - [["originalLine"]]
-      line <- computeLineIndex("------", projNoteContents)
-
-      # Insert projectNoteLinkVector to projNoteContents:
-      projNoteContents <- c(projNoteContents[1:(line-1)], objectivesContents, projNoteContents[(line):length(projNoteContents)])
-
-    }
-
-    cat( "    Written Goal Del Task ", DocName, " to Sub Note file: ", basename(projNotePath),  "\n" )
-
-  }
-
-  projNoteContents
+  # return the del's Number : everything after ProjectDelHeader & before ProjectDelDivider - with whitespace removed
+  as.integer( trimws(  substring(deliverable,
+                                 first=(regexpr(settings[["ProjectDeliverableHeader"]],deliverable) + nchar(settings[["ProjectDeliverableHeader"]])),
+                                 last=(regexpr(settings[["ProjectDeliverableDivider"]],deliverable)-1) )  )   )
 
 }
 
 
 
-
-#' Update all links
+#' compute deliverable link
 #'
-#' Updates every hyperlink in all Rmd files within orgPath directory tree, from oldName
-#' to newName.
+#' generate new link from project doc with html # tag for deliverable section.
+compute_task_link <- function(task, DocLink, settings) {
+
+
+  #### task link ####
+
+  # get start of goal link line WITHOUT [+GoalTitle - will use goal_trim to fill link title
+  taskLinkLineStart <- unlist(strsplit(settings[["NoteTaskLinkLine"]],
+                                       split=paste0("[",settings[["ProjectTaskTitle"]]), fixed=TRUE))
+
+  # identify the length of task header - default '### TASK' minus TaskTitle - default 'TASK'
+  # +1 for substring
+  tlen <- nchar(unlist(strsplit(settings[["ProjectTaskHeader"]],
+                                split=settings[["ProjectTaskTitle"]], fixed=TRUE)))+1
+
+  # get task without the header portion
+  task_trim <- substring(task, first=tlen)
+
+  # create html tag to section - START #, replace space & _ with -, remove :, all lower case
+  taskTag <- paste0("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task_trim) ) ), ")" )
+
+  # return formatted link with title task_trim & link to doc + taskTag
+  paste0(taskLinkLineStart, "[", task_trim, "](", DocLink, taskTag)
+
+}
+
+#' get task title
 #'
-#' @param orgPath defines the path to the Organisation - should point to the root directory of the Organisation.
-#' @param oldName defines the OLD name that will be in Hyperlinks.  Should be the FILE NAME - with no spaces,
-#'     including PREFIX and .Rmd EXTENSION
-#' @param newName defines the NEW name to be written into Hyperlinks.  Should be the FILE NAME - with no spaces.
-#' @param oldTitle defines the OLD TITLE that will be in Hyperlinks.  By default replaces - & _ with spaces from name.
-#' @param newTitle defines the NEW TITLE that will be in Hyperlinks.  By default replaces - & _ with spaces from name.
+#' `task` as collected from selection[["task"]] - fitting the format specified
+#' in settings[["ProjectTaskHeader"]].
 #'
-#' @export
-updateAllLinks <- function( orgPath, oldName, newName, oldTitle="", newTitle="" ) {
+get_task_title <- function(task, settings) {
 
+  # return the task's Title : everything after ProjectTaskDivider - with whitespace removed
+  trimws(substring(task,  first=(regexpr(settings[["ProjectTaskDivider"]], task)+1 ) ))
 
-  #cat( "\nprojectmanagr::editProjectOrg():\n" )
+}
 
-  # remove the .Rmd EXTENSION from oldName && newName
-  oldName <- substring(oldName, first=1, last=nchar(oldName)-4)
-  newName <- substring(newName, first=1, last=nchar(newName)-4)
+#' get task number
+#'
+#' `task` as collected from selection[["task"]] - fitting the format specified
+#' in settings[["ProjectTaskHeader"]].
+#'
+get_task_number <- function(task, settings) {
 
-  #oldPrefix <- substring( oldName, first=1, last=regexpr("~_", oldName, fixed=TRUE)-1 )
-  #oldTitle <- substring( oldName, first=regexpr("~_", oldName, fixed=TRUE)+2, last=nchar(oldName)-4 )
-
-  #newPrefix <- substring( newName, first=1, last=regexpr("~_", newName, fixed=TRUE)-1 )
-  #newTitle <- substring( newName, first=regexpr("~_", newName, fixed=TRUE)+2, last=nchar(newName)-4 )
-
-  # replacing oldName with newName in all links!
-
-  # Check orgPath is at the root of an ORGANISATION:
-
-  # look for the config/ and templates/ dirs:
-  confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
-  tempPath <- paste(confPath, .Platform$file.sep, "templates" , sep="")
-
-
-  if(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
-    stop( paste0("  orgPath is not an ORGANISATION directory: ",orgPath) )
-  }
-
-
-  # check oldName contains NO SPACES:
-  if( grepl("\\s+", oldName) ) {
-    stop( paste0("  oldName contains a SPACE: ",oldName) )
-  }
-
-
-  # check newName contains NO SPACES:
-  if( grepl("\\s+", newName) ) {
-    stop( paste0("  newName contains a SPACE: ",newName) )
-  }
-
-
-  # define the old and new titles:
-  #if(nchar(oldTitle) == 0) {
-  #  oldTitle  <- gsub("-", " ", gsub("_", " ", oldName) )
-  #}
-  #if( nchar(newTitle) == 0) {
-  #  newTitle  <- gsub("-", " ", gsub("_", " ", newName) )
-  #}
-
-
-  # traverse EVERY Rmd file in orgPath dir tree:
-  file_list <- list.files(path = orgPath, pattern = "*.Rmd", all.files = TRUE, recursive = TRUE, include.dirs = TRUE)
-
-  for(x in file_list) {
-    # read file:
-    fileConn <- file( paste0( orgPath, .Platform$file.sep, x) )
-    contents <- readLines( fileConn )
-    close(fileConn)
-
-    # identify all lines with a link in them
-    link_indices <- grep("\\]\\(", contents)
-
-    # replace every instance of oldName with newName
-    grepName <- any( grepl(oldName, contents, fixed=TRUE ))
-    if(grepName) {
-
-      contents <- gsub(oldName, newName, contents, fixed=TRUE)
-
-      # ALSO check -
-      prefixOld <- getProjectPrefixFromName(oldName)
-      prefixNew <- getProjectPrefixFromName(newName)
-
-      # IF oldName is a HEADER or SIMPLE note : rename string
-      # DocPrefix01/Note~Prefix
-      if( regexpr("~", prefixOld) != -1) { # if prefix does contain a ~
-        # extract the START of prefix and concat with file.sep with oldName/newName
-        subOldName <- paste0(substr(prefixOld, 1, regexpr("~", prefixOld)-1),
-                             .Platform$file.sep, newName) # use newName as oldName alreayd replaced by newName above!
-        subNewName <- paste0(substr(prefixNew, 1, regexpr("~", prefixNew)-1),
-                             .Platform$file.sep, newName)
-
-        contents <- gsub(subOldName, subNewName, contents, fixed=TRUE)
-        # will rename links that are eg. SJW01/SJW01~001~_FILE_NAME to SJW03/SJW03~001~_FILE_NAME
-        # as opposed to missing the HEADER NOTE PREFIX change
-      }
-
-      # IF oldName is a SUBNOTE : rename the strings
-      # DocPrefix01/HEADER~PREFIX-00/SUBNOTE~PREFIX-001~_SubNote_Name
-      # HEADER~PREFIX-00/SUBNOTE~PREFIX-001~_SubNote_Name
-
-      # CHECK this is a SUBNOTE prefix
-      if( regexpr("-", prefixOld) != -1 && # if prefix does contain a -
-          !endsWith(prefixOld, "-00") ) { # AND it end does NOT with -00 (header note)
-
-        # DocPrefix01/HEADER~PREFIX-00/SUBNOTE~PREFIX-001~_SubNote_Name
-        # extract the START of prefix and concat with file.sep with oldName/newName
-        subOldName <- paste0(substr(prefixOld, 1, regexpr("~", prefixOld)-1),
-                             .Platform$file.sep, substr(prefixOld, 1, regexpr("-", prefixOld)-1), "-00",
-                             .Platform$file.sep, newName ) # use newName as oldName alreayd replaced by newName above!
-
-        subNewName <- paste0(substr(prefixNew, 1, regexpr("~", prefixNew)-1),
-                             .Platform$file.sep, substr(prefixNew, 1, regexpr("-", prefixNew)-1), "-00",
-                             .Platform$file.sep, newName )
-
-        contents <- gsub(subOldName, subNewName, contents, fixed=TRUE)
-        # will rename links that are
-         # eg. SJW01/SJW01~001-00/SJW01~001-001~_FILE_NAME to SJW03/SJW03~001-00/SJW03~001-001~_FILE_NAME
-        # as opposed to missing the PROJ DOC PREFIX change
-
-
-        # HEADER~PREFIX-00/SUBNOTE~PREFIX-001~_SubNote_Name
-        # extract the START and MIDDLE of prefix and concat with file.sep with oldName/newName
-        subOldName <- paste0(substr(prefixOld, 1, regexpr("-", prefixOld)-1), "-00",
-                             .Platform$file.sep, newName) # use newName as oldName alreayd replaced by newName above!
-
-        subNewName <- paste0(substr(prefixNew, 1, regexpr("-", prefixNew)-1), "-00",
-                             .Platform$file.sep, newName)
-
-        contents <- gsub(subOldName, subNewName, contents, fixed=TRUE)
-        # will rename links that are eg. SJW01~001-00/SJW01~001-001~_FILE_NAME to SJW03~001-00/SJW03~001-001~_FILE_NAME
-        # as opposed to missing the HEADER NOTE PREFIX change
-
-      }
-    }
-
-    # replace every instance of oldtitle with newTitle
-    #grepTitle <- any( grepl(oldTitle, contents, fixed=TRUE ))
-    #if(grepTitle) {
-    #  contents <- gsub(oldTitle, newTitle, contents, fixed=TRUE)
-    #}
-
-    # write file ONLY IF a replacement has been made
-    #if(grepTitle || grepName) {
-    if(grepName) {
-      cat( "    replaced in file:", x ,"\n" )
-      fileConn <- file( paste0( orgPath, .Platform$file.sep, x) )
-      writeLines(contents, fileConn)
-      close(fileConn)
-    }
-  }
-
-  #lapply(file_list, function(x) {
-
-    # read file:
-   # fileConn <- file( paste0( orgPath, .Platform$file.sep, x) )
-  #  contents <- readLines( fileConn )
-   # close(fileConn)
-
-    # replace every instance of oldName with newName
-  #  grepName <- any( grepl(oldName, contents, fixed=TRUE ))
-   # if(grepName) {
-    #  contents <- gsub(oldName, newName, contents, fixed=TRUE)
-    #}
-
-    # replace every instance of oldtitle with newTitle
-    #grepTitle <- any( grepl(oldTitle, contents, fixed=TRUE ))
-  #  if(grepTitle) {
-   #   contents <- gsub(oldTitle, newTitle, contents, fixed=TRUE)
-  #  }
-
-    # write file ONLY IF a replacement has been made
-   # if(grepTitle || grepName) {
-  #    cat( "    replaced in file:", x ,"\n" )
-   #   fileConn <- file( paste0( orgPath, .Platform$file.sep, x) )
-    #  writeLines(contents, fileConn)
-     # close(fileConn)
-    #}
-
-  #})
-
+  # return the task's Number : everything after ProjectTaskHeader & before ProjectTaskDivider - with whitespace removed
+  as.integer( trimws(  substring(task,
+                                 first=(regexpr(settings[["ProjectTaskHeader"]],task) + nchar(settings[["ProjectTaskHeader"]])),
+                                 last=(regexpr(settings[["ProjectTaskDivider"]],task)-1) )  )   )
 
 }
 
 
 
-
-#' Add Project Doc Links to Project Note.
+#' Get Project Note Paths from Doc GDT links
 #'
-#' Assumes the Project Note MAY not have ANY Project Doc links written to it, and
-#' therefore still contain the original Objective.Rmd template Variables.
+#' Get project note paths from doc GDT links  Assumes `projDocContents` is a
+#' character vector from a project doc.
 #'
-#' @param projDocList List containing all Project Docs - Absolute path, Goal/Del/Task.  Like the list
-#' returned by getProjectNoteDocLinkList().
-#' @param subNotePath ABSOLUTE path to the location on the filesystem where sub note is saved.
-#' @param headerPath the Absolute path to the header note, which the subnote is stored under.
-#'
-addSubNoteLinkToDocs <- function(projDocList, subNotePath, headerPath) {
+get_doc_gdt_project_note_paths <- function(projectDocPath, projDocContents, settings) {
 
-  # Determine projectNote PREFIX and TITLE:
-  subNotePrefix <- substring( basename(subNotePath), first=1, last=regexpr("~_", basename(subNotePath), fixed=TRUE)-1 )
-  subNoteTitle <- substring( basename(subNotePath), first=regexpr("~_", basename(subNotePath), fixed=TRUE)+2 )
-  # Remove - and _ and remove file suffix:
-  subNoteTitle <- gsub("-", " ",  gsub("_", " ", substring(subNoteTitle, first=1, last=nchar(subNoteTitle)-4) )  )
-
-  subNoteName <- substring( basename(subNotePath), first=1, last=nchar(basename(subNotePath))-4 ) # file name without Rmd
-
-  # first, compute subnote prefix and title:
-  #subNotePrefix <- getProjectPrefixFromPath(subNotePath)
-  #subNoteName <- substr(basename(subNotePath), 1, nchar(basename(subNotePath))-4 )
-  #subNoteTitle <- gsub("-", " ", gsub("_", " ", subNoteName) )
-
-  # compute headerName
-  headerName <- basename(headerPath)
-
-  for( i in 1:length(projDocList) ) {
+  projectDocParent <- dirname( normalizePath(projectDocPath))
+  orgPath <- find_org_directory(projectDocParent)
 
 
-    ### WRITE PROJECT NOTE TO PROJECT DOC:
+  #### split projDocContents into each TASK ####
 
-    projectDocPath <- projDocList[[i]][[1]]
+  # indices of each task HEADER
+  taskHeaderIndices <- grep( trimws(settings[["ProjectTaskHeader"]]), trimws(projDocContents), fixed=TRUE)
 
-    # generate Task Header from template
-    orgPath <- findOrgDir(projectDocPath)
-    confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
-    summaryBullet <- getTaskSectionHeader(orgPath)
+  # index of each task LOG HEADER from each task HEADER
+  taskLogIndices <- c()
+  fi <- 1
+  for(head in taskHeaderIndices) {
+    taskLogIndices[fi] <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
+                                                  projDocContents, head)
+    fi <- fi+1
+  }
 
-    # read Project Doc:
-    projDocFileConn <- file( projectDocPath )
-    projDocContents <- readLines( projDocFileConn )
-    close(projDocFileConn)
-
-    # create the projectNoteLink: projectNotePrefix, "~ ", projectNoteTitle,
-    NoteLink <- R.utils::getRelativePath(subNotePath, relativeTo=projectDocPath)
-    NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-    projectNoteLink <- paste("*[", subNoteName, "](", NoteLink, ")*",  sep="")
-    # output ex.:
-    # *[LAB~003-001~ THF MeOH/DCM Clearing Tau Labelling](../LAB/LAB~001-00~_thf_meoh_dcm_clearing_tau_labelling.Rmd)*
-
-    #sb <- summaryBullets[1:(length(summaryBullets)-2)]
-
-    #cat("sb:", sb, "\n")
-    #cat("sb length:", length(sb), "\n")
-
-    # create the Vector, including summaryBullets (these have appropriate whitespace):
-    #projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryBullets, "" )
-    # edit the summary information - if TaskTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
-    # get TaskTodoSectionHeader value
-    settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-    settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-    todoValue <- settings[["TaskTodoSectionHeader"]]
-    # get new summary info - WITHOUT the TaskTodoSectionHeader plus excess whitespace
-    summaryInfo <- summaryBullet[1: computePreviousLineIndex(grep(todoValue, summaryBullet, fixed=TRUE)-1, summaryBullet)+1 ]
-
-    # create the Vector, including Whitespace and Summary information ONLY - without Task TODO Section :
-    projectNoteLinkVector <- c( "", "", "", projectNoteLink, "", "", summaryInfo, "" )
-
-    # compute place to insert the project note link:
-    line <- computeHeaderLineUnderProjectDocGoalDelTask(headerName,
-                                                        projDocContents,
-                                                        projDocList[[i]][[2]],
-                                                        projDocList[[i]][[3]],
-                                                        projDocList[[i]][[4]] )
+  # index of each task FOOTER from each task HEADER
+  taskFooterIndices <- c()
+  fi <- 1
+  for(head in taskHeaderIndices) {
+    taskFooterIndices[fi] <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
+                                                  projDocContents, head)
+    fi <- fi+1
+  }
 
 
-    # Insert projectNoteLinkVector to projDocContents:
-    projDocContents <- c(projDocContents[1:(line-1)], projectNoteLinkVector, projDocContents[(line+1):length(projDocContents)])
+  #### get each project note absolute path linked to GDTs ####
 
+  # loop through index of taskLogIndices
+  for(i in 1:length(taskLogIndices) ) {
 
-    # write to projFile
-    projDocFileConn <- file( projectDocPath )
-    writeLines(projDocContents, projDocFileConn)
-    close(projDocFileConn)
+    taskContents <- projDocContents[ (taskLogIndices[i]):(taskFooterIndices[i]) ]
 
-    cat( "  Written Project Sub Note Link ", basename(subNotePath), " to Project Doc: ", basename(projectDocPath), "\n" )
+    # find lines that start with note link format && contain a link
+    pnLines <- taskContents[startsWith(taskContents, paste0(settings[["NoteLinkFormat"]],"[") ) & grepl("](", taskContents, fixed=TRUE)]
+    snLines <- taskContents[startsWith(taskContents, paste0(settings[["SubNoteLinkFormat"]],"[") ) & grepl("](", taskContents, fixed=TRUE)]
+    lines <- c(pnLines, snLines)
 
-
-
-    ### WRITE PROJECT NOTE TO PROGRAMME INDEX FILE:  NOT USED
-
-    # identify programme path:
-    #progPath <- findProgDir(projectDocPath)
-
-    # read Programme Index File:
-    #progIndexPath = paste(progPath, .Platform$file.sep, basename(progPath), "_index.Rmd", sep="")
-    #progIndexFileConn <- file( progIndexPath )
-    #progIndexContents <- readLines( progIndexFileConn )
-    #close(progIndexFileConn)
-
-
-    # create the projIndexLink:
-    #NoteLink <- R.utils::getRelativePath(subNotePath, relativeTo=progIndexPath)
-    #NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-    #projIndexLink <- paste("* [", subNoteTitle, "](", NoteLink, ")",  sep="")
-
-    # create the Vector, including Whitespace and Summary information:
-    #projIndexLinkVector <- c( "", "", "", projIndexLink, "" )
-
-    # compute place to insert the project doc link:
-    # First get the line index containing containing the header Name
-      # -1 as the projectDocPath line is counted TWICE in lineHead!
-      # projectDocLine INCLUDES projectDocPath line, and the filtered projIndexContents includes it too!
-    #projectDocLine <- grep(basename(projectDocPath), progIndexContents)
-    #lineHead <- projectDocLine + grepLineIndex(
-     #     basename(headerPath),
-      #    progIndexContents[projectDocLine:grepLineIndexFrom("---", progIndexContents,projectDocLine)])-1
-
-    # Then get the NEXT line that is before ##, ---, or **[, inside the headerNote Group:
-    #lineProg <- computeNextLineHeader(lineHead, progIndexContents)
-
-    # Insert projIndexLinkVector to progIndexContents:
-      # only if projIndexLink doesnt already exist in the programme contents UNDER THE CURRENT HEADER NOTE GROUP
-      # this ensures the first place the subnote is written is the only place it is written
-      # BUT this should still allow the subnote to be written to the PROGRAMME file under other PROJECTS
-    #if( is.element(projIndexLink, progIndexContents[lineHead:lineProg] ) == FALSE ) {
-
-            #progIndexContents <- c(progIndexContents[1:(lineProg-1)], projIndexLinkVector, progIndexContents[(lineProg+1):length(progIndexContents)])
-
-            #}
-
-
-    # write to progIndexPath
-    #progIndexFileConn <- file( progIndexPath )
-    #writeLines(progIndexContents, progIndexFileConn)
-    #close(progIndexFileConn)
-
-    #cat( "  Written Project Note ", basename(subNotePath), " to Programme File: ", basename(progIndexPath), "\n" )
+    # extract the absolute path from each link
+    relLinks <- substr(lines, regexpr("](", lines, fixed=TRUE)+2, regexpr(")", lines, fixed=TRUE)-1 )
+    absPaths <- R.utils::getAbsolutePath( paste0(projectDocParent, .Platform$file.sep, relLinks))
 
   }
 
+  # return
+  absPaths
 }
 
 
-
-#' Compute Next Line under Header Links, in Project Doc Goal Del Task
+#' Extract Project Note Doc Links GDT & Summary
 #'
-#' In projDocContents, sequentially identifies lines containing GOAL, DELIVERABLE,
-#' TASK, headerName.  Then identifies the next line AFTER all subnote links under the headerName
-#' link.  This returned index is where the NEXT subnote should be inserted.
+#' Returns a list containing string vectors with projectDocFilePath, goal,
+#' deliverable, task for all objectives, and summary & todo for single &
+#' subnotes (not header notes).
 #'
-#' @param headerName name of header note to search for
-#' @param projDocContents character vector containing the Project Doc
-#' @param GOAL the GOAL character string to find in projDocContents
-#' @param DELIVERABLE the DELIVERABLE character string to find in projDocContents
-#' @param TASK the TASK character string to find in projDocContents
+#' If no objectives are identified, a BLANK LIST `list()` is returned.
 #'
-#'
-computeHeaderLineUnderProjectDocGoalDelTask <- function(headerName, projDocContents,
-                                                        GOAL, DELIVERABLE, TASK ) {
+extract_note_obj_doc_link_GDT_summ <- function(linkNoteRmdContents, linkNoteRmdPath,
+                                               settings, orgPath) {
 
-  #update headerName to include ")**" suffix:
-  headerName <- paste0(headerName, ")**")
+  # linkNoteRmdContents contains all ProjDoc GDT links to add to new subnote
 
-  # find first line that contains GOAL String
-  for( j in 1:length(projDocContents)) {
+  type <- get_file_type(linkNoteRmdPath, settings)
 
-    if( grepl(GOAL, projDocContents[j], fixed=TRUE) ) {
+  # isolate the objectives segment of contents
+  linkObjHeadIndex <- match_line_index( load_param_vector(settings[["NoteObjectivesHeader"]], orgPath),
+                                      linkNoteRmdContents)+1
+  linkObjFootIndex <- grep_line_index_from( load_param_vector(settings[["NoteObjectivesFooter"]], orgPath),
+                                            linkNoteRmdContents, linkObjHeadIndex)-1
 
-      goalIndex <- j
+  linkObjectives <- linkNoteRmdContents[ linkObjHeadIndex:linkObjFootIndex ]
+  # this contains all the links plus summary & todo information inserted in
+  # current linkNoteRmd so cannot just extract as-is - return projDoc ABSOLUTE PATH
 
-      break
+  #### split objectives list ####
 
+  # split linkObjectives into each objective : ProjDoc Link plus GDT
+  objList <- list()
+  objSplit <- match_vector(load_param_vector(settings[["NoteObjectivesSep"]], orgPath), linkObjectives)
+
+  if( identical(objSplit, integer(0)) ) {
+    # no objectives are identified!
+    # this may be the case for header notes with no objective
+    # return a blank list
+    return(list())
+  }
+
+  objSplitMax <- c(objSplit, length(linkObjectives)+1)
+  for( o in 1:length(objSplit) ) {
+    objList[[o]] <- linkObjectives[(objSplitMax[o]):(objSplitMax[o+1]-1)]
+  }
+
+  #### For each Objective ####
+
+  # extract ProjDoc absolute path plus GDT from each objective
+  DocGDTsList <- list()
+  dGDTi <- 1
+
+  for( o in objList ) {
+
+
+    ##### Extract ProjDoc Path #####
+
+    # projdoc - string to start with ProjectLinkFormat plus '['
+    pdli <- grep_line_index(paste0(settings[["ProjectLinkFormat"]], "["), o) # projDoc link index
+    gli <- grep_line_index_from(settings[["NoteGoalLinkLine"]], o, pdli) # goal index
+    dli <- grep_line_index_from(settings[["NoteDeliverableLinkLine"]], o, gli) # del index
+    tli <- grep_line_index_from(settings[["NoteTaskLinkLine"]], o, dli) # task index
+    if(type != "HEAD") { # summary and todo sections only exist for NON HEAD notes
+      summi <- grep_line_index_from(settings[["NoteObjectivesSummarySectionHeader"]], o, tli) # summary index
+      todoi <- grep_line_index_from(settings[["NoteObjectivesTodoSectionHeader"]], o, summi) # todo index
     }
 
-  }
+    # get ProjDoc RelativePath
+    pdrp <- substr(o[pdli], regexpr("](", o[pdli], fixed=TRUE)+2, regexpr(")", o[pdli], fixed=TRUE)-1)
 
-  #cat( "  goalIndex: ", goalIndex, "\n" )
+    # compute ProjDoc AbsolutePath
+    pdap <- R.utils::getAbsolutePath( paste0(dirname(linkNoteRmdPath), .Platform$file.sep, pdrp))
 
-  # find first line that contains DELIVERABLE String FROM GOAL
-  for( j in goalIndex:length(projDocContents)) {
 
-    if( grepl(DELIVERABLE, projDocContents[j], fixed=TRUE) ) {
+    #### Extract Goal Del Task Headers ####
 
-      delIndex <- j
+    #compute goal, del, task titles from links
+    goal <- paste0(
+      unlist(strsplit(settings[["ProjectGoalHeader"]],
+                      split=paste0(settings[["ProjectGoalTitle"]]), fixed=TRUE)),
+      substr(o[gli], regexpr(settings[["ProjectGoalTitle"]], o[gli], fixed=TRUE),
+                   regexpr("](", o[gli], fixed=TRUE)-1)
+    )
 
-      break
+    del <- paste0(
+      unlist(strsplit(settings[["ProjectDeliverableHeader"]],
+                      split=paste0(settings[["ProjectDeliverableTitle"]]), fixed=TRUE)),
+      substr(o[dli], regexpr(settings[["ProjectDeliverableTitle"]], o[dli], fixed=TRUE),
+             regexpr("](", o[dli], fixed=TRUE)-1)
+    )
 
+    task <- paste0(
+      unlist(strsplit(settings[["ProjectTaskHeader"]],
+                      split=paste0(settings[["ProjectTaskTitle"]]), fixed=TRUE)),
+      substr(o[tli], regexpr(settings[["ProjectTaskTitle"]], o[tli], fixed=TRUE),
+             regexpr("](", o[tli], fixed=TRUE)-1)
+    )
+
+
+    #### Extract Goal Del Task Summary & TODO Sections ####
+
+    if(type != "HEAD") { # summary and todo sections only exist for NON HEAD notes
+      summLen <- length(settings[["NoteObjectivesSummarySectionHeader"]])
+      todoLen <- length(settings[["NoteObjectivesTodoSectionHeader"]])
+      summary <- o[(summi+summLen):(todoi-1)]
+      todo <- o[(todoi+todoLen):length(o)]
+    } else {
+      summary <- ""
+      todo <- "" # if HEAD note set to BLANK
     }
 
+
+    #### Add to list ####
+
+    dgdt <- list(pdap, goal, del, task, summary, todo)
+    names(dgdt) <- c("projectDocFilePath",
+                     "goal", "deliverable", "task",
+                     "summary", "todo")
+    DocGDTsList[[dGDTi]] <- dgdt
+    dGDTi <- dGDTi+1
   }
 
-  #cat( "  delIndex: ", delIndex, "\n" )
+  DocGDTsList
 
-  # find first line that contains TASK String FROM DELIVERABLE
-  for( j in delIndex:length(projDocContents)) {
+}
 
-    if( grepl(TASK, projDocContents[j], fixed=TRUE) ) {
 
-      taskIndex <- j
+#' Extract GDT & summary & TODO from Project Note Objectives vector
+#'
+#'
+#'
+extract_objectives_note_GDT <- function(linkObjectives, linkRmdPath, subNoteRmdPath,
+                                       settings, orgPath) {
 
-      break
+  #### split objectives list ####
 
-    }
-
+  # split linkObjectives into each objective : ProjDoc Link plus GDT
+  objList <- list()
+  objSplit <- match_vector(load_param_vector(settings[["NoteObjectivesSep"]], orgPath), linkObjectives)
+  objSplitMax <- c(objSplit, length(linkObjectives))
+  for( o in 1:length(objSplit) ) {
+    objList[[o]] <- linkObjectives[(objSplitMax[o]):(objSplitMax[o+1])]
   }
 
-  #cat( "  taskIndex: ", taskIndex, "\n" )
+  #### For each Objective ####
 
-  # find first line that contains headerName String FROM TASK
-  for( j in taskIndex:length(projDocContents)) {
+  # extract ProjDoc absolute path plus GDT from each objective
+  DocGDTsList <- list()
+  dGDTi <- 1
 
-    if( grepl(headerName, projDocContents[j], fixed=TRUE) ) {
+  for( o in objList ) {
 
-      headIndex <- j
 
-      break
+    ##### Extract ProjDoc Path #####
 
-    }
+    # projdoc - string to start with ProjectLinkFormat plus '['
+    pdli <- grep_line_index(paste0(settings[["ProjectLinkFormat"]], "["), o) # projDoc link index
+    gli <- grep_line_index_from(settings[["NoteGoalLinkLine"]], o, pdli) # goal index
+    dli <- grep_line_index_from(settings[["NoteDeliverableLinkLine"]], o, gli) # del index
+    tli <- grep_line_index_from(settings[["NoteTaskLinkLine"]], o, dli) # task index
+    summi <- grep_line_index_from(settings[["NoteObjectivesSummarySectionHeader"]], o, tli) # summary index
+    todoi <- grep_line_index_from(settings[["NoteObjectivesTodoSectionHeader"]], o, summi) # todo index
 
+    # get ProjDoc RelativePath
+    pdrp <- substr(o[pdli], regexpr("](", o[pdli], fixed=TRUE)+2, regexpr(")", o[pdli], fixed=TRUE)-1)
+
+    # compute ProjDoc AbsolutePath
+    pdap <- R.utils::getAbsolutePath( paste0(dirname(linkRmdPath), .Platform$file.sep, pdrp))
+
+
+    #### Extract Goal Del Task Headers ####
+
+    #compute goal, del, task titles from links
+    goal <- paste0(
+      unlist(strsplit(settings[["ProjectGoalHeader"]],
+                      split=paste0(settings[["ProjectGoalTitle"]]), fixed=TRUE)),
+      substr(o[gli], regexpr(settings[["ProjectGoalTitle"]], o[gli], fixed=TRUE),
+             regexpr("](", o[gli], fixed=TRUE)-1)
+    )
+
+    del <- paste0(
+      unlist(strsplit(settings[["ProjectDeliverableHeader"]],
+                      split=paste0(settings[["ProjectDeliverableTitle"]]), fixed=TRUE)),
+      substr(o[dli], regexpr(settings[["ProjectDeliverableTitle"]], o[dli], fixed=TRUE),
+             regexpr("](", o[dli], fixed=TRUE)-1)
+    )
+
+    task <- paste0(
+      unlist(strsplit(settings[["ProjectTaskHeader"]],
+                      split=paste0(settings[["ProjectTaskTitle"]]), fixed=TRUE)),
+      substr(o[tli], regexpr(settings[["ProjectTaskTitle"]], o[tli], fixed=TRUE),
+             regexpr("](", o[tli], fixed=TRUE)-1)
+    )
+
+
+    #### Extract Goal Del Task Summary & TODO Sections ####
+    summary <- o[summi:todoi]
+    todo <- o[todoi:length(o)]
+
+
+    #### Add to list ####
+
+    dgdt <- c(pdap, goal, del, task)
+    names(dgdt) <- c("projectDocFilePath", "goal", "deliverable", "task")
+    DocGDTsList[[dGDTi]] <- dgdt
+    dGDTi <- dGDTi+1
   }
 
-  #cat( "  headIndex: ", headIndex, "\n" )
-
-  # compute the NEXT LINE After the Header set of Links from headIndex:
-  line <- computeNextLineHeader(headIndex, projDocContents)
-
-  # return this index:
-  line
-
-}
-
-
-#' Get Project Comp title from Project Comp contents
-#'
-#'
-getProjCompTitle <- function(contents) {
-
-  line <- grep( paste0("title: '"), contents) # get first instance of line beginning with title:
-
-  # compute old title - +2 as always have "~ " after prefix, -1 as have "'" at end of title
-  oldProjectCompTitle <- substr(contents[line],
-                                regexpr( "~ ", contents[line]) + 2,
-                                nchar(contents[line])-1)
-
-  # return oldProjectCompTitle
-  oldProjectCompTitle
-
-}
-
-
-#' Get Project Prefix From Path
-#'
-#' Extracts the Project Prefix from the projectPath - all characters before "~_"
-#'
-#'
-getProjectPrefixFromPath <- function(projectPath) {
-    getProjectPrefixFromName(basename(projectPath) )
-}
-
-
-
-#' Get Project Prefix From Name
-#'
-#' Extracts the Project Prefix from the projectName - all characters before "~_"
-#'
-#'
-getProjectPrefixFromName <- function(projectCompName) {
-  substr(projectCompName, 1, regexpr("~_", projectCompName)-1)
-}
-
-#' Get Prefix From File Name
-#'
-#' fileName is PREFIX~_COMP_TITLE.Rmd - returned is PREFIX
-#'
-getPrefixFromFileName <- function(fileName) {
-  substr(fileName, 1, regexpr("~_", fileName)-1)
-}
-
-
-#' Get Project TiNametle From File Name
-#'
-#' fileName is PREFIX~_COMP_TITLE.Rmd - returned is COMP_TITLE
-#'
-getNameFromFileName <- function(fileName) {
-  substr(fileName, regexpr("~_", fileName)+2, nchar(fileName)-4)
-}
-
-
-#' Get Protocol Summary
-#'
-#' Extracts the Protocol Summary from protocolName in SOP/ relative to projNotePath.
-#'
-#' @param projNotePath a path to a valid Project Note.
-#' @param protocolName the name of a valid protocol in SOP/ in programme relative to projNotePath
-#'
-#' @export
-getProtocolSummary <- function(projNotePath, protocolName) {
-
-  # get protocolPath from projNotePath and protocolName:
-  orgPath <- dirname( dirname(projNotePath) )
-
-  orgPath <- findOrgDir(orgPath)
-
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, projectNotePath is not inside a PROGRAMME sub-dir!
-    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projNotePath) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # set confPath + tempPath:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # normalize path - remove HOME REF ~
-  projNotePath <- normalizePath(projNotePath)
-
-  # get the progPath:
-  progPath <- findProgDir(projNotePath)
-
-  # get SOP path:
-  protocolsPath <- paste0(progPath, .Platform$file.sep, "SOP")
-
-  protocolPath <- paste0( protocolsPath, .Platform$file.sep, protocolName,
-                          .Platform$file.sep, paste0(protocolName, ".Rmd") )
-
-  # read Protocol file:
-  protocolFileConn <- file( protocolPath )
-  protocolContents <- readLines( protocolFileConn )
-  close(protocolFileConn)
-
-  protocolStartIndex <- matchLineIndex("# SUMMARY", protocolContents)
-
-  # get the NEXT LINE in Protocol
-  protocolStartIndex <- computeNextLineIndex((protocolStartIndex+1), protocolContents )-1
-
-  # defined as the line starting: # NEXT STEPS
-  protocolEndIndex <- grepLineIndexFrom("---", protocolContents, protocolStartIndex)
-
-  extractedProtocolSummary <- c("")
-
-  for(i in (protocolStartIndex-1):(protocolEndIndex-1) ) {
-
-    extractedProtocolSummary <- c(extractedProtocolSummary, protocolContents[i])
-
-  }
-
-  extractedProtocolSummary
-
-}
-
-
-#' Compute Line Index
-#'
-#' Returns the index of the first EXACT MATCH of line in contents, if not found returns -1.
-#'
-#' line - a String to be found
-#'
-#' contents - a vector of strings, the index of the first instance of line in this vector is returned.
-#'
-#'
-computeLineIndex <- function(line, contents) {
-
-  returnVal <- -1
-  # look through contents to find an index that matches line:
-  for( l in 1:length(contents) ) {
-
-    if( contents[l] == line ) {
-      returnVal <- l
-      break
-    }
-
-  }
-
-  returnVal
+  DocGDTsList
 
 }
 
@@ -745,13 +502,14 @@ computeLineIndex <- function(line, contents) {
 #' this vector is returned.
 #'
 #'
-grepLineIndex <- function(line, contents) {
+grep_line_index <- function(line, contents) {
 
+  #### grep line in contents FIXED ####
   returnVal <- -1
   # look through contents to find an index that matches line:
   for( l in 1:length(contents) ) {
 
-    if( grepl(line, contents[l]) ) {
+    if( grepl(line[1], contents[l], , fixed=TRUE) ) {
       returnVal <- l
       break
     }
@@ -763,38 +521,7 @@ grepLineIndex <- function(line, contents) {
 }
 
 
-#' Match Line Index
-#'
-#' Returns the index of the FIRST COMPLETE MATCH of line in contents,
-#' if not found returns -1.
-#'
-#' @param line a String to be found - any leading/trailing whitespace is TRIMMED.
-#' @param contents a vector of strings, the index of the first instance of line in
-#' this vector is returned - any leading/trailing whitespace is TRIMMED from each line.
-#'
-#'
-matchLineIndex <- function(line, contents) {
-
-  # trim leading/trailing whitespace
-  line <- trimws(line)
-
-  returnVal <- -1
-  # look through contents to find an index that matches line:
-  for( l in 1:length(contents) ) {
-
-    if( (line == trimws(contents[l]) ) ) {
-      returnVal <- l
-      break
-    }
-
-  }
-
-  returnVal
-
-}
-
-
-#' Grep Line Index from initialIndex
+#' Grep Line Index from initialIndex to END of contents
 #'
 #' Returns the index of the first PARTIAL MATCH (using grep) of line in contents,
 #' from initialIndex, if not found returns -1.
@@ -804,13 +531,15 @@ matchLineIndex <- function(line, contents) {
 #' this vector is returned.
 #'
 #'
-grepLineIndexFrom <- function(line, contents, initialIndex) {
+grep_line_index_from <- function(line, contents, initialIndex) {
+
+  #### grep line in contents from initialIndex FIXED ####
 
   returnVal <- -1
   # look through contents to find an index that matches line:
   for( l in initialIndex:length(contents) ) {
 
-    if( grepl(line, contents[l]) ) {
+    if( grepl(line[1], contents[l], fixed=TRUE) ) {
       returnVal <- l
       break
     }
@@ -822,431 +551,43 @@ grepLineIndexFrom <- function(line, contents, initialIndex) {
 }
 
 
-#' Compute Last Line Index
+#' Grep Line Index from initialIndex to START of contents
 #'
-#' Returns the index of the LAST Line in contents that contains any content ("[A-z,0-9]")
+#' Returns the index of the first PARTIAL MATCH (using grep) of line in contents,
+#' from initialIndex, if not found returns -1.
 #'
-#' contents - a vector of strings, the index of the first instance of line in this vector is returned.
+#' @param line a String to be found
+#' @param contents a vector of strings, the index of the first instance of line in
+#' this vector is returned.
 #'
-#' Set sep to TRUE to include searches for separation lines (---) in Rmd doc.
 #'
-computeLastLineIndex <- function(contents, sep=FALSE) {
+grep_line_index_from_rev <- function(line, contents, initialIndex) {
 
-  returnVal <- 1
+  #### grep line in contents from initialIndex FIXED ####
 
-  if( sep==FALSE) {
-    grepStr <- "[A-z,0-9]"
+  returnVal <- -1
+  # look through contents to find an index that matches line:
+  for( l in initialIndex:1 ) {
+
+    if( grepl(line[1], contents[l], fixed=TRUE) ) {
+      returnVal <- l
+      break
+    }
+
+  }
+
+  returnVal
+
+}
+
+match_line_index <- function(line, contents) {
+
+  indices <- grep( trimws(line), trimws(contents), fixed=TRUE)
+
+  if( length(indices) == 0 ) {
+    returnVal <- -1
   } else {
-    grepStr <- "[A-z,0-9,-]"
-  }
-
-  # start at the END of contents:
-  for( l in length(contents):1 ) {
-
-    if( grepl(grepStr, contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
-
-      returnVal <- (l+1) # return the NEXT LINE after the line which contains content
-      break
-
-    }
-
-  }
-
-  returnVal
-
-}
-
-
-#' Compute Previous Line Index
-#'
-#' Returns the index of the Previous Line in contents that contains any content ("[A-z,0-9]"), looking back
-#' from lineIndex to 1.
-#'
-#' @param lineIndex the index to start looking back from.
-#' @param contents a vector of strings, the index of the first instance of line in this vector is returned.
-#'
-#'
-computePreviousLineIndex <- function(lineIndex, contents) {
-
-  returnVal <- 1
-
-  # start at the END of contents:
-  for( l in lineIndex:1 ) {
-
-    if( grepl("[A-z,0-9]", contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
-
-      returnVal <- (l+1) # return the NEXT LINE after the line which contains content
-      break
-
-    }
-
-  }
-
-  returnVal
-
-}
-
-#' Compute Next Line Index
-#'
-#' Returns the index of the Next Line in contents that contains any content ("[A-z,0-9]"), looking
-#' from lineIndex to length of contents.
-#'
-#' @param lineIndex the index to start looking from.
-#' @param contents a vector of strings, the index of the first instance of any content in this vector is returned.
-#'
-#'
-computeNextLineIndex <- function(lineIndex, contents) {
-
-  returnVal <- 1
-
-  # start at the END of contents:
-  for( l in lineIndex:length(contents) ) {
-
-    if( grepl("[A-z,0-9]", contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
-
-      returnVal <- (l+1) # return the NEXT LINE after the line which contains content
-      break
-
-    }
-
-  }
-
-  returnVal
-
-}
-
-
-#' Compute next Header line
-#'
-#' Returns the first blank line after the last content in Header Note contents.
-#'
-#' @param lineIndex Line to start to search back in headerContents from.
-#'
-#' @param headerContents Character vector containing header note contents.
-#'
-#'
-computeNextHeaderLine <- function(lineIndex, headerContents) {
-
-  returnVal <- 1
-
-  # start at the END of headerContents:
-  for( l in lineIndex:1 ) {
-
-    if( grepl("[A-z,0-9]", headerContents[l]) ) { # returns TRUE if line CONTAINS any letter or number
-
-      returnVal <- (l+1) # return the NEXT LINE after the line which contains content
-      break
-
-    }
-
-  }
-
-  returnVal
-
-}
-
-#' Get Project Note Doc Link List
-#'
-#' Returns a list of VECTORS:
-#'
-#'  list[[i]] : A VECTOR that includes the Project Doc ABSOLUTE Link, GOAL Num, DEL Num, TASK Num.
-#'
-#'  list[[i]][[1]] : Project Doc ABSOLUTE Link
-#'
-#'  list[[i]][[2]] : Project Doc GOAL - number plus title
-#'
-#'  list[[i]][[3]] : Project Doc DELIVERABLE - number plus title
-#'
-#'  list[[i]][[4]] : Project Doc TASK - number plus title
-#'
-#'  list[[i]][[5]] : LIST containing all summary information in Project Note for this
-#'                   Project Doc GOAL/DEL/TASK
-#'
-#'  length( list ) returns the number of Project Doc links in the returned list.
-#'
-#'  @param projectNoteContents Character vector containing the contents of a Project Note, which includes links to
-#'  at least one ProjectDoc, separated by "----", and ended with "------".
-#'
-#'  @param projectNotePath the FULL PATH to the project note, from which the contents is derived.
-#'
-#'  @param todoHeader The header of any TODO section that may be defined under the project note summary.  This Header
-#'  and remaining content of a summary should be saved SEPARATELY to the summaryVector.
-#'
-#'
-getProjectNoteDocLinkList <- function(projectNoteContents, projectNotePath, todoHeader) {
-
-  # instantiate a list to store links
-  linkList <- list()
-
-  summaryVector <- c()
-
-  todoVector <- c()
-  todoFound <- FALSE
-
-  # start indices at 1:
-  linkIndex <- 1
-  goaldeltaskIndex <- 1
-
-  # look through projectNoteContents:
-    # From OBJECTIVES up to line "------" - which marks the end of the Project Doclinks
-
-  for( l in ( grep("# OBJECTIVES", projectNoteContents, fixed=TRUE) +1 ):
-            ( grep("------", projectNoteContents)[1] )  ) {
-
-    # check for Project Doc link, plus GOAL, DEL, TASK
-    # First will encounter Project Doc Link, then GOAL, DEL, TASK
-
-
-    if( substring(projectNoteContents[l], first=1, last=1) == "[" ) { # this must be ProjectDocLink
-
-      # projectNoteContents[l] is a line that contains Project Doc link in ()
-      # extract this Relative Link, and add to list to return:
-      # AUTOMATICALLY uses [1] as the vector reference (and creates an error if referencing it!)
-      # SO do not use goaldeltaskIndex:
-      projDocRelLink <- substring(projectNoteContents[l],
-                                  first=regexpr("\\(", projectNoteContents[l])+1,
-                                  last=regexpr("\\)", projectNoteContents[l])-1 )
-
-      linkList[[linkIndex]] <- computePath(projectNotePath, projDocRelLink)
-
-      goaldeltaskIndex <- goaldeltaskIndex +1 # STILL increment this index
-
-    } else if(substring(projectNoteContents[l], first=1, last=7) == "* [GOAL") {
-
-          linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "## ", substring(projectNoteContents[l],
-                                                               first=4,
-                                                               last=regexpr("]", projectNoteContents[l])-1 ) )
-
-          goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
-
-      } else if(substring(projectNoteContents[l], first=1, last=18) == "    + [DELIVERABLE") {
-
-          linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "### ", substring(projectNoteContents[l],
-                                                               first=8,
-                                                               last=regexpr("]", projectNoteContents[l])-1 ) )
-
-          goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
-
-      } else if(substring(projectNoteContents[l], first=1, last=15) == "        - [TASK") {
-
-          linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "#### ", substring(projectNoteContents[l],
-                                                               first=12,
-                                                               last=regexpr("]", projectNoteContents[l])-1 ) )
-
-          goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
-
-      } else if( substring(projectNoteContents[l], first=1, last=4) == "----" ) {
-
-        # save summaryVector to linkList, and reset the summaryVector
-        linkList[[linkIndex]][goaldeltaskIndex] <- list(summaryVector)
-        summaryVector <- c()
-
-        #increment linkIndex when divider BETWEEN ProjectDoc links is seen:
-        linkIndex <- linkIndex + 1
-
-        # and reset the goaldeltaskIndex
-        goaldeltaskIndex <- 1
-
-    } else if(grepl("[A-Za-z0-9]", projectNoteContents[l]) && !grepl("##", projectNoteContents[l]) ) {
-
-      # if the line contains letters and is not the Doc Title, Doc Link, or Goal/Del/Task, it is part of the
-      # overview - so concat this into a character vector:
-      summaryVector <- c(summaryVector, projectNoteContents[l])
-
-    }
-
-  }
-
-  #return the linkList
-  linkList
-
-}
-
-
-
-#' Get Header Note Doc Link List
-#'
-#' Returns a list of VECTORS:
-#'
-#'  list[[i]] : A VECTOR that includes the Project Doc ABSOLUTE Link, GOAL Num, DEL Num, TASK Num.
-#'
-#'  list[[i]][1] : Project Doc ABSOLUTE Link
-#'
-#'  list[[i]][2] : Project Doc GOAL - number plus title
-#'
-#'  list[[i]][3] : Project Doc DELIVERABLE - number plus title
-#'
-#'  list[[i]][4] : Project Doc TASK - number plus title
-#'
-#'  length( list ) returns the number of Project Doc links in the returned list.
-#'
-#'  @param projectNoteContents Character vector containing the contents of a Project Note, which includes links to
-#'  at least one ProjectDoc, separated by "----", and ended with "------".
-#'
-#'  @param projectNotePath the FULL PATH to the project note, from which the contents is derived.
-#'
-#'
-getHeaderNoteDocLinkList <- function(projectNoteContents, projectNotePath) {
-
-  # instantiate a list to store links
-  linkList <- list()
-
-  summaryVector <- c()
-
-  # start indices at 1:
-  linkIndex <- 1
-  goaldeltaskIndex <- 1
-
-  # look through projectNoteContents:
-  # From OBJECTIVES up to line "------" - which marks the end of the Project Doclinks
-
-  for( l in ( grep("# OBJECTIVES", projectNoteContents, fixed=TRUE) +1 ):
-       ( grep("------", projectNoteContents)[1] )  ) {
-
-    # check for Project Doc link, plus GOAL, DEL, TASK
-    # First will encounter Project Doc Link, then GOAL, DEL, TASK
-
-
-    if( substring(projectNoteContents[l], first=1, last=1) == "[" ) { # this must be ProjectDocLink
-
-      # projectNoteContents[l] is a line that contains Project Doc link in ()
-      # extract this Relative Link, and add to list to return:
-      # AUTOMATICALLY uses [1] as the vector reference (and creates an error if referencing it!)
-      # SO do not use goaldeltaskIndex:
-      projDocRelLink <- substring(projectNoteContents[l],
-                                  first=regexpr("\\(", projectNoteContents[l])+1,
-                                  last=regexpr("\\)", projectNoteContents[l])-1 )
-
-      linkList[[linkIndex]] <- computePath(projectNotePath, projDocRelLink)
-
-      goaldeltaskIndex <- goaldeltaskIndex +1 # STILL increment this index
-
-    } else if(substring(projectNoteContents[l], first=1, last=7) == "* [GOAL") {
-
-      linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "## ", substring(projectNoteContents[l],
-                                                                          first=4,
-                                                                          last=regexpr("]", projectNoteContents[l])-1 ) )
-
-      goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
-
-    } else if(substring(projectNoteContents[l], first=1, last=18) == "    + [DELIVERABLE") {
-
-      linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "### ", substring(projectNoteContents[l],
-                                                                           first=8,
-                                                                           last=regexpr("]", projectNoteContents[l])-1 ) )
-
-      goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
-
-    } else if(substring(projectNoteContents[l], first=1, last=15) == "        - [TASK") {
-
-      linkList[[linkIndex]][goaldeltaskIndex] <- paste0( "#### ", substring(projectNoteContents[l],
-                                                                            first=12,
-                                                                            last=regexpr("]", projectNoteContents[l])-1 ) )
-
-      goaldeltaskIndex <- goaldeltaskIndex +1 # increment index
-
-    } else if( substring(projectNoteContents[l], first=1, last=4) == "----" ) {
-
-      #increment linkIndex when divider BETWEEN ProjectDoc links is seen:
-      linkIndex <- linkIndex + 1
-
-      # and reset the goaldeltaskIndex
-      goaldeltaskIndex <- 1
-
-    }
-
-  }
-
-  # remove any NULL references from list
-   # this can happen if for example a line separator was placed between OBJECTIVES_HEADER and ProjectDocLinkGDT
-  linkList <- linkList[-which(sapply(linkList, is.null))]
-
-  #return the linkList
-  linkList
-
-}
-
-
-#' Space Summary Bullets
-#'
-#' Summary Bullets - acquired from getProjectNoteDocLinkList() (in returned linkList[[5]]) -
-#' can be re-spaced for insertion into Rmd file.  2 blank lines between primary bullet ("*"), 1
-#' blank line between all other lines, and ends with three blank lines.
-#'
-#'
-spaceSummaryBulletPoints <- function(summaryBullets) {
-
-  summaryBullets2 <- c()
-
-  for( i in 1:length(summaryBullets) ) {
-
-    if( startsWith(summaryBullets[i], "*") ) {
-      summaryBullets2 <- c(summaryBullets2, "")
-      summaryBullets2 <- c(summaryBullets2, "")
-      summaryBullets2 <- c(summaryBullets2, summaryBullets[i])
-    }
-    else {
-      summaryBullets2 <- c(summaryBullets2, "")
-      summaryBullets2 <- c(summaryBullets2, summaryBullets[i])
-    }
-
-  }
-
-  # add three blank lines at end:
-  summaryBullets2 <- c(summaryBullets2, "")
-  summaryBullets2 <- c(summaryBullets2, "")
-  summaryBullets2 <- c(summaryBullets2, "")
-
-  summaryBullets2
-
-}
-
-
-
-
-
-
-
-#' Find Goal/Del/Task Line Index in Project Doc
-#'
-#' Identify the line index of a goal/del/task, given the goalNum, delNum, taskNum.
-#'
-findProjectDocGoalDelTaskLineIndex <- function(projectDocContents, goalNum, delNum, taskNum) {
-
-}
-
-
-#' Compute Next Line
-#'
-#' Returns the first blank line after the last content under a Task
-#' in a Project Document,
-#'
-#'
-computeNextLine <- function(line, projDocContents) {
-
-  # look through projDocContents FROM line, and identify the line that begins ### or ---
-  for( l in (line+1):length(projDocContents) ) {
-
-    if( substring(projDocContents[l], first=1, last=2) =="##" || substring(projDocContents[l], first=1, last=3) =="###" || substring(projDocContents[l], first=1, last=3) =="---" ) {
-
-      val <- l
-      break
-    }
-    else {
-      val <- l
-    }
-  }
-
-  # next, look from val-1 BACK to line, and identify the first line
-  for( lb in (val-1):(line) ) {
-
-    if( grepl("[A-z,0-9]", projDocContents[lb]) ) { # returns TRUE if line CONTAINS any letter or number
-
-      returnVal <- (lb+1) # return the NEXT LINE after the line which contains content
-      break
-
-    }
-
+    returnVal <- indices[1]
   }
 
   returnVal
@@ -1255,112 +596,20 @@ computeNextLine <- function(line, projDocContents) {
 
 
 
-#' Compute Next Line Header
-#'
-#' Returns the first blank line after the last Project SubNote in a Project Group, under a Task
-#' in a Project Document.
-#'
-#'
-computeNextLineHeader <- function(line, projDocContents) {
 
-  # look through projDocContents FROM line, and identify the line that begins ### or ---
-  for( l in (line+1):length(projDocContents) ) {
+#' Match vector in parent vector
+#'
+#' Identifies each initial index of `vector` in `parent` where all elements in
+#' `vector` match elements in `parent` in order.
+#'
+match_vector <- function(vector, parent, nomatch = 0L) {
 
-    if( substring(projDocContents[l], first=1, last=2) =="##" ||
-        substring(projDocContents[l], first=1, last=3) =="###" ||
-        substring(projDocContents[l], first=1, last=3) =="---" ||
-        substring(projDocContents[l], first=1, last=3) =="**[" ) {
-
-      val <- l
-      break
-    }
-    else {
-      val <- l
-    }
+  #### match vector in parent ####
+  sieved <- which(parent == vector[1L])
+  for (i in seq.int(1L, length(vector) - 1L)) {
+    sieved <- sieved[parent[sieved + i] == vector[i + 1L]]
   }
-
-  # next, look from val-1 BACK to line, and identify the first line
-  for( lb in (val-1):(line) ) {
-
-    if( grepl("[A-z,0-9]", projDocContents[lb]) ) { # returns TRUE if line CONTAINS any letter or number
-
-      returnVal <- (lb+1) # return the NEXT LINE after the line which contains content
-      break
-
-    }
-
-  }
-
-  returnVal
-
-}
-
-
-
-#' Compute Next Link Line
-#'
-#' Returns the next line in contents, from line, that contains a Rmd link (the next
-#' line that contains the string "](" ), else if no link is found, returns a BLANK
-#' STRING.
-#'
-#'
-computeNextLinkLine <- function(line, contents) {
-
-  returnVal <- ""
-
-  # look through projDocContents FROM line, and identify the line that begins ### or ---
-  for( l in (line+1):length(contents) ) {
-
-    if( regexpr("](", contents[l], fixed=TRUE) > 0 ) {
-      returnVal <- contents[l]
-      break
-    }
-
-  }
-
-  returnVal
-
-}
-
-
-#' Compute Next SubNote Line
-#'
-#' Returns the first blank line after the last content under a Header Note Link
-#' in a Project Document,
-#'
-#'
-computeNextSubNoteLine <- function(line, projDocContents) {
-
-  # look through projDocContents FROM line, and identify the line that begins ### or ---
-  # or **[ (start of next HEADER or SIMPLE NOTE)
-  for( l in (line+1):length(projDocContents) ) {
-
-    if( substring(projDocContents[l], first=1, last=3) == "###" ||
-        substring(projDocContents[l], first=1, last=3) == "---" ||
-        substring(projDocContents[l], first=1, last=3) == "**[" ) {
-
-      val <- l
-      break
-    }
-    else {
-      val <- l
-    }
-  }
-
-  # next, look from val-1 BACK to line, and identify the first line
-  for( lb in (val-1):(line) ) {
-
-    if( grepl("[A-z,0-9]", projDocContents[lb]) ) { # returns TRUE if line CONTAINS any letter or number
-
-      returnVal <- (lb+1) # return the NEXT LINE after the line which contains content
-      break
-
-    }
-
-  }
-
-  returnVal
-
+  sieved
 }
 
 
@@ -1409,26 +658,10 @@ computeNextSubNoteLine <- function(line, projDocContents) {
 #' [[2]] - contains the errorMessage - a String indicating why the method failed.
 #'
 #' @export
-cursorSelection <- function() {
+cursor_selection <- function() {
 
-  taskRetrieved <- TRUE
 
-  originalLine <- ""
-  task <- ""
-  deliverable <- ""
-  goal <- ""
-
-  taskLine <- 1
-  delLine <- 1
-  goalLine <- 1
-
-  headerRetrieved <- TRUE
-
-  errorMessage <- ""
-
-  addingSubNote <- FALSE
-  headerNoteLink <- ""
-  headerNoteLineNumber <- 0
+  #### get source editor selection ####
 
   context <- rstudioapi::getSourceEditorContext()
 
@@ -1438,236 +671,31 @@ cursorSelection <- function() {
   # recapture, to ensure the path is retrieved!
   context <- rstudioapi::getSourceEditorContext()
 
-  original <- context$contents
+
+  #### get path contents & selected line ####
+
+  filePath <- normalizePath(context$path)
+  contents <- context$contents
 
   cursor <- rstudioapi::primary_selection(context)
   line <- (cursor$range[[1]])[1] # get the line number of cursor
 
-  # store the originalLineNumber:
-  originalLineNumber <- line
-
-  lineContent <- original[ line ] # retrieve the CONTENT of the line with the cursor on
-  originalLine <- lineContent
-
-  # identify if the selected line is selecting a HEADER NOTE
-  # if a HEADER NOTE is selected, the line will contain the string "-00~"
-  # if a SUBNOTE is selected, the line will contain the string "*["
-  if( grepl("-00~", lineContent, fixed = TRUE) || grepl("*[", lineContent, fixed = TRUE) ) {
-
-    addingSubNote <- TRUE
-
-    # find the headerNote:
-    if( grepl("-00~", lineContent, fixed = TRUE) ) {
-      headerNoteLink <- lineContent
-      headerNoteLineNumber <- line
-    }
-    else {
-      for(l in line:1) {
-        lineContent <- original[ l ]
-        if( grepl("-00~", lineContent, fixed = TRUE) ) {
-          headerNoteLink <- lineContent
-          headerNoteLineNumber <- l
-          break
-        }
-      }
-    }
-    if(headerNoteLink == "" ) { # if headerNoteLink not found, set errorMessage:
-      headerRetrieved <- FALSE
-      errorMessage <- "Could Not Identify HEADER NOTE"
-    }
+  # get orgPath confPath and tempPath
+  orgPath <- find_org_directory(filePath)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  filePath is not in a projectmanagr ORGANISATION: ", filePath) )
   }
+  # set confPath + tempPath:
+  confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
+  tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
 
-  # Search BACK through lineContent to find the first line that starts with "##"
-  for(l in line:1) {
-    lineContent <- original[ l ]
-    if(substring(lineContent, 1, 2)  == "##") {
-      line <- l
-      break
-    }
-  }
+  # load settings file for user defined settings
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
-  # Now check if lineContent is a Task
-  taskString <- substring(lineContent, 1, 9)
-
-  if(taskString=="#### TASK") { # if so, extract the first DELIVERABLE and GOAL:
-
-    task <- lineContent
-    taskLine <- line
-
-    # Extract "### DELIVERABLE" line
-    for(l in line:1) {
-      lineContent <- original[ l ]
-      if(substring(lineContent, 1, 15)  == "### DELIVERABLE") {
-        deliverable <- lineContent
-        line <- l
-        break
-      }
-    }
-
-    if( line == taskLine ) {
-      # didnt find ### DELIVERABLE - set error message
-      taskRetrieved <- FALSE
-      errorMessage <- "Could Not Locate TASK/DEL/GOAL"
-    }
-
-    delLine <- line
-
-    # Extract "## GOAL" line
-    for(l in line:1) {
-      lineContent <- original[ l ]
-      if(substring(lineContent, 1, 7)  =="## GOAL") {
-        goal <- lineContent
-        line <- l
-        break
-      }
-    }
-
-    if( line == delLine ) {
-      # didnt find ## GOAL - set error message
-      taskRetrieved <- FALSE
-      errorMessage <- "Could Not Locate TASK/DEL/GOAL"
-    }
-
-    goalLine <- line
-
-  }
-  else { # if task not found, set errorMessage:
-    taskRetrieved <- FALSE
-    errorMessage <- "Could Not Locate TASK/DEL/GOAL"
-  }
-
-
-
-  # form the output for this Function:
-
-  if( taskRetrieved == TRUE && headerRetrieved == TRUE ) {
-
-    #taskNum <- as.integer(  substring(task,  first=11, last=(regexpr(":", task)-1) )  )
-    #delNum <- as.integer(  substring(deliverable,  first=17, last=(regexpr(":", deliverable)-1) )  )
-    #goalNum <- as.integer(  substring(goal,  first=9, last=(regexpr(":", goal)-1) )  )
-
-    #taskTitle <- substring(task,  first=(regexpr(":", task)+2 ) )
-    #delTitle <- substring(deliverable,  first=(regexpr(":", deliverable)+2 ) )
-    #goalTitle <- substring(goal,  first=(regexpr(":", goal)+2 ) )
-
-    output <- list( task, taskLine, deliverable, delLine, goal, goalLine,
-                    originalLine, originalLineNumber,
-                    addingSubNote, headerNoteLink, headerNoteLineNumber,
-                    context$path )
-
-    names(output) <- c( "task", "taskLine", "deliverable", "delLine", "goal", "goalLine",
-                        "originalLine", "originalLineNumber",
-                        "addingSubNote", "headerNoteLink", "headerNoteLineNumber",
-                        "projectDocPath")
-
-    output
-
-  }
-  else {
-
-    list( "FALSE", errorMessage )
-
-  }
+  create_selection(filePath, contents, line, settings) # return selection
 
 }
-
-
-
-
-
-#' Document Cursor Selection
-#'
-#' Identify the selection from the Active Cursor position in current R Studio file.
-#'
-#' First identifies if the current Cursor position is on a GROUP (HEADER NOTE or SUBNOTE).
-#' It then searches back through the Active Document to find the first line starting with
-#' "##" - if this is a "#### TASK" line, then the first previous "### DELIVERABLE" line and
-#' the first previous "### GOAL" line is also identified.
-#'
-#' If TASK, DELIVERABLE and GOAL lines are all successfully found, this method returns
-#' a LIST:
-#'
-#' [[1]] or [["line"]] - line index selected in Project Note.
-#'
-#' [[2]] or [["column"]] - column index selected in Project Note.
-#'
-#' [[3]] or [["projectNotePath"]] - the path of the Active Doc (a Project Doc, as successfully retrieved Task/Del/Goal)
-#'
-#'
-#' If this method is unsuccessful (there is an error), it returns a LIST:
-#'
-#' [[1]] - contains the String "FALSE"
-#' [[2]] - contains the errorMessage - a String indicating why the method failed.
-#'
-#'
-projectNoteSelection <- function() {
-
-
-  projectNoteRetrieved <- TRUE
-
-  errorMessage <- ""
-
-  context <- rstudioapi::getSourceEditorContext()
-
-  # first ENSURE the current file is saved:
-  rstudioapi::documentSave(context$id)
-
-  # recapture, to ensure the path is retrieved!
-  context <- rstudioapi::getSourceEditorContext()
-
-  original <- context$contents
-
-  cursor <- rstudioapi::primary_selection(context)
-  line <- (cursor$range[[1]])[1] # get the line number of cursor
-  column <- (cursor$range[[1]])[2]
-
-  # check if the current note is a Project Note in an Organisation:
-
-  orgPath <- dirname( dirname(context$path) )
-
-  orgPath <- findOrgDir(orgPath)
-
-  if(orgPath == "" ) {
-    projectNoteRetrieved <- FALSE
-    errorMessage <- "Current File is not inside an Organisation"
-  }
-
-  if(regexpr("~_", context$path) < 0) {
-    projectNoteRetrieved <- FALSE
-    errorMessage <- "Current file name does not contain Prefix~_Name syntax"
-  }
-
-
-
-  # form the output for this Function:
-
-  if( projectNoteRetrieved == TRUE ) {
-
-    #taskNum <- as.integer(  substring(task,  first=11, last=(regexpr(":", task)-1) )  )
-    #delNum <- as.integer(  substring(deliverable,  first=17, last=(regexpr(":", deliverable)-1) )  )
-    #goalNum <- as.integer(  substring(goal,  first=9, last=(regexpr(":", goal)-1) )  )
-
-    #taskTitle <- substring(task,  first=(regexpr(":", task)+2 ) )
-    #delTitle <- substring(deliverable,  first=(regexpr(":", deliverable)+2 ) )
-    #goalTitle <- substring(goal,  first=(regexpr(":", goal)+2 ) )
-
-    output <- list( line, column, normalizePath( context$path )  )
-
-    names(output) <- c( "line", "column", "projectNotePath")
-
-    output
-
-  }
-  else {
-
-    list( "FALSE", errorMessage )
-
-  }
-
-}
-
-
-
 
 
 #' Document User Selection
@@ -1721,177 +749,495 @@ projectNoteSelection <- function() {
 #' [[2]] - contains the errorMessage - a String indicating why the method failed.
 #'
 #' @export
-userSelection <- function(projectDocPath, line) {
+user_selection <- function(filePath, line) {
 
-  taskRetrieved <- TRUE
+  # get orgPath confPath and tempPath
+  orgPath <- find_org_directory(filePath)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  filePath is not in a projectmanagr ORGANISATION: ", filePath) )
+  }
+  # set confPath + tempPath:
+  confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
+  tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
 
-  originalLine <- ""
-  task <- ""
-  deliverable <- ""
-  goal <- ""
+  # load settings file for user defined settings
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
-  taskLine <- 1
-  delLine <- 1
-  goalLine <- 1
+  #### read file ####
 
-  headerRetrieved <- TRUE
+  contents <- read_file(filePath)
 
-  errorMessage <- ""
+  create_selection(filePath, contents, line, settings) # return selection
 
-  addingSubNote <- FALSE
-  headerNoteLink <- ""
-  headerNoteLineNumber <- 0
+}
 
+
+#' Create Selection
+#'
+#' Creates a selection list generated from a filePath, its contents, and an
+#' existing line.  The selection list consists of a `rmdType` named vector that
+#' defines what kind of file is in the current selection: `DOC` `HEAD` `SUB`
+#' `NOTE` or `FALSE`.
+#'
+#' If a Project Document (`DOC`) is selected, the returned list contains several
+#' other useful parameters:
+#'
+#' From project doc filepath contents and selection line.
+#'
+create_selection <- function(filePath, contents, line, settings) {
+
+
+  #### get Rmd file type ####
+
+  rmdType <- get_file_type(filePath, settings)
 
   # store the originalLineNumber:
   originalLineNumber <- line
 
-  # read Project Doc:
-  projectDocConn <- file(projectDocPath)
-  projectDocContents <- readLines( projectDocConn )
-  close(projectDocConn)
+  lineContent <- contents[ line ] # retrieve the CONTENT of the line with the cursor on
+  originalLine <- lineContent
 
 
-  lineContent <- projectDocContents[ line ] # retrieve the CONTENT at line
+  #### Deal with DOC Selection ####
 
-  originalLine <- lineContent # store original line content
+  if( rmdType == "DOC" ) {
+
+    taskRetrieved <- TRUE
+
+    task <- ""
+    deliverable <- ""
+    goal <- ""
+
+    taskLine <- 1
+    delLine <- 1
+    goalLine <- 1
+
+    headerRetrieved <- TRUE
+
+    errorMessage <- ""
+
+    addingSubNote <- FALSE
+    headerNoteLink <- ""
+    headerNoteRmdPath <- ""
+    headerNoteName <- ""
+    headerNoteLineNumber <- 0
 
 
-  # identify if the selected line is selecting a HEADER NOTE
-  # if a HEADER NOTE is selected, the line will contain the string "-00~"
-  # if a SUBNOTE is selected, the line will contain the string "*["
-  if( grepl("-00~", lineContent, fixed=TRUE) || grepl("*[", lineContent, fixed=TRUE) ) {
+    ##### Identify HEADER or SUBNOTE ####
+
+    # identify if the selected line is selecting a HEADER OR SUB NOTE
+    # if a HEADER NOTE is selected, the line will contain the string "-00~" by default
+    headerString <- paste0(settings[["HeaderNotePrefix"]], settings[["ProjectPrefixSep"]])
+    # if a SUBNOTE is selected, the line will contain the string "*[" by default (subnotelinkformat plus start of link)
+    subNoteString <- paste0(settings[["SubNoteLinkFormat"]], "[")
+    if( grepl(headerString, lineContent, fixed = TRUE) || grepl(subNoteString, lineContent, fixed = TRUE) ) {
+
+      addingSubNote <- TRUE
+
+      # find the headerNote:
+      if( grepl(headerString, lineContent, fixed = TRUE) ) {
+        headerNoteLink <- lineContent
+        headerNoteLineNumber <- line
+      } else {
+        for(l in line:1) {
+          lineContent <- contents[ l ]
+          if( grepl(headerString, lineContent, fixed = TRUE) ) {
+            headerNoteLink <- lineContent
+            headerNoteLineNumber <- l
+            break
+          }
+        }
+      }
+      if(headerNoteLink == "" ) { # if headerNoteLink not found, set errorMessage:
+        headerRetrieved <- FALSE
+        errorMessage <- "Could Not Identify HEADER NOTE"
+      }
+
+      # get headerNoteName
+      hnrp <- substr(headerNoteLink,
+                     regexpr("](", headerNoteLink, fixed=TRUE)+2,
+                     nchar(headerNoteLink) )
+      hnrp <- substr(hnrp, 1, regexpr(")", hnrp, fixed=TRUE)-1)
+      # combine with filePath to get the full path
+      headerNoteRmdPath <- R.utils::getAbsolutePath(
+        paste0(dirname(filePath), .Platform$file.sep, hnrp) )
+      headerNoteFileName <- basename(headerNoteRmdPath)
+      # now extract the headerNoteName from filename
+      headerNoteName <- substring(headerNoteFileName,
+                                  first=regexpr(settings[["ProjectPrefixSep"]], headerNoteFileName, fixed=TRUE) + nchar(settings[["ProjectPrefixSep"]]),
+                                  last=regexpr( paste0(".", settings[["FileTypeSuffix"]]), headerNoteFileName, fixed=TRUE)-1  )
+
+    }
+
+
+    #### Find TASK DEL GOAL ####
+
+    # crop project doc content to include content up to selection line
+    contentsCrop <- contents[1:line]
+
+    # identify line indices that starts with TASK DEL GOAL Strings
+    taskIndices <- which( startsWith(contentsCrop, settings[["ProjectTaskHeader"]]) )
+    delIndices <- which( startsWith(contentsCrop, settings[["ProjectDeliverableHeader"]]) )
+    goalIndices <- which( startsWith(contentsCrop, settings[["ProjectGoalHeader"]]) )
+
+    if(length(taskIndices) == 0 | length(delIndices) == 0 | length(goalIndices) == 0) {
+
+      # if task/del/goal not found, set errorMessage:
+      taskRetrieved <- FALSE
+      errorMessage <- "Could Not Locate TASK/DEL/GOAL"
+
+    } else {
+
+      # task del goal to retrieve is the LAST in indices
+      taskLine <- taskIndices[length(taskIndices)]
+      delLine <- delIndices[length(delIndices)]
+      goalLine <- goalIndices[length(goalIndices)]
+
+      # get string for task del goal
+      task <- contentsCrop[taskLine]
+      deliverable <- contentsCrop[delLine]
+      goal <- contentsCrop[goalLine]
+
+    }
+
+    #### return goal del task plus header note info ####
+
+    if( taskRetrieved == TRUE && headerRetrieved == TRUE ) {
+
+      output <- list( rmdType, task, taskLine, deliverable, delLine,
+                      goal, goalLine,
+                      originalLine, originalLineNumber,
+                      addingSubNote, headerNoteLink,
+                      headerNoteRmdPath, headerNoteName,
+                      headerNoteLineNumber,
+                      filePath )
+
+      names(output) <- c( "rmdType", "task", "taskLine", "deliverable", "delLine",
+                          "goal", "goalLine",
+                          "originalLine", "originalLineNumber",
+                          "addingSubNote", "headerNoteLink",
+                          "headerNoteRmdPath", "headerNoteName",
+                          "headerNoteLineNumber",
+                          "filePath")
+
+    }
+    else {
+
+      output <- create_no_selection(rmdType, errorMessage, filePath)
+
+    }
+
+  } else if( rmdType == "HEAD" ) {
+
+    #### Deal with HEAD Selection ####
 
     addingSubNote <- TRUE
 
-    # find the headerNote:
-    if( grepl("-00~", lineContent, fixed=TRUE) ) {
-      headerNoteLink <- lineContent
-      headerNoteLineNumber <- line
-    }
-    else {
-      for(l in line:1) {
-        lineContent <- projectDocContents[ l ]
-        if( grepl("-00~", lineContent, fixed=TRUE) ) {
-          headerNoteLink <- lineContent
-          headerNoteLineNumber <- l
-          break
-        }
-      }
-    }
-    if(headerNoteLink == "" ) { # if headerNoteLink not found, set errorMessage:
-      headerRetrieved <- FALSE
-      errorMessage <- "Could Not Identify HEADER NOTE"
-    }
-  }
-
-  # Search BACK through lineContent to find the first line that starts with "##"
-  for(l in line:1) {
-    lineContent <- projectDocContents[ l ]
-    if(substring(lineContent, 1, 2)  == "##") {
-      line <- l
-      break
-    }
-  }
-
-  # Now check if lineContent is a Task
-  taskString <- substring(lineContent, 1, 9)
-
-  if(taskString=="#### TASK") { # if so, extract the first DELIVERABLE and GOAL:
-
-    task <- lineContent
-    taskLine <- line
-
-    # Extract "### DELIVERABLE" line
-    for(l in line:1) {
-      lineContent <- projectDocContents[ l ]
-      if(substring(lineContent, 1, 15)  == "### DELIVERABLE") {
-        deliverable <- lineContent
-        line <- l
-        break
-      }
-    }
-
-    if( line == taskLine ) {
-      # didnt find ### DELIVERABLE - set error message
-      taskRetrieved <- FALSE
-      errorMessage <- "Could Not Locate TASK/DEL/GOAL"
-    }
-
-    delLine <- line
-
-    # Extract "## GOAL" line
-    for(l in line:1) {
-      lineContent <- projectDocContents[ l ]
-      if(substring(lineContent, 1, 7)  =="## GOAL") {
-        goal <- lineContent
-        line <- l
-        break
-      }
-    }
-
-    if( line == delLine ) {
-      # didnt find ## GOAL - set error message
-      taskRetrieved <- FALSE
-      errorMessage <- "Could Not Locate TASK/DEL/GOAL"
-    }
-
-    goalLine <- line
-
-  }
-  else { # if task not found, set errorMessage:
-    taskRetrieved <- FALSE
-    errorMessage <- "Could Not Locate TASK/DEL/GOAL"
-  }
+    # get headerNoteName from filePath
+    headerNoteRmdPath <- filePath
+    headerNoteFileName <- basename(filePath)
+    # now extract the headerNoteName from filename
+    headerNoteName <- substring(headerNoteFileName,
+                                first=regexpr(settings[["ProjectPrefixSep"]], headerNoteFileName, fixed=TRUE) + nchar(settings[["ProjectPrefixSep"]]),
+                                last=regexpr( paste0(".", settings[["FileTypeSuffix"]]), headerNoteFileName, fixed=TRUE)-1  )
 
 
-
-  # form the output for this Function:
-
-  if( taskRetrieved == TRUE && headerRetrieved == TRUE ) {
-
-    #taskNum <- as.integer(  substring(task,  first=11, last=(regexpr(":", task)-1) )  )
-    #delNum <- as.integer(  substring(deliverable,  first=17, last=(regexpr(":", deliverable)-1) )  )
-    #goalNum <- as.integer(  substring(goal,  first=9, last=(regexpr(":", goal)-1) )  )
-
-    #taskTitle <- substring(task,  first=(regexpr(":", task)+2 ) )
-    #delTitle <- substring(deliverable,  first=(regexpr(":", deliverable)+2 ) )
-    #goalTitle <- substring(goal,  first=(regexpr(":", goal)+2 ) )
-
-    output <- list( task, taskLine, deliverable, delLine, goal, goalLine,
+    output <- list( rmdType,
                     originalLine, originalLineNumber,
-                    addingSubNote, headerNoteLink, headerNoteLineNumber,
-                    projectDocPath )
+                    addingSubNote,
+                    headerNoteRmdPath, headerNoteName,
+                    filePath )
 
-    names(output) <- c( "task", "taskLine", "deliverable", "delLine", "goal", "goalLine",
+    names(output) <- c( "rmdType",
                         "originalLine", "originalLineNumber",
-                        "addingSubNote", "headerNoteLink", "headerNoteLineNumber",
-                        "projectDocPath")
+                        "addingSubNote",
+                        "headerNoteRmdPath", "headerNoteName",
+                        "filePath")
 
-    output
+  } else if( rmdType == "SUB" ) {
+
+    #### Deal with SUBNOTE Selection ####
+
+    addingSubNote <- TRUE
+
+    headerNoteRmdPath <- find_header_Rmd_path(filePath, settings)
+    headerNoteFileName <- basename(headerNoteRmdPath)
+    # now extract the headerNoteName from filename
+    headerNoteName <- substring(headerNoteFileName,
+                                first=regexpr(settings[["ProjectPrefixSep"]], headerNoteFileName, fixed=TRUE) + nchar(settings[["ProjectPrefixSep"]]),
+                                last=regexpr( paste0(".", settings[["FileTypeSuffix"]]), headerNoteFileName, fixed=TRUE)-1  )
+
+
+    output <- list( rmdType,
+                    originalLine, originalLineNumber,
+                    addingSubNote,
+                    headerNoteRmdPath, headerNoteName,
+                    filePath )
+
+    names(output) <- c( "rmdType",
+                        "originalLine", "originalLineNumber",
+                        "addingSubNote",
+                        "headerNoteRmdPath", "headerNoteName",
+                        "filePath")
+
+  } else if( rmdType == "NOTE" ) {
+
+    #### Deal with PROJECT NOTE Selection ####
+
+    addingSubNote <- FALSE
+
+    output <- list( rmdType,
+                    originalLine, originalLineNumber,
+                    addingSubNote,
+                    filePath )
+
+    names(output) <- c( "rmdType",
+                        "originalLine", "originalLineNumber",
+                        "addingSubNote",
+                        "filePath")
+
+  } else {
+
+    #### Deal with unidentified Rmd file ####
+
+    errorMessage <- "Unidentified file type selected."
+    output <- create_no_selection("UNKNOWN", errorMessage, filePath)
 
   }
-  else {
 
-    list( "FALSE", errorMessage )
-
-  }
+  output # return output
 
 }
 
 
-#' Replace and insert a vector
-#'
-#' This function will find the FIRST INSTANCE of the exact match pattern in the passed vector, x,
-#' and replace this element with all elements in the vector, values.
-#'
-replaceAndInsertVector <- function( pattern, values, x ) {
 
-  index <- match(pattern, x)
-
-  c(x[1:(index-1)], values, x[(index+1):length(x)])
+#' Create No Selection
+#'
+#' Selection object that signifies No Selection, with error message.
+#'
+#' Consists of a list with first item the string "FALSE", and second item
+#' an `errorMessage`.
+#'
+#'
+create_no_selection <- function(rmdType, errorMessage, filePath) {
+  output <- list( rmdType, errorMessage, filePath )
+  names(output) <- c( "rmdType", "errorMessage", "filePath")
+  output # return output
 
 }
+
+
+
+#' Substitute Sub Note params in contents
+#'
+sub_subnote_params <- function(subNoteContents, subNotePrefix,
+                               subNoteTitle, authorValue,
+                               settings, orgPath) {
+
+  #### sub subnote params in contents ####
+  subNoteContents <- sub_template_param(subNoteContents, "{{PREFIX}}",
+                                        subNotePrefix, orgPath)
+  subNoteContents <- sub_template_param(subNoteContents, "{{TITLE}}",
+                                        subNoteTitle, orgPath)
+  subNoteContents <- sub_template_param(subNoteContents, "{{AUTHOR}}",
+                                        authorValue, orgPath)
+
+  subNoteContents <- sub_template_param(subNoteContents, "{{OBJECTIVES_HEADER}}",
+                                        settings[["NoteObjectivesHeader"]], orgPath)
+  subNoteContents <- sub_template_param(subNoteContents, "{{OBJECTIVES_FOOTER}}",
+                                        settings[["NoteObjectivesFooter"]], orgPath)
+
+  subNoteContents <- sub_template_param(subNoteContents, "{{DATA_STORAGE_HEADER}}",
+                                        settings[["NoteStorageHeader"]], orgPath)
+  subNoteContents <- sub_template_param(subNoteContents, "{{DATA_STORAGE_FOOTER}}",
+                                        settings[["NoteStorageFooter"]], orgPath)
+
+  subNoteContents <- sub_template_param(subNoteContents, "{{GROUP_NOTE_CONTENTS_HEADER}}",
+                                        settings[["SubNoteContentsHeader"]], orgPath)
+  subNoteContents <- sub_template_param(subNoteContents, "{{GROUP_NOTE_CONTENTS_FOOTER}}",
+                                        settings[["SubNoteContentsFooter"]], orgPath)
+
+  # modify subNoteContents with rmarkdown-html-header content
+  subNoteContents <- replace_markdown_header(subNoteContents, orgPath)
+
+  # modify subNoteContents with SEP values
+  subNoteContents <- replace_sep_values(subNoteContents, orgPath)
+
+  subNoteContents # return
+
+}
+
+#' Insert header link content into subnote
+#'
+insert_subnote_header_link <- function(subNoteContents, headerNoteFileName,
+                                       headerNoteRmdPath, subNoteRmdPath,
+                                       headerNoteContentLinkContents,
+                                       settings, orgPath) {
+
+
+  #### Insert header link content into subnote ####
+
+  headerNoteContentLink <- create_hyperlink( headerNoteFileName, headerNoteRmdPath, subNoteRmdPath)
+  headerNoteContentLinkContents <- sub_template_param(headerNoteContentLinkContents,
+                                                      "{{SUB_NOTE_CONTENT_LINK}}",
+                                                      headerNoteContentLink, orgPath)
+
+  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["SubNoteContentsHeader"]], orgPath),
+                                           subNoteContents)
+  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["SubNoteContentsFooter"]], orgPath),
+                                              subNoteContents, noteContentsHeadIndex)
+
+  subNoteContents <- insert_at_indices(subNoteContents, noteContentsFootIndex, headerNoteContentLinkContents)
+
+  subNoteContents # return
+
+}
+
+
+#' Substitute Note Link Summary in Contents
+#'
+note_link_summ_params <- function(projNoteLinkSummaryContents, todoContents, settings, orgPath) {
+
+  #### sub headers in contents ####
+  noteLinkSummContents <- sub_template_param(projNoteLinkSummaryContents,
+                                             "{{OBJECTIVES_SUMMARY_HEADER}}",
+                                             settings[["NoteObjectivesSummarySectionHeader"]],
+                                             orgPath)
+
+  noteLinkSummContents <- sub_template_param(noteLinkSummContents,
+                                             "{{OBJECTIVES_TODO_HEADER}}",
+                                             settings[["NoteObjectivesTodoSectionHeader"]],
+                                             orgPath)
+
+  # replace todoContents
+  todo <- sub_template_param(todoContents, "{{TODO_ITEM_HEADER_TEMPLATE}}",
+                                     settings[["TodoItemHeaderTemplate"]], orgPath)
+  noteLinkSummContents <- sub_template_param(noteLinkSummContents, "{{TODO_TEMPLATE}}",
+                                         todo, orgPath)
+
+  noteLinkSummContents # return
+
+}
+
+#' Substitute Note Link in Contents
+#'
+sub_note_link_params <- function(noteLinkContents, settings, DocGDTList,
+                                 projNoteLinkSummaryContents, orgPath) {
+
+  #### sub link in contents ####
+  noteLinkContents <- sub_template_param(noteLinkContents, "{{OBJECTIVES_SEP}}",
+                                         settings[["NoteObjectivesSep"]], orgPath)
+  noteLinkContents <- sub_template_param(noteLinkContents, "{{PROJECT_DOC_TITLE}}",
+                                         DocGDTList$title, orgPath)
+  noteLinkContents <- sub_template_param(noteLinkContents, "{{PROJECT_DOC_LINK}}",
+                                         DocGDTList$link, orgPath)
+  noteLinkContents <- sub_template_param(noteLinkContents, "{{PROJECT_DOC_LINK_GOAL}}",
+                                         DocGDTList$goal, orgPath)
+  noteLinkContents <- sub_template_param(noteLinkContents, "{{PROJECT_DOC_LINK_DEL}}",
+                                         DocGDTList$del, orgPath)
+  noteLinkContents <- sub_template_param(noteLinkContents, "{{PROJECT_DOC_LINK_TASK}}",
+                                         DocGDTList$task, orgPath)
+
+  # insert the summaryBullet into SUMMARY_INFO field:
+  noteLinkContents <- sub_template_param(noteLinkContents, "{{SUMMARY_INFO}}",
+                                         projNoteLinkSummaryContents, orgPath)
+
+  # return
+  noteLinkContents
+
+}
+
+
+
+#' Substitute a templates' parameter for content
+#'
+#' This function deals with the cases where the paramContents points a multi-lined
+#' vector, or where paramContents points to to a template file in templates/ that
+#' specifies multi-lined content to insert into the templateContents vector.
+#'
+sub_template_param <- function(templateContents, templateParam, paramContents, orgPath) {
+
+  #### sub param in contents ####
+
+  if(is.character(paramContents) &&
+     length(paramContents) == 1 &&
+     startsWith(paramContents, "template:")) {
+
+    # check orgPath
+    orgPath <- find_org_directory(orgPath)
+    # set confPath + tempPath:
+    confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
+    tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
+
+    # paramContents is a POINTER to a multi-line content file in templates dir
+    # so open this and insert the multi-lined vector into templateContents
+    paramPointer <- substr(paramContents, nchar("template:")+1, nchar(paramContents))
+    paramContents <- read_file( paste0( tempPath, .Platform$file.sep, paramPointer) )
+
+    templateContents <- replace_params_with_vector(templateContents, templateParam, paramContents)
+
+  } else if( length(paramContents) > 1 ) {
+
+    # paramContents is a multi-lined vector
+    # so insert the multi-lined vector appropriately
+    templateContents <- replace_params_with_vector(templateContents, templateParam, paramContents)
+
+  } else {
+
+    # paramContents is a vector of length 1, insert appropriately with gsub()
+    templateContents <- gsub(templateParam, paramContents, templateContents, fixed=TRUE)
+
+  }
+
+  templateContents # return
+
+}
+
+#' Replace every instance of `templateParam` in `templateContents` with `paramContents`.
+replace_params_with_vector <- function(templateContents, templateParam, paramContents) {
+
+  tempParamIndices <- grep(templateParam, templateContents, fixed=TRUE)
+  templateContents <- replace_at_indices(templateContents, tempParamIndices, paramContents)
+  templateContents
+
+}
+
+
+
+#' Load `paramContents` (a param from settings.yml) correctly
+#'
+#' Some params start with keyword `template:` which indicates the relative path
+#' from the templatesDir to the template file to be loaded.
+#'
+#' Else `paramContents` is returned unchanged.
+load_param_vector <- function(paramContents, orgPath) {
+
+  #### load value if param points to template ####
+
+  # load the param if it points to a file
+  if(is.character(paramContents) &&
+     length(paramContents) == 1 &&
+     startsWith(paramContents, "template:")) {
+
+    # check orgPath
+    orgPath <- find_org_directory(orgPath)
+    # set confPath + tempPath:
+    confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
+    tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
+
+    # paramContents is a POINTER to a multi-line content file in templates dir
+    # so open this and insert the multi-lined vector into templateContents
+    paramPointer <- substr(paramContents, nchar("template:")+1, nchar(paramContents))
+    paramContents <- read_file( paste0( tempPath, .Platform$file.sep, paramPointer) )
+
+  }
+
+  # return
+  paramContents
+
+}
+
 
 
 #' Replace SEP Values
@@ -1906,22 +1252,12 @@ replaceAndInsertVector <- function( pattern, values, x ) {
 #' templates: `{{SEP01}}` to `{{SEP06}}`
 #'
 #'
-replaceSepValues <- function(templateContents, orgPath) {
+replace_sep_values <- function(templateContents, orgPath) {
 
-  # check orgPAth
 
-  # look for the .config/ and templates/ dirs:
-  confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
-  tempPath = paste(confPath, .Platform$file.sep, "templates" , sep="")
-
-  while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
-    orgPath <- dirname(orgPath)
-    if(nchar(orgPath) <=1) {
-      stop( paste0("  Could not identify ORGANISATION in orgPath: ",orgPath) )
-    }
-    confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
-    tempPath = paste(confPath, .Platform$file.sep, "templates", sep="")
-  }
+  # set confPath + tempPath:
+  confPath <- paste0(orgPath, .Platform$file.sep, "config")
+  tempPath <- paste0(confPath, .Platform$file.sep, "templates")
 
   # get all SEP files form tempPath
   sepFiles <- list.files(tempPath)[ startsWith(list.files(tempPath), "SEP") ]
@@ -1934,74 +1270,437 @@ replaceSepValues <- function(templateContents, orgPath) {
     close(templateFileConn)
   }
 
-  # replace SEP values in templateContents with appropriate SEP values
+  #### replace SEP values ####
 
   sep01indices <- grep("{{SEP01}}", templateContents, fixed=TRUE)
-  templateContents <- replaceAtIndices(templateContents, sep01indices, SEPS[[1]])
+  templateContents <- replace_at_indices(templateContents, sep01indices, SEPS[[1]])
 
   sep02indices <- grep("{{SEP02}}", templateContents, fixed=TRUE)
-  templateContents <- replaceAtIndices(templateContents, sep02indices, SEPS[[2]])
+  templateContents <- replace_at_indices(templateContents, sep02indices, SEPS[[2]])
 
   sep03indices <- grep("{{SEP03}}", templateContents, fixed=TRUE)
-  templateContents <- replaceAtIndices(templateContents, sep03indices, SEPS[[3]])
+  templateContents <- replace_at_indices(templateContents, sep03indices, SEPS[[3]])
 
   sep04indices <- grep("{{SEP04}}", templateContents, fixed=TRUE)
-  templateContents <- replaceAtIndices(templateContents, sep04indices, SEPS[[4]])
+  templateContents <- replace_at_indices(templateContents, sep04indices, SEPS[[4]])
 
   sep05indices <- grep("{{SEP05}}", templateContents, fixed=TRUE)
-  templateContents <- replaceAtIndices(templateContents, sep05indices, SEPS[[5]])
+  templateContents <- replace_at_indices(templateContents, sep05indices, SEPS[[5]])
 
   sep06indices <- grep("{{SEP06}}", templateContents, fixed=TRUE)
-  templateContents <- replaceAtIndices(templateContents, sep06indices, SEPS[[6]])
+  templateContents <- replace_at_indices(templateContents, sep06indices, SEPS[[6]])
 
   templateContents
-
-}
-
-
-replaceMarkdownHeader  <- function(templateContents, orgPath) {
-
-  # check orgPAth
-
-  # look for the .config/ and templates/ dirs:
-  confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
-  tempPath = paste(confPath, .Platform$file.sep, "templates" , sep="")
-
-  while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
-    orgPath <- dirname(orgPath)
-    if(nchar(orgPath) <=1) {
-      stop( paste0("  Could not identify ORGANISATION in orgPath: ",orgPath) )
-    }
-    confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
-    tempPath = paste(confPath, .Platform$file.sep, "templates", sep="")
-  }
-
-  # get all SEP files form tempPath
-  htmlHeaderFile <- file( paste0(tempPath, .Platform$file.sep, "rmarkdown-html-header.txt") )
-  htmlHeader <- readLines( htmlHeaderFile )
-  close(htmlHeaderFile)
-
-  # replace HTML_HEADER in templateContents with header
-  htmlHeaderIndex <- grep("{{HTML_HEADER}}", templateContents, fixed=TRUE)
-  templateContents <- replaceAtIndices(templateContents, htmlHeaderIndex, htmlHeader)
-
-  templateContents
-
 }
 
 
 #' Replace with VECTOR at indices in contents
-#'
-#'
-replaceAtIndices <- function(templateContents, indices, replacementVector) {
+replace_at_indices <- function(templateContents, indices, replacementVector) {
 
+  #### sort indices in reverse ####
   indices <- sort(indices, decreasing=TRUE) # work from END to START so indices remain VALID
+
+  #### replace each index with replacementVector
   for( i in indices) {
-    max <- length(templateContents)
-    templateContents <- c(templateContents[1:(i-1)], replacementVector, templateContents[(i+1):max])
+    max <- length(templateContents) # compute with each loop
+    # deal with edge cases - where index is 1 or max
+    if( i == 1 ) {
+      templateContents <- c(replacementVector, templateContents[(i+1):max])
+    } else if( i == max ) {
+      templateContents <- c(templateContents[1:(i-1)], replacementVector)
+    } else { # deal with standard case - replace index i with the vector
+      templateContents <- c(templateContents[1:(i-1)], replacementVector, templateContents[(i+1):max])
+    }
   }
 
   templateContents
+}
+
+
+
+replace_markdown_header  <- function(templateContents, orgPath,
+                                     htmlMarkdown="{{HTML_HEADER}}",
+                                     htmlHeaderFilename="rmarkdown-html-header.txt") {
+
+  # set confPath + tempPath:
+  confPath <- paste0(orgPath, .Platform$file.sep, "config")
+  tempPath <- paste0(confPath, .Platform$file.sep, "templates")
+
+  # get all SEP files form tempPath
+  htmlHeaderFile <- file( paste0(tempPath, .Platform$file.sep, htmlHeaderFilename) )
+  htmlHeader <- readLines( htmlHeaderFile )
+  close(htmlHeaderFile)
+
+  #### replace HTML_HEADER ####
+  htmlHeaderIndex <- grep(htmlMarkdown, templateContents, fixed=TRUE)
+  templateContents <- replace_at_indices(templateContents, htmlHeaderIndex, htmlHeader)
+
+  templateContents
+}
+
+
+#' Create Hyperlink
+#'
+#' creates string for hyperlink in Rmd, using `toFileName` as the hyperlink text,
+#' and generating a RELATIVE LINK to `toFilePath` from `fromFilePath`.
+#'
+create_hyperlink <- function(toFileName, toFilePath, fromFilePath) {
+  NoteLink <- R.utils::getRelativePath(toFilePath, relativeTo=fromFilePath)
+  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  HyperLink <- paste("[", toFileName, "](", NoteLink, ")",  sep="")
+  HyperLink # return
+}
+
+
+
+#' Update links
+#'
+#' Updates every hyperlink in all files within `dirTree`, replacing
+#' `oldFileName` (the basename of the file, including prefix and extension) with
+#' `newName` (the new file name, without prefix or extension).
+#'
+#' @param oldFileName defines the OLD name that will be in Hyperlinks.  Should be
+#' the FILE NAME - with no spaces, including PREFIX and .Rmd EXTENSION
+#' @param newName defines the NEW name to be written into Hyperlinks.  Should
+#' be the FILE NAME - with no spaces.
+#' @param dirTree Directory tree to search for files for replacing links in.
+#' @param oldTitle defines the OLD TITLE that will be in Hyperlinks.  By default
+#' replaces - & _ with spaces from name.
+#' @param newTitle defines the NEW TITLE that will be in Hyperlinks.  By default
+#' replaces - & _ with spaces from name.
+#' @param fileExtensions List of file extensions indicating what types of files
+#' should be searched for links and have links replaced.  Must be plaintext file
+#' type.  Default is Rmd files only.
+#'
+#' @export
+update_links <- function( oldFileName, newName, dirTree, settings,
+                          fileExtensions = list("Rmd") ) {
+
+  # check oldFileName contains NO SPACES:
+  if( grepl("\\s+", oldFileName) ) {
+    stop( paste0("  oldFileName contains a SPACE: ",oldFileName) )
+  }
+
+  # check newName contains NO SPACES:
+  if( grepl("\\s+", newName) ) {
+    stop( paste0("  newName contains a SPACE: ",newName) )
+  }
+
+  # make dirTree full path
+  dirTree <- normalizePath(dirTree)
+
+  # split oldFileName into PREFIX NAME and EXTENSION
+  oldPrefix <- substr(oldFileName, 1,
+                   regexpr(settings[["ProjectPrefixSep"]], oldFileName, fixed=TRUE)-1 )
+  oldFileNameExt <- tools::file_ext(oldFileName)
+  oldName <- substr(oldFileName,
+                    regexpr(settings[["ProjectPrefixSep"]], oldFileName, fixed=TRUE)+(nchar(settings[["ProjectPrefixSep"]])),
+                    regexpr(oldFileNameExt, oldFileName, fixed=TRUE)-2) # first letter AND extension .
+
+  # construct oldLink: prefix plus oldName (no extension) for replacing
+  oldLink <- paste0(oldPrefix, settings[["ProjectPrefixSep"]], oldName)
+
+  # construct newLink: prefix plus newName (no extension) for replacing
+  newLink <- paste0(oldPrefix, settings[["ProjectPrefixSep"]], newName)
+
+  # get orgPath from dirTree
+  orgPath <- find_org_directory(dirTree)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNotePath) )
+  }
+
+  # get config path to exclude files from (in case dirTree is orgPath!)
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+
+
+  #### get file list ####
+
+  # traverse EVERY Rmd file in orgPath dir tree:
+  fileList <- c()
+  for(fe in fileExtensions) {
+    fileList <- c(fileList,
+                   paste0( dirTree, .Platform$file.sep,
+                           list.files(path = dirTree, pattern = paste0("*.",fe),
+                                all.files = TRUE, recursive = TRUE, include.dirs = TRUE) ) )
+  }
+
+  # remove all files in config directory
+  fileList <- fileList[ !startsWith(fileList, confPath)]
+
+
+  #### replace oldLink with newLink ####
+
+  for(fl in fileList) {
+
+    # read file:
+    fileConn <- file(fl)
+    contents <- readLines(fileConn)
+    close(fileConn)
+
+    if( any( grepl(oldLink, contents, fixed=TRUE )) ) {
+      # replace oldLink with newLink in contents
+      contents <- gsub(oldLink, newLink, contents, fixed=TRUE)
+      # and save file
+      cat( "    replaced link(s) in file:", fl ,"\n" )
+      fileConn <- file(fl)
+      writeLines(contents, fileConn)
+      close(fileConn)
+    }
+  }
+}
+
+
+
+#' Insert vector at indices in contents
+#'
+#' Inserts `replacementVector` into `templateContents` at `indices` WITHOUT
+#' replacing the content at each index.
+#'
+insert_at_indices <- function(templateContents, indices, replacementVector) {
+
+  #### insert at indices without replacing each index ####
+
+  max <- length(templateContents)
+
+  indices <- sort(indices, decreasing=TRUE) # work from END to START so indices remain VALID
+  for( i in indices) {
+    # deal with edge cases - where index is 1 or max
+    if( i == 1 ) {
+      templateContents <- c(replacementVector, templateContents[(i):max])
+    } else if( i == max ) {
+      templateContents <- c(templateContents[1:(i-1)], replacementVector)
+    } else { # deal with standard case - replace index i with the vector
+      templateContents <- c(templateContents[1:(i-1)], replacementVector, templateContents[(i):max])
+    }
+  }
+
+  templateContents
+}
+
+
+
+#' Update ProjectManagr Files
+#'
+#' Updates all summary information in ORG index, PROG index, & Project Docs
+#' with linked PROG index, Project Docs, & Project Notes, respectively.
+#'
+#' @param dirTree OPTIONAL argument to set the directory tree in which an update
+#' will apply.  Will only update the summary information for ORG index, PROG
+#' index, Project Doc files that are contained within dirTree if set.  Default is
+#' a BLANK STRING, which means the current working directory is used, or the
+#' Source Editor context file path is used, to identify the orgPath to update
+#' the whole organisation.
+#'
+update <- function(dirTree="") {
+
+  #### update all projectmanagr documents in dirTree ####
+
+  if( dirTree == "" ) {
+
+    orgPath <- find_org_directory( getwd() )
+    if(orgPath == "" & Sys.getenv("RSTUDIO") != "" ) {
+      orgPath <- find_org_directory( rstudioapi::getSourceEditorContext()$path)
+    } else {
+      stop( paste0("  Path is not in an Organisation: ",  getwd()) )
+    }
+    dirTree <- orgPath # simplifies code below - will udpate files in dirTree only which IS orgPath!
+
+  } else {
+
+    orgPath <- find_org_directory( dirTree )
+    if(orgPath == "") {
+      stop( paste0("  dirTree is not in an Organisation: ",  dirTree) )
+    }
+  }
+
+  # set confPath + tempPath - these names are FIXED:
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+
+  # load settings file for user defined settings
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  statusFile <- paste0(confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
+  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+
+
+  #### find all projectManagr files in dirTree for updating ####
+
+  # ORG index
+  orgFiles <- list.files(orgPath)
+  orgIndex <- orgFiles[ startsWith(orgFiles, settings[["OrgIndexFileNamePrefix"]])]
+
+  # PROG index
+  progDirs <- names(status$PROGRAMMES)
+  progIndexes <- c()
+  for(pd in progDirs) {
+    progFiles <- list.files( paste0(orgPath, .Platform$file.sep, pd) )
+    progIndexes <- c(progIndexes, paste0(orgPath, .Platform$file.sep, pd, .Platform$file.sep,
+                                         progFiles[ startsWith(progFiles, settings[["ProgIndexFileNamePrefix"]])]) )
+  }
+
+  # ProjDocs
+  progProjects <- paste0(progDirs, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
+  projDocs <- c()
+  for(pp in progProjects) {
+    projFiles <- list.files( paste0(orgPath, .Platform$file.sep, pp) )
+    if(length(projFiles) > 0 ) {
+      projDocs <- c(projDocs,
+                    paste0(orgPath, .Platform$file.sep, pp, .Platform$file.sep,
+                           projFiles[ grepl(settings[["ProjectPrefixSep"]], projFiles, fixed=TRUE)  ] ) )
+    }
+  }
+
+
+  #### update summaries in files ####
+
+
+  # ORG index
+
+  # only if dirTree == orgPath - otherwise dirTree has been set by function call to be sub-dir in org..
+  if(dirTree == orgPath ) {
+
+    update_org_index(orgIndex)
+  }
+
+
+  # PROG index
+
+  for(pi in progIndexes) {
+    # only if PROG INDEX startsWith dirTree - otherwise dirTree has been set by function call to be sub-dir in org that doesnt include PROG INDEX
+    if( startsWith(pi, dirTree) == TRUE ) {
+
+      update_prog_index(pi)
+    }
+  }
+
+
+  # proj docs
+
+  update_project_docs( projDocs[ startsWith(projDocs, dirTree) ], settings, orgPath )
 
 }
+
+
+
+update_org_index <- function(orgIndexPath) {
+
+  orgIndexContents <- read_file(orgIndexPath)
+
+  # identify each programme in this orgIndex
+
+  # read each programme file
+
+  # extract summary section
+
+  # insert into orgIndexContents
+
+
+}
+
+update_prog_index <- function(progIndexPath) {
+
+  progIndexContents <- read_file(progIndexPath)
+
+  # identify each projDoc in this progIndex
+
+  # read each projDoc
+
+  # extract summary section
+
+  # insert into progIndexContents
+
+}
+
+
+#' updating all project docs in one function for efficiency
+#'
+#' As one project note can contain MULTIPLE GDTs to Project Notes, and want to
+#' efficiently update the projDoc GDTs, need to keep track of which project
+#' notes have been updated.
+#'
+#' Every time a project note is opened, ALL OF ITS GDT SUMMARY SECTIONS are updated.
+#' Once updated do not want to update again, so add its full path to a character
+#' vector to check against before opening and updating any further project notes.
+update_project_docs <- function(projectDocPaths, settings, orgPath) {
+
+  projectNotesUpdated <- c() # vector to append project notes to as they are updated
+
+  for(projectDocPath in projectDocPaths) {
+
+    projectDocContents <- read_file(projectDocPath)
+
+    # identify project note paths linked to each GDT
+    projNotePaths <- get_doc_gdt_project_note_paths(projectDocPath, projectDocContents, settings)
+
+    for(pn in projNotePaths) {
+
+      if( any(projectNotesUpdates == pn) == FALSE ) { # only parse project note if not parsed already
+
+        projectDocContents <- update_project_note(pn, projectDocPath, projectDocContents)
+
+        # add pn to projectNotesUpdates
+        projectNotesUpdates <- c(projectNotesUpdates, pn)
+      }
+
+    }
+
+  }
+
+}
+
+
+#' update project note, putting GDT summary updates for projectDoc that exists at
+#' projectDocPath into projectDocContents.
+update_project_note <- function(projectNotePath, projectDocPath, projectDocContents) {
+
+  projNoteContents <- read_file(projectNotePath)
+
+  # extract each objective
+  DocGDTsList <- extract_note_obj_doc_link_GDT_summ(projNoteContents, pn, settings, orgPath)
+
+  if(is.list(DocGDTsList) & length(DocGDTsList) == 0) {
+    # if a blank list - this note has no objective - skip this note
+    next
+  }
+
+  # update each GDT summary section to the relevant project doc
+  for(dGDT in DocGDTsList) {
+
+  }
+
+}
+
+
+#' Compute Previous Line Index
+#'
+#' Returns the index of the Previous Line in contents that contains any content ("[A-z,0-9]"), looking back
+#' from lineIndex to 1.
+#'
+#' @param lineIndex the index to start looking back from.
+#' @param contents a vector of strings, the index of the first instance of line in this vector is returned.
+#'
+#'
+compute_previous_line_index <- function(lineIndex, contents) {
+
+  returnVal <- 1
+
+  # start at the END of contents:
+  for( l in lineIndex:1 ) {
+
+    if( grepl("[A-z,0-9]", contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
+
+      returnVal <- (l+1) # return the NEXT LINE after the line which contains content
+      break
+
+    }
+
+  }
+
+  returnVal
+}
+
+
+
+
 

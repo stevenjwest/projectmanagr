@@ -1,109 +1,80 @@
 ---
 title: '{{TITLE}}'
 author: '{{AUTHOR}}'
-output:
-  html_document:
-    theme: united
-    toc: yes
-    toc_depth: 5
-    toc_float: yes
+{{HTML_HEADER}}
 ---
 
 
 
-# PROGRAMME AIMS
+{{SUMMARY_HEADER}}
 
 
 {{ORGLINK}}
 
 
-* _eg_Develop_Histology_Pipelines_
 
-* _eg_Conduct_IBL_Histology_
-
-* _eg_Cultivate_collaborations_
+*Welcome to the {{TITLE}} Programme*
 
 
->>> copy summary bullets from Programme Objectives defined below
->>> This will be copied under programme link in Organisation Index page to summarise this programme
->>> Consider expanding with summary of achievements of progress in this programme as work is completed
->>> Consider adding a summary GRAPHIC to insert.
+_one_sentence_summary_statement_of_programme_scope__This_Programme_documents__
 
 
-------
+>>> What does this programme aim to achieve?  Complete sentence "This Programme documents..."
 
 
-
-# Overview
-
-
-*Welcome to the {{TITLE}} Programme!*
-
-
-_one_sentence_summary_of_programme_scope__EG__DEMONSTRATE_Mouse_CNS_Clearing_and_Histology_Principles_empirically_and_apply_these_to_study_mouse_CNS_3D_structure_
-
-This Programme serves as the primary Documentation for _programme_scope_
+>>> Summarise Programme Aim with Plans and Progress
+>>> Each AIM should be a broad objective that one or more projects attempt to meet.
+>>> These AIMs will be copied under programme link in Organisation Index page to summarise this programme
+>>> Continue expanding with summary of achievements of progress in this programme as work is completed
+>>> Consider adding a summary GRAPHIC to update & insert.
 
 
 
----
-
-
-
-# {{TITLE}} Programme Objectives
-
-
-* _eg_Conduct_IBL_Histology_
-
-* _eg_Develop_Histology_Pipelines_
-
-* _eg_Cultivate_collaborations_
-
-
-
-## _eg_Conduct_IBL_Histology_
+## _PROGRAMME_AIM_01__BROAD_OBJECTIVE_
 
 
 
 
-## _eg_Develop_Histology_Pipelines_
+
+
+## _PROGRAMME_AIM_02__BROAD_OBJECTIVE_
 
 
 
 
-## _eg_Cultivate_collaborations_
+
+
+## _PROGRAMME_AIM_03__BROAD_OBJECTIVE_
 
 
 
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+
+
+{{SUMMARY_FOOTER}}
 
 
 
-# Programme Background
-
-
-_initial_aims_background_information_MOTIVATION_Notes_
+# Project Background Information
 
 
 
 >>> Provide background and context to reader
->>> Provide links to other relevant projects
->>> Keep notes on project research which do not have a note to go into yet..
+>>> Keep notes on programme research which do not have a project to go into yet
 
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-
-
-# PROJECTS:
+{{SEP01}}
 
 
 
+{{PROJECTS_HEADER}}
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+
+Programme work is organised into the following PROJECTS - bodies of work defined by set of goals
+
+
+
+{{PROJECTS_FOOTER}}
+
 
 

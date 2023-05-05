@@ -1,590 +1,238 @@
 ---
 title: '{{TITLE}}'
 author: '{{AUTHOR}}'
-date: "`r Sys.Date()`"
-output:
-  pdf_document:
-    toc: yes
-    toc_depth: 5
-  html_document:
-    theme: united
-    toc: yes
-    toc_depth: 5
-    toc_float: yes
+{{HTML_HEADER_PROTOCOL}}
 ---
 
 
 
-# PROJECT NOTE: 
+{{PROTOCOL_SUMMARY_HEADER}}
 
 
-{{PROJECT_NOTE_LINK}}
+{{PROTOCOL_PROJECT_NOTE_LINK}}
 
 
-------
+>>>>
+>>>> Provide a one sentence summary of this protocol
+>>>> Each Protocol is broken into SOP and LOG sections.
+>>>> This summary will be shown to users when viewing the protocol for insertion into project notes.
+>>>>
+
+This Protocol specifies the SOP for _insert_protocol_scope_
 
 
-
-# SUMMARY
-
-
-one_sentence_summary__EXAMPLE_edit_as_appropriate
-
-
-This Protocol specifies how to perfuse a whole mouse, and provides boilerplate to log mouse perfusion.
-
-
----
+{{PROTOCOL_SUMMARY_FOOTER}}
 
 
 
-# Background
+{{PROTOCOL_GRAPHICAL_ABSTRACT_HEADER}}
 
 
-EXAMPLE_edit_as_appropriate
+>>>> SCHEMATIC representing the procedures & underlying MODEL/UNDERSTANDING of mechanisms
+>>>>     - include RECOMMENDED parameter values for each step
+>>>>     - include underlying MECHANISMS that happen with each step
+>>>>     - This graphic and abstract serves as a QUICK REFERENCE
 
 
+```{r}
 
-## Perfusion Fixation background
-
-
-* Forming formaldehyde from PFA powder has been shown to create artifacts in mouse brains
-            
-    - see https://pubmed.ncbi.nlm.nih.gov/22305951/
-            
-    - One artifact is a hyperintense rim around the brain
-    
-        - This artifact is not seen in any brains perfused with EM Grade formaldehyde
-    
-        - presumed to be due to occlusion of capillaries and small vessels by particulates
-        
-        - this causes an increase in pressure that ruptures the vessels, resulting in a blister of liquid below the dura mater
-                
-    - Another artifact is gray-white matter contrast inversion
-    
-        - This is seen when too short a fixation time or too low a concentration of fixative is used
-
-
-
----
-
-
-
-# Pre-Requisites
-
-
-EXAMPLE_edit_as_appropriate
-
-
-This Protocol assumes the animals have been imported into projectmanagr samples framework:
-
-
-* To import samples data, use the following:
-
-    - Protocol: [Data Import Mouse Manual Protocol](../Data_Import_Mouse_Manual_Protocol/Data_Import_Mouse_Manual_Protocol.Rmd)
-
-
----
-
-
-
-# EQUIPMENT & MATERIAL
-
-
----
-
-
-EXAMPLE_edit_as_appropriate
-
-
-* Perfusion Kit:
-        
-    + *Perfusion Apparatus:*
-    
-        - 2 x 20mL Syringes ()
-        
-        - ~60cm Length of Bubble Tubing ()
-        
-        - Luer Locks and Adaptors ()
-        
-        - Butterfly Needle ()
-        
-    + *Buffers:*
-    
-        - Standard PBS (pH 7.4)
-        
-            - See Setup below for making this solution
-    
-        - 4% Formaldehyde in 0.1M PB (pH 7.4)
-        
-            - Make with 10mL 16% EM Grade Formaldehyde solution (ThermoFisher, 28908)
-        
-            - See Setup below for making this solution
-        
-    + *Perfusion Dissection Kit:*
-    
-        - Large Sharp Scissors
-        
-        - Rat-tooth forceps
-        
-        - Suture Forceps
-        
-        - Plastic Forceps
-        
-        - Small spring-loaded scissors
-
-
-```{r perfusion-kit-schematic, fig.cap="Perfusion Kit"}
-
- #knitr::include_graphics("images/01-formaldehyde-EM-Thermofisher.jpg")
+knitr::include_graphics('{{PROTOCOL_GRAPHICAL_ABSTRACT_SVG}}')
 
 ```
 
 
-* Notes:
-
-    + It is convenient to keep the dissection kit in a Really Useful box : 9L (??)
+_abstract_succinct_description_of_procedures_and_parameters_
 
 
 
-* Lab Hood
-    
-    + Follow local best practice when handling Formaldehyde
-        
-        - It is toxic and considered carcinogenic!  It is highly volatile, always work with formaldehyde in a hood.
-
-
----
+{{PROTOCOL_GRAPHICAL_ABSTRACT_FOOTER}}
 
 
 
-## Setup
+{{PROTOCOL_BACKGROUND_HEADER}}
 
 
-EXAMPLE_edit_as_appropriate
-
-
-
-### Make PBS:
-
-
-* [] Make PBS - 250mL:
-
-    + Dissolve **0.479g Na2HPO4-7H2O** (Sigma S9390) into ~180mL dH2O in 250mL Lab Bottle
-    
-    + Dissolve **0.0983g NaH2PO4-H2O** (Sigma S9638) into ~30mL dH2O in 50mL Falcon Tube
-
-    + Mix ~30mL NaH2PO4-H2O solution to ~180mL Na2HPO4-7H2O Solution in 250mL Lab Bottle
-    
-    + Dissolve **2.0g NaCl** (Sigma S9888) and **0.05g KCl** (Sigma P3911) into 250mL Lab Bottle
-
-    + Top up 250mL bottle to 250mL with dH2O
-            
-        - Rinse Falcon Tube with ~40mL to add any remnants of NaH2PO4-H2O solution
-        
-    + Will keep for weeks in 4C fridge
-    
-
-* Notes:
-
-    + Reference : [Buffer Phosphate Protocol](../../../00-SWC/SOP/Buffer_Phosphate_Protocol/Buffer_Phosphate_Protocol.Rmd)
-
----
+>>>> Provide background and context to reader
+>>>> Provide links to relevant project notes & data that supports the protocol procedure parameters
 
 
 
-# PROTOCOL
-
-
----
+{{PROTOCOL_BACKGROUND_FOOTER}}
 
 
 
-## Mount Tissue Samples in BABB
+{{PROTOCOL_MATERIALS_HEADER}}
 
 
-Benzyl Alcohol Benzyl Benzoate (BABB) mountant matches RI of dehydrated protein and renders the tissue transparent at wavelengths +450nm.
+>>>> Provide a list of equipment & material
+>>>> Define Equipment/Material ID - and give supplier and catalogue number
+>>>> Group equipment/material together by usage/storage
 
 
+>>>> SUGGEST TO add images to visualise sets of equipment/material for graphical reference
 
-```{r mount-babb-schematic, fig.cap="Mount tissue samples in BABB"}
 
-#knitr::include_graphics("relative/path/to/img.svg")
+```{r equipment-material-image, fig.cap=""}
+
+knitr::include_graphics('{{PROTOCOL_EQUIPMENT_SVG}}')
 
 ```
 
 
-
-* Sample dehydration:
-    
-    + Wash: PBS
-    
-        - [] 2mL, RT, swirl by hand, ~30sec
-        
-            - **Log DATETIME**
-        
-        - [] 2mL, RT, Shaker, 2Hr
-        
-        - [] 1mL, RT, swirl by hand, ~30sec
-        
-    + Wash: dH2O
-    
-        - [] 1mL, RT, swirl by hand, ~30sec
-        
-        - [] 1mL, RT, swirl by hand, ~30sec
-        
-        - [] 1mL, RT, swirl by hand, ~30sec
-        
-    + Dehydrate: methanol
-    
-        - [] 1mL, RT, swirl by hand, ~30sec
-        
-        - [] 1mL, RT, swirl by hand, ~30sec
-        
-        - [] 1mL, RT, swirl by hand, ~30sec
-        
-
-* Notes:
-    
-    + dH2O wash will remove the NDS, Tx, Az, and the phosphate salts from the tissue
-    
-    + Methanol : do not need to move through concentrations as tissue does not shrink excessively if fixed properly.
-
-
----
+>>>> Consider adding notes & images on storage
 
 
 
-## PROCEDURE_2
+{{PROTOCOL_MATERIALS_FOOTER}}
 
 
-procedure_2_summary_explain_purpose_of_steps
 
+{{PROTOCOL_HEADER}}
+
+
+{{PROTOCOL_SOP_HEADER}}
+
+
+
+# _PROTOCOL_ SOP
+
+
+SOP for _PROTOCOL_
+
+>>>>
+>>>> Example layout of SOP Procedures Description
+>>>>   Name each Procedure SOP with short descriptive name, give brief description
+>>>>     Consider adding a graphic for visual overview
+>>>>   Define the standard operating procedure - series of steps & their parameters
+
+----
+
+
+
+## _PROCEDURE_01_
+
+
+_brief_description_of_procedure_
 
 
 ```{r procedure-schematic, fig.cap="Procedure_schematic_caption"}
 
-knitr::include_graphics("relative/path/to/img.svg")
+knitr::include_graphics('{{PROTOCOL_PROCEDURE_TEMPLATE_SVG}}')
 
 ```
 
 
 
-* STEP_1_PASSIVE_AB_INCUBATION
+* _PROCEDURE_
 
-    + substep_active_wash_in_pbs
+    + CONDITIONS
     
-        - [ ] volume, temperature, time, conditions
+        - PARAMETERS
         
-        - [ ] volume, temperature, time, conditions
-        
-            - VARIABLES
+        - PARAMETERS
 
-
-* STEP_2_PASSIVE_AB_INCUBATION
-
-    + substep_active_wash_in_pbs
+    + CONDITIONS
     
-        - [ ] volume, temperature, time, conditions
+        - PARAMETERS
         
-        - [ ] volume, temperature, time, conditions
-        
-            - VARIABLES
+        - PARAMETERS
 
 
-* STEP_3_PASSIVE_AB_INCUBATION
+EXAMPLE:
 
-    + substep_active_wash_in_pbs
+* 1st LABEL wash
+
+    + Buffer `PBSTxAzNDS` : PBS + 0.1% Tx + 0.1% Az + 1mg NDS
     
-        - [ ] volume, temperature, time, conditions
-        
-        - [ ] volume, temperature, time, conditions
-        
-            - VARIABLES
+        - 0.4mL in 0.5mL Eppendorf
 
-
-* STEP_4_PASSIVE_AB_INCUBATION
-
-    + substep_active_wash_in_pbs
+    + Conditions
     
-        - [ ] volume, temperature, time, conditions
-        
-        - [ ] volume, temperature, time, conditions
-        
-            - VARIABLES
-            
+        - RT 2min
+
+        - 37C_Shaker 30min
+
+        - 37C_Shaker 5min
+
+        - RT 2min
+
 
 * Notes
-    
-    + REASONS
-        
-    + TIPS_ADVICE
 
+    + _describe_reasons_for_using_parameters_where_appropriate_
 
----
 
 
+{{PROTOCOL_LOG_HEADER}}
 
-## PROCEDURE_3
 
 
-procedure_3_summary_explain_purpose_of_steps
+# _PROTOCOL_ LOG
 
 
+LOG of _PROTOCOL_
 
-```{r procedure-schematic, fig.cap="Procedure_schematic_caption"}
 
-knitr::include_graphics("relative/path/to/img.svg")
+>>>>
+>>>> Example layout of LOG Procedures Description
+>>>>   Name each Procedure LOG with SAME short descriptive name as SOP procedure that data is logged from
+>>>>   generate link to procedure SOP section
+>>>>   define log section - what data should be logged - create template datatable for data log
+>>>> 
 
-```
 
+{{PROTOCOL_LOG_SEP}}
 
-* STEP_1_PASSIVE_AB_INCUBATION
 
-    + substep_active_wash_in_pbs
-    
-        - [ ] volume, temperature, time, conditions
-        
-        - [ ] volume, temperature, time, conditions
-        
-            - VARIABLES
 
+## [] _PROCEDURE_01_ LOG
 
-* STEP_2_PASSIVE_AB_INCUBATION
 
-    + substep_active_wash_in_pbs
-    
-        - [ ] volume, temperature, time, conditions
-        
-        - [ ] volume, temperature, time, conditions
-        
-            - VARIABLES
+SOP : [_PROCEDURE_01_](_procedure_01_)
 
+>>>> 
+>>>> Link to SOP section that describes how to execute the steps that are logged here
+>>>> 
 
-* STEP_3_PASSIVE_AB_INCUBATION
 
-    + substep_active_wash_in_pbs
-    
-        - [ ] volume, temperature, time, conditions
-        
-        - [ ] volume, temperature, time, conditions
-        
-            - VARIABLES
+_brief_description_of_procedure_
 
 
-* STEP_4_PASSIVE_AB_INCUBATION
+* LOG Notes
 
-    + substep_active_wash_in_pbs
-    
-        - [ ] volume, temperature, time, conditions
-        
-        - [ ] volume, temperature, time, conditions
-        
-            - VARIABLES
-            
+    + **LOG_NOTE_DESCRIPTION**:
 
-* Notes
-    
-    + REASONS
-        
-    + TIPS_ADVICE
-    
+        - _details_of_log_note__how_did_this_run_vary_from_sop_
 
----
 
 
+EXAMPLE:
 
-## DATA LOG
 
 
-* include_DATA_LOGS_where_needed
 
-    + log_protocol_execution
-    
-    + collect_metadata_from_samples_and_procedures
+{{PROTOCOL_FOOTER}}
 
 
 
-EXAMPLES
-
-
-
-
-Log Perfusion Dissection and Fixation Data:
-
-
----
-
-
-
-### Perfusion Log
-
-
-* Log perfusion data:
-
-    + Run `projectmanagr::addinDatatableAddData()`
-
-        - `Addins > ProjectManagr : Datatable Add Data : CTRL M T A`
-        
-        - data columns :  fixation_condition fixation_dt
-    
-    + `fixation_condition  :  perfusion condition code (4PFA_RT)`
-    
-    + `fixation_dt         :  add DATETIME - of perfusion/death/dissection/resampling`
-
-
-
-
----
-
-
-
-### Dissection Log
-
-
-* Log resampling of tissue :
-    
-    + Run `projectmanagr::addinDatatableResample()`
-
-        - `Addins > ProjectManagr : Datatable Resample : CTRL M T R`
-        
-        - Resample Vector :  CNS
-    
-    + `resample   :  space-separated strings to represent dissected tissues - CNS SC-CER SC-LUM DRG-L4-LT etc`
-    
-    + `reps       :  Number of replicates (sub-samples) from the tissue - for dissection typically 1`
-
-
-
-
----
-
-
-
-### Post-Fixation Log
-
-
-* Log Post-Fixation data 
-
-    + for **EACH RESAMPLED TISSUE**
-    
-    + Run `projectmanagr::addinDatatableAddData()`
-
-        - `Addins > ProjectManagr : Datatable Add Data : CTRL M T A`
-        
-        - data columns :  fix_wash_condition fix_wash_dt
-    
-    + Add Data:
-    
-        -  `fix_wash_condition`  :  tissue wash code : PBS_RT dH2O_RT
-    
-        - `fix_wash_dt`          :  add DATETIME of wash
-
-
-
-
----
-
-
-* Notes:
-
-    + Perfusion Fixation : 
-    
-        - `fixation_condition` note perfusion solution (typically 4PFA)
-        
-        - `fixation_dt` note DATETIME - this is the datetime of perfusion/death/dissection/resampling
-        
-        - Note use term FIXATION and not PERFUSION
-        
-            - Perfusion is the PROCEDURE applied to saturate tissue in fixative
-            
-                - Note that other PROCEDURES could be followed (immersion fixation) that still achieve FIXATION
-            
-            - Fixation is the action of fixing tissue INDEPENDENT of the procedure used to saturate tissue in fixative
-            
-                - since the 4PFA solution is fixing the tissue, makes sense to label the condition and dt as fixation not perfusion
-        
-    + Dissection :
-    
-        - Create a resampling datatable and include all codes for tissues dissected from the subject
-        
-    + Wash post-Fixation :
-    
-        - Tissues were moved into fixative during perfusion at SAME TIME - and were noted above at perfusion datetime
-        
-        - So only next steps to record are the datetimes when tissues are removed from fixative and moved to other solutions
-        
-        - This would include AT LEAST:  
-        
-            - fix_wash (PBS_RT) fix_wash_dt (datetime of this)
-            
-            - storage_condition (typically CIVM1_-80C) storage_dt (datetime of this)
-
-    + Can print and use the [Perfusion Check Sheet](perfusion_checksheet.pdf) to log the perfusion of each sample and collect data during experiment
-    
-        - No need to take computer into perfusion room!
-        
-        - Store this hard copy of perfusion/dissection data in the Perfusion Log Folder
-
-    + NB: This protocol REQUIRES that the animals have already been imported into projectmanagr samples framework!
-    
-        - Use one of the following protocols for data import:
-        
-            - Protocol: [Data Import Mouse Manual Protocol](../Data_Import_Mouse_Manual_Protocol/Data_Import_Mouse_Manual_Protocol.Rmd)
-            
-            - Protocol: [Data Import Mouse PyRAT Protocol](../Data_Import_Mouse_PyRAT_Protocol/Data_Import_Mouse_PyRAT_Protocol.Rmd)
-
-
-
-```{r, eval=FALSE}
-
- # CHECK samples datatable can be read:
-
- # place cursor here...
- # read datatables up to cursor selection in Rmd:
-projectmanagr::datatable_read_to_selection()
-
-```
-
-
-------
-
-
-
-# NEXT STEPS
-
-
-recommended_next_steps
-
-
-link_to_other_protocols
-
-
-
-EXAMPLE
-
-
----
-
-
-
-# RESULTS LOG
+{{PROTOCOL_RESULTS_LOG_HEADER}}
 
 
 Examples of expected results can be noted here.
 
 
----
+{{PROTOCOL_RESULTS_LOG_FOOTER}}
 
 
 
-# TROUBLESHOOTING GUIDE
+{{PROTOCOL_TROUBLESHOOTING_HEADER}}
 
 
-Troubleshooting Guide - list: step, problem, potential reasons, possible solutions.
+Troubleshooting Table: procedure, problem, potential reasons, possible solutions.
 
 
----
+
+{{PROTOCOL_TROUBLESHOOTING_FOOTER}}
 
 
 
@@ -597,7 +245,7 @@ Troubleshooting Guide - list: step, problem, potential reasons, possible solutio
 Created.
 
 
----
+{{SEP02}}
 
 
 

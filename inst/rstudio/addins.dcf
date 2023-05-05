@@ -1,107 +1,166 @@
 
-
-Name: ProjectManagr: Add Project Note
-Description: Add a New Project Note to a Project Document.
-Binding: addinAddProjectNote
-Interactive: true
-
-Name: ProjectManagr: Add Project Link
-Description: Add a New Project Link to a Project Document Goal Del Task.
-Binding: addinAddProjectLink
-Interactive: true
-
-Name: ProjectManagr: Add SOP
-Description: Add a New SOP (Protocol or sReference) to a Project File.
-Binding: addinAddProtocolReference
-Interactive: true
-
 Name: ProjectManagr: Create Organisation
 Description: Initialise a New Project Organisation.
-Binding: addinCreateProjectOrg
+Binding: addin_create_project_org
 Interactive: true
 
 Name: ProjectManagr: Create Programme
 Description: Create a New Programme in a Project Organisation.
-Binding: addinCreateProgramme
+Binding: addin_create_programme
 Interactive: true
 
-Name: ProjectManagr: Create Project
+Name: ProjectManagr: Create Project Document
 Description: Create a New Project Document in a Programme.
-Binding: addinCreateProjectDoc
+Binding: addin_create_project_doc
+Interactive: true
+
+Name: ProjectManagr: Create Project Note
+Description: Create a New Project Note linked to a Project Document GDT.
+Binding: addin_create_project_note
+Interactive: true
+
+Name: ProjectManagr: Create Protocol
+Description: Create a New Protocol to a Project File.
+Binding: addin_create_protocol
 Interactive: true
 
 Name: ProjectManagr: Create Volume
 Description: Create a New Volume in a Project Organisation.
-Binding: addinCreateVolume
+Binding: addin_create_volume
 Interactive: true
 
 Name: ProjectManagr: Datatable Add Data
 Description: Add data to a datatable via addin: select samples to add to, and provide layout, ID format, and data column headers.
-Binding: addinDatatableAddData
+Binding: addin_datatable_add_data
 Interactive: true
 
 Name: ProjectManagr: Datatable Add Groups
 Description: Add group data to a datatable via addin: select samples to add to, and provide data column headers and group values.
-Binding: addinDatatableAddGroups
+Binding: addin_datatable_add_groups
 Interactive: true
 
 Name: ProjectManagr: Datatable Create
 Description: Create a datatable via addin: provide optional IDs and data columns.
-Binding: addinDatatableCreate
+Binding: addin_datatable_create
 Interactive: true
 
 Name: ProjectManagr: Datatable Create from File
 Description: Create a datatable from a data file (such as CSV).
-Binding: addinDatatableCreateFromFile
+Binding: addin_datatable_create_from_file
 Interactive: true
 
 Name: ProjectManagr: Datatable Import
 Description: Import samples from srouce note(s) via addin: select samples & reps from source DIR tree, export from source notes, import to destination note
-Binding: addinDatatableImport
+Binding: addin_datatable_import
 Interactive: true
 
 Name: ProjectManagr: Datatable Resample
 Description: Resample a datatable via addin: select samples to resample, and optionally add resample codes.
-Binding: addinDatatableResample
+Binding: addin_datatable_resample
 Interactive: true
+
+Name: ProjectManagr: Navigate Markdown Link
+Description: Navigate relative link from current file to markdown destination file & header.
+Binding: navigate_markdown_link
+Interactive: false
 
 Name: ProjectManagr: Insert ToDo
 Description: Insert ToDo at the cursor location.
-Binding: addinInsertToDoString
+Binding: addin_insert_ToDo_string
+Interactive: false
+
+Name: ProjectManagr: Insert Date
+Description: Insert Date at the cursor location.
+Binding: addin_insert_date
 Interactive: false
 
 Name: ProjectManagr: Insert DateTime
 Description: Insert DateTime at the cursor location.
-Binding: addinInsertDateTimeString
+Binding: addin_insert_datetime
+Interactive: false
+
+Name: ProjectManagr: Insert Goal Section to Project Doc
+Description: Insert a new Goal Section to end of Project Doc GDT section.
+Binding: addin_insert_doc_goal_section
+Interactive: false
+
+Name: ProjectManagr: Insert Deliverable Section to Project Doc
+Description: Insert a new Deliverable Section to end of cursor-selected Project Doc Goal Section.
+Binding: addin_insert_doc_deliverable_section
+Interactive: false
+
+Name: ProjectManagr: Insert Task Section to Project Doc
+Description: Insert a new Task Section to end of cursor-selected Project Doc Deliverable Section.
+Binding: addin_insert_doc_task_section
 Interactive: false
 
 Name: ProjectManagr: Insert Hyper Link
 Description: Insert a New Hyper Link between the Active Document and another open document.
-Binding: addinAddHyperLink
+Binding: addin_insert_hyperlink
 Interactive: true
 
-Name: ProjectManagr: Insert SOP
-Description: Insert a SOP (Protocol or Cheatsheet) into a Project Note.
-Binding: addinInsertProtocol
+Name: ProjectManagr: Insert Protocol
+Description: Insert a Protocol into a Project Note.
+Binding: addin_insert_protocol
 Interactive: true
 
-Name: ProjectManagr: Rename Project Doc or Note
-Description: Rename a Project Doc or Note in the Project Organisation.
-Binding: addinRenameComp
+Name: ProjectManagr: Insert Section Sep 1
+Description: Insert a Level 1 Section Separator into the Active Document at currently selected line.
+Binding: addin_insert_section_sep_1
+Interactive: false
+
+Name: ProjectManagr: Insert Section Sep 2
+Description: Insert a Level 2 Section Separator into the Active Document at currently selected line.
+Binding: addin_insert_section_sep_2
+Interactive: false
+
+Name: ProjectManagr: Insert Section Sep 3
+Description: Insert a Level 3 Section Separator into the Active Document at currently selected line.
+Binding: addin_insert_section_sep_3
+Interactive: false
+
+Name: ProjectManagr: Insert Section Sep 4
+Description: Insert a Level 4 Section Separator into the Active Document at currently selected line.
+Binding: addin_insert_section_sep_4
+Interactive: false
+
+Name: ProjectManagr: Insert Section Sep 5
+Description: Insert a Level 5 Section Separator into the Active Document at currently selected line.
+Binding: addin_insert_section_sep_5
+Interactive: false
+
+Name: ProjectManagr: Insert Section Sep 6
+Description: Insert a Level 6 Section Separator into the Active Document at currently selected line.
+Binding: addin_insert_section_sep_6
+Interactive: false
+
+Name: ProjectManagr: Link Project Doc GDT To Note
+Description: Create a New Link from a Project Document Goal Del Task to a Project Note.
+Binding: addin_link_doc_to_note
 Interactive: true
+
+Name: ProjectManagr: Navigate Markdown Link
+Description: Navigate to the file and/or section header given in the markdown hyperlink in the Active Document on currently selected line.
+Binding: navigate_markdown_link
+Interactive: false
 
 Name: ProjectManagr: Set Selection Next Horizontal Rule
 Description: Set Selection from current line to next line with same number of dashes as current line.
-Binding: setSelectionNextHorizontalRule
+Binding: set_selection_next_horizontal_rule
 Interactive: false
 
 Name: ProjectManagr: Set WD Active Doc
 Description: Set the working directory to the active doc's parent directory.
-Binding: setwdActiveDoc
+Binding: set_wd_active_doc
 Interactive: false
 
+Name: ProjectManagr: Rename Project File
+Description: Rename a Project Doc or Note in the Project Organisation, and update all links.
+Binding: addin_rename_project_file
+Interactive: true
+
 Name: ProjectManagr: Update
-Description: Updates all recently edited Project Notes' summary information in linked Project Docs.
-Binding: updateProjectOrg
+Description: Updates all recently edited Project Notes' summary information under linked Project Doc GDTs.
+Binding: update_project_org
 Interactive: false
 

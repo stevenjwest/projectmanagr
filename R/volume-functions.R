@@ -76,16 +76,16 @@ volume_move_data <- function(project_note_path, from_dir, to_volume, copy = FALS
 
   # check project note path is valid:
   project_note_path <- path.expand(project_note_path) # expand HOME ~
-  project_note_path <- checkProjNote(project_note_path)
+  project_note_path <- check_proj_note(project_note_path)
   if( nchar(project_note_path) == 0 ) {
     stop( paste0("  project_note_path is not valid: ", project_note_path) )
   }
 
   # define project_note_dir path:
-  project_note_dir <- getProjectNoteDirPath(project_note_path)
+  project_note_dir <- get_project_note_dir_path(project_note_path)
 
   # define the volume path:
-  org_path <- findOrgDir(project_note_path)
+  org_path <- find_org_directory(project_note_path)
   if( nchar(org_path) == 0 ) {
     stop( paste0("  org_path not identified from project_note_path: ", project_note_path) )
   }
@@ -321,19 +321,19 @@ volume_update_copies <- function(project_note_path, from_dir) {
 
   # check project note path is valid:
   project_note_path <- path.expand(project_note_path) # expand HOME ~
-  project_note_path <- checkProjNote(project_note_path)
+  project_note_path <- check_proj_note(project_note_path)
   if( nchar(project_note_path) == 0 ) {
     stop( paste0("  project_note_path is not valid: ", project_note_path) )
   }
 
   # define the volume path:
-  org_path <- findOrgDir(project_note_path)
+  org_path <- find_org_directory(project_note_path)
   if( nchar(org_path) == 0 ) {
     stop( paste0("  org_path not identified from project_note_path: ", project_note_path) )
   }
 
   # define project_note_dir path:
-  project_note_dir <- getProjectNoteDirPath(project_note_path)
+  project_note_dir <- get_project_note_dir_path(project_note_path)
 
   # load project note contents:
   project_note_filecon <- file( project_note_path )
@@ -503,7 +503,7 @@ volume_add_dir <- function(dirName, volName,
     # run dirname TWICE as want to ensure projectNoteDir is a sub-dir in a Programme!
   orgPath <- dirname( dirname(projectNoteDir) )
 
-  orgPath <- findOrgDir(orgPath)
+  orgPath <- find_org_directory(orgPath)
 
   if( orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
@@ -535,7 +535,7 @@ volume_add_dir <- function(dirName, volName,
     # volumes/[volName]/[programme-dir]/[proj-doc-dir]/[proj-note-dir]/
 
     projDirOrgPath <- paste0( substr(projectNoteDir,
-                                     nchar(findOrgDir(projectNoteDir))+2,
+                                     nchar(find_org_directory(projectNoteDir))+2,
                                      nchar(projectNoteDir) )  )
 
     noteDirPath <- paste0( volPath, .Platform$file.sep, projDirOrgPath )
@@ -681,13 +681,13 @@ volume_mkdir <- function(dirName, projectNoteDir, volName) {
   }
 
   # Find programme DIR from projectDocPath:
-  progPath <- findProgDir(projectNoteDir)
+  progPath <- find_prog_dir(projectNoteDir, settings)
 
   # Check projectNoteDir is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
   # run dirname TWICE as want to ensure projectNoteDir is a sub-dir in a Programme!
   orgPath <- dirname( dirname(projectNoteDir) )
 
-  orgPath <- findOrgDir(orgPath)
+  orgPath <- find_org_directory(orgPath)
 
   if(orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
@@ -705,7 +705,7 @@ volume_mkdir <- function(dirName, projectNoteDir, volName) {
     # volumes/[volName]/[path-from org-root-to-proj-note-dir]/[dirName]
 
   projDirOrgPath <- paste0( substr(projectNoteDir,
-                                   nchar(findOrgDir(projectNoteDir))+2,
+                                   nchar(find_org_directory(projectNoteDir))+2,
                                    nchar(projectNoteDir) ),
                             .Platform$file.sep, basename(projectNoteDir),
                             .Platform$file.sep, dirName )
@@ -775,7 +775,7 @@ createVolume <- function( sourcePath, volName, orgPath=getwd() ) {
   }
 
   # set/check orgPath to the org root dir:
-  orgPath <- findOrgDir(orgPath)
+  orgPath <- find_org_directory(orgPath)
 
   if(orgPath == "" ) {
     stop( paste0("  orgPath is not in a projectmanagr ROOT Directory: ", orgPath) )
@@ -835,7 +835,7 @@ moveToVolume <- function(volName, projectNotePath) {
   }
 
   # Get orgPath from projectNotePath:
-  orgPath <- findOrgDir(projectNotePath)
+  orgPath <- find_org_directory(projectNotePath)
 
   if(orgPath == "" ) {
     stop( paste0("  projectNotePath is not inside a projectmanagr ROOT Directory: ", projectNotePath) )

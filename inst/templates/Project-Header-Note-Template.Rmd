@@ -1,43 +1,99 @@
 ---
 title: '{{PREFIX}}~ {{TITLE}}'
 author: '{{AUTHOR}}'
-output:
-  html_document:
-    theme: united
-    toc: yes
-    toc_depth: 5
-    toc_float: yes
+{{HTML_HEADER}}
 ---
 
 
 
-# OBJECTIVES:
+{{OBJECTIVES_HEADER}}
 
 
 
-{{OBJECTIVES}}
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+{{OBJECTIVES_FOOTER}}
 
 
 
-{{DATA_STORAGE_SECTION}}
+{{DATA_STORAGE_HEADER}}
 
 
-----------------------------------------
-----------------------------------------
-
-
-
-{{HEADER_NOTE_CONTENTS_SECTION}}
-
-
---------------------
---------------------
+{{DATA_STORAGE_FOOTER}}
 
 
 
-# Introduction
+{{HEADER_NOTE_CONTENTS_HEADER}}
+
+
+
+{{HEADER_NOTE_CONTENTS_FOOTER}}
+
+
+
+# Overview
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
