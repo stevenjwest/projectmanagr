@@ -1411,21 +1411,46 @@ update_links <- function( oldFileName, newName, dirTree, settings,
 
   # get config path to exclude files from (in case dirTree is orgPath!)
   confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  volPath <- paste0(orgPath, .Platform$file.sep, settings[["VolumesDir"]])
 
 
   #### get file list ####
 
-  # traverse EVERY Rmd file in orgPath dir tree:
+  # first grab all files WITHOUT RECURSION - all files in dirTree directory
   fileList <- c()
   for(fe in fileExtensions) {
     fileList <- c(fileList,
-                   paste0( dirTree, .Platform$file.sep,
-                           list.files(path = dirTree, pattern = paste0("*.",fe),
-                                all.files = TRUE, recursive = TRUE, include.dirs = TRUE) ) )
+                  paste0( dirTree, .Platform$file.sep,
+                          list.files(path = dirTree, pattern = paste0("*.",fe),
+                                     all.files = TRUE, include.dirs = TRUE) ) )
   }
 
+  # now grab all dirs WITHOUT RECURSION
+  dirsList <- list.dirs(path = dirTree, recursive=FALSE)
+
+  # and exclude confPath and volPath if present
+  dirsList <- dirsList[ dirsList != confPath]
+  dirsList <- dirsList[ dirsList != volPath]
+
+  # next traverse each directory - but only down to project note level
+  for(dl in dirsList) {
+    # get fileList recursively but only down to project note parent dir level
+    fileList <- get_file_list_to_project_notes(fileList, dl, settings, fileExtensions)
+  }
+
+  # now RECURSIVELY traverse EVERY Rmd file in dirTree
+  #fileList <- c()
+  #for(fe in fileExtensions) {
+  #  for(dl in dirsList) {
+  #    fileList <- c(fileList,
+  #                  paste0( dl, .Platform$file.sep,
+  #                          list.files(path = dl, pattern = paste0("*.",fe),
+  #                          all.files = TRUE, recursive = TRUE, include.dirs = TRUE) ) )
+  #  }
+  #}
+
   # remove all files in config directory
-  fileList <- fileList[ !startsWith(fileList, confPath)]
+  #fileList <- fileList[ !startsWith(fileList, confPath)]
 
 
   #### replace oldLink with newLink ####
@@ -1447,6 +1472,65 @@ update_links <- function( oldFileName, newName, dirTree, settings,
       close(fileConn)
     }
   }
+}
+
+
+#' get file list to project notes
+#'
+#' Traverses all directory tree in `dl` but only
+get_file_list_to_project_notes <- function(fileList, dl, settings, fileExtensions = list("Rmd") ) {
+
+
+  #### Set Instance Variables ####
+
+  # get important delimiters from settings
+  #projIdentifierSep <- load_param_vector(settings[["ProjectIdentifierSep"]]) # "_"
+  #projPrefixSep <- load_param_vector(settings[["ProjectPrefixSep"]]) #  "~_"
+  #projIndexSep <- load_param_vector(settings[["ProjectIndexSep"]]) # "~"
+  #groupIndexSep <- load_param_vector(settings[["GroupNotePrefixSep"]]) # "-"
+
+
+  #### get files from parent ####
+
+  # get each file with extension from this dir
+  for(fe in fileExtensions) {
+    # get local copy of fl to check for project notes
+    fl <- paste0( dl, .Platform$file.sep,
+                  list.files(path = dl, pattern = paste0("*.",fe),
+                             all.files = TRUE) )
+    fl <- fl[fl!=paste0(dl, .Platform$file.sep)] # remove any instances of just dl/ - if no files found!
+    fileList <- c(fileList, fl )
+  }
+
+
+  #### get next level of sub-dirs ####
+
+  dls <- list.dirs(path = dl, recursive=FALSE)
+
+
+  #### filter sub-dirs to remove SIMPLE & SUB NOTES ####
+
+  types <- get_file_types(fl, settings)
+  fl_ex <- fl[types=="NOTE" | types=="SUB"] # excluding dirs belonging to simple notes and subnotes
+  fl_ex_dir <- get_project_note_dir_path(fl_ex, settings) # get the note's dirs
+
+  # remove these dirs from dls
+  for(fled in fl_ex_dir) {
+    dls <- dls[dls != fled]
+  }
+
+
+  #### recursively get files from children ####
+
+  # recurses with each set of dls retrieved!
+  for(d in dls) {
+    fileList <- get_file_list_to_project_notes(fileList, d, settings, fileExtensions )
+  }
+
+  # return fileList
+  fileList
+
+
 }
 
 
