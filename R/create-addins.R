@@ -726,7 +726,7 @@ addin_create_project_note_from_doc_gdt <- function(selection, settings, orgPath)
 
   # create vector of possible roots for dir selection in server()
   roots <- c(projectDirPath, progPath, orgPath) # can use projectDirPath, progPath, or orgPath as roots
-  names(roots) <- c('project_dir', basename(progPath), basename(orgPath))
+  names(roots) <- c(basename(projectDirPath), basename(progPath), basename(orgPath))
 
 
   # compute the goal/del/task NUM and TITLE:
@@ -836,7 +836,8 @@ addin_create_project_note_from_doc_gdt <- function(selection, settings, orgPath)
 
     # allows selection of Dir, with roots set to project doc DIR or ORG Dir
     shinyDirChoose(
-      input, 'dir', defaultRoot = 'project_dir',
+      input, 'dir',
+      defaultRoot = names(roots)[1], # set default to first root
       roots=roots, # can use projectDirPath, progPath, or orgPath as roots
       filetypes = c('', 'txt', 'Rmd', "tsv", "csv", "bw")
     )
