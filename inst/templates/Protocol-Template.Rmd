@@ -1,251 +1,743 @@
----
-title: '{{TITLE}}'
-author: '{{AUTHOR}}'
-{{HTML_HEADER_PROTOCOL}}
----
+{{SEP01}}
 
 
 
-{{PROTOCOL_SUMMARY_HEADER}}
+{{PROTOCOL_HEADER}}{{_PROTOCOL_}}
 
 
-{{PROTOCOL_PROJECT_NOTE_LINK}}
-
-
->>>>
->>>> Provide a one sentence summary of this protocol
->>>> Each Protocol is broken into SOP and LOG sections.
->>>> This summary will be shown to users when viewing the protocol for insertion into project notes.
->>>>
-
-This Protocol specifies the SOP for _insert_protocol_scope_
-
-
-{{PROTOCOL_SUMMARY_FOOTER}}
+{{PROTOCOL_DESCRIPTION_FIELD}} {{PROTOCOL_DESCRIPTION}}
 
 
 
-{{PROTOCOL_GRAPHICAL_ABSTRACT_HEADER}}
-
-
->>>> SCHEMATIC representing the procedures & underlying MODEL/UNDERSTANDING of mechanisms
->>>>     - include RECOMMENDED parameter values for each step
->>>>     - include underlying MECHANISMS that happen with each step
->>>>     - This graphic and abstract serves as a QUICK REFERENCE
-
-
-```{r}
-
-knitr::include_graphics('{{PROTOCOL_GRAPHICAL_ABSTRACT_SVG}}')
-
-```
-
-
-_abstract_succinct_description_of_procedures_and_parameters_
+{{PROTOCOL_SEP}}
 
 
 
-{{PROTOCOL_GRAPHICAL_ABSTRACT_FOOTER}}
+# {{_PROTOCOL_}} SOP
+
+
+SOP for {{_PROTOCOL_}}
+
+>>>> 
+>>>> Example of Protocol SOP Sections
+>>>>  * Each Procedure has a separate Section Title
+>>>>  * Initial summary of procedure
+>>>>      + include schematic, photo or screenshot of the procedure for graphical summary
+>>>>  * Outline of procedure in bullet point list.
+>>>>      + include code chunks where data processing is required
+>>>> 
+
+
+{{SEP02}}
 
 
 
-{{PROTOCOL_BACKGROUND_HEADER}}
+## Import Mouse Data from PYRAT
 
 
->>>> Provide background and context to reader
->>>> Provide links to relevant project notes & data that supports the protocol procedure parameters
+Export data from PyRAT as CSV and insert into Project Note.
 
 
+```{r procedure-schematic-import-data, fig.cap="Import mouse data."}
 
-{{PROTOCOL_BACKGROUND_FOOTER}}
-
-
-
-{{PROTOCOL_MATERIALS_HEADER}}
-
-
->>>> Provide a list of equipment & material
->>>> Define Equipment/Material ID - and give supplier and catalogue number
->>>> Group equipment/material together by usage/storage
-
-
->>>> SUGGEST TO add images to visualise sets of equipment/material for graphical reference
-
-
-```{r equipment-material-image, fig.cap=""}
-
-knitr::include_graphics('{{PROTOCOL_EQUIPMENT_SVG}}')
+knitr::include_graphics("img/02-setup-hood/01_import_mouse_data.png")
 
 ```
 
 
->>>> Consider adding notes & images on storage
+* Export PyRAT Mouse Data:
+
+    + Open PyRAT:
+    
+        -  https://hosted.scionics.com/swc/cgi-bin/login.py
+        
+        - Login with SWC credentials - `steve_west`
+        
+        - Alias : `No Alias` > `Set Alias`
+
+    + Filter and Select Mice for Export
+    
+        - filter by Cage ID
+        
+            - `Apply filter` - TOP LEFT : 
+                
+                - Cage ID(s) : 
+                
+                    - `SIAA-0349184 SIAA-0349185`  
+                    
+                    - > `Apply filter`
+
+    + Export Mice data:
+    
+        - Checkbox ALL mice  >  `QS > Export this list to Excel (bottom)  >  Apply  >  Export`
+        
+            - ENSURE following columns selected:
+            
+                - `ID` `Sex` `Date of birth` `Wean date` `Line / strain (Name)` `Cage` `Cage label` `Cage category` `Cage type` `Genetic background` `Genetic status` `Line / strain ID` `Line / strain Official name` `Line / strain severity` `Mutations`
+
+        - Use defaults - file is saved to `~/Downloads/animallist.csv`
+        
+    + Cull mice on PyRAT
+    
+        - Close Export Window and uncheck `Export this list to Excel (bottom)`
+        
+        - Check `Sacrifice these animals`
+        
+            - Confirm assigned licence - CHECK
+        
+            - reason : `Tissue Collection`
+            
+            - method : `Perfusion`
+            
+            - Severity : `Non-recovery`
+            
+        - Click `Apply > OK`
 
 
 
-{{PROTOCOL_MATERIALS_FOOTER}}
+* Move metadata file to Project Note DIR:
+
+
+```{bash, eval=FALSE}
+
+mkdir -p PREFIX/_data
+mv ~/Downloads/animallist.csv PREFIX/_data/animallist.csv
+
+```
 
 
 
-{{PROTOCOL_HEADER}}
+* Import as dataframe & wrangle into correct format
+
+    + `samples` : datatable to insert that contains
+    
+        - Standard cols : ID sex dob_Dt, colony_genotype, treatment
+        
+        - Further data cols : wean_Dt, strain_code, strain, cage_ID, cage_type
 
 
-{{PROTOCOL_SOP_HEADER}}
+```{r, eval=FALSE}
 
+ # read - UTF-16!
+samples_df <- read.csv("PREFIX/_data/animallist.csv", fileEncoding = "UTF-16", sep = "\t")
 
+ # convert to character cols
+samples_df <- data.frame(lapply(samples_df, as.character), stringsAsFactors=FALSE)
 
-# _PROTOCOL_ SOP
+ # convert to tibble
+samples_df <- tibble::tibble(samples_df)
 
+ # trim ID
+samples_df$ID <- substr(samples_df$ID, 5, nchar(samples_df$ID))
 
-SOP for _PROTOCOL_
+ # select cols needed to CREATE df:
+samples <- dplyr::select(samples_df, ID, Sex, DOB, Wean.date, dplyr::starts_with("Mutation"), dplyr::starts_with("Grade"), Line...Strain..Name., Line...Strain..Official.name., Cage, Cage.category )
 
->>>>
->>>> Example layout of SOP Procedures Description
->>>>   Name each Procedure SOP with short descriptive name, give brief description
->>>>     Consider adding a graphic for visual overview
->>>>   Define the standard operating procedure - series of steps & their parameters
+ # unite the mutations and grades to form colony_genotype col:
+samples <- tidyr::unite(samples, Mutations, dplyr::starts_with("Mutation"))
+samples <- tidyr::unite(samples, Grades, dplyr::starts_with("Grade"))
+samples <- tidyr::unite(samples, colony_genotype, Mutations:Grades, sep = ":")
+
+ # rename col names to match standard datatables layout:
+samples <- dplyr::transmute(samples, ID = ID, sex = Sex, dob_dt = DOB, colony_genotype = colony_genotype, treatment = "NAIVE", wean_dt = Wean.date, strain_code = Line...Strain..Name., strain = Line...Strain..Official.name., cage_ID = Cage, cage_type = Cage.category )
+
+ # REPLACE all spaces that may come up
+samples$colony_genotype <-  gsub(" ", "-", samples$colony_genotype)
+samples$strain_code <-  gsub(" ", "-", samples$strain_code)
+samples$strain <-  gsub(" ", "", samples$strain)
+samples$cage_type <-  gsub(" ", ":", samples$cage_type)
+
+samples
+
+ # samples can be used to embed a datatable now!
+
+```
+
 
 ----
 
 
 
-## _PROCEDURE_01_
+## Prepare Stock Solutions
 
 
-_brief_description_of_procedure_
+Prepare stock buffers for perfusing all mice.
 
 
-```{r procedure-schematic, fig.cap="Procedure_schematic_caption"}
+```{r procedure-schematic-prep-stock-sol, fig.cap="Prepare hood for perfusion."}
 
-knitr::include_graphics('{{PROTOCOL_PROCEDURE_TEMPLATE_SVG}}')
+knitr::include_graphics("img/02-setup-hood/01_prepare_stock_solutions.png")
+
+```
+
+
+* Water
+
+    + `dH2O` : distilled water 
+    
+        + 500mL
+
+
+* Phosphate Buffers
+
+    + `PBS` : 0.01M Phosphate Buffered Saline
+
+        + 1000mL : 
+        
+            - Mix **1.916 g Na2HPO4-7H2O dissolved in 700 mL dH2O** with **0.393 g NaH2PO4-H2O dissolved in 200 mL dH2O**
+                
+                - OR **XX mL 0.5M Na2HPO4** with **XX mL 0.5M NaH2PO4**
+            
+            - Dissolve 8.0g NaCl and 0.2g KCl into mixture, top up to 1000mL
+            
+            - Will keep for days at RT or weeks in 4C fridge
+            
+    + `PB_0.3M` : 0.3M Phosphate Buffer Stock - for fixative
+    
+        + 500mL :
+        
+            - Mix **33.8g Na2HPO4-7H2O dissolved in 350mL dH2O** with **3.31g NaH2PO4-H2O dissolved in 100mL dH2O**
+                
+                - OR **252 mL 0.5M Na2HPO4** with **48 mL 0.5M NaH2PO4**
+            
+            - Top up to 500mL
+            
+            - Will keep for weeks at RT
+
+
+
+----
+
+
+
+## Setup Hood for Perfusion
+
+
+Prepare the Drop Jar, Perfusion Board, Syringes
+
+
+```{r procedure-schematic, fig.cap="Prepare hood for perfusion."}
+
+knitr::include_graphics("img/02-setup-hood/02_setup.png")
 
 ```
 
 
 
-* _PROCEDURE_
+* Prepare Drop Jar for isoflurane overdose
 
-    + CONDITIONS
+    + Add ~5% volatile isoflurane to jar for overdose
+
+        - Place paper towel into the bottom
     
-        - PARAMETERS
+        - Scrunch second paper towel for holding isoflurane
+    
+        - Place in HOOD - Pipette ~1.5mL isoflurane onto scrunched paper towel
         
-        - PARAMETERS
+        - Seal jar
 
-    + CONDITIONS
+
+
+* Setup Perfusion Board:
+
+    + put four needles in a square where perfusion will take place on perfusion board
+
+
+
+* Fill Syringes 
+
+    - Fill PBS Syringe MAX with `PBS`
     
-        - PARAMETERS
+    - Will fill PFA syringe once fixative is prepared per mouse - [Prepare Fixative](prepare-fixative)
+
+
+
+* Connect the PBS syringe to luer lock & butterfly needle 
+
+    - FILL butterfly tubing with PBS
+    
+        - ENSURE there are no AIR BUBBLES
+
+
+
+* Grip the butterfly needle at its base using the plastic forceps:
+
+    - LOCK the plastic forceps onto the needle
+
+        - Will use the plastic forceps to help hold the needle in place during the perfusion
+
+
+
+
+----
+
+
+
+## Prepare Fixative
+
+
+Prepare fixative freshly for each mouse perfusion.
+
+
+
+```{r procedure-schematic, fig.cap="Make formaldehyde solution for perfusion."}
+
+knitr::include_graphics("img/01-prepare-solutions/01_formaldehyde-solution.png")
+
+```
+
+
+
+* Prepare 4% Formaldehyde solution - per mouse:
+
+    + Open 10mL 16% Formaldehyde (ThermoFisher, 28908) glass vial and add to 50mL Falcon Tube
+
+    + Add 20mL of `PB_0.3M` to 50mL Falcon Tube
+    
+    + Add 10mL of `dH2O` to 50mL Falcon Tube, seal tube, invert to mix at RT - **PERFUSION formaldehyde solution**
+    
+    + Fill 20mL PFA syrinace with 20mL PERFUSION formaldehyde solution
+    
+    + Decant remainder into separate 50mL falcon tube
+    
+        - add 200 µL 100% Methanol (1% final conc.) - **POST-FIX formaldehyde solution**
+
+
+----
+
+
+
+## Overdose Mouse
+
+
+Overdose each mouse using the *"Drop Jar" method* with isoflurane.  The animal is overdosed with ~5% isoflurane, which is achieved in 1-2 minutes.
+
+
+
+```{r procedure-schematic, fig.cap="Procedure_schematic_caption"}
+
+knitr::include_graphics("img/03-overdose-mouse/01_mouse-od.png")
+
+```
+
+
+
+* Overdose mouse with isoflurane
+
+    + Gently take the mouse from its cage, place into the Drop Jar, seal jar
+
+    + Wait 1-2 minutes until overdose complete
+    
+        - Hyperventillation suddenly STOPS, micturition
+
+    + Animal is now overdosed -> remove from jar, re-seal jar, and proceed with perfusion
+
+
+* Subsequent Mouse Overdose
+
+    + Top up +0.5mL isoflurane to paper towel for each new mouse
+
+
+
+* Notes:
+    
+    - **PERFORM DROP JAR METHOD IN HOOD**
         
-        - PARAMETERS
-
-
-EXAMPLE:
-
-* 1st LABEL wash
-
-    + Buffer `PBSTxAzNDS` : PBS + 0.1% Tx + 0.1% Az + 1mg NDS
+        - Isoflurane is carcinogenic, and also addictive!
+        
+    - **ANIMAL PLANES OF ANAESTHETIA SIGNS**
+        
+        - The animal will fall asleep within 5-10 seconds: re-position supine to observe planes of anaesthesia
     
-        - 0.4mL in 0.5mL Eppendorf
+        - The animal will traverse all planes of anaesthesia, with the following symptoms:
+        
+            - Initial hyperventilation and some reflex jerking (1)
+            
+            - Slowed breathing (2-3)
+            
+            - renewed hyperventilation / gasping (4)
+            
+        - Overdose is observed with:
+        
+            - SUDDEN loss of breathing
+            
+            - Micturition
+            
+            - Pale and dark skin
+            
+        - NB: Sometimes the isoflurane dose can be a little higher, and the above renewed hyperventilation is not seen.  Therefore **ALWAYS check the animal is overdosed** by removing from the jar and waiting 10-15 seconds to check it does not resume breathing.
 
-    + Conditions
+
+
+----
+
+
+
+## Perfuse Mouse
+
+
+Perfusion is performed using the **manual syringe method**.  The heart is exposed, and buffer is perfused throughout the body via the circulatory system.  PBS is perfused first, to clear the blood; 4% Formaldehyde is then perfused to fix all body tissues.  It is critical to connect to the circulatory system tightly, and to use the correct pressure, for a good perfusion.
+
+
+
+```{r procedure-schematic, fig.cap="Perfuse mouse.  Pin paws to perfusion board (a & b).  Remove chest fur, expose and cut diaphragm (c).  Cut ribs and expose heart, insert needle in left ventricle, cut right atrium (d).  Perfuse with PBS until liver clears (e), then perfuse with formaldehyde.  Remove cadaver from perfusion board for dissection (f)."}
+
+knitr::include_graphics("img/04-perfuse-mouse/04_perfuse-mouse.png")
+
+```
+
+
+
+* Mouse Perfusion:
+
+    + Secure mouse cadaver
+
+        - Lay the cadaver supine on a cork or polystyrene board
     
-        - RT 2min
+        - Pin each paw with needles
+    
+            - Ensure the body is reasonably taut to help with perfusion
 
-        - 37C_Shaker 30min
+    + Expose heart
 
-        - 37C_Shaker 5min
+        - Raise the chest fur/skin ventrally with rat-tooth forceps, and using large scissors, cut away fur.
+    
+        - Hold remaining skin at the base of the chest, raise tissue up ventrally and cut laterally along the base of the thoracic cavity to reveal the liver.
+    
+        - Push the liver down inferiorly, and lift the chest up ventrally at the base of the sternum (breastbone), to expose the thoracic diaphragm.
+    
+        - Starting laterally, make a small incision through the diaphragm membrane, and cut mediolaterally through the whole diaphragm to expose the bottom of the heart.
+    
+        - Still holding the chest up ventrally at the base of the sternum, expose the heart fully by cutting the rib cage along each lateral side of the thoracic cavity.
+    
+            - Clear any connective tissue and fat around the heart with the scissors if necessary, to expose the complete heart
+    
+        - Pin the top of the rib cage over the head using the sutures forceps.
 
-        - RT 2min
+    + Connect to circulatory system
+
+        - Insert the butterfly needle, using the plastic forceps that are gripping it, into the LEFT VENTRICLE of the heart.
+        
+        - Using small spring loaded scissors, cut and tear away the whole RIGHT ATRIUM
+
+    + Perfuse
+
+        - Unlock the luer lock that connects the PBS syringe to the perfusion tube, and begin to push the PBS through the circulatory system
+        
+        - Lock the luer lock (to prevent air entering the tube), change the syringe from PBS to Formaldehyde, unlock luer lock, and begin formaldehyde perfusion through the circulatory system
+        
+        - Once complete, lock the luer lock, and remove the needle, large suture forceps, and pins from the perfused body:
+    
+            - The body should already show clear signs of fixation - it should be stiff and free of blood.
+        
+            - Move onto **DISSECTION**
+
 
 
 * Notes
 
-    + _describe_reasons_for_using_parameters_where_appropriate_
+    - **Perform perfusion QUICKLY:**
+
+        - Want to perform the whole operation - from overdose to perfusion - as rapidly as can be performed comfortably:
+
+        - Once competent, it should be possible to fully perfuse with formaldehyde within 2 minutes of overdose.
+    
+    - **Pin the mouse cadaver TAUT:**
+
+        - Pin forepaws first, then hindpaws, and keep the cadaver taut
+    
+        - This is to stabilise the cadaver for the perfusion, as there is muscle contraction during the process
+
+    - **The Heart will likely be in fibrillation:**
+
+        - Due to the overdose, the heart will either by in fibrillation (fluttering) or not beating at all.
+
+        - Either is fine, but want to perform the whole perfusion relatively RAPIDLY.
+
+    - **Connect to circulatory system SECURELY:**
+
+        - Secure the needle in the heart by balancing the plastic forceps by their handles to the side of the cadaver
+        
+        - Optionally also use the rat tooth forceps, balanced on top of the needle, to help secure it
+
+    - **Open circulatory system COMPLETELY:**
+
+        - Important to completely cut and tear the right atrium, to ensure a smooth and fast perfusion
+        
+        - If the atrium is left partially intact, the perfusate may not flow freely or quickly enough, and this can result in blood remaining in the body.  
+    
+        - This is often seen as patches of dark red that remain in the liver after perfusion.
+
+    - **Use sufficient Perfusion Pressure with PBS:**
+
+        - For initial PBS perfusion ensure a strong pressure is used: 
+
+        - need to push hard enough to clear all the blood from all parts of the system.  
+    
+        - The actual perfusion with ~20mL of solution should take roughly 15-20 seconds.
+
+    - **Adjust needle position during perfusion if necessary:**
+
+        - If the initial PBS perfusion is good, should see the liver clear very quickly - from dark red to a light brown colour.  If this is not happening, adjust the needle position (see next point).
+        
+        - Occasionally, the needle position needs adjusting during perfusion, to ensure the flow is correctly targetted through to the left atrium and through the aorta.  Using the plastic forceps, the needle angle in the heart can be gently manipulated to help angle the flow of the PBS for a better perfusion - especially useful if the liver is not clearing very well.
+        
+        - Occasionally, the perfusion flow will break from the main circulatory system into the pulmonary system: this will result in lung swelling, and buffer exiting the nose.  Although not ideal, continue the perfusion as normal, as fixative should still get to most or all tissues.
+        
+        - Perfuse through almost all of the PBS - leave ~0.5mL in the syringe, and then seal the luer lock - this will prevent any air from entering into the tube when switching to the Formaldehyde
+
+    - **Use Sufficient Perfusion Pressure with Formaldehyde:**
+        
+        - For the Formaldehyde perfusion, continue to use a strong pressure, to ensure a good perfusion of formaldehyde to all tissues throughout the body.
+                
+        - **SAFETY FIRST:** On occasion, due to the high pressure, a spray of formaldehyde may emerge from the body, or even a sudden burst of formaldehyde, so always conduct the perfusion with the hood sash down, or if on a perfusion table, with a clear perspex screen between you and the perfusion.
+        
+        - If the perfusion is good (reaches all tissues in the body), the muscles in all perfused areas will tense with the initial influx of formaldehyde: common signs that indicate a good perfusion include limb movement, and gastrointestinal tract movement (these tissues are often the hardest to reach with perfusion)
+    
+            - If there is no muscle movement, this could indicate that the buffer flow is not effectively entering the circulation, or that the mouse has been left too long before perfusion (and rigor mortis has set in - it is unlikely enough would set in to stop this effect unless the mosue was left for 10-15 minutes though).
+        
+        - When the formaldehyde enters the system, the body will move (the back will arch), and this can potentially cause the heart to move. 
+    
+            - A risk is the butterfly needle may penetrate the heart wall, therefore disrupting the perfusion through the body.  To prevent this from happening, be sure to hold the plastic forceps holding the needle, and carefully re-tune the needle direction (typically the back arches, so you need to adjust the needle position to be more VENTRAL to minimise this risk)
+        
+        - Perfuse through all of the formaldehyde solution, and wait until any muscle movement ceases before continuing.
+
+        
+----
 
 
 
-{{PROTOCOL_LOG_HEADER}}
+## Post Fix Tissue
+
+
+Tissue immersed in fixative to continue fixation.
+
+
+```{r procedure-schematic, fig.cap="Procedure_schematic_caption"}
+
+#knitr::include_graphics("relative/path/to/img.svg")
+
+```
 
 
 
-# _PROTOCOL_ LOG
+* Tissue Post-Fixation
+
+    + 4% Formaldehyde in 0.15M PB : +/- 1% Methanol
+    
+        - 12mL (20x tissue vol MIN) in FILLED 15mL falcon tube
+        
+        - RT shaker
+        
+        - 1-3 days MIN
 
 
-LOG of _PROTOCOL_
+
+{{SEP01}}
 
 
+
+# {{_PROTOCOL_}} LOG
+
+
+LOG of {{_PROTOCOL_}}
+
+>>>> 
+>>>> Example of Protocol LOG including
+>>>>  1. Extracting data from resource, wrangling in R, inserting datatable into note
+>>>>  2. Filling in a datatable template & adding values
+>>>> 
+>>>>  * Each LOG Section Title starts with a [] tick box.
+>>>>  * Each LOG Section Title matches an SOP Section title, with suffix LOG.
+>>>>  * Each LOG Section has a link to the SOP Section it relates to : 
+>>>>      + can navigate to this with ProjectManagr : Navigate Markdown Link - CTRL + M, N
 >>>>
->>>> Example layout of LOG Procedures Description
->>>>   Name each Procedure LOG with SAME short descriptive name as SOP procedure that data is logged from
->>>>   generate link to procedure SOP section
->>>>   define log section - what data should be logged - create template datatable for data log
+>>>>  * Repeat summary of procedure
+>>>>  * Add Logs
+>>>>      + datatables used to record data from the procedure
+>>>>      + Notes bullet points to record observations or differences to SOP
 >>>> 
-
-
-{{PROTOCOL_LOG_SEP}}
-
-
-
-## [] _PROCEDURE_01_ LOG
-
-
-SOP : [_PROCEDURE_01_](_procedure_01_)
-
->>>> 
->>>> Link to SOP section that describes how to execute the steps that are logged here
->>>> 
-
-
-_brief_description_of_procedure_
-
-
-* LOG Notes
-
-    + **LOG_NOTE_DESCRIPTION**:
-
-        - _details_of_log_note__how_did_this_run_vary_from_sop_
-
-
-
-EXAMPLE:
-
-
-
-
-{{PROTOCOL_FOOTER}}
-
-
-
-{{PROTOCOL_RESULTS_LOG_HEADER}}
-
-
-Examples of expected results can be noted here.
-
-
-{{PROTOCOL_RESULTS_LOG_FOOTER}}
-
-
-
-{{PROTOCOL_TROUBLESHOOTING_HEADER}}
-
-
-Troubleshooting Table: procedure, problem, potential reasons, possible solutions.
-
-
-
-{{PROTOCOL_TROUBLESHOOTING_FOOTER}}
-
-
-
-# CHANGE LOG
-
-
-**Version 1.0 - DATE**
-
-
-Created.
 
 
 {{SEP02}}
+
+
+
+## [] Import Mouse Data from PYRAT LOG
+
+
+SOP : [Import Mouse Data from PYRAT](import-mouse-data-from-pyrat)
+
+
+Insert PyRAT metadata as datatable.
+
+
+
+* Move downloaded metadata file to Project Note DIR:
+
+
+```{bash, eval=FALSE}
+
+mkdir -p PREFIX/_data
+mv ~/Downloads/animallist.csv PREFIX/_data/animallist.csv
+
+```
+
+
+
+* Import as dataframe & wrangle into correct format
+
+
+```{r, eval=FALSE}
+
+ # read - UTF-16!
+samples_df <- read.csv("PREFIX/_data/animallist.csv", fileEncoding = "UTF-16", sep = "\t")
+
+ # convert to character cols
+samples_df <- data.frame(lapply(samples_df, as.character), stringsAsFactors=FALSE)
+
+ # convert to tibble
+samples_df <- tibble::tibble(samples_df)
+
+ # trim ID
+samples_df$ID <- substr(samples_df$ID, 5, nchar(samples_df$ID))
+
+ # select cols needed to CREATE df:
+samples <- dplyr::select(samples_df, ID, Sex, DOB, Wean.date, dplyr::starts_with("Mutation"), dplyr::starts_with("Grade"), Line...Strain..Name., Line...Strain..Official.name., Cage, Cage.category )
+
+ # unite the mutations and grades to form colony_genotype col:
+samples <- tidyr::unite(samples, Mutations, dplyr::starts_with("Mutation"))
+samples <- tidyr::unite(samples, Grades, dplyr::starts_with("Grade"))
+samples <- tidyr::unite(samples, colony_genotype, Mutations:Grades, sep = ":")
+
+ # rename col names to match standard datatables layout:
+samples <- dplyr::transmute(samples, ID = ID, sex = Sex, dob_dt = DOB, colony_genotype = colony_genotype, treatment = "NAIVE", wean_dt = Wean.date, strain_code = Line...Strain..Name., strain = Line...Strain..Official.name., cage_ID = Cage, cage_type = Cage.category )
+
+ # REPLACE all spaces that may come up
+samples$colony_genotype <-  gsub(" ", "-", samples$colony_genotype)
+samples$strain_code <-  gsub(" ", "-", samples$strain_code)
+samples$strain <-  gsub(" ", "", samples$strain)
+samples$cage_type <-  gsub(" ", ":", samples$cage_type)
+
+samples
+
+ # samples can be used to embed a datatable now!
+
+```
+
+
+
+* Insert sample datatable
+        
+    + `sex             :  M, F`
+    
+    + `dob_dt          :  date of birth`
+    
+    + `colony_genotype :  Colony Code:genotype[wt,het,hom] -> e.g. Rbp4-cre:wt` 
+    
+    + `treatment       :  encode INTERVENTION: NAIVE, 21SNI, 7RHIZ, etc`
+
+    + `wean_dt          :  date of wean`
+    
+    + `strain_code      :  SWC code for mouse line`    
+    
+    + `strain           :  Official strain name`
+
+    + `cage_ID          :  ID of cage mice were in`
+
+    + `cage_type       :  Typically IVC`
+
+
+
+```{r, eval=FALSE}
+
+ # HIGHLIGHT TEXT BELOW - then SAVE DOCUMENT - CTRL + S
+  # THEN run this chunk to insert datatable
+  # THEN delete this code chunk && SAVE DOCUMENT - CTRL + S
+projectmanagr::datatable_insert_from_dataframe(samples)
+
+```
+
+
+
+__HIGHLIGHT_TEXT_TO_INSERT_DATATABLE_HERE__
+
+
+
+
+
+```{r, eval=FALSE, include=FALSE}
+ # CHECK sample datatables - place cursor HERE & run code chunk
+projectmanagr::datatable_read_to_selection()
+```
+
+
+----
+
+
+
+## [] Post Fix Tissue LOG
+
+
+SOP : [Post Fix Tissue](post-fix-tissue)
+
+
+Tissue placed into fixative for preservation.
+
+
+
+* Log fixation data:
+    
+    + `fix_01_dt           :  DATETIME of perfusion`
+
+    + `fix_01_condition  :  store condition code - PFA4_RT PFA4_MeOH1_RT `
+
+    + `fix_01_location   :  location code  L160:D4:B04 L160:S1:Rack2 `
+
+
+
+
+>>>> 
+>>>> Fill Datatables Template with existing samples
+>>>> 
+>>>>  * Place cursor inside _TEMPLATE_ Datatable
+>>>>  * Run projectmanagr::addin_datatable_add_data() : 
+>>>>      + CTRL + M T A
+>>>>  * Select existing datatable(s) 
+>>>>      + 
+>>>> 
+
+
++===============================================================================
+
+
+    TEMPLATE  :  ADD_DATA
+
+
+        ID           fix_01_dt         fix_01_condition      fix_01_location    
+    =========  ====================  ====================  =====================  
+
+     _SID_       INSERT__DATETIME      PFA4_RT              L160:HOOD-PERFUSION   
+                 INSERT__DATETIME      PFA4_MeOH1_RT        L160:HOOD-PERFUSION
+
+
++===============================================================================
+
+
+
+* Notes
+
+    + _notes_
+
+
+```{r, eval=FALSE, include=FALSE}
+ # CHECK sample datatables - place cursor HERE & run code chunk
+projectmanagr::datatable_read_to_selection()
+```
+
+
+
+{{PROTOCOL_SEP}}
 
 
 

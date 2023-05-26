@@ -1611,43 +1611,36 @@ create_sub_note <- function( subNoteName, subNotePath,
 
 
 
-#' Add a Protocol to a Project Note
+#' Create a Protocol in a Project Note
 #'
-#' This Function adds a new Protocol to a Project Note - saved in the
-#' PROGRAMMES' protocols Dir. The Protocol is formed using an Rmd template:
-#' `Protocol-Template.Rmd` from the projectmanagr package. Protocols compile to
-#' PDF as standard, and can therefore be used as independent files.
+#' This Function create a new Protocol, based on the `protocolTemplate`, which
+#' is defined in a Project Note.  The base protocol template is located in the
+#' organisation : `config/templates/Protocol-Template.Rmd` & provides suggested
+#' layout for a Protocol.
 #'
-#' Protocols are stored in the protocols directory inside the PROGRAMME
-#' Directory (defined in projectmanagr settings.yml).  Each Protocol
-#' exists in its own directory, to keep its compiled files together.
+#' Protocols are insertable text that define a set of Standard Operating
+#' Procedures (SOPs) & LOG Sections that record Protocol execution.  The Protocol
+#' is defined between specific delimiters, defined in `PROTOCOL_SEP.txt`.
 #'
-#' The Protocol source Rmd will link to its creating Project Note at the originalLine
-#' in the `selection` object, and the   Project Note will link to the compiled
-#' PDF of the Protocol.
-#'
-#' Protocols can then be inserted into new Project Notes, using the
-#' `insert_procotol()` function, which  allows insertion of preformed template
+#' Defined protocols can be inserted into new Project Notes, using the
+#' `insert_protocol()` function, which  allows insertion of preformed template
 #' documentation into new Notes.
 #'
-#' @param projectNotePath The ABSOLUTE path of the Project Note.
+#' @param selection projectmanagr selection object indicating the type of file
+#' currently selects.  The current file must be a Project Note.
 #'
-#' @param protocolName The name of the Protocol, a Title with all SPACES replaced
-#' with - or _.
+#' @param protocolName The name of the Protocol.  RECOMMEND to use a VERB-DRIVEN
+#' Naming Convention && use the common verb words first. eg. Fix Perfuse Mouse,
+#' Fix Fog Drosophila.
 #'
-#' @param selection List containing `rmdType` `filePath` & `originalLineNumber`,
-#' indicating what Project Note is to document the added protocol, and what line
-#' the protocol is to be linked to in the project note.  The function will deal
-#' with protocol insertion into simple project notes and subnotes only.
-#'
-#' @param protocolTitle The title of the Protocol, by default the name with
-#' all - and _ replaced with SPACES.
+#' @param protocolDescription One sentence description of the protocol - shown
+#' to users when choosing a protocol to insert.
 #'
 #' @param protocolTemplate Template to use, as found in the `config/templates/`
 #' directory.  Default is "Protocol-Template.Rmd"
 #'
 #' @export
-create_protocol <- function(protocolName, selection, protocolTitle="",
+create_protocol <- function(selection, protocolName, protocolDescription,
                             protocolTemplate="Protocol-Template.Rmd") {
 
   cat( "\nprojectmanagr::create_protocol():\n" )
@@ -1655,7 +1648,8 @@ create_protocol <- function(protocolName, selection, protocolTitle="",
 
   #### Set Instance Variables ####
 
-  projNoteRmdPath <- selection[["filePath"]]
+  projNoteRmdPath <- selection[["filePath"]] # presumed to be project note Rmd
+  noteInsertionIndex <- selection[["originalLineNumber"]]
 
   # get orgPath
   orgPath <- find_org_directory(projNoteRmdPath)
@@ -1674,50 +1668,11 @@ create_protocol <- function(protocolName, selection, protocolTitle="",
   settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
 
-  # If projectTitle blank, fill with projectName, replacing all "_" and "-" with spaces
-  if( nchar(protocolTitle)==0 ) {
-    protocolTitle <- gsub("-", " ", gsub("_", " ", protocolName) )
-  }
-
-  # define protocolDescription - name without suffix attached
-  protocolDescription <- protocolName
-  if( endsWith(  tolower(protocolDescription), tolower(settings[["ProtocolNameSuffix"]]) ) ) {
-    protocolDescription <- substr(protocolDescription, 1, nchar(protocolDescription)-nchar(settings[["ProtocolNameSuffix"]]))
-    protocolDescription = gsub("-", " ", gsub("_", " ", protocolDescription) )
-  }
-
-  # get the progPath:
-  progPath <- find_prog_dir(projNoteRmdPath, settings)
-
-  # get protocol directory path:
-  protocolsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
-
-  # define protocol Dir path + Rmd path
-  protocolDirPath <- paste0( protocolsPath, .Platform$file.sep, protocolName)
-  protocolRmdPath <- paste0( protocolDirPath, .Platform$file.sep, protocolName, ".Rmd")
-
-
   #### CHECK FOR ERRORS IN INPUT ####
-
-  # Check protocolName contains NO SPACES:
-  if( grepl("\\s+", protocolName) ) {
-    stop( paste0("  protocolName contains a SPACE: ", protocolName) )
-  }
-
-  # Check protocolName end with ProtocolNameSuffix
-  if( endsWith(  protocolName, settings[["ProtocolNameSuffix"]] ) == FALSE ) {
-    stop( paste0("  protocolName does not end with designated suffix: ", protocolName,
-                 " settings:ProtocolNameSuffix: ", settings[["ProtocolNameSuffix"]]) )
-  }
 
   # check selection is a Project Note - simple or sub
   if( selection[["rmdType"]] != "NOTE" && selection[["rmdType"]] != "SUB" ) {
     stop( paste0("  selection is not a suitable Project Note: ", selection[["filePath"]]) )
-  }
-
-  # Check protocolRmdPath doesnt exist
-  if( file.exists(protocolRmdPath) == TRUE ) {
-    stop( paste0("  protocol of this name already exists: ", protocolRmdPath) )
   }
 
 
@@ -1727,174 +1682,39 @@ create_protocol <- function(protocolName, selection, protocolTitle="",
   projNoteRmdContents <- read_file(projNoteRmdPath)
 
 
-  #### Create Protocol Dir ####
+  #### Replace markup in Protocol with values ####
 
-  done <- dir.create( protocolDirPath )
-
-  if(!done) {
-    stop( paste0("  DIR for Protocol could not be created: ", protocolDirPath) )
-  }
-
-  cat( "  Made Protocol DIR: ", protocolDirPath, "\n" )
-
-
-  #### create Rmd file ####
-
-  # Create blank RMD DOCUMENT:
-  done <- file.create( protocolRmdPath )
-
-  if(!done) {
-    file.remove(protocolDirPath) # remove the Protocol dir
-    stop( paste0("  Protocol could not be created: ", protocolRmdPath) )
-  }
-
-
-  #### Replace markup in Note with values ####
-
-  # use username as author value
-  authorValue <- Sys.info()["user"]
-
-  # modify protocolContents to include PREFIX and projectTitle
-  protocolContents <- sub_template_param(protocolContents, "{{TITLE}}",
-                                         protocolTitle, orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{AUTHOR}}",
-                                         authorValue, orgPath)
-
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_SUMMARY_HEADER}}",
-                                         settings[["ProtocolSummaryHeader"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_SUMMARY_FOOTER}}",
-                                         settings[["ProtocolSummaryFooter"]], orgPath)
-
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_GRAPHICAL_ABSTRACT_HEADER}}",
-                                         settings[["ProtocolGraphicalAbstractHeader"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_GRAPHICAL_ABSTRACT_FOOTER}}",
-                                         settings[["ProtocolGraphicalAbstractFooter"]], orgPath)
-
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_BACKGROUND_HEADER}}",
-                                         settings[["ProtocolBackgroundHeader"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_BACKGROUND_FOOTER}}",
-                                         settings[["ProtocolBackgroundFooter"]], orgPath)
-
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_MATERIALS_HEADER}}",
-                                         settings[["ProtocolMaterialsHeader"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_MATERIALS_FOOTER}}",
-                                         settings[["ProtocolMaterialsFooter"]], orgPath)
-
+  # add protocol section header and name
   protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_HEADER}}",
                                          settings[["ProtocolHeader"]], orgPath)
+  protocolContents <- sub_template_param(protocolContents, "{{_PROTOCOL_}}",
+                                         protocolName, orgPath)
 
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_SOP_HEADER}}",
-                                         settings[["ProtocolSopHeader"]], orgPath)
+  # Add ProtocolDescription field
+  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_DESCRIPTION_FIELD}}",
+                                         settings[["ProtocolDescriptionField"]], orgPath)
+  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_DESCRIPTION}}",
+                                         protocolDescription, orgPath)
 
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_LOG_HEADER}}",
-                                         settings[["ProtocolLogHeader"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_LOG_SEP}}",
-                                         settings[["ProtocolLogSep"]], orgPath)
-
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_FOOTER}}",
-                                         settings[["ProtocolFooter"]], orgPath)
-
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_RESULTS_LOG_HEADER}}",
-                                         settings[["ProtocolResultsLogHeader"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_RESULTS_LOG_FOOTER}}",
-                                         settings[["ProtocolResultsLogFooter"]], orgPath)
-
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_TROUBLESHOOTING_HEADER}}",
-                                         settings[["ProtocolTroubleshootingHeader"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_TROUBLESHOOTING_FOOTER}}",
-                                         settings[["ProtocolTroubleshootingFooter"]], orgPath)
-
-
-  # modify protocolContents with rmarkdown-html-header content
-  protocolContents <- replace_markdown_header(protocolContents, orgPath,
-                                              htmlMarkdown="{{HTML_HEADER_PROTOCOL}}",
-                                              htmlHeaderFilename="rmarkdown-html-header-protocol.txt")
+  # Add Protocol Separators in base template
+  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_SEP}}",
+                                         settings[["ProtocolSep"]], orgPath)
 
   # modify protocolContents with SEP values
   protocolContents <- replace_sep_values(protocolContents, orgPath)
 
 
-  # modify _PROTOCOL_ with protocolDescription
-  protocolContents <- sub_template_param(protocolContents, "_PROTOCOL_", protocolDescription, orgPath)
+  #### Add Protocol Insertion Template to Project Note
 
-  # modify svg files with names
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_GRAPHICAL_ABSTRACT_SVG}}",
-                                         settings[["ProtocolGraphicalAbstractSvg"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_EQUIPMENT_SVG}}",
-                                         settings[["ProtocolEquipmentSvg"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_PROCEDURE_TEMPLATE_SVG}}",
-                                         settings[["ProtocolProcedureTemplateSvg"]], orgPath)
-
-
-  #### Link Protocol and Project Note ####
-
-  # create link from protocol to project note
-  projNoteName <- substr(basename(projNoteRmdPath), 1, regexpr(".Rmd", basename(projNoteRmdPath))-1)
-  projNoteLink <- paste0(settings[["ProtocolLinkFormat"]],
-                         create_hyperlink( projNoteName, projNoteRmdPath, protocolRmdPath),
-                         settings[["ProtocolLinkFormat"]])
-
-  # insert link into protocol
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_PROJECT_NOTE_LINK}}",
-                                         projNoteLink, orgPath)
-
-  # create link from project note to protocol
-  protocolLink <- paste0(settings[["ProtocolLinkFormat"]],
-                         create_hyperlink( protocolName, protocolRmdPath, projNoteRmdPath),
-                         settings[["ProtocolLinkFormat"]])
-
-  # insert link into project note - replacing the original line with link
-  projNoteRmdContents <- replace_at_indices(projNoteRmdContents, selection[["originalLineNumber"]], protocolLink)
-
-
-  #### write Protocol ####
-
-  write_file(protocolContents, protocolRmdPath)
-
-  cat( "  Made Protocol: ", protocolRmdPath, "\n" )
-
-
-  #### add resources ####
-
-  # graphical abstract svg
-  graphicalAbstractSvg <- settings[['ProtocolGraphicalAbstractSvg']]
-  graphicalAbstractSvgTemplate <- paste0( tempPath, .Platform$file.sep, graphicalAbstractSvg )
-  graphicalAbstractSvgProtocol <- paste0( protocolDirPath, .Platform$file.sep, graphicalAbstractSvg )
-
-  done <- file.copy(graphicalAbstractSvgTemplate, graphicalAbstractSvgProtocol)
-  if(!done) {
-    stop( paste0("  Failed to copy ",graphicalAbstractSvg,": ", graphicalAbstractSvgTemplate) )
-  }
-  cat( "  Copied ",graphicalAbstractSvg," \n" )
-
-  # equipment svg
-  equipmentSvg <- settings[['ProtocolEquipmentSvg']]
-  equipmentSvgTemplate <- paste0( tempPath, .Platform$file.sep, equipmentSvg )
-  equipmentSvgProtocol <- paste0( protocolDirPath, .Platform$file.sep, equipmentSvg )
-
-  done <- file.copy(equipmentSvgTemplate, equipmentSvgProtocol)
-  if(!done) {
-    stop( paste0("  Failed to copy ",equipmentSvg,": ", equipmentSvgTemplate) )
-  }
-  cat( "  Copied ",equipmentSvg," \n" )
-
-  # procedure svg
-  procedureSvg <- settings[['ProtocolProcedureTemplateSvg']]
-  procedureSvgTemplate <- paste0( tempPath, .Platform$file.sep, procedureSvg )
-  procedureSvgProtocol <- paste0( protocolDirPath, .Platform$file.sep, procedureSvg )
-
-  done <- file.copy(procedureSvgTemplate, procedureSvgProtocol)
-  if(!done) {
-    stop( paste0("  Failed to copy ",procedureSvg,": ", procedureSvgTemplate) )
-  }
-  cat( "  Copied ",procedureSvg," \n" )
+  projNoteRmdContents <- insert_at_indices(projNoteRmdContents, noteInsertionIndex,
+                                           protocolContents)
 
 
   #### write Project Note ####
 
   write_file(projNoteRmdContents, projNoteRmdPath)
 
-  cat( "  written Protocol link to Project Note: ", projNoteRmdPath, "\n" )
+  cat( "  Inserted Protocol into Project Note: ", projNoteRmdPath, "\n" )
 
 }
 

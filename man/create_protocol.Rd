@@ -2,48 +2,41 @@
 % Please edit documentation in R/create-functions.R
 \name{create_protocol}
 \alias{create_protocol}
-\title{Add a Protocol to a Project Note}
+\title{Create a Protocol in a Project Note}
 \usage{
 create_protocol(
-  protocolName,
   selection,
-  protocolTitle = "",
+  protocolName,
+  protocolDescription,
   protocolTemplate = "Protocol-Template.Rmd"
 )
 }
 \arguments{
-\item{protocolName}{The name of the Protocol, a Title with all SPACES replaced
-with - or _.}
+\item{selection}{projectmanagr selection object indicating the type of file
+currently selects.  The current file must be a Project Note.}
 
-\item{selection}{List containing `rmdType` `filePath` & `originalLineNumber`,
-indicating what Project Note is to document the added protocol, and what line
-the protocol is to be linked to in the project note.  The function will deal
-with protocol insertion into simple project notes and subnotes only.}
+\item{protocolName}{The name of the Protocol.  RECOMMEND to use a VERB-DRIVEN
+Naming Convention && use the common verb words first. eg. Fix Perfuse Mouse,
+Fix Fog Drosophila.}
 
-\item{protocolTitle}{The title of the Protocol, by default the name with
-all - and _ replaced with SPACES.}
+\item{protocolDescription}{One sentence description of the protocol - shown
+to users when choosing a protocol to insert.}
 
 \item{protocolTemplate}{Template to use, as found in the `config/templates/`
 directory.  Default is "Protocol-Template.Rmd"}
-
-\item{projectNotePath}{The ABSOLUTE path of the Project Note.}
 }
 \description{
-This Function adds a new Protocol to a Project Note - saved in the
-PROGRAMMES' protocols Dir. The Protocol is formed using an Rmd template:
-`Protocol-Template.Rmd` from the projectmanagr package. Protocols compile to
-PDF as standard, and can therefore be used as independent files.
+This Function create a new Protocol, based on the `protocolTemplate`, which
+is defined in a Project Note.  The base protocol template is located in the
+organisation : `config/templates/Protocol-Template.Rmd` & provides suggested
+layout for a Protocol.
 }
 \details{
-Protocols are stored in the protocols directory inside the PROGRAMME
-Directory (defined in projectmanagr settings.yml).  Each Protocol
-exists in its own directory, to keep its compiled files together.
+Protocols are insertable text that define a set of Standard Operating
+Procedures (SOPs) & LOG Sections that record Protocol execution.  The Protocol
+is defined between specific delimiters, defined in `PROTOCOL_SEP.txt`.
 
-The Protocol source Rmd will link to its creating Project Note at the originalLine
-in the `selection` object, and the   Project Note will link to the compiled
-PDF of the Protocol.
-
-Protocols can then be inserted into new Project Notes, using the
-`insert_procotol()` function, which  allows insertion of preformed template
+Defined protocols can be inserted into new Project Notes, using the
+`insert_protocol()` function, which  allows insertion of preformed template
 documentation into new Notes.
 }

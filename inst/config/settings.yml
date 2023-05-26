@@ -62,6 +62,10 @@
   NoteGoalLinkLine: '* [GOAL'
   NoteDeliverableLinkLine: '    + [DELIVERABLE'
   NoteTaskLinkLine: '        - [TASK'
+  ProtocolHeader: '# PROTOCOL : '
+  ProtocolSep: 'template:PROTOCOL_SEP.txt'
+  ProtocolDescriptionField: 'PROTOCOL_DESCRIPTION:'
+
   ProtocolLinkFormat: '**'
   ProtocolNameSuffix: '_Protocol'
   ProtocolSummaryHeader: '# SUMMARY'
@@ -79,7 +83,6 @@
   ProtocolResultsLogFooter: 'template:SEP01.txt'
   ProtocolTroubleshootingHeader: '# TROUBLESHOOTING GUIDE'
   ProtocolTroubleshootingFooter: 'template:SEP01.txt'
-  ProtocolHeader: '# PROTOCOL'
   ProtocolSopHeader: 'template:SEP03.txt'
   ProtocolLogHeader: 'template:SEP02.txt'
   ProtocolLogSep: 'template:SEP03.txt'
