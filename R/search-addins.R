@@ -59,7 +59,7 @@ addin_search_project_org <- function() {
 
     miniContentPanel(
 
-      fillCol( flex = c(1,1,1,1,1,20),
+      fillCol( flex = c(1,1,1,1,15),
 
         fillRow( h5("Select organisation scope for search:") ),
 
@@ -68,8 +68,6 @@ addin_search_project_org <- function() {
 
         # search terms entered here
         fillRow(  textInput("searchTerm", "Search:", value = "", width="100%")  ),
-
-        fillRow( h5("") ),
 
         fillRow(   span( textOutput("warning"), style="color:red")  ),
 
@@ -85,7 +83,9 @@ addin_search_project_org <- function() {
 
   server <- function(input, output, session) {
 
-    # compute Dir selection:
+
+    #### compute Dir selection ####
+
     global <- reactiveValues(datapath = orgPath )
     # this sets initial value of global$datapath to orgPath
 
@@ -200,21 +200,31 @@ addin_search_project_org <- function() {
 
         #### open selected file from table ####
 
-        cat("LOCATION : ", global$data$LOCATION, "\n\n")
+        LOCATION <- global$data[[1]]
+        LINE <- global$data[[2]]
 
-        cat("LOCATION[index] : ", global$data$LOCATION[input$mytable1_rows_selected], "\n\n")
-
-        cat("LINE : ", global$data$LINE, "\n\n")
+        loc <- LOCATION[input$mytable1_rows_selected]
+        navLine <- as.numeric(LINE[input$mytable1_rows_selected])
 
         # navigate to org index file:
-        rstudioapi::navigateToFile( global$data$LOCATION[input$mytable1_rows_selected] )
+        id <- rstudioapi::navigateToFile( loc, navLine, column=1, moveCursor=TRUE )
 
         # move to line where search term was identified
 
+        #Sys.sleep(0.1) # ensure first position is set
+        # go 40 BELOW - to ensure the navLine appears 4 lines BELOW top of doc
+        #rstudioapi::setCursorPosition(rstudioapi::document_position(max(navLine+40, ), 1), id)
 
-        workingDir <- dirname(global$data$LOCATION[input$mytable1_rows_selected])
+        #Sys.sleep(0.1) # ensure first position is set
+        # go 4 above - to ensure the navLine appears 4 lines BELOW top of doc
+        #rstudioapi::setCursorPosition(rstudioapi::document_position(max(navLine-4, 0), 1), id)
+
+        #Sys.sleep(0.1) # ensure first position is set
+        # then go to navLine - so this line is selected!
+        #rstudioapi::setCursorPosition(rstudioapi::document_position(max(navLine, 0), 1), id)
 
         # navigate to containing dir
+        workingDir <- dirname(LOCATION[input$mytable1_rows_selected])
         rstudioapi::filesPaneNavigate( workingDir )
         # and set working directory
         setwd( workingDir )

@@ -473,16 +473,16 @@ create_programme <- function(programmeName, programmePrefix,
   cat( "  Made PROJECTS dir: ",projsPath, "\n" )
 
 
-  #### create protocols dir ####
+  # create protocols dir #
 
-  templatesPath <- paste(progPath, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]], sep="")
-  done <- dir.create(templatesPath)
+  #templatesPath <- paste(progPath, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]], sep="")
+  #done <- dir.create(templatesPath)
 
-  if(!done) {
-    stop( paste0("  SOP directory could not be created: ", templatesPath) )
-  }
+  #if(!done) {
+  #  stop( paste0("  SOP directory could not be created: ", templatesPath) )
+  #}
 
-  cat( "  Made SOP dir: ",templatesPath, "\n" )
+  #cat( "  Made SOP dir: ",templatesPath, "\n" )
 
 
   #### create Rmd file ####
@@ -1614,17 +1614,17 @@ create_sub_note <- function( subNoteName, subNotePath,
 #' Create a Protocol in a Project Note
 #'
 #' This Function create a new Protocol, based on the `protocolTemplate`, which
-#' is defined in a Project Note.  The base protocol template is located in the
-#' organisation : `config/templates/Protocol-Template.Rmd` & provides suggested
-#' layout for a Protocol.
+#' is inserted into a Project Note.  The base protocol template is located in
+#' the organisation : `config/templates/Protocol-Template.Rmd` & provides
+#' suggested layout for a Protocol.
 #'
 #' Protocols are insertable text that define a set of Standard Operating
-#' Procedures (SOPs) & LOG Sections that record Protocol execution.  The Protocol
-#' is defined between specific delimiters, defined in `PROTOCOL_SEP.txt`.
+#' Procedures (SOPs) & LOG Sections that record Protocol execution.  The
+#' Protocol is defined between specific delimiters, defined in
+#' `PROTOCOL_SEP.txt`: by default the delimiter is a series of `====`.
 #'
-#' Defined protocols can be inserted into new Project Notes, using the
-#' `insert_protocol()` function, which  allows insertion of preformed template
-#' documentation into new Notes.
+#' Protocols defined in a source Project Note can be inserted into new Project
+#' Notes, using the `insert_protocol()` function.
 #'
 #' @param selection projectmanagr selection object indicating the type of file
 #' currently selects.  The current file must be a Project Note.
@@ -1633,7 +1633,7 @@ create_sub_note <- function( subNoteName, subNotePath,
 #' Naming Convention && use the common verb words first. eg. Fix Perfuse Mouse,
 #' Fix Fog Drosophila.
 #'
-#' @param protocolDescription One sentence description of the protocol - shown
+#' @param protocolDescription Description of the protocol - shown
 #' to users when choosing a protocol to insert.
 #'
 #' @param protocolTemplate Template to use, as found in the `config/templates/`
@@ -1687,7 +1687,8 @@ create_protocol <- function(selection, protocolName, protocolDescription,
   # add protocol section header and name
   protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_HEADER}}",
                                          settings[["ProtocolHeader"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{_PROTOCOL_}}",
+
+  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_NAME}}",
                                          protocolName, orgPath)
 
   # Add ProtocolDescription field

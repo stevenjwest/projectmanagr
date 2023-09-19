@@ -211,7 +211,7 @@ addin_insert_hyperlink <- function() {
   orgPath <- find_org_directory( context$path )
 
   # if orgPath not identified present error interface and then stop this function
-  if(orgPath=="") { # do nothing
+  if( orgPath == "" ) { # do nothing
 
   } else { # get the settings file
     # set confPath + tempPath - these names are FIXED:
@@ -321,7 +321,7 @@ addin_insert_hyperlink <- function() {
       print(reorderedFileList[[as.integer(input$select)]])
 
 
-      #### insert hyperlink ####
+      #### done : insert hyperlink ####
 
       # form new hyperlink:
       DocLink <- R.utils::getRelativePath(reorderedFileList[[as.integer(input$select)]], relativeTo=context$path)
@@ -374,12 +374,28 @@ addin_insert_hyperlink <- function() {
 
 #' Select & Insert Protocol
 #'
+#' A Directory Tree within the Organisation is used to screen all Project Notes
+#' for all declared Protocols, based on the Protocol Delimiter Syntax (defined
+#' in `PROTOCOL_SEP.txt`).  This Directory Tree can be adjusted.
+#'
+#' All Protocols present in Project Notes in the Directory Tree are shown in a
+#' DT datatable by protocol title.
+#'
+#' Individual Protocols can be selected to show the summary information.
+#'
+#' A Preview view of the Protocol can be opened to read through the entire
+#' Protocol in the ADDIN.
+#'
+#' Selected protocols can be inserted into the current selection in a
+#' Destination Project Note via the DONE button.
+#'
 #' Using DT to display a datatable in the shiny gadget here.  See the tutorial
 #' at https://rstudio.github.io/DT/shiny.html
 #'
+#' @export
 addin_insert_protocol <- function() {
 
-  cat( "\nprojectmanagr::addin_insert_protocol():\n" )
+  cat( "\nprojectmanagr::addin_insert_protocol():\n\n" )
 
 
   #### instance variables ####
@@ -391,10 +407,10 @@ addin_insert_protocol <- function() {
   noteInsertionIndex <- selection[["originalLineNumber"]]
 
   # get orgPath
-  orgPath <- find_org_directory(context$path)
+  orgPath <- find_org_directory(projNoteRmdPath)
 
   if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  Cannot identify organisation directory: ", context$path) )
+    stop( paste0("  Cannot identify organisation directory: ", projNoteRmdPath) )
 
   }
 
@@ -406,24 +422,60 @@ addin_insert_protocol <- function() {
   settingsFile <- paste0(confPath, .Platform$file.sep, "settings.yml")
   settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
-  # get the progPath:
-  progPath <- find_prog_dir(projNoteRmdPath, settings)
+  # load status file for projectmanagr org status
+   # contains information on protocols DIRs && index of protocols in those files with retrieval datetime
+  statusFile <- paste0(confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
+  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
-  # get protocol directory path:
-  protocolsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
+  # read status information for PROTOCOLS if it exists
+  protocolsStatus <- status[['PROTOCOLS']]
 
-  # get list of protocols
-  sops <- list.dirs(protocolsPath, recursive=FALSE)
-  protocols <- sops[endsWith(sops, settings[["ProtocolNameSuffix"]])] # extract only Protocol directories
+  # if PROTOCOLS data exists use last dir tree where a protocol was inserted from
+   # otherwise set the dirtree to the PROGRAMME of the current document's path
+  if( is.null(protocolsStatus) ) {
+    cat("  no previous protocols found - searching parent directory of current file for protocols..\n")
+    dirPath <- dirname(projNoteRmdPath)
+    #protocols <- find_protocols_in_dir_tree(dirPath, orgPath, settings)
+    protocols <- find_protocols_in_dir_tree(dirPath, orgPath, settings)
+    protocolRetrievalDateTime <- get_datetime() # set to current datetime
 
-  # get data from current file - DESTINATION FILE
-  context <- rstudioapi::getSourceEditorContext()
-  row <- context$selection[[1]]$range$start[1]
-  path <- normalizePath( context$path )
+  } else {
+
+    cat("  found previous protocols - identifying most recently used...\n\n")
+    # identify the latest used dirPath from metadata stored in protocolsStatus
+    protocolDirPaths <- names(protocolsStatus)
+    dts <- lapply(X = protocolsStatus, FUN = `[[`, "protocolRetrievalDateTime")
+    dts <- lubridate::ymd_hm(dts)
+    dtsl <- max(dts) # get maximum value - or LATEST DATETIME
+    dtsli <- which(dts == dtsl) # get the index
+    dirPath <- protocolDirPaths[[dtsli]]
+
+    # validate the protocols! Check if any project Notes are updated since the protocolRetrievalDateTime
+    protocolsStatus[[dirPath]] <- update_protocols_in_list(protocolsStatus, dirPath, orgPath, settings)
+
+    # latest retrieval datetime
+    protocolRetrievalDateTime <- protocolsStatus[[dirPath]]$protocolRetrievalDateTime
+
+    # latest protocols
+    protocols <- protocolsStatus[[dirPath]]$protocols
+
+    cat( paste0("    displaying most recent protocols from path: ", dirPath, "\n") )
+
+  }
+
+  # open protocol sep delimiter
+  protocolSepContents <- read_file( paste0( tempPath, .Platform$file.sep, "PROTOCOL_SEP.txt") )
+
+  # create vector of possible roots for dir selection in server()
+  roots <- c(orgPath) # can use orgPath ONLY as roots
+  names(roots) <- c(basename(orgPath))
 
   # generate a blank table to hold protocol names in
-  PROTOCOL_NAME <- basename(protocols)
-  protocolsTable <- tibble::tibble(PROTOCOL_NAME)
+  PROTOCOL_NAME <- names(protocols)
+  PROTOCOL_LINE_NUM <- as.character(lapply(X = protocols, FUN = `[[`, "startLineNum"))
+  PROTOCOL_NOTE_PATH <- as.character(lapply(X = protocols, FUN = `[[`, "projectNotePath"))
+  PROTOCOL_NOTE_NAME <- basename( as.character(lapply(X = protocols, FUN = `[[`, "projectNotePath")) )
+  protocolsTable <- tibble::tibble(PROTOCOL_NAME, PROTOCOL_LINE_NUM, PROTOCOL_NOTE_NAME)
 
 
   #### user interface ####
@@ -434,11 +486,28 @@ addin_insert_protocol <- function() {
 
     miniContentPanel(
 
-      fillCol( flex = c(1,20),
+      fillCol( flex = c(1,1,1,20,1,1,1,4),
 
                fillRow( p("Insert a protocol into the current Project Note") ),
 
-               fillRow ( DT::DTOutput("mytable1") )
+               #fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
+
+               fillRow( flex = c(5, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Directory Tree")  ),
+
+               #fillRow(   textOutput("projectNotePath")  ),
+
+               fillRow( br() ),
+
+               fillRow ( DT::DTOutput("mytable1", height = "100%") ),
+
+               fillRow( br() ),
+
+               fillRow( h3("Protocol Description") ),
+
+               fillRow( br() ),
+
+               fillRow( h4( htmlOutput("protocolDescription") ) )
+
       )
     )
   )
@@ -448,14 +517,79 @@ addin_insert_protocol <- function() {
 
   server <- function(input, output, session) {
 
-    #  make table reactive
-    global <- reactiveValues(table = protocolsTable)
 
-    output$mytable1 <- DT::renderDT( global$table,
+    #### compute Dir selection####
+
+    global <- reactiveValues(datapath = dirPath )
+    # this sets initial value of global$datapath
+
+
+    # allows selection of Dir, with roots set to project doc DIR or ORG Dir
+    shinyDirChoose(
+      input, 'dir',
+      defaultRoot = names(roots)[1], # set default to first root
+      #defaultPath = global$datapath,
+      roots=roots, # can use orgPath only as roots
+      filetypes = c('', 'txt', 'Rmd', "tsv", "csv", "bw")
+    )
+
+    dir <- reactive(input$dir) # make input dir REACTIVE to enable update of global datapath when changed
+
+    # show the global$datapath computed from input$dir in output$dir (next to shinyDirButton!)
+    output$dir <- renderText({ global$datapath })
+
+    # update global$datapath
+    observeEvent(ignoreNULL = TRUE,
+                 eventExpr = { # if input$dir is changed/set
+                   input$dir
+                 },
+                 handlerExpr = { # update datapath with dir() list
+                   if (!"path" %in% names(dir())) return() # check the path element exists in dir
+                   #cat("\n dir() names: ", names(dir())) # contains : root, path
+                   #cat("\n  dir$root: ", dir()$root) # name of the root selected in shinyDirChoose
+                   #cat("\n  dir$path: _", unlist( dir()$path ), "_" ) # list of each dir in dirTree, separated by space?
+                   #cat("\n  dir$path pasted with fileSep: _", paste( unlist( dir()$path ), collapse = .Platform$file.sep ), "_" )
+                   # list of each dir in dirTree created into a path
+                   #cat("\n  dir$path[-1]: _", unlist( dir()$path[-1] ), "_" ) # list of each dir in dirTree, separated by space?
+                   #cat("\n  dir$path[-1] pasted with fileSep: _", paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep ), "_" )
+                   # list of each dir in dirTree created into a path
+                   global$datapath <- file.path( # form path with
+                     roots[[dir()$root]], # shinyDirChoose selected ROOT (selected by its NAME found in dir()$root)
+                     paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep )  ) # shinyDirChoose selected PATH with file.sep added
+                 })
+
+
+    #### render the protocolsTable ####
+
+    #  make table reactive
+    gt <- reactiveValues(table = protocolsTable, paths = PROTOCOL_NOTE_PATH,
+                         lines = PROTOCOL_LINE_NUM, protocols = protocols)
+
+    cat("\n  compute protocols table\n")
+    # compute protocols table
+    observe({
+      if( global$datapath != "" ) { # only if datapath has been assigned!
+        protocols <- find_protocols_in_dir_tree(global$datapath, orgPath, settings)
+        PROTOCOL_NAME <- names(protocols)
+        PROTOCOL_LINE_NUM <- as.character(lapply(X = protocols, FUN = `[[`, "startLineNum"))
+        PROTOCOL_NOTE_PATH <- as.character(lapply(X = protocols, FUN = `[[`, "projectNotePath"))
+        PROTOCOL_NOTE_NAME <- basename( as.character(lapply(X = protocols, FUN = `[[`, "projectNotePath")) )
+        protocolsTable <- tibble::tibble(PROTOCOL_NAME, PROTOCOL_LINE_NUM, PROTOCOL_NOTE_NAME)
+        gt$table <- tibble::tibble(PROTOCOL_NAME, PROTOCOL_LINE_NUM, PROTOCOL_NOTE_NAME)
+        gt$paths = PROTOCOL_NOTE_PATH
+        gt$lines = PROTOCOL_LINE_NUM
+        gt$protocols <- protocols
+      }
+    })
+
+
+    cat("\n  render the protocolsTable\n")
+
+    output$mytable1 <- DT::renderDT( gt$table,
                                      selection = 'single',
                                      class = 'cell-border',
                                      #editable = list(target = "cell", disable = list(columns = c(1:7))),
-                                     editable = TRUE,
+                                     #editable = TRUE,
                                      filter = 'top',
                                      caption = 'Protocols Table',
                                      fillContainer = TRUE,
@@ -466,31 +600,45 @@ addin_insert_protocol <- function() {
                                      server = FALSE ) # processing on client-side means edits to IMPORT col are kept when searching the table
 
 
-    # Insert the Protocol from selected SOP
+    #### set protocol description ####
+
+    # set the protocolDescription text based on protocol selection
+    output$protocolDescription <- renderUI({
+      if( is.null(input$mytable1_rows_selected) ) {
+        paste0("  no protocol selected")
+      } else {
+        #paste0("row: ", input$mytable1_rows_selected, " line: ",
+        #       PROTOCOL_LINE_NUM[[input$mytable1_rows_selected]],
+        #       " path: ", PROTOCOL_NOTE_PATH[[input$mytable1_rows_selected]])
+        desc <- get_protocol_description(read_file(gt$paths[[input$mytable1_rows_selected]]),
+                                 as.numeric(gt$lines[[input$mytable1_rows_selected]]),
+                                 settings, orgPath)
+        HTML(paste0(desc[desc!=""], sep='<br/>') )
+      }
+    })
+
+
+    #### done : insert protocol ####
+
     observeEvent(input$done, {
 
-      # insertProtocol:
-      if(input$includeNotes == "1" && input$includeEquip == "1") {
-        # NO - includeNotes is FALSE & includeNotes is FALSE
-        cat( "  projectmanagr::insertProtocol():  includeNotes=FALSE, includeEquip=FALSE \n" )
-        projectmanagr::insertProtocol(projNotePath, row, input$select, includeNotes=FALSE, includeEquip=FALSE)
+      cat( paste0("  inserting protocol into: ", basename(projNoteRmdPath), " at line: ", noteInsertionIndex, "\n") )
+      projectmanagr::insert_protocol(
+        user_selection(gt$paths[[input$mytable1_rows_selected]],
+                       as.numeric(gt$lines[[input$mytable1_rows_selected]]) ),
+        user_selection(projNoteRmdPath, noteInsertionIndex)
+      )
 
-      } else if(input$includeNotes == "2" && input$includeEquip == "1") {
-        # YES - includeNotes is TRUE BUT includeNotes is FALSE
-        cat( "  projectmanagr::insertProtocol():  includeNotes=TRUE, includeEquip=FALSE \n" )
-        projectmanagr::insertProtocol(projNotePath, row, input$select, includeNotes=TRUE, includeEquip=FALSE)
+      # add found protocols cache to status
+      # cache consists of protocolRetrievalDateTime (ie. current datetime!) & protocols list
+       # protocols list : each protocol name, plus source project note PATH && LINE in file where this begins
+      protocolRetrievalDateTime <- get_datetime()
+      attrs <- list(protocolRetrievalDateTime, gt$protocols ) # gt protocols stores reactive protocols value
+      names(attrs) <- c("protocolRetrievalDateTime", "protocols")
+      status[["PROTOCOLS"]][[global$datapath]] <- attrs # global datapath store reactive dirPath value
 
-      } else if(input$includeNotes == "1" && input$includeEquip == "2") {
-        # NO - includeNotes is FALSE BUT includeNotes is TRUE
-        cat( "  projectmanagr::insertProtocol():  includeNotes=FALSE, includeEquip=TRUE \n" )
-        projectmanagr::insertProtocol(projNotePath, row, input$select, includeNotes=FALSE, includeEquip=TRUE)
-
-      } else if(input$includeNotes == "2" && input$includeEquip == "2") {
-        # YES - includeNotes is TRUE & includeNotes is TRUE
-        cat( "  projectmanagr::insertProtocol():  includeNotes=TRUE, includeEquip=TRUE \n" )
-        projectmanagr::insertProtocol(projNotePath, row, input$select, includeNotes=TRUE, includeEquip=TRUE)
-
-      }
+      # Write status list to the statusFile:
+      yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
       # Close Gadget after computations are complete:
       stopApp()

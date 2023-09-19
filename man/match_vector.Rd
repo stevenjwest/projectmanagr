@@ -2,7 +2,7 @@
 % Please edit documentation in R/document-functions.R
 \name{match_vector}
 \alias{match_vector}
-\title{Match vector in parent vector}
+\title{Match vector in parent}
 \usage{
 match_vector(vector, parent, nomatch = 0L)
 }

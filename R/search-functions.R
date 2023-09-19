@@ -1,7 +1,7 @@
 #' Search Dir Tree
 #'
-#' Searches the Dir Tree within an Organisation, returning a datatable
-#' with FILENAME, CONTEXT, LOCATION columns.
+#' Searches all project docs/notes in a Dir Tree within an Organisation,
+#' returning a datatable with FILENAME, CONTEXT, LOCATION LINE columns.
 #'
 search_dir_tree <- function(path, searchTerm, updateProgress = NULL, settings, orgPath) {
 

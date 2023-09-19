@@ -41,7 +41,7 @@ set_selection_next_horizontal_rule <- function( ) {
   line <- (cursor$range[[1]])[1] # get the line number of cursor
 
   if( startsWith(context$contents[line], "---") == TRUE ) {
-    # can only make selection if current lien is horizontal rule!
+    # can only make selection if current line is horizontal rule!
 
     for(l in (line+2):length(context$contents) ) {
       # find the next line that starts with the same number or more dashes as current line ---

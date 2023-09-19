@@ -2,159 +2,38 @@
 
 
 
-{{PROTOCOL_HEADER}}{{_PROTOCOL_}}
+{{PROTOCOL_HEADER}}{{PROTOCOL_NAME}}
 
 
-{{PROTOCOL_DESCRIPTION_FIELD}} {{PROTOCOL_DESCRIPTION}}
+{{PROTOCOL_DESCRIPTION_FIELD}} 
+
+{{PROTOCOL_DESCRIPTION}}
 
 
 
 {{PROTOCOL_SEP}}
 
-
-
-# {{_PROTOCOL_}} SOP
-
-
-SOP for {{_PROTOCOL_}}
-
->>>> 
->>>> Example of Protocol SOP Sections
->>>>  * Each Procedure has a separate Section Title
->>>>  * Initial summary of procedure
->>>>      + include schematic, photo or screenshot of the procedure for graphical summary
->>>>  * Outline of procedure in bullet point list.
->>>>      + include code chunks where data processing is required
->>>> 
-
-
 {{SEP02}}
 
 
 
-## Import Mouse Data from PYRAT
+# {{PROTOCOL_NAME}} SOP
 
 
-Export data from PyRAT as CSV and insert into Project Note.
+Standard Operating Procedure(s) for {{PROTOCOL_NAME}}
+
+>>>> 
+>>>> Example of Protocol SOP Sections shown below
+>>>>  * Each Procedure has a separate Section Title
+>>>>  * Initial summary of procedure
+>>>>      + include schematic, photo or screenshot of the procedure for graphical summary if possible
+>>>>  * Outline of procedure in bullet point list.
+>>>>      + include code chunks to explicitly describe data processing where required
+>>>>      + include images of steps to show explicitly how to conduct them
+>>>> 
 
 
-```{r procedure-schematic-import-data, fig.cap="Import mouse data."}
-
-knitr::include_graphics("img/02-setup-hood/01_import_mouse_data.png")
-
-```
-
-
-* Export PyRAT Mouse Data:
-
-    + Open PyRAT:
-    
-        -  https://hosted.scionics.com/swc/cgi-bin/login.py
-        
-        - Login with SWC credentials - `steve_west`
-        
-        - Alias : `No Alias` > `Set Alias`
-
-    + Filter and Select Mice for Export
-    
-        - filter by Cage ID
-        
-            - `Apply filter` - TOP LEFT : 
-                
-                - Cage ID(s) : 
-                
-                    - `SIAA-0349184 SIAA-0349185`  
-                    
-                    - > `Apply filter`
-
-    + Export Mice data:
-    
-        - Checkbox ALL mice  >  `QS > Export this list to Excel (bottom)  >  Apply  >  Export`
-        
-            - ENSURE following columns selected:
-            
-                - `ID` `Sex` `Date of birth` `Wean date` `Line / strain (Name)` `Cage` `Cage label` `Cage category` `Cage type` `Genetic background` `Genetic status` `Line / strain ID` `Line / strain Official name` `Line / strain severity` `Mutations`
-
-        - Use defaults - file is saved to `~/Downloads/animallist.csv`
-        
-    + Cull mice on PyRAT
-    
-        - Close Export Window and uncheck `Export this list to Excel (bottom)`
-        
-        - Check `Sacrifice these animals`
-        
-            - Confirm assigned licence - CHECK
-        
-            - reason : `Tissue Collection`
-            
-            - method : `Perfusion`
-            
-            - Severity : `Non-recovery`
-            
-        - Click `Apply > OK`
-
-
-
-* Move metadata file to Project Note DIR:
-
-
-```{bash, eval=FALSE}
-
-mkdir -p PREFIX/_data
-mv ~/Downloads/animallist.csv PREFIX/_data/animallist.csv
-
-```
-
-
-
-* Import as dataframe & wrangle into correct format
-
-    + `samples` : datatable to insert that contains
-    
-        - Standard cols : ID sex dob_Dt, colony_genotype, treatment
-        
-        - Further data cols : wean_Dt, strain_code, strain, cage_ID, cage_type
-
-
-```{r, eval=FALSE}
-
- # read - UTF-16!
-samples_df <- read.csv("PREFIX/_data/animallist.csv", fileEncoding = "UTF-16", sep = "\t")
-
- # convert to character cols
-samples_df <- data.frame(lapply(samples_df, as.character), stringsAsFactors=FALSE)
-
- # convert to tibble
-samples_df <- tibble::tibble(samples_df)
-
- # trim ID
-samples_df$ID <- substr(samples_df$ID, 5, nchar(samples_df$ID))
-
- # select cols needed to CREATE df:
-samples <- dplyr::select(samples_df, ID, Sex, DOB, Wean.date, dplyr::starts_with("Mutation"), dplyr::starts_with("Grade"), Line...Strain..Name., Line...Strain..Official.name., Cage, Cage.category )
-
- # unite the mutations and grades to form colony_genotype col:
-samples <- tidyr::unite(samples, Mutations, dplyr::starts_with("Mutation"))
-samples <- tidyr::unite(samples, Grades, dplyr::starts_with("Grade"))
-samples <- tidyr::unite(samples, colony_genotype, Mutations:Grades, sep = ":")
-
- # rename col names to match standard datatables layout:
-samples <- dplyr::transmute(samples, ID = ID, sex = Sex, dob_dt = DOB, colony_genotype = colony_genotype, treatment = "NAIVE", wean_dt = Wean.date, strain_code = Line...Strain..Name., strain = Line...Strain..Official.name., cage_ID = Cage, cage_type = Cage.category )
-
- # REPLACE all spaces that may come up
-samples$colony_genotype <-  gsub(" ", "-", samples$colony_genotype)
-samples$strain_code <-  gsub(" ", "-", samples$strain_code)
-samples$strain <-  gsub(" ", "", samples$strain)
-samples$cage_type <-  gsub(" ", ":", samples$cage_type)
-
-samples
-
- # samples can be used to embed a datatable now!
-
-```
-
-
-----
+{{SEP03}}
 
 
 
@@ -533,14 +412,14 @@ Tissue immersed in fixative to continue fixation.
 
 
 
-{{SEP01}}
+{{SEP02}}
 
 
 
-# {{_PROTOCOL_}} LOG
+# {{PROTOCOL_NAME}} LOG
 
 
-LOG of {{_PROTOCOL_}}
+LOG of {{PROTOCOL_NAME}}
 
 >>>> 
 >>>> Example of Protocol LOG including
@@ -559,7 +438,17 @@ LOG of {{_PROTOCOL_}}
 >>>> 
 
 
-{{SEP02}}
+{{SEP03}}
+
+
+
+# {{DATE}} Perfuse Fix Mouse LOG
+
+
+__description_of_protocol_execution__what_was_processed__
+
+
+----
 
 
 
@@ -736,6 +625,8 @@ projectmanagr::datatable_read_to_selection()
 ```
 
 
+
+{{SEP01}}
 
 {{PROTOCOL_SEP}}
 

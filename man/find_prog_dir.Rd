@@ -9,7 +9,7 @@ find_prog_dir(fileSystemPath, settings)
 \description{
 Searches fileSystemPath's parent directories to identify
 a Programme directory.  This is identified by
-finding a 'PROJECTS/' directory and a 'SOP' directory.
+finding a 'PROJECTS/' directory.
 }
 \details{
 If a Programme path is identified, it is returned, otherwise

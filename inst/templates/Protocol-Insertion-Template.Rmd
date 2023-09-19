@@ -1,10 +1,14 @@
+{{PROTOCOL_INSERTION_SEP}}
+
+
+
 {{PROTOCOL_INSERTION_TITLE}}
 
 
-{{PROTOCOL_INSERTION_LINK}}
+__protocol_implementation_summary__what_is_this_protocol_used_to_do__
+
+
+Protocol Template : {{PROTOCOL_INSERTION_LINK}}
 
 
 {{PROTOCOL_INSERTION_CONTENT}}
-
-
-{{PROTOCOL_INSERTION_SEP}}

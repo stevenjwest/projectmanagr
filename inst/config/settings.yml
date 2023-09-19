@@ -10,7 +10,6 @@
   OrgProgrammeFooter: 'template:SEP01.txt'
   OrgProgrammeSummarySep: 'template:SEP02.txt'
   ProgrammeProjectsDir: PROJECTS
-  ProgrammeProtocolsDir: protocols
   ProgIndexFileNamePrefix: index_
   ProgSummaryHeader: '# PROGRAMME OVERVIEW'
   ProgSummaryTitle: '# '
@@ -65,9 +64,9 @@
   ProtocolHeader: '# PROTOCOL : '
   ProtocolSep: 'template:PROTOCOL_SEP.txt'
   ProtocolDescriptionField: 'PROTOCOL_DESCRIPTION:'
-
+  ProtocolInsertionTitle: '# '
+  ProtocolInsertionSep: 'template:SEP01.txt'
   ProtocolLinkFormat: '**'
-  ProtocolNameSuffix: '_Protocol'
   ProtocolSummaryHeader: '# SUMMARY'
   ProtocolSummaryFooter: 'template:SEP01.txt'
   ProtocolGraphicalAbstractHeader: '# Graphical Abstract'
@@ -87,15 +86,13 @@
   ProtocolLogHeader: 'template:SEP02.txt'
   ProtocolLogSep: 'template:SEP03.txt'
   ProtocolFooter: 'template:SEP01.txt'
-  ProtocolInsertionSep: 'template:SEP01.txt'
-  ProtocolInsertionTitle: '# '
   TodoItemHeaderTemplate: '* [] **TODO_DESCRIPTION**:'
   TodoItemHeaderComplete: '* [x]'
   TodoItemHeader: '* ['
   TodoCollectionDir: todo
   TodoProgrammeSep: 'template:SEP02.txt'
   DateTimeZone: 'UTC'
-  DateSplit: '/'
+  DateSplit: '-'
   DateTimeSplit: ':'
   RunUpdateOnStartup: yes
   RunCompileWithUpdate: yes

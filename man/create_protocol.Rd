@@ -19,7 +19,7 @@ currently selects.  The current file must be a Project Note.}
 Naming Convention && use the common verb words first. eg. Fix Perfuse Mouse,
 Fix Fog Drosophila.}
 
-\item{protocolDescription}{One sentence description of the protocol - shown
+\item{protocolDescription}{Description of the protocol - shown
 to users when choosing a protocol to insert.}
 
 \item{protocolTemplate}{Template to use, as found in the `config/templates/`
@@ -27,16 +27,16 @@ directory.  Default is "Protocol-Template.Rmd"}
 }
 \description{
 This Function create a new Protocol, based on the `protocolTemplate`, which
-is defined in a Project Note.  The base protocol template is located in the
-organisation : `config/templates/Protocol-Template.Rmd` & provides suggested
-layout for a Protocol.
+is inserted into a Project Note.  The base protocol template is located in
+the organisation : `config/templates/Protocol-Template.Rmd` & provides
+suggested layout for a Protocol.
 }
 \details{
 Protocols are insertable text that define a set of Standard Operating
-Procedures (SOPs) & LOG Sections that record Protocol execution.  The Protocol
-is defined between specific delimiters, defined in `PROTOCOL_SEP.txt`.
+Procedures (SOPs) & LOG Sections that record Protocol execution.  The
+Protocol is defined between specific delimiters, defined in
+`PROTOCOL_SEP.txt`: by default the delimiter is a series of `====`.
 
-Defined protocols can be inserted into new Project Notes, using the
-`insert_protocol()` function, which  allows insertion of preformed template
-documentation into new Notes.
+Protocols defined in a source Project Note can be inserted into new Project
+Notes, using the `insert_protocol()` function.
 }

@@ -2,32 +2,36 @@
 % Please edit documentation in R/insert-functions.R
 \name{insert_protocol}
 \alias{insert_protocol}
-\title{Insert a Protocol into a Project Note}
+\title{Insert a Protocol from Source Project Note into a new Project Note}
 \usage{
 insert_protocol(
-  protocolName,
-  selection,
+  selectionSource,
+  selectionDestination,
   protocolInsertionTemplate = "Protocol-Insertion-Template.Rmd"
 )
 }
 \arguments{
-\item{protocolName}{The name of the Protocol Rmd file - WITHOUT extension.}
+\item{selectionSource}{Selection object from Project Note file containing
+the Protocol to be inserted.  The selection must be on the FIRST PROTOCOL
+DELIMITER that indicates the start of the Protocol. Use
+`projectmanagr::cursor_selection()` or `projectmanagr::user_selection()` to
+create this object.}
 
-\item{selection}{Selection object from the Project Note file where the protocol
-is to be inserted.  Use `projectmanagr::cursor_selection()` or
+\item{selectionDestination}{Selection object from the Project Note file where
+the protocol is to be inserted.  Use `projectmanagr::cursor_selection()` or
 `projectmanagr::user_selection()` to create this object.}
 
 \item{protocolInsertionTemplate}{Template file that contains boilerplate content
 for protocol insertion into project note.}
 }
 \description{
-This Function adds a Protocol to a Project Note - protocols are found in the
- PROGRAMMES' protocols/ Dir.
+This Function adds a Protocol to a Project Note - protocols are created and
+ formed in a Source Project Note.
 }
 \details{
-Inserted protocols add each Procedure defined under the '# PROTOCOL' section
- of the document. Notes sections (FALSE by default) and the Equipment section
-(TRUE by default) can be optionally included in the inserted protocol.
+* Recommended to place all Project Notes that define Protocols into a
+ Programme-wide directory with clear name (eg. protocol/), so all protocols
+ for a programme can be easily and quickly located.
 
 All links in the Protocol are UPDATED to work from the destination Project
  Note.

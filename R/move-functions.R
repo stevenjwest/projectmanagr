@@ -57,7 +57,7 @@ move_project_note <- function(protocolName, selection,
   progPath <- find_prog_dir(projNoteRmdPath, settings)
 
   # get protocol directory path:
-  protocolsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
+  #protocolsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
 
   # define protocol Dir path + Rmd path
   protocolDirPath <- paste0( protocolsPath, .Platform$file.sep, protocolName)

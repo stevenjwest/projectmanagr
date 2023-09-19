@@ -4,7 +4,7 @@
 \alias{get_datetime}
 \title{internal function to get datetime in YYYY/MM/DD:hh:mm format}
 \usage{
-get_datetime(timezone = "UTC", split = "/", splitTime = ":")
+get_datetime(timezone = "UTC", split = "-", splitTime = ":")
 }
 \description{
 internal function to get datetime in YYYY/MM/DD:hh:mm format

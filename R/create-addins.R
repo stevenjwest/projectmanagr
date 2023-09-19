@@ -694,18 +694,20 @@ addin_create_project_note <- function() {
 
     ##### Add Project Note : inherit single note - NOT SUPPORTED #####
     # currently NOT SUPPORTED - so generating an error message
-    addin_error_path("Add Project Note",
-                     "  Simple Project Note selected - unsupported selection. Select a project doc GDT to add new Simple Project Note.",
-                     selection$filePath)
+    addin_error_path(
+      "Add Project Note",
+      "  Simple Project Note selected - unsupported selection. Select a project doc GDT to add new Simple Project Note.",
+      selection$filePath, settings)
     stop( paste0("  Simple Project Note selected - unsupported selection. Select a project doc GDT to add new Simple Project Note: \n    ", selection$filePath))
 
-    #addin_create_project_note_to_single(selection, settings)
+    #addin_create_project_note_from_single(selection, settings)
 
   } else if( selection$rmdType == "UNKNOWN" ) {
 
-    addin_error_path("Add Project Note",
-                     "No Valid Rmd file selected - ensure a Project Doc or Project Note is the active document.",
-                     selection$filePath)
+    addin_error_path(
+      "Add Project Note",
+      "No Valid Rmd file selected - ensure a Project Doc or Project Note is the active document.",
+      selection$filePath, settings)
     stop( paste0("  No Valid Rmd file selected - ensure a Project Doc or Project Note is the active document: \n    ", selection$filePath))
 
   }
@@ -1350,6 +1352,151 @@ addin_create_subnote_from_subnote <- function(selection, settings, orgPath) {
 
 
 
+#' Add new note from existing single note - inheriting all note GDTs
+#'
+addin_create_project_note_from_single <- function(selection, settings, orgPath) {
+
+
+  #### user interface ####
+
+  ui <- miniPage(
+
+    gadgetTitleBar("Add New Project Note"),
+
+    miniContentPanel(
+
+      fillCol( #flex=NA, # use the natural size of the elements in col
+
+        fillRow( h5("Add a new Project Note for existing Note : Inherit all GDT Links.") ),
+
+        fillRow( h5("Inherit Goal/Del/Tasks from NOTE:") ),
+        fillRow( code( paste0("  ", selection[["filePath"]]) ) ),
+
+        fillRow(  textInput("projectNoteName", "Sub Note Name:", width='100%')  ),
+        fillRow(  span( textOutput("warningName"), style="color:red")  ),
+
+        fillRow(  textInput("projectNoteTitle", "Sub Note Title:", width='100%')  ),
+        fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
+
+        fillRow(   textOutput("projectNotePath")  )
+
+      )
+
+    )
+
+  )
+
+
+  #### server function ####
+
+  server <- function(input, output, session) {
+
+    # update projectNoteTitle when projectNoteName is changed:
+    observe({
+
+      updateTextInput(session, "projectNoteTitle",
+                      value = gsub("-", " ", gsub("_", " ", input$projectNoteName) )  )
+
+    })
+
+    observe({
+
+      if( input$projectNoteName != "" ) {
+
+        projNotePath <- get_project_note_path(
+          dirname(selection[["filePath"]]), # current project note parent dir
+          input$projectNoteName,
+          settings)
+        output$projectNotePath <- renderText({ projNotePath })
+
+      } else {
+
+        output$projectNotePath <- renderText({ "" })
+
+      }
+    })
+
+    observe({
+
+      if( grepl("\\s", input$projectNoteName)  ) {
+        # set the warningName TextOutput:
+        output$warningName <- renderText({
+          "PROJECT NAME CANNOT CONTAIN SPACES"
+        })
+      }
+      else {
+        output$warningName <- renderText({
+          ""
+        })
+      }
+    })
+
+    # perform computations to create new Programme:
+    observeEvent(input$done, {
+
+      if(input$projectNoteName == "") {
+        # set the warningName TextOutput:
+        output$warningName <- renderText({
+          "*** PROVIDE PROJECT NAME ***"
+        })
+      } else if( grepl("\\s", input$projectNoteName)  ) {
+        # set the warningName TextOutput:
+        output$warningName <- renderText({
+          "*** PROJECT NAME CANNOT CONTAIN SPACES ***"
+        })
+      } else {
+
+
+        #### Add SINGLE note ####
+
+        # compute new single note path
+        projNotePath <- get_project_note_path(
+          dirname(selection[["filePath"]]), # current project note parent dir
+          input$projectNoteName,
+          settings)
+
+        # get all GDTs from selected project note
+
+        # form FIRST selection
+
+        # add single note
+        create_project_note(
+          projectNoteName = input$projectNoteName,
+          projectNotePath = dirname(projNotePath),
+          selection = selection,
+          projectNoteTitle = input$projectNoteTitle
+        )
+
+        # add all links to remaining GDTs from selected project note
+
+        # open new subnote
+        rstudioapi::navigateToFile(projNotePath)
+
+        # navigate to containing dir
+        rstudioapi::filesPaneNavigate( dirname(subNotePath) )
+        # and set working directory
+        setwd( dirname(subNotePath) )
+
+        # Close Gadget after computations are complete:
+        stopApp()
+
+      }
+    })
+  }
+
+
+  #### view gadget ####
+
+  viewer <- dialogViewer("Add New Sub Note",
+                         width = settings[["GadgetWidth"]],
+                         height = settings[["GadgetHeight"]])
+
+  runGadget(ui, server, viewer = viewer)
+
+}
+
+
+
 #' Add a New Protocol Addin
 #'
 #' Generates a Shiny Gadget for adding a new Protocol inside the `protocol`
@@ -1383,6 +1530,7 @@ addin_create_protocol <- function() {
     addin_error("Add New Protocol", selection[["errorMessage"]])
     stop( paste0("  ", selection[["errorMessage"]]))
   }
+
 
   # get the orgPath:
   orgPath <- find_org_directory(selection$filePath)
@@ -1420,17 +1568,17 @@ addin_create_protocol <- function() {
 
       fillCol(
 
-        fillRow( h5("Add a new Protocol to a Project File") ),
+        fillRow( h5("Add a new Protocol in a Project Note") ),
 
         #fillRow( p("Protocol Name MUST end with _Protocol:") ),
 
-        fillRow(  textInput("protocolName", "Protocol Name", value=settings[["ProtocolNameSuffix"]], width="100%")  ),
+        fillRow(  textInput("protocolName", "Protocol Name", value='PROTOCOL NAME', width="100%")  ),
 
         fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
-        fillRow(  textInput("protocolTitle", "Protocol Title:", width="100%")  ),
+        fillRow(  textAreaInput("protocolDescription", "Protocol Description:", value='This Protocol specifies how to ', rows=3, width="100%")  ),
 
-        fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
+        fillRow(   span( textOutput("warningDescription"), style="color:red")  ),
 
         fillRow(   textOutput("protocolPath")  )
 
@@ -1443,79 +1591,22 @@ addin_create_protocol <- function() {
 
   server <- function(input, output, session) {
 
-    # update protocolTitle when protocolName is changed:
-    observe({
-
-      updateTextInput(session, "protocolTitle", value = gsub("-", " ", gsub("_", " ", input$protocolName) )  )
-
-    })
-
-    output$protocolPath <- renderText({
-      #selection[["filePath"]]
-      projectNotePath <- normalizePath(selection[["filePath"]])
-      progPath <- find_prog_dir(projectNotePath, settings)
-      protocolsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
-      protocolDirPath <- paste( protocolsPath, .Platform$file.sep, input$protocolName, sep="")
-      paste0( protocolDirPath, .Platform$file.sep, input$protocolName, ".Rmd")
-    })
-
-    observe({
-
-      if( grepl("\\s", input$protocolName)  ) {
-        # set the warningName TextOutput:
-        output$warningName <- renderText({
-          "PROTOCOL NAME CANNOT CONTAIN SPACES"
-        })
-      } else {
-        output$warningName <- renderText({""})
-      }
-    })
-
-    # perform computations to create new Programme:
+    # create new protocol in note
     observeEvent(input$done, {
 
-      if(input$protocolName == "") {
-        # set the warningName TextOutput:
-        output$warningName <- renderText({
-          "*** PROVIDE PROTOCOL NAME ***"
-        })
-      }
-      else if(! endsWith( input$protocolName, settings[["ProtocolNameSuffix"]] )  ) {
-        # if protocolName does not end with protocol or reference, stop and inform user:
-        # set the warningName TextOutput:
-        output$warningName <- renderText({
-          paste0("*** NAME MUST END WITH ProtocolNameSuffix*** : ", settings[["ProtocolNameSuffix"]])
-        })
-      }
-      else if( grepl("\\s", input$protocolName)  ) {
-        # set the warningName TextOutput:
-        output$warningName <- renderText({
-          "*** PROTOCOL NAME CANNOT CONTAIN SPACES ***"
-        })
-      }
-      else {
-
-        # define protocol Rmd path
-        projectNotePath <- normalizePath(selection[["filePath"]])
-        progPath <- find_prog_dir(projectNotePath, settings)
-        protocolsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
-        protocolDirPath <- paste0( protocolsPath, .Platform$file.sep, input$protocolName)
-        protocolPath <- paste0( protocolDirPath, .Platform$file.sep, input$protocolName, ".Rmd")
+      if(input$protocolName == "PROTOCOL NAME") {
+        output$warningName <- renderText({"*** PROVIDE PROTOCOL NAME ***"})
+      } else if( input$protocolDescription == 'This Protocol '  ) {
+        output$warningDescription <- renderText({"*** PROVIDE PROTOCOL DESCRIPTION ***"})
+      } else {
 
         # create protocol
         projectmanagr::create_protocol(
-          protocolName = input$protocolName,
           selection = selection,
-          protocolTitle = input$protocolTitle,
-          protocolTemplate="Protocol-Template.Rmd" )
-
-        # open new protocol
-        rstudioapi::navigateToFile(protocolPath)
-
-        # navigate to containing dir
-        rstudioapi::filesPaneNavigate( dirname(protocolPath) )
-        # and set working directory
-        setwd( dirname(protocolPath) )
+          protocolName = input$protocolName,
+          protocolDescription = input$protocolDescription,
+          protocolTemplate="Protocol-Template.Rmd"
+        )
 
         # Close Gadget after computations are complete:
         stopApp()

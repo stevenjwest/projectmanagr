@@ -37,6 +37,12 @@ find_org_directory <- function( path ) {
 }
 
 
+get_prefix <- function(filePath, settings) {
+
+  substr(basename(filePath), 1,
+         regexpr(settings[["ProjectPrefixSep"]], basename(filePath), fixed=TRUE)-1 )
+}
+
 #' Get File Type
 #'
 #' Determine if the current file is a PROJECT DOC (it is inside the PROJECTS/ Directory),
@@ -112,9 +118,12 @@ get_file_type <- function( filePath, settings ) {
     TYPE <- "HEAD"
 
   } else if( grepl(settings[["ProjectIndexSep"]], prefix, fixed = TRUE) &&
-             grepl(settings[["GroupNotePrefixSep"]], prefix, fixed = TRUE) ) {
+             grepl(settings[["GroupNotePrefixSep"]], prefix, fixed = TRUE) &&
+             endsWith(basename(dirname(filePath)),
+                      paste0(settings[["GroupNotePrefixSep"]], settings[["HeaderNotePrefix"]]))  )  {
     # subNotes are differentiated from simple notes by inclusion of GroupNotePrefixSep
      # need to use prefix here, as the GroupNotePrefixSep string is in the ProjectPrefixSep by default!
+    # AND subNotes will be in a directory whose name will end with GroupNotePrefixSep + HeaderNotePrefix : '-00' by default
     TYPE <- "SUB"
 
   } else if( grepl(settings[["ProjectIndexSep"]], prefix, fixed = TRUE) ) {
@@ -123,6 +132,31 @@ get_file_type <- function( filePath, settings ) {
   }
 
   TYPE
+}
+
+
+#' Get File Types
+#'
+#' Get types of a vector of file paths.
+#'
+#' Determine if the current file is a PROJECT DOC (it is inside the PROJECTS/ Directory),
+#' a HEADER GROUP NOTE (contains the string "-00~_"), or a SIMPLE or SUB Project Note (any
+#' other file).
+#'
+#' Returns the relevant String:  DOC, HEAD, SUB, NOTE, or UNKNOWN for unidentified file.
+#'
+#' @param filePath the Absolute path to the file.
+#' @param settings A named list of the settings.yml file in projectmanagr organisation.
+#'
+#'
+get_file_types <- function( filePaths, settings ) {
+
+  types <- c()
+
+  for(fps in filePaths) {
+    types <- c(types, get_file_type(fps, settings))
+  }
+  types
 }
 
 
@@ -156,7 +190,7 @@ get_date <- function(timezone = "UTC", split="/") {
 
 
 #' internal function to get datetime in YYYY/MM/DD:hh:mm format
-get_datetime <- function(timezone = "UTC", split="/", splitTime=":") {
+get_datetime <- function(timezone = "UTC", split="-", splitTime=":") {
 
   datetime <- lubridate::now(timezone) #Sys.time()
 
@@ -226,10 +260,12 @@ get_next_simple_prefix <- function(projectNotePath, settings) {
   # define the Regular Exp for this prefix:
   prefixRegExp <- paste("^", prefix, ".*", sep="")
 
-  # look in projectNotePath for any files - if so, compute Prefix from these,
-   # otherwise generate new Prefix for file:
-  subFiles <- list.files(projectNotePath)
-  subFiles <- subFiles[endsWith(subFiles, ".Rmd")]
+  # look in projectNotePath for any files - if so, compute Prefix from these, otherwise generate new Prefix for file:
+  subFiles <- list.files(projectNotePath) # get all files
+  subFiles <- subFiles[endsWith(subFiles, paste0(".", settings[["FileType"]]) )] # filter for filetype
+  subFiles <- subFiles[ regexpr(projPrefixSep, subFiles) >= 1 ] # filter for files that contain projPrefixSep
+  subFiles <- subFiles[ startsWith(subFiles, pir) ] # filter for files that start with name of parent
+    # ALL PROJECT NOTES HAVE THIS FORMAT!
   # now CREATE subDirs from subFiles - substring at index of "~_"
   subDirs <- substr(subFiles, 1, regexpr(projPrefixSep, subFiles)-1 )
 
@@ -241,27 +277,26 @@ get_next_simple_prefix <- function(projectNotePath, settings) {
     # extract all MAJOR NUMBERING of subDirs (numbers BETWEEN projIndexSep (~) and
       # groupIndexSep (-) for GROUP HEADERS, and AFTER ~ for SINGLE NOTES)
 
-    subVals <- integer( length(subDirs) )
+    subVals <- integer( length(subDirs) ) # new integer vector
 
     for(l in 1:length(subDirs) ) {
 
-      if( regexpr(groupIndexSep, subDirs[l], fixed=TRUE) > 0 ) {
+      # remove the prefix string (same as parent directory name) to identify the major numbering
+      subDirNums <- substring(subDirs[l], first=regexpr(pir, subDirs[l], fixed=TRUE)+nchar(pir))
+
+      if( regexpr(groupIndexSep, subDirNums, fixed=TRUE) > 0 ) {
+
         # this is a GROUP HEADER DIR - extract the integer between ~ and -
-
-        subVals[l] <- as.integer( substring(
-                                    subDirs[l],
-                              first=regexpr(projIndexSep, subDirs[l], fixed=TRUE)+1,
-                              last=regexpr(groupIndexSep, subDirs[l], fixed=TRUE)-1
-                          )
-                      )
+        subVals[l] <- as.integer(
+          substring( subDirNums,
+                     first=regexpr(projIndexSep, subDirNums, fixed=TRUE)+1,
+                     last=regexpr(groupIndexSep, subDirNums, fixed=TRUE)-1 )  )
       } else {
-        # this is a SINGLE DIR - extract the integer AFTER ~
 
-        subVals[l] <- as.integer( substring(
-                                    subDirs[l],
-                              first=regexpr(projIndexSep, subDirs[l], fixed=TRUE)+1
-                          )
-                      )
+        # this is a SINGLE DIR - extract the integer AFTER ~
+        subVals[l] <- as.integer(
+          substring( subDirNums,
+                     first=regexpr(projIndexSep, subDirNums, fixed=TRUE)+1 )  )
       }
     }
 
@@ -329,10 +364,14 @@ get_next_subnote_prefix <- function(headerNoteDir, settings) {
 
   #### compute group note prefix ####
 
-  headerNotePrefix <- basename(headerNoteDir)
+  headerNotePrefix <- basename(headerNoteDir) # prefix string plus major index plus header '-00'
+  headerNotePrefixDir <- basename( dirname(headerNoteDir) ) # string prefix is derived from!
 
   # get the ROOT of the Prefix - string up to groupIndexSep
-  majorPrefix <- substring(headerNotePrefix, first=1, last= regexpr(groupIndexSep, headerNotePrefix)[1])
+  headPrefixNoString <- substring(headerNotePrefix, first=nchar(headerNotePrefixDir)+1)
+  majorPrefix <- substring(headerNotePrefix, first=1,
+                           last= nchar(headerNotePrefixDir)+regexpr(groupIndexSep, headPrefixNoString)[1])
+  # add support for headerNotePrefix incase it contains groupIndexSep char!
 
   # define the Regular Exp for this prefix:
   majPrefixRegExp <- paste("^", majorPrefix, ".*", sep="")
@@ -351,7 +390,8 @@ get_next_subnote_prefix <- function(headerNoteDir, settings) {
   if(length(subNoteDirs) > 0 ) {
 
     # compute NEXT subNote Prefix from the DIRs in subNoteDirs:
-    subNoteVals <- as.integer(substring(subNoteDirs, first=regexpr(groupIndexSep, subNoteDirs, fixed=TRUE)+1  ) )
+    subNoteNums <- substring(subNoteDirs, first=nchar(headerNotePrefixDir)+1)
+    subNoteVals <- as.integer(substring(subNoteNums, first=regexpr(groupIndexSep, subNoteNums, fixed=TRUE)+1  ) )
 
     nextVal <- max(subNoteVals) +1
 
@@ -575,7 +615,7 @@ check_prog_sub_dir <- function( fileSystemPath ) {
 #'
 #' Searches fileSystemPath's parent directories to identify
 #' a Programme directory.  This is identified by
-#' finding a 'PROJECTS/' directory and a 'SOP' directory.
+#' finding a 'PROJECTS/' directory.
 #'
 #' If a Programme path is identified, it is returned, otherwise
 #' the function returns a BLANK string "".
@@ -596,10 +636,10 @@ find_prog_dir <- function( fileSystemPath, settings ) {
 
     # look for the PROJECTS/ and protocol dirs:
     projPath <- paste0(f, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
-    proPath <- paste0(f, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
+    #proPath <- paste0(f, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
+    # no longer specifying protocols directory
 
-    while(  !( all(file.exists(projPath))
-               && all(file.exists(proPath)) )  ) {
+    while(  !( all(file.exists(projPath)) )  ) {
       fileSystemPath2 <- f # save in placeholder
       f <- dirname(f)
       if( root == f ) { # break if reached filesystem root
@@ -607,7 +647,8 @@ find_prog_dir <- function( fileSystemPath, settings ) {
         break
       }
       projPath <- paste0(f, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
-      proPath <- paste0(f, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
+      #proPath <- paste0(f, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
+      # no longer specifying protocols directory
     }
 
     fsp[fspi] <- f

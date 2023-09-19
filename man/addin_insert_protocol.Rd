@@ -7,6 +7,22 @@
 addin_insert_protocol()
 }
 \description{
+A Directory Tree within the Organisation is used to screen all Project Notes
+for all declared Protocols, based on the Protocol Delimiter Syntax (defined
+in `PROTOCOL_SEP.txt`).  This Directory Tree can be adjusted.
+}
+\details{
+All Protocols present in Project Notes in the Directory Tree are shown in a
+DT datatable by protocol title.
+
+Individual Protocols can be selected to show the summary information.
+
+A Preview view of the Protocol can be opened to read through the entire
+Protocol in the ADDIN.
+
+Selected protocols can be inserted into the current selection in a
+Destination Project Note via the DONE button.
+
 Using DT to display a datatable in the shiny gadget here.  See the tutorial
 at https://rstudio.github.io/DT/shiny.html
 }

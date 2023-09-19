@@ -144,6 +144,11 @@ Description: Navigate to the file and/or section header given in the markdown hy
 Binding: navigate_markdown_link
 Interactive: false
 
+Name: ProjectManagr: Search Project Organisation
+Description: Search active document project organisation for search string.
+Binding: addin_search_project_org
+Interactive: true
+
 Name: ProjectManagr: Set Selection Next Horizontal Rule
 Description: Set Selection from current line to next line with same number of dashes as current line.
 Binding: set_selection_next_horizontal_rule

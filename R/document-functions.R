@@ -19,6 +19,8 @@ compute_doc_GDT_link <- function(projectDocPath, projNoteRmdPath, settings,
   DocName <- basename(projectDocPath)
   DocName <- substring(DocName, first=1, last=nchar(DocName)-4)
 
+  DocPrefix <- get_prefix(projectDocPath, settings)
+
 
   #### link ####
 
@@ -43,11 +45,11 @@ compute_doc_GDT_link <- function(projectDocPath, projNoteRmdPath, settings,
 
   #### TITLE ####
 
-  # create DocTitle - DocName plus the Gnum Dnum Tnum
+  # create DocTitle - DocPrefix plus the Gnum Dnum Tnum
   #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
   # create DocTitle - DocName plus the TaskTitle
   DocTitle <- paste0( settings[["NoteSummaryTitle"]] ,
-                      DocName, " : ", get_task_title(task, settings) )
+                      DocPrefix, " : ", get_task_title(task, settings) )
 
   # return
   l <- list(DocTitle, DocTitleLink, GoalTitleLink, DelTitleLink, TaskTitleLink)
@@ -580,8 +582,11 @@ grep_line_index_from_rev <- function(line, contents, initialIndex) {
 
 }
 
+#' return index of line that matches line in contents
+#'
 match_line_index <- function(line, contents) {
 
+  #### get line index in contents ####
   indices <- grep( trimws(line), trimws(contents), fixed=TRUE)
 
   if( length(indices) == 0 ) {
@@ -595,9 +600,7 @@ match_line_index <- function(line, contents) {
 }
 
 
-
-
-#' Match vector in parent vector
+#' Match vector in parent
 #'
 #' Identifies each initial index of `vector` in `parent` where all elements in
 #' `vector` match elements in `parent` in order.
@@ -764,9 +767,13 @@ user_selection <- function(filePath, line) {
   settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
   settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
+
   #### read file ####
 
   contents <- read_file(filePath)
+
+
+  #### create selection at line ####
 
   create_selection(filePath, contents, line, settings) # return selection
 
@@ -1035,7 +1042,9 @@ sub_subnote_params <- function(subNoteContents, subNotePrefix,
                                subNoteTitle, authorValue,
                                settings, orgPath) {
 
+
   #### sub subnote params in contents ####
+
   subNoteContents <- sub_template_param(subNoteContents, "{{PREFIX}}",
                                         subNotePrefix, orgPath)
   subNoteContents <- sub_template_param(subNoteContents, "{{TITLE}}",
@@ -1353,6 +1362,23 @@ create_hyperlink <- function(toFileName, toFilePath, fromFilePath) {
 
 
 
+#' Create Hyperlink Section
+#'
+#' creates string for hyperlink in Rmd, using `toFileName : toFileSection` as
+#' the hyperlink text, and generating a RELATIVE LINK to
+#' `toFilePath#toFileSection` from `fromFilePath`.
+#'
+create_hyperlink_section <- function(toFileName, toFileSection, toFilePath, fromFilePath) {
+
+  NoteLink <- R.utils::getRelativePath(toFilePath, relativeTo=fromFilePath)
+  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  NoteLink <- paste0(NoteLink, '#', gsub("[ ]|[_]", "-", trimws( gsub("[^[:alnum:] ]", "", toFileSection) ) ) )
+  HyperLink <- paste("[", toFileName, " : ", toFileSection, "](", NoteLink, ")",  sep="")
+  HyperLink # return
+}
+
+
+
 #' Update links
 #'
 #' Updates every hyperlink in all files within `dirTree`, replacing
@@ -1475,9 +1501,16 @@ update_links <- function( oldFileName, newName, dirTree, settings,
 }
 
 
-#' get file list to project notes
+#' get file list down to project notes
 #'
 #' Traverses all directory tree in `dl` but only
+#' get fileList recursively but only down to project note parent dir level
+#'
+#' @param fileList List of files recursively retrieved by this function.
+#' @param dl DirsList - a list of directory paths.
+#' @param settings projectmanagr settings list.
+#' @param fileExtensions File extensions of files to list.
+#'
 get_file_list_to_project_notes <- function(fileList, dl, settings, fileExtensions = list("Rmd") ) {
 
 
@@ -1490,9 +1523,9 @@ get_file_list_to_project_notes <- function(fileList, dl, settings, fileExtension
   #groupIndexSep <- load_param_vector(settings[["GroupNotePrefixSep"]]) # "-"
 
 
-  #### get files from parent ####
+  #### get all files from dl ####
 
-  # get each file with extension from this dir
+  # get each file with extension from all dirs in dl
   for(fe in fileExtensions) {
     # get local copy of fl to check for project notes
     fl <- paste0( dl, .Platform$file.sep,
@@ -1503,29 +1536,31 @@ get_file_list_to_project_notes <- function(fileList, dl, settings, fileExtension
   }
 
 
-  #### get next level of sub-dirs ####
+  #### get next level of sub-dirs from dl ####
 
   dls <- list.dirs(path = dl, recursive=FALSE)
 
 
-  #### filter sub-dirs to remove SIMPLE & SUB NOTES ####
+  #### filter next level of sub-dirs to remove SIMPLE & SUB NOTE DIRS ####
 
   types <- get_file_types(fl, settings)
   fl_ex <- fl[types=="NOTE" | types=="SUB"] # excluding dirs belonging to simple notes and subnotes
   fl_ex_dir <- get_project_note_dir_path(fl_ex, settings) # get the note's dirs
 
-  # remove these dirs from dls
+  # remove the project note dirs from dls
   for(fled in fl_ex_dir) {
     dls <- dls[dls != fled]
   }
 
 
-  #### recursively get files from children ####
+  #### recursively get more files from next level of sub-dirs ####
 
   # recurses with each set of dls retrieved!
   for(d in dls) {
     fileList <- get_file_list_to_project_notes(fileList, d, settings, fileExtensions )
   }
+
+  #### return list of files down to project note dirs ####
 
   # return fileList
   fileList
@@ -1561,6 +1596,255 @@ insert_at_indices <- function(templateContents, indices, replacementVector) {
   templateContents
 }
 
+
+get_project_prefix_from_path <- function(projectPath, settings) {
+  get_project_prefix_from_name(basename(projectPath), settings )
+}
+
+
+#' Get Project Prefix From Name
+#'
+#' Extracts the Project Prefix from the projectName - all characters before "~_"
+#'
+#'
+get_project_prefix_from_name <- function(projectFileName, settings) {
+  substr(projectFileName, 1, regexpr(settings[["ProjectPrefixSep"]], projectFileName)-(nchar(settings[["ProjectPrefixSep"]])-1 ) )
+}
+
+
+#' Get Name from File Name
+#'
+#' fileName is PREFIX~_COMP_TITLE.Rmd - returned is COMP_TITLE
+#'
+#'
+get_name_from_file_name <- function(projectFileName, settings) {
+  substr(projectFileName,
+         regexpr(settings[["ProjectPrefixSep"]], projectFileName)+(nchar(settings[["ProjectPrefixSep"]]) ),
+         nchar(projectFileName)-(nchar(settings[["FileType"]])+1) )
+}
+
+
+
+#' Find Protocols in Project Note
+#'
+#' Searches through dirTree (non-recursively) for Project Notes, and then looks
+#' for Protocols in these based on the protocol sep delimiter (identified in
+#' `config/templates/PROTOCOL_SEP.txt`).
+#'
+#' Returns a structured lists that describe each protocol in the project notes:
+#'
+#' Each Structured List is comprised
+#' [[3]] : Name of Protocol in the Project Note
+#' [[1]] : ProjectNotePath
+#' [[2]] : Project Note Line Number where Protocol BEGINS (start of first delimiter)
+#'
+find_protocols_in_dir_tree <- function(dirTree,  orgPath, settings) {
+
+  #### instance variables ####
+
+  protocols <- list() # to store all retrieved protocols metadata in
+
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+
+  # load settings file for user defined settings
+  settingsFile <- paste0(confPath, .Platform$file.sep, "settings.yml")
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
+  # load status file for projectmanagr org status
+  # contains information on protocols DIRs && index of protocols in those files with retrieval datetime
+  statusFile <- paste0(confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
+  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+
+  # read status information for PROTOCOLS if it exists
+  protocolsStatus <- status[['PROTOCOLS']]
+
+  protocolSepContents <- read_file( paste0( tempPath, .Platform$file.sep, "PROTOCOL_SEP.txt") )
+  # as this is called in a for loop, better to open this file external to that loop and pass as param
+
+  #### loop through filePaths ####
+
+  # first screen filePaths for project notes
+  filePaths <- get_project_note_paths(dirTree, settings)
+
+  for( f in filePaths) {
+
+    pr <- get_protocols(f, protocolSepContents, settings, orgPath)
+    protocols[names(pr)] <- pr
+
+  }
+
+  # return structured list
+  protocols
+
+}
+
+
+#' Get Protocols from file path
+#'
+#' Get protocols from file path (`f`)
+#'
+get_protocols <- function(f, protocolSepContents, settings, orgPath) {
+
+  protocols <- list()
+
+  # check the filePath is a project note
+  ft <- get_file_type(f, settings)
+
+  if( ft == "SUB" | ft == "NOTE" ) {
+    # check file contents for protocols
+    fc <- read_file(f)
+
+    ps <- match_vector(protocolSepContents, fc)
+
+    # protocol seps should be in PAIRS
+    if( length(ps) %% 2 != 0 ) {
+      # DEAL WITH ERROR
+      stop( cat("  file contains uneven number of protocol separators: ", f))
+    }
+
+    # if the length is 0 just return blank list
+    if(length(ps) == 0 ) {
+      return( protocols )
+    }
+
+    # extract metadata from each protocol - PROTOCOL_TITLE, START_LINE_NUM, PROJECT_NOTE_PATH
+    for( i in 1:(length(ps)/2) ) {
+      j <- (i*2)-1
+      startSep <- ps[j]
+      endSep <- ps[(j+1)]
+
+      # get the protocol title
+      protocolTitle <- get_protocol_title(fc, startSep, settings, orgPath)
+
+      attrs <- list(f, startSep )
+      names(attrs) <- c("projectNotePath","startLineNum")
+      protocols[[protocolTitle]] <- attrs
+
+    }
+  }
+
+  protocols
+
+}
+
+
+#' Get Protocol Description
+#'
+#' From the note rmdContents, the protocol with startSep at startSepLineIndex.
+#'
+get_protocol_description <- function(rmdContents, startSepLineIndex, settings, orgPath) {
+
+  protocolDescriptionLine <- grep_line_index_from_rev(
+                               load_param_vector(settings[["ProtocolDescriptionField"]], orgPath),
+                               rmdContents, startSepLineIndex)
+
+  # return
+  rmdContents[(protocolDescriptionLine+1):(startSepLineIndex-1)]
+
+}
+
+
+#' Get Protocol Header
+#'
+#' From the note rmdContents, the protocol with startSep at startSepLineIndex.
+#'
+get_protocol_header <- function(rmdContents, startSepLineIndex, settings, orgPath) {
+
+  headerLine <- grep_line_index_from_rev(load_param_vector(settings[["ProtocolHeader"]], orgPath),
+                                         rmdContents, startSepLineIndex)
+
+  protocolHeader <- rmdContents[headerLine]
+
+  # return
+  protocolHeader
+
+}
+
+
+#' Get Protocol Title
+#'
+#' From the note rmdContents, the protocol with startSep at startSepLineIndex.
+#'
+get_protocol_title <- function(rmdContents, startSepLineIndex, settings, orgPath) {
+
+  protocolHeader <- get_protocol_header(rmdContents, startSepLineIndex, settings, orgPath)
+
+  # get the protocol title from headerLine
+  protocolTitle <- toupper(substring(protocolHeader,
+                                     nchar(load_param_vector(settings[["ProtocolHeader"]], orgPath))+1,
+                                     nchar(protocolHeader)))
+
+  # return
+  protocolTitle
+
+}
+
+
+#' Update Protocols in List
+#'
+#' Updates the protocols found
+#' Searches through dirTree (non-recursively) for Project Notes, and then looks
+#' for Protocols in these based on the protocol sep delimiter (identified in
+#' `config/templates/PROTOCOL_SEP.txt`).
+#'
+#' Returns a structured lists that describe each protocol in the project notes:
+#'
+#' Each Structured List is comprised
+#' [[3]] : Name of Protocol in the Project Note
+#' [[1]] : ProjectNotePath
+#' [[2]] : Project Note Line Number where Protocol BEGINS (start of first delimiter)
+#'
+update_protocols_in_list <- function(protocolsStatus, dirPath, orgPath, settings) {
+
+  #### instance variables ####
+
+  protocolRetrievalDateTime <- protocolsStatus[[dirPath]]$protocolRetrievalDateTime
+  prdt <- lubridate::ymd_hm(protocolRetrievalDateTime) # get as datetime
+  protocols <- protocolsStatus[[dirPath]]$protocols
+
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+
+  # load settings file for user defined settings
+  settingsFile <- paste0(confPath, .Platform$file.sep, "settings.yml")
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
+  protocolSepContents <- read_file( paste0( tempPath, .Platform$file.sep, "PROTOCOL_SEP.txt") )
+  # in case needed to check new files
+
+  #### loop through filePaths ####
+
+  # first screen filePaths for project notes
+  filePaths <- get_project_note_paths(dirPath, settings)
+
+  for( f in filePaths) {
+
+    # get the last modified datetime mtime
+    updateTime <- lubridate::force_tz(file.info(f)[,5], "UTC") # retrieve mtime for file in UTC
+
+    if( prdt < updateTime ) {
+
+      # if TRUE : retrieval datetime BEFORE updateTime of file
+      # potentially new protocols may have been added to this protocol
+
+      # so retrieve protocols information from the project note
+      pr <- get_protocols(f, protocolSepContents, settings, orgPath)
+      protocols[names(pr)] <- pr # update the contents of protocols
+
+    }
+  }
+
+  # update protocols
+  protocolsStatus[[dirPath]]$protocols <- protocols
+
+  # update retrieval time
+  protocolsStatus[[dirPath]]$protocolRetrievalDateTime <- get_datetime()
+
+  # return protocolsStatus for dirPath
+  protocolsStatus[[dirPath]]
+
+}
 
 
 #' Update ProjectManagr Files
@@ -1635,6 +1919,8 @@ update <- function(dirTree="") {
     }
   }
 
+
+  ### todo ######
 
   #### update summaries in files ####
 

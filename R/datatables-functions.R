@@ -3025,12 +3025,24 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
   }
   # now, orgPath should be the root dir of the organisation
 
+  # set confPath + tempPath - these names are FIXED:
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+
+  # load settings file for user defined settings
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
   # normalize path - remove HOME REF ~
   path <- normalizePath(path)
 
   # get all Project Docs/Notes inside path - they all contain "~_" in filename and end with .Rmd
-  samplesList <- list.files(path, pattern="*.Rmd", full.names = TRUE, recursive=TRUE)
-  samplesList <- samplesList[ (regexpr("~_", samplesList) > 0) & (regexpr(".Rmd", samplesList) > 0) ]
+  if( file.info(path)$isdir == FALSE ) {
+    samplesList <- path
+  } else {
+    samplesList <- list.files(path, pattern="*.Rmd", full.names = TRUE, recursive=TRUE)
+    samplesList <- samplesList[ (regexpr("~_", samplesList) > 0) & (regexpr(".Rmd", samplesList) > 0) ]
+  }
 
   samplesListLength <- length(samplesList) # for updateProgress
 
@@ -3165,7 +3177,7 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
          # ID, SAMPLE, COUNT, PREFIX, TITLE, LOCATION, CONDITION
         dc <- dplyr::transmute(
           dc,
-          PREFIX=getProjectPrefixFromPath( s ),
+          PREFIX=get_project_prefix_from_path( s ),
           TITLE=getNameFromFileName(basename(s) ),
           ID=ID,
           SAMPLE=d_name,
