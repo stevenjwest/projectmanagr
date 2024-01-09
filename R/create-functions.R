@@ -426,7 +426,7 @@ create_programme <- function(programmeName, programmePrefix,
     stop( paste0("  programmePrefix contains a SPACE: ", programmePrefix) )
   }
 
-  # Search for root of an ORGANISATION:
+  #### Identify root of ORGANISATION ####
 
   # get the orgPath from organisationPath
   orgPath <- find_org_directory(organisationPath)
@@ -471,18 +471,6 @@ create_programme <- function(programmeName, programmePrefix,
   }
 
   cat( "  Made PROJECTS dir: ",projsPath, "\n" )
-
-
-  # create protocols dir #
-
-  #templatesPath <- paste(progPath, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]], sep="")
-  #done <- dir.create(templatesPath)
-
-  #if(!done) {
-  #  stop( paste0("  SOP directory could not be created: ", templatesPath) )
-  #}
-
-  #cat( "  Made SOP dir: ",templatesPath, "\n" )
 
 
   #### create Rmd file ####
@@ -640,9 +628,11 @@ create_programme <- function(programmeName, programmePrefix,
 #' title.  If no title is provided, the Title is derived from the project name, replacing any
 #' "_" & "-" with " ". The default programmePath is the working directory.
 #'
+#' @param projectPrefix Prefix of Project - must contain only alphanumeric chars & be unique to Programme.
+#'
 #' @param projectName Name of Project - must NOT contain a space.
 #'
-#' @param projectTitle Title of project - typically the projectName with "_" & "-" replaced with spaces.
+#' @param projectTitle Title of project - by default set to `projectName` with "_" & "-" replaced with spaces.
 #'
 #' @param programmePath Path to insert the Project into.  This must be a Programme dir, one level below the
 #' organisation, and containing a PROJECTS/ directory.  The Project will be placed into the PROJECTS/ directory.
@@ -654,7 +644,7 @@ create_programme <- function(programmeName, programmePrefix,
 #' Otherwise, the projectIndex is used to number the Project in its Prefix.
 #'
 #' @export
-create_project_doc <- function(projectName, programmePath, projectTitle="",
+create_project_doc <- function(projectPrefix, projectName, programmePath, projectTitle="",
                              projDocTemplate="Project-Doc-Template.Rmd",
                              projDocSummaryTemplate="Project-Doc-Summary-Template.Rmd",
                              projectIndex=0 ) {
@@ -680,9 +670,22 @@ create_project_doc <- function(projectName, programmePath, projectTitle="",
   settingsYamlFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="")
   settings <- yaml::yaml.load( yaml::read_yaml( settingsYamlFile ) )
 
-  # Check programmePath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
+  # get programme path
   progPath <- check_prog_dir(programmePath, settings)
 
+  # extract the PROGRAMME NAME from the programmePath:
+  programmeName <-basename(progPath)
+
+  # define the projects path - settings[["ProgrammeProjectsDir"]] in progPath
+  projsPath <- paste0( progPath, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
+
+  # define project path
+  projPath <- paste0(projsPath, .Platform$file.sep, projectPrefix)
+
+
+  #### ERROR CHECKING ####
+
+  # Check programmePath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
   if(  progPath == ""  ) {
     # the search reached the root of the filesystem without finding the Organisation files,
     # therefore, programmePath is not inside a PROGRAMME sub-dir!
@@ -691,38 +694,18 @@ create_project_doc <- function(projectName, programmePath, projectTitle="",
 
   # programmePath is therefore in a PROGRAMME DIR
 
+  # Check projectPrefix is alphanumeric (no punctuation chars) and unique to programme
+  if( grepl('[[:punct:]]', projectPrefix) == TRUE ) {
+    stop( paste0("  projectPrefix contains non-alphanumeric characters: ", projectPrefix) )
+  }
 
-  # extract the PROGRAMME NAME from the programmePath:
-  programmeName <-basename(progPath)
-
-  # define the projects path - settings[["ProgrammeProjectsDir"]] in progPath
-  projsPath <- paste0( progPath, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
-
-  # extract the programme prefix from status file
-  statusFile <- paste( confPath, .Platform$file.sep, "status.yml", sep="" )
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
-  programmePrefix <- status[["PROGRAMMES"]][[programmeName]][["programmePrefix"]]
-
-
-  if(projectIndex < 1) { # if projectIndex is below 1 (default is 0), then try to identify what projectIndex should be
-    # by looking at DIR numbers:
-
-    projectIndex <- compute_project_index(projsPath, programmePrefix)
-
-  } else { # else, if projectIndex was set to be above 0, then use this number!
-
-    if(projectIndex < 10 ) {
-      projectIndex <- paste("0", projectIndex, sep="")
-    } else {
-      projectIndex <- paste("", projectIndex, sep="")
-    }
-
+  if( file.exists(projPath) == TRUE ) {
+    stop( paste0("  projectPrefix already used in Programme: ", projPath) )
   }
 
 
   #### Create Project Dir ####
 
-  projPath <- paste0(projsPath, .Platform$file.sep, programmePrefix, projectIndex)
   done <- dir.create(projPath)
 
   if(!done) {
@@ -734,7 +717,7 @@ create_project_doc <- function(projectName, programmePath, projectTitle="",
 
   #### create Rmd file ####
 
-  projDocFilePath <- paste0(projsPath, .Platform$file.sep, programmePrefix, projectIndex,
+  projDocFilePath <- paste0(projsPath, .Platform$file.sep, projectPrefix,
                             settings[["ProjectPrefixSep"]], projectName, ".Rmd" )
   done <- file.create(projDocFilePath)
 
@@ -756,7 +739,7 @@ create_project_doc <- function(projectName, programmePath, projectTitle="",
   authorValue <- Sys.info()["user"]
 
   # modify projDocContents to include PREFIX projectTitle author
-  projDocContents <- gsub("{{PREFIX}}", paste(programmePrefix, projectIndex, sep=""), projDocContents, fixed=TRUE)
+  projDocContents <- gsub("{{PREFIX}}", projectPrefix, projDocContents, fixed=TRUE)
   projDocContents <- gsub("{{TITLE}}", projectTitle, projDocContents, fixed=TRUE)
   projDocContents <- gsub("{{AUTHOR}}", authorValue, projDocContents, fixed=TRUE)
 
@@ -1611,39 +1594,40 @@ create_sub_note <- function( subNoteName, subNotePath,
 
 
 
-#' Create a Protocol in a Project Note
+#' Create Boilerplate Content in a Project Note
 #'
-#' This Function create a new Protocol, based on the `protocolTemplate`, which
-#' is inserted into a Project Note.  The base protocol template is located in
-#' the organisation : `config/templates/Protocol-Template.Rmd` & provides
-#' suggested layout for a Protocol.
+#' This Function create new boilerplate Content, based on the `contentTemplate`,
+#' which is inserted into selected Project Note.  The base content template is
+#' located in the organisation : `config/templates/Content-Template.Rmd` &
+#' provides suggested layout for a Protocol.
 #'
-#' Protocols are insertable text that define a set of Standard Operating
+#' Content is any templated insertable text for boilerplate content.  Typically
+#' in ProjectManage it is used to define a set of Standard Operating
 #' Procedures (SOPs) & LOG Sections that record Protocol execution.  The
-#' Protocol is defined between specific delimiters, defined in
-#' `PROTOCOL_SEP.txt`: by default the delimiter is a series of `====`.
+#' Content is defined between specific delimiters, defined in
+#' `CONTENT_SEP.txt`: by default the delimiter is a series of `====`.
 #'
-#' Protocols defined in a source Project Note can be inserted into new Project
-#' Notes, using the `insert_protocol()` function.
+#' Content defined in a source Project Note can be inserted into new Project
+#' Notes, using the `insert_content()` function.
 #'
 #' @param selection projectmanagr selection object indicating the type of file
 #' currently selects.  The current file must be a Project Note.
 #'
-#' @param protocolName The name of the Protocol.  RECOMMEND to use a VERB-DRIVEN
+#' @param contentName The name of the Protocol.  RECOMMEND to use a VERB-DRIVEN
 #' Naming Convention && use the common verb words first. eg. Fix Perfuse Mouse,
 #' Fix Fog Drosophila.
 #'
-#' @param protocolDescription Description of the protocol - shown
+#' @param contentDescription Description of the protocol - shown
 #' to users when choosing a protocol to insert.
 #'
-#' @param protocolTemplate Template to use, as found in the `config/templates/`
+#' @param contentTemplate Template to use, as found in the `config/templates/`
 #' directory.  Default is "Protocol-Template.Rmd"
 #'
 #' @export
-create_protocol <- function(selection, protocolName, protocolDescription,
-                            protocolTemplate="Protocol-Template.Rmd") {
+create_content <- function(selection, contentName, contentDescription,
+                            contentTemplate="Content-Template.Rmd") {
 
-  cat( "\nprojectmanagr::create_protocol():\n" )
+  cat( "\nprojectmanagr::create_content():\n" )
 
 
   #### Set Instance Variables ####
@@ -1678,47 +1662,319 @@ create_protocol <- function(selection, protocolName, protocolDescription,
 
   #### Read Rmds ####
 
-  protocolContents <- read_file( paste0( tempPath, .Platform$file.sep, protocolTemplate) )
+  contentContents <- read_file( paste0( tempPath, .Platform$file.sep, contentTemplate) )
   projNoteRmdContents <- read_file(projNoteRmdPath)
 
 
-  #### Replace markup in Protocol with values ####
+  #### Replace markup in Content with values ####
 
-  # add protocol section header and name
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_HEADER}}",
-                                         settings[["ProtocolHeader"]], orgPath)
+  # add Content section header and name
+  contentContents <- sub_template_param(contentContents, "{{CONTENT_HEADER}}",
+                                         settings[["ContentHeader"]], orgPath)
 
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_NAME}}",
-                                         protocolName, orgPath)
+  contentContents <- sub_template_param(contentContents, "{{CONTENT_NAME}}",
+                                         contentName, orgPath)
 
-  # Add ProtocolDescription field
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_DESCRIPTION_FIELD}}",
-                                         settings[["ProtocolDescriptionField"]], orgPath)
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_DESCRIPTION}}",
-                                         protocolDescription, orgPath)
+  # Add contentDescription field
+  contentContents <- sub_template_param(contentContents, "{{CONTENT_DESCRIPTION_FIELD}}",
+                                         settings[["ContentDescriptionField"]], orgPath)
+  contentContents <- sub_template_param(contentContents, "{{CONTENT_DESCRIPTION}}",
+                                         contentDescription, orgPath)
 
-  # Add Protocol Separators in base template
-  protocolContents <- sub_template_param(protocolContents, "{{PROTOCOL_SEP}}",
-                                         settings[["ProtocolSep"]], orgPath)
+  # Add Content Separators in base template
+  contentContents <- sub_template_param(contentContents, "{{CONTENT_SEP}}",
+                                         settings[["ContentSep"]], orgPath)
 
-  # modify protocolContents with SEP values
-  protocolContents <- replace_sep_values(protocolContents, orgPath)
+  # modify contentContents with SEP values
+  contentContents <- replace_sep_values(contentContents, orgPath)
 
 
-  #### Add Protocol Insertion Template to Project Note
+  #### Add Content Insertion Template to Project Note
 
   projNoteRmdContents <- insert_at_indices(projNoteRmdContents, noteInsertionIndex,
-                                           protocolContents)
+                                           contentContents)
 
 
   #### write Project Note ####
 
   write_file(projNoteRmdContents, projNoteRmdPath)
 
-  cat( "  Inserted Protocol into Project Note: ", projNoteRmdPath, "\n" )
+  cat( "  Inserted Content into Project Note: ", projNoteRmdPath, "\n" )
 
 }
 
 
+#' Create Weekly Journal
+#'
+#' Saved in directory indicated in settings under "WeeklyJournalDir".
+#'
+#' Can optionally extract TODOs to this file with the `extract_todos()` function.
+#'
+#' @param date The start date of the Weekly Journal - typically a Monday.  This
+#' should be in 'YYYY-MM-DD' format, and can be a String. Can create a Date
+#' object with code `as.Date(paste(year, month, "01", sep = "-"))`.
+#'
+#' @param organisationPath The path to the Organisation where the weekly
+#'  journal is created & saved.
+#'
+#' @param journalFileNameTemplate A string that defines the journal File Name.
+#' YYYY & MM & DD are replaced with the year, month, day in the date arg.
+#'
+#' @param journalTemplate File in template/s dir that indicates the layout
+#' for the weekly journal.
+#'
+#' @export
+create_weekly_journal <- function(date, organisationPath,
+                                  journalFileNameTemplate="YYYY-MM-DD",
+                                  journalTemplate="Weekly-Work-Journal-Template.Rmd") {
+
+
+  #### Instance Variables ####
+
+  if( lubridate::is.Date(date) == FALSE ) {
+    date <- lubridate::ymd(date) # parse the date and convert to ymd format
+  }
+
+  year <- format(date, "%Y")
+  month <- format(date, "%m")
+  day <- format(date, "%d")
+
+
+  #### Identify root of ORGANISATION ####
+
+  # get the orgPath from organisationPath
+  orgPath <- find_org_directory(organisationPath)
+
+  if(orgPath == "" ) { # only blank if orgPath not identified
+    stop( paste0("  organisationPath is not in an Organisation: ", organisationPath) )
+  } # now, orgPath should be the root dir of the organisation
+
+  # set confPath + tempPath - these names are FIXED:
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+
+
+  #### Load Settings YAML file ####
+
+  # load from orgPath
+  settingsYamlFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="")
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsYamlFile ) )
+
+
+  #### Create Journal Dir ####
+
+  # create PROG Dir:
+  journalPath <- paste0(orgPath, .Platform$file.sep, settings[["WeeklyJournalDir"]])
+  if(dir.exists(journalPath) ) {
+    cat( "  Journal dir exists - creating weekly journal here: ", journalPath, "\n" )
+  } else { # create the journalPath
+    done <- dir.create(journalPath)
+    if(!done) {
+      stop( paste0("  Programme directory could not be created: ", journalPath) )
+    } else {
+      cat( "  Made Journal dir: ", journalPath, "\n" )
+    }
+  }
+
+
+  #### create Journal Rmd file ####
+
+  # modify journalFileNameTemplate
+  journalFileNameTemplate <- gsub('YYYY', year, journalFileNameTemplate)
+  journalFileNameTemplate <- gsub('MM', month, journalFileNameTemplate)
+  journalFileNameTemplate <- gsub('DD', day, journalFileNameTemplate)
+
+  journalRmdPath <- paste0(journalPath, .Platform$file.sep, journalFileNameTemplate, ".Rmd")
+  done <- file.create(journalRmdPath)
+
+  if(!done) {
+    stop( paste0("  Journal .Rmd file could not be created: ", journalRmdPath) )
+  }
+
+  cat( "  Made Journal .Rmd file: ",journalRmdPath, "\n" )
+
+
+  # read journalTemplate:
+  journalContents <- read_file( paste0(tempPath, .Platform$file.sep, journalTemplate) )
+
+  # use username as author value
+  authorValue <- Sys.info()["user"]
+
+  # modify journalContents to include date YYYY MM DD
+  journalContents <- gsub("{{YYYY}}", year, journalContents, fixed=TRUE)
+  journalContents <- gsub("{{MM}}", month, journalContents, fixed=TRUE)
+  journalContents <- gsub("{{DD}}", day, journalContents, fixed=TRUE)
+
+  # modify journalContents to include authorValue
+  journalContents <- gsub("{{AUTHOR}}", authorValue, journalContents, fixed=TRUE)
+
+  # add plaintext calendar
+  journalContents <- sub_template_param(journalContents,
+                                        "{{WEEKLY_JOURNAL_PLAINTEXT_CALENDAR}}",
+                                        generate_plaintext_calendar(year, month, day),
+                                        orgPath)
+
+  # add weekly rmarkdown daily journal
+  journalContents <- sub_template_param(journalContents,
+                                        "{{WEEKLY_JOURNAL_DAILY_JOURNAL}}",
+                                        generate_weekly_rmarkdown(year, month, day),
+                                        orgPath)
+
+  # add todo collection from org
+  #journalContents <- sub_template_param(journalContents,
+  #                                      "{{WEEKLY_JOURNAL_TODO_COLLECTION}}",
+  #                                      extract_todos(orgPath),
+  #                                      orgPath)
+  # DEPRECATED - user should extract TODOs as needed into the weekly journal
+  # allows flexibility in TODO extraction!
+  # added separate __EXTRACT_TODOS_HERE__ marker in the Weekly Journal Template now
+
+  # modify journalContents with rmarkdown-html-header content
+  journalContents <- replace_markdown_header(journalContents, orgPath)
+
+  # modify journalContents with SEP values
+  journalContents <- replace_sep_values(journalContents, orgPath)
+
+  # write to journalFile
+  write_file(journalContents, journalRmdPath)
+
+  cat( "  Written template to Journal .Rmd file: ", journalRmdPath, "\n" )
+
+}
+
+
+#' Generate Plaintext Calendar
+#'
+#' Internal function to generate a plaintext calendar for insertion into
+#' the weekly journal.
+#'
+#' The calendar is laid out as a matrix with columns for each day of the week,
+#' starting with SUNDAY, and dates filled into this matrix - from the first date
+#' of the month to the end of the week (ie. the Saturday) BEYOND the last date
+#' of the month.
+#'
+generate_plaintext_calendar <- function(year, month, day, calendar_header="# DAILY LOG :") {
+  # Create a date object for the first day of the specified month and year
+  first_date <- as.Date(paste(year, month, "01", sep = "-"))
+
+  # Determine the last day of the specified month
+  last_date <- as.Date(seq.Date(from = first_date, by = "month", length.out = 2)[2]) - 1
+
+  # Initialize an empty string to store the calendar
+  calendar_text <- ""
+
+  # Add the month and year as the title
+  calendar_text <- paste(calendar_header, calendar_text, paste(day, month.name[as.integer(month)], year), "\n\n")
+
+  # Create a matrix to represent the calendar grid
+  calendar_matrix <- matrix("", nrow = 7, ncol = 7)
+
+  # Fill in the day numbers in the matrix
+  current_date <- first_date
+
+  # define day names vector
+  day_names <- c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+
+  # get the first of month as day
+  day <- format(current_date, "%a")
+  day_index <- which(day_names == day)
+
+  # boolean to check when first date added
+  add_first_date <- FALSE
+
+  # add extra dates for NEXT month - to complete each week
+  # calculate number of extra days over last day of month to add to complete calendar
+  # how many extra days over a week (modulus 7)
+  extra_days_week <- as.integer(format(last_date, "%d"))%%7
+  # how many extra days over a month
+  extra_days_month <- 7 - ( (day_index + extra_days_week - 1)%%7 )
+  # need to fill (7 + 1 - day_index) but minus the extra days
+  #extra_days_month <- (7 + 1 - day_index) - extra_days_week
+
+  # add these extra days to last_date
+  last_date <- last_date + extra_days_month
+
+  num_dates <- as.integer(format(last_date, "%d")) + (7 + 1 - day_index)
+
+  for (row in 1:7) {
+    for (col in 1:7) {
+      if(add_first_date == FALSE) {
+        if(col == day_index) {
+          # then add the first date and proceed
+          day_number <- format(current_date, "%d")
+          calendar_matrix[row, col] <- day_number
+          current_date <- current_date + 1
+          add_first_date <- TRUE
+        } else {
+          calendar_matrix[row, col] <- "  " # add two blank lines for spacing
+        }
+      } else {
+        if (current_date >= first_date && current_date <= last_date) {
+          day_number <- format(current_date, "%d")
+          calendar_matrix[row, col] <- day_number
+          current_date <- current_date + 1
+        } else {
+          calendar_matrix[row, col] <- "  " # add two blank lines for spacing
+        }
+      }
+    }
+  }
+
+  # Add the column headers (day names)
+  calendar_text <- paste(calendar_text, paste(day_names, collapse = "  "), "\n")
+
+  # Add the calendar grid to the text
+  for (row in 1:6) {
+    calendar_text <- paste(calendar_text, paste(calendar_matrix[row, ], collapse = "   "), "\n")
+  }
+
+  # add blank line at end of calendar
+  calendar_text <- paste(calendar_text, "\n")
+
+  return(calendar_text)
+}
+
+
+#' Generate Weekly RMarkdown Daily Log
+#'
+#' Creates RMarkdown content for 7 days, from the year-month-day date passed
+#' to this function.
+#'
+generate_weekly_rmarkdown <- function(year, month, day, separator_lines="{{SEP02}}") {
+
+  # Create a Date object for the date provided to this function
+  first_date <- as.Date(paste(year, month, day, sep = "-"))
+
+  # get the last date: + 6 from first_date
+  last_date <- first_date + 6
+
+  # Determine the last day of the month
+  #last_day <- as.Date(paste(year, month + 1, "01", sep = "-")) - 1
+
+  # Initialize an empty string to store the R Markdown lines
+  markdown_lines <- character(0)
+
+  # Loop through each day of the month
+  current_date <- first_date
+  while (current_date <= last_date) {
+    # Generate the R Markdown header for the current day
+    day_header <- toupper( format(current_date, "# %A %d %B %Y") )
+
+    # Add separator lines
+    markdown_lines <- c(markdown_lines, separator_lines, "","","","")
+
+    # then add day header
+    markdown_lines <- c(markdown_lines, day_header, "","","","")
+
+
+    # Move to the next day
+    current_date <- current_date + 1
+  }
+
+  # Combine the R Markdown lines into a single string
+  #markdown_text <- paste(markdown_lines, collapse = "")
+
+  return(markdown_lines)
+}
 
 

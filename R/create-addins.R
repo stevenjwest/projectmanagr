@@ -366,17 +366,22 @@ addin_create_project_doc <- function() {
   statusFile <- paste0( confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
   status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
+
+  programmeDirPaths <- find_prog_dirs(orgPath, settings)
+  programmeDirNames <- basename(programmeDirPaths)
+
+  # no longer retireving using the status file..
   # compute all programme directories
-  programmeDirNames <- names(status$PROGRAMMES)
-  programmeDirPaths <-  paste0(orgPath, .Platform$file.sep, programmeDirNames)
+  #programmeDirNames <- names(status$PROGRAMMES)
+  #programmeDirPaths <-  paste0(orgPath, .Platform$file.sep, programmeDirNames)
 
   # check these exist
-  if( any( check_prog_dir(programmeDirPaths, settings) == "" ) ) {
-    addin_error_path("Create Project Document",
-                     "Programme directories not identified - check the status.yaml file is correct.",
-                     programmeDirPaths[check_prog_dir(programmeDirPaths, settings) == "" ])
-    stop( paste0("  Programme directories not identified - check the status.yaml file is correct: \n    ", statusFile) )
-  }
+  #if( any( check_prog_dir(programmeDirPaths, settings) == "" ) ) {
+  #  addin_error_path("Create Project Document",
+  #                   "Programme directories not identified - check the status.yaml file is correct.",
+  #                   programmeDirPaths[check_prog_dir(programmeDirPaths, settings) == "" ])
+  #  stop( paste0("  Programme directories not identified - check the status.yaml file is correct: \n    ", statusFile) )
+  #}
 
   # create named list of programmeDirNames
   programmeDirNamesChoices <- as.list(seq(length(programmeDirNames)))
@@ -411,11 +416,11 @@ addin_create_project_doc <- function() {
                              choices = programmeDirNamesChoices,
                              selected = progSelected) ),
 
-        fillRow(  textInput("projectName", "Project Name:", value = "PROJECT", width="100%")  ),
+        fillRow(  textInput("projectPrefix", "Project Prefix:", value = "", width="25%"), textInput("projectName", "Project Name:", value = "", width="75%")  ),
 
         fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
-        fillRow(  textInput("projectTitle", "Project Title:", value = "01 PROGRAMME", width="100%")  ),
+        fillRow(  textInput("projectTitle", "Project Title:", value = "", width="100%")  ),
 
         #fillRow( flex = c(7, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Programme Parent Directory")  ),
 
@@ -488,32 +493,23 @@ addin_create_project_doc <- function() {
     #})
 
 
+    # projectPrefix error checking
     observe({
 
-      if( input$projectName != "" ) {
-        progPath <- programmeDirPaths[ as.integer(input$selectProg[1]) ]
-        projsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
-        progName <- basename(progPath)
-        programmePrefix <- status[["PROGRAMMES"]][[progName]][["programmePrefix"]]
-        projectIndex <- compute_project_index(projsPath, programmePrefix)
-
-        projPath <- paste0(progPath,
-                           .Platform$file.sep, settings[["ProgrammeProjectsDir"]],
-                           .Platform$file.sep, programmePrefix, projectIndex,
-                           settings[["ProjectPrefixSep"]], input$projectName, ".Rmd")
-
-        output$projectPathOutput <- renderText({
-          projPath
+      if( grepl('[[:punct:]]', input$projectPrefix) ) {
+        output$warningName <- renderText({
+          "PROJECT PREFIX ONLY SUPPORTS ALPHANUMERICS"
         })
-      } else {
-        output$projectPathOutput <- renderText({
+      }
+      else {
+        output$warningName <- renderText({
           ""
         })
       }
-
     })
 
 
+    # projectName error checking
     observe({
 
       if( grepl("\\s", input$projectName)  ) {
@@ -529,33 +525,61 @@ addin_create_project_doc <- function() {
     })
 
 
+    # render path
+    observe({
 
-    # perform computations to create new Programme:
+      if( input$projectPrefix != "" && input$projectName != "" ) {
+        progPath <- programmeDirPaths[ as.integer(input$selectProg[1]) ]
+        projsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
+        progName <- basename(progPath)
+        #programmePrefix <- status[["PROGRAMMES"]][[progName]][["programmePrefix"]]
+        #projectIndex <- compute_project_index(projsPath, programmePrefix)
+
+        projPath <- paste0(progPath,
+                           .Platform$file.sep, settings[["ProgrammeProjectsDir"]],
+                           .Platform$file.sep, input$projectPrefix,
+                           settings[["ProjectPrefixSep"]], input$projectName, ".Rmd")
+
+        output$projectPathOutput <- renderText({
+          projPath
+        })
+      } else {
+        output$projectPathOutput <- renderText({
+          ""
+        })
+      }
+
+    })
+
+
+    # create new project doc
     observeEvent(input$done, {
 
       if(input$projectName == "") {
+
         # set the warningName TextOutput:
         output$warningName <- renderText({
           "*** PROVIDE PROJECT NAME ***"
         })
-      }
-      else if( grepl("\\s", input$projectName)  ) {
+      } else if( grepl("\\s", input$projectName)  ) {
+
         # set the warningName TextOutput:
         output$warningName <- renderText({
           "*** PROJECT NAME CANNOT CONTAIN SPACES ***"
         })
-      }
-      #else if(global$datapath == "") {
-      #  output$warningDirectory <- renderText({
-      #    "*** DIR PATH NOT VALID PROGRAMME ***"
-      #  })
-      #}
-      #else if(input$select == "") {
-      #  output$warningTemplate <- renderText({
-      #    "*** SELECT A TEMPLATE ***"
-      #  })
-      #}
-      else {
+      } else if(input$projectPrefix == "") {
+
+        # set the warningName TextOutput:
+        output$warningName <- renderText({
+          "*** PROVIDE PROJECT PREFIX ***"
+        })
+      } else if( grepl('[[:punct:]]', input$projectPrefix)  ) {
+
+        # set the warningName TextOutput:
+        output$warningName <- renderText({
+          "*** PROJECT PREFIX ONLY SUPPORTS ALPHANUMERICS ***"
+        })
+      } else {
 
         # FIRST - save all open documents in RStudio:
         rstudioapi::documentSaveAll()
@@ -566,6 +590,7 @@ addin_create_project_doc <- function() {
 
         # call projectmanagr::createProjectDoc:
         projectmanagr::create_project_doc(
+          projectPrefix = input$projectPrefix,
           projectName = input$projectName,
           programmePath = progPath,
           projectTitle = input$projectTitle
@@ -1497,28 +1522,33 @@ addin_create_project_note_from_single <- function(selection, settings, orgPath) 
 
 
 
-#' Add a New Protocol Addin
+#' Create New Content Addin
 #'
-#' Generates a Shiny Gadget for adding a new Protocol inside the `protocol`
-#' directory of the containing Programme, and inserting a link to this
-#' inside the active Project Note.
+#' Shiny Gadget generated to create new Insertable Content in a Project Note
+#' at the currently selected line.
 #'
-#' The User must be in an active Project Note, and the selected
-#' line and column is where the Protocol Link will be inserted.
-#' This command works for all Project Notes.  A reciprocal link is formed
-#' from the Protocol to the Project Note.
+#' Content is any templated insertable text for boilerplate content.  Typically
+#' in ProjectManage it is used to define a set of Standard Operating
+#' Procedures (SOPs) & LOG Sections that record Protocol execution.  The
+#' Content is defined between specific delimiters, defined in
+#' `CONTENT_SEP.txt`: by default the delimiter is a series of `====`.
 #'
-#' User selects a Protocol name, and (Optionally) Protocol
-#'  title (filled by default with SPACES replacing "_" and "-" from name).
+#' User defines the following in the gadget interface:
+#'
+#' * `contentName` : A descriptive name for the block of insertable content.
+#'
+#' * `contentDescription` : A concise description of the block of insertable
+#'   content - what will this content be used for?
 #'
 #' Stipulates any errors in the input, and can only be completed
 #' when these errors have been resolved.
 #'
+#' This addin calls `create_content()` with appropriate ARGs.
 #'
 #' @export
-addin_create_protocol <- function() {
+addin_create_content <- function() {
 
-  cat( "\nprojectmanagr::addin_create_protocol():\n" )
+  cat( "\nprojectmanagr::addin_create_content():\n" )
 
 
   #### instance variables ####
@@ -1527,7 +1557,7 @@ addin_create_protocol <- function() {
   selection <- cursor_selection() # Project Doc, Project Note - Simple, Header, SubNote
 
   if(selection[["rmdType"]]=="UNKNOWN") { # return error message from selection
-    addin_error("Add New Protocol", selection[["errorMessage"]])
+    addin_error("Add New Content", selection[["errorMessage"]])
     stop( paste0("  ", selection[["errorMessage"]]))
   }
 
@@ -1537,7 +1567,7 @@ addin_create_protocol <- function() {
 
   # if orgPath not identified present error interface and then stop this function
   if(orgPath=="") {
-    addin_error_path("Add New Protocol",
+    addin_error_path("Add New Content",
                      "No Organisation identified - ensure active document is in an Organisation.",
                      selection$filePath)
     stop( paste0("  No Organisation identified - ensure active document is in an Organisation: \n    ", selection$filePath))
@@ -1562,25 +1592,25 @@ addin_create_protocol <- function() {
 
   ui <- miniPage(
 
-    gadgetTitleBar("Add New Protocol"),
+    gadgetTitleBar("Add New Content"),
 
     miniContentPanel(
 
       fillCol(
 
-        fillRow( h5("Add a new Protocol in a Project Note") ),
+        fillRow( h5("Add a new Content in a Project Note") ),
 
-        #fillRow( p("Protocol Name MUST end with _Protocol:") ),
+        #fillRow( p("Content Name MUST end with _Content:") ),
 
-        fillRow(  textInput("protocolName", "Protocol Name", value='PROTOCOL NAME', width="100%")  ),
+        fillRow(  textInput("contentName", "Content Name", value='PROTOCOL NAME', width="100%")  ),
 
         fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
-        fillRow(  textAreaInput("protocolDescription", "Protocol Description:", value='This Protocol specifies how to ', rows=3, width="100%")  ),
+        fillRow(  textAreaInput("contentDescription", "Content Description:", value='This Content specifies how to ', rows=3, width="100%")  ),
 
         fillRow(   span( textOutput("warningDescription"), style="color:red")  ),
 
-        fillRow(   textOutput("protocolPath")  )
+        fillRow(   textOutput("contentPath")  )
 
       )
     )
@@ -1591,21 +1621,21 @@ addin_create_protocol <- function() {
 
   server <- function(input, output, session) {
 
-    # create new protocol in note
+    # create new content in note
     observeEvent(input$done, {
 
-      if(input$protocolName == "PROTOCOL NAME") {
+      if(input$contentName == "PROTOCOL NAME") {
         output$warningName <- renderText({"*** PROVIDE PROTOCOL NAME ***"})
-      } else if( input$protocolDescription == 'This Protocol '  ) {
+      } else if( input$contentDescription == 'This Content '  ) {
         output$warningDescription <- renderText({"*** PROVIDE PROTOCOL DESCRIPTION ***"})
       } else {
 
-        # create protocol
-        projectmanagr::create_protocol(
+        # create content
+        projectmanagr::create_content(
           selection = selection,
-          protocolName = input$protocolName,
-          protocolDescription = input$protocolDescription,
-          protocolTemplate="Protocol-Template.Rmd"
+          contentName = input$contentName,
+          contentDescription = input$contentDescription,
+          contentTemplate="Content-Template.Rmd"
         )
 
         # Close Gadget after computations are complete:
@@ -1618,7 +1648,7 @@ addin_create_protocol <- function() {
 
   #### view gadget ####
 
-  viewer <- dialogViewer("Add New Protocol",
+  viewer <- dialogViewer("Add New Content",
                          width = settings[["GadgetWidth"]],
                          height = settings[["GadgetHeight"]])
 
