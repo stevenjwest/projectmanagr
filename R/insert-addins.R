@@ -372,30 +372,30 @@ addin_insert_hyperlink <- function() {
 }
 
 
-#' Select & Insert Protocol
+#' Select & Insert Content
 #'
 #' A Directory Tree within the Organisation is used to screen all Project Notes
-#' for all declared Protocols, based on the Protocol Delimiter Syntax (defined
-#' in `PROTOCOL_SEP.txt`).  This Directory Tree can be adjusted.
+#' for all declared Contents, based on the Content Delimiter Syntax (defined
+#' in `settings[["ContentSep"]]`).  This Directory Tree can be adjusted.
 #'
-#' All Protocols present in Project Notes in the Directory Tree are shown in a
-#' DT datatable by protocol title.
+#' All Insertable Content present in Project Notes in the Directory Tree are
+#' shown in a DT datatable by content title.
 #'
-#' Individual Protocols can be selected to show the summary information.
+#' Individual Content can be selected to show the summary information.
 #'
-#' A Preview view of the Protocol can be opened to read through the entire
-#' Protocol in the ADDIN.
+#' A Preview view of the Content can be opened to read through the entire
+#' Content in the ADDIN.
 #'
-#' Selected protocols can be inserted into the current selection in a
+#' Selected content can be inserted into the current selection in a
 #' Destination Project Note via the DONE button.
 #'
 #' Using DT to display a datatable in the shiny gadget here.  See the tutorial
 #' at https://rstudio.github.io/DT/shiny.html
 #'
 #' @export
-addin_insert_protocol <- function() {
+addin_insert_content <- function() {
 
-  cat( "\nprojectmanagr::addin_insert_protocol():\n\n" )
+  cat( "\nprojectmanagr::addin_insert_content():\n\n" )
 
 
   #### instance variables ####
@@ -423,72 +423,88 @@ addin_insert_protocol <- function() {
   settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
   # load status file for projectmanagr org status
-   # contains information on protocols DIRs && index of protocols in those files with retrieval datetime
+   # contains information on contents DIRs && index of contents in those files with retrieval datetime
   statusFile <- paste0(confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
   status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
-  # read status information for PROTOCOLS if it exists
-  protocolsStatus <- status[['PROTOCOLS']]
+  # read status information for CONTENTS if it exists
+  contentsStatus <- status[['CONTENTS']]
 
-  # if PROTOCOLS data exists use last dir tree where a protocol was inserted from
+  # get progPath
+  progPath <- find_prog_dir(projNoteRmdPath, settings)
+
+  cat( paste0("  progPath: ", progPath) )
+
+  # if CONTENTS data exists use last dir tree where a content was inserted from?
    # otherwise set the dirtree to the PROGRAMME of the current document's path
-  if( is.null(protocolsStatus) ) {
-    cat("  no previous protocols found - searching parent directory of current file for protocols..\n")
-    dirPath <- dirname(projNoteRmdPath)
-    #protocols <- find_protocols_in_dir_tree(dirPath, orgPath, settings)
-    protocols <- find_protocols_in_dir_tree(dirPath, orgPath, settings)
-    protocolRetrievalDateTime <- get_datetime() # set to current datetime
+  if( is.null(contentsStatus) ) {
+    cat("  no previous contents found - searching programme directory of current file for contents..\n")
+    #dirPath <- dirname(projNoteRmdPath)
+    dirPath <- progPath
+    contents <- find_contents_in_dir_tree(progPath, orgPath, settings)
+    contentRetrievalDateTime <- get_datetime() # set to current datetime
 
   } else {
 
-    cat("  found previous protocols - identifying most recently used...\n\n")
-    # identify the latest used dirPath from metadata stored in protocolsStatus
-    protocolDirPaths <- names(protocolsStatus)
-    dts <- lapply(X = protocolsStatus, FUN = `[[`, "protocolRetrievalDateTime")
+    cat("  found previous contents - identifying most recently used...\n\n")
+    # identify the latest used dirPath from metadata stored in contentsStatus
+    contentDirPaths <- names(contentsStatus)
+    dts <- lapply(X = contentsStatus, FUN = `[[`, "contentRetrievalDateTime")
     dts <- lubridate::ymd_hm(dts)
     dtsl <- max(dts) # get maximum value - or LATEST DATETIME
     dtsli <- which(dts == dtsl) # get the index
-    dirPath <- protocolDirPaths[[dtsli]]
+    dirPath <- contentDirPaths[[dtsli]]
 
-    # validate the protocols! Check if any project Notes are updated since the protocolRetrievalDateTime
-    protocolsStatus[[dirPath]] <- update_protocols_in_list(protocolsStatus, dirPath, orgPath, settings)
+    # validate the contents! Check if any project Notes are updated since the contentRetrievalDateTime
+    contentsStatus[[dirPath]] <- update_contents_in_list(contentsStatus, dirPath, orgPath, settings)
 
     # latest retrieval datetime
-    protocolRetrievalDateTime <- protocolsStatus[[dirPath]]$protocolRetrievalDateTime
+    contentRetrievalDateTime <- contentsStatus[[dirPath]]$contentRetrievalDateTime
 
-    # latest protocols
-    protocols <- protocolsStatus[[dirPath]]$protocols
+    # latest contents
+    contents <- contentsStatus[[dirPath]]$contents
 
-    cat( paste0("    displaying most recent protocols from path: ", dirPath, "\n") )
+    cat( paste0("    displaying most recent contents from path: ", dirPath, "\n") )
 
   }
 
-  # open protocol sep delimiter
-  protocolSepContents <- read_file( paste0( tempPath, .Platform$file.sep, "PROTOCOL_SEP.txt") )
+  # open content sep delimiter
+  contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
 
   # create vector of possible roots for dir selection in server()
   roots <- c(orgPath) # can use orgPath ONLY as roots
   names(roots) <- c(basename(orgPath))
 
-  # generate a blank table to hold protocol names in
-  PROTOCOL_NAME <- names(protocols)
-  PROTOCOL_LINE_NUM <- as.character(lapply(X = protocols, FUN = `[[`, "startLineNum"))
-  PROTOCOL_NOTE_PATH <- as.character(lapply(X = protocols, FUN = `[[`, "projectNotePath"))
-  PROTOCOL_NOTE_NAME <- basename( as.character(lapply(X = protocols, FUN = `[[`, "projectNotePath")) )
-  protocolsTable <- tibble::tibble(PROTOCOL_NAME, PROTOCOL_LINE_NUM, PROTOCOL_NOTE_NAME)
+  cat("  generate initial DT:")
+
+  # generate a blank table to hold content names in
+  CONTENT_NAME <- as.character(lapply(X = contents, FUN = `[[`, "contentTitle"))
+  pathLine <- strsplit(names(contents), ':::', fixed=TRUE)
+  CONTENT_LINE_NUM <- c()
+  CONTENT_NOTE_PATH <- c()
+  CONTENT_NOTE_NAME <- c()
+  for(pl in 1:length(pathLine) ) {
+    plc <- pathLine[[pl]]
+    CONTENT_LINE_NUM[pl] <- as.character(plc[2]) #second index
+    CONTENT_NOTE_PATH[pl] <- as.character(plc[1]) #first index
+    CONTENT_NOTE_NAME[pl] <- basename( as.character(plc[1])) #first index
+
+  }
+
+  contentsTable <- tibble::tibble(CONTENT_NAME, CONTENT_LINE_NUM, CONTENT_NOTE_NAME)
 
 
   #### user interface ####
 
   ui <- miniPage(
 
-    gadgetTitleBar("Insert Protocol"),
+    gadgetTitleBar("Insert Content"),
 
     miniContentPanel(
 
       fillCol( flex = c(1,1,1,20,1,1,1,4),
 
-               fillRow( p("Insert a protocol into the current Project Note") ),
+               fillRow( p("Insert Content into the current Project Note") ),
 
                #fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
 
@@ -502,11 +518,11 @@ addin_insert_protocol <- function() {
 
                fillRow( br() ),
 
-               fillRow( h3("Protocol Description") ),
+               fillRow( h3("Content Description") ),
 
                fillRow( br() ),
 
-               fillRow( h4( htmlOutput("protocolDescription") ) )
+               fillRow( h4( htmlOutput("contentDescription") ) )
 
       )
     )
@@ -559,31 +575,44 @@ addin_insert_protocol <- function() {
                  })
 
 
-    #### render the protocolsTable ####
+    #### render the contentsTable ####
 
     #  make table reactive
-    gt <- reactiveValues(table = protocolsTable, paths = PROTOCOL_NOTE_PATH,
-                         lines = PROTOCOL_LINE_NUM, protocols = protocols)
+    gt <- reactiveValues(table = contentsTable, paths = CONTENT_NOTE_PATH,
+                         lines = CONTENT_LINE_NUM, contents = contents)
 
-    cat("\n  compute protocols table\n")
-    # compute protocols table
+    cat("\n  compute contents table\n")
+    # compute contents table
     observe({
       if( global$datapath != "" ) { # only if datapath has been assigned!
-        protocols <- find_protocols_in_dir_tree(global$datapath, orgPath, settings)
-        PROTOCOL_NAME <- names(protocols)
-        PROTOCOL_LINE_NUM <- as.character(lapply(X = protocols, FUN = `[[`, "startLineNum"))
-        PROTOCOL_NOTE_PATH <- as.character(lapply(X = protocols, FUN = `[[`, "projectNotePath"))
-        PROTOCOL_NOTE_NAME <- basename( as.character(lapply(X = protocols, FUN = `[[`, "projectNotePath")) )
-        protocolsTable <- tibble::tibble(PROTOCOL_NAME, PROTOCOL_LINE_NUM, PROTOCOL_NOTE_NAME)
-        gt$table <- tibble::tibble(PROTOCOL_NAME, PROTOCOL_LINE_NUM, PROTOCOL_NOTE_NAME)
-        gt$paths = PROTOCOL_NOTE_PATH
-        gt$lines = PROTOCOL_LINE_NUM
-        gt$protocols <- protocols
+
+        contents <- find_contents_in_dir_tree(global$datapath, orgPath, settings)
+
+        CONTENT_NAME <- as.character(lapply(X = contents, FUN = `[[`, "contentTitle"))
+        pathLine <- strsplit(names(contents), ':::', fixed=TRUE)
+        CONTENT_LINE_NUM <- c()
+        CONTENT_NOTE_PATH <- c()
+        CONTENT_NOTE_NAME <- c()
+        for(pl in 1:length(pathLine) ) {
+          plc <- pathLine[[pl]]
+          CONTENT_LINE_NUM[pl] <- as.character(plc[2]) #second index
+          CONTENT_NOTE_PATH[pl] <- as.character(plc[1]) #first index
+          CONTENT_NOTE_NAME[pl] <- basename( as.character(plc[1])) #first index
+
+        }
+        contentsTable <- tibble::tibble(CONTENT_NAME, CONTENT_LINE_NUM, CONTENT_NOTE_NAME)
+
+        #gt$table <- tibble::tibble(CONTENT_NAME, CONTENT_LINE_NUM, CONTENT_NOTE_NAME)
+        gt$table <- contentsTable
+        gt$paths = CONTENT_NOTE_PATH
+        gt$lines = CONTENT_LINE_NUM
+        gt$contents <- contents
+
       }
     })
 
 
-    cat("\n  render the protocolsTable\n")
+    cat("\n  render the contentsTable\n")
 
     output$mytable1 <- DT::renderDT( gt$table,
                                      selection = 'single',
@@ -591,7 +620,7 @@ addin_insert_protocol <- function() {
                                      #editable = list(target = "cell", disable = list(columns = c(1:7))),
                                      #editable = TRUE,
                                      filter = 'top',
-                                     caption = 'Protocols Table',
+                                     caption = 'Contents Table',
                                      fillContainer = TRUE,
                                      #options = list(
                                     #   lengthMenu = c(20, 50, 100),
@@ -600,17 +629,17 @@ addin_insert_protocol <- function() {
                                      server = FALSE ) # processing on client-side means edits to IMPORT col are kept when searching the table
 
 
-    #### set protocol description ####
+    #### set Content description ####
 
-    # set the protocolDescription text based on protocol selection
-    output$protocolDescription <- renderUI({
+    # set the contentDescription text based on content selection
+    output$contentDescription <- renderUI({
       if( is.null(input$mytable1_rows_selected) ) {
-        paste0("  no protocol selected")
+        paste0("  no content selected")
       } else {
         #paste0("row: ", input$mytable1_rows_selected, " line: ",
-        #       PROTOCOL_LINE_NUM[[input$mytable1_rows_selected]],
-        #       " path: ", PROTOCOL_NOTE_PATH[[input$mytable1_rows_selected]])
-        desc <- get_protocol_description(read_file(gt$paths[[input$mytable1_rows_selected]]),
+        #       CONTENT_LINE_NUM[[input$mytable1_rows_selected]],
+        #       " path: ", CONTENT_NOTE_PATH[[input$mytable1_rows_selected]])
+        desc <- get_content_description(read_file(gt$paths[[input$mytable1_rows_selected]]),
                                  as.numeric(gt$lines[[input$mytable1_rows_selected]]),
                                  settings, orgPath)
         HTML(paste0(desc[desc!=""], sep='<br/>') )
@@ -618,24 +647,24 @@ addin_insert_protocol <- function() {
     })
 
 
-    #### done : insert protocol ####
+    #### done : insert content ####
 
     observeEvent(input$done, {
 
-      cat( paste0("  inserting protocol into: ", basename(projNoteRmdPath), " at line: ", noteInsertionIndex, "\n") )
-      projectmanagr::insert_protocol(
+      cat( paste0("  inserting content into: ", basename(projNoteRmdPath), " at line: ", noteInsertionIndex, "\n") )
+      projectmanagr::insert_content(
         user_selection(gt$paths[[input$mytable1_rows_selected]],
                        as.numeric(gt$lines[[input$mytable1_rows_selected]]) ),
         user_selection(projNoteRmdPath, noteInsertionIndex)
       )
 
-      # add found protocols cache to status
-      # cache consists of protocolRetrievalDateTime (ie. current datetime!) & protocols list
-       # protocols list : each protocol name, plus source project note PATH && LINE in file where this begins
-      protocolRetrievalDateTime <- get_datetime()
-      attrs <- list(protocolRetrievalDateTime, gt$protocols ) # gt protocols stores reactive protocols value
-      names(attrs) <- c("protocolRetrievalDateTime", "protocols")
-      status[["PROTOCOLS"]][[global$datapath]] <- attrs # global datapath store reactive dirPath value
+      # add found contents cache to status
+      # cache consists of contentRetrievalDateTime (ie. current datetime!) & contents list
+       # contents list : each content name, plus source project note PATH && LINE in file where this begins
+      contentRetrievalDateTime <- get_datetime()
+      attrs <- list(contentRetrievalDateTime, gt$contents ) # gt contents stores reactive contents value
+      names(attrs) <- c("contentRetrievalDateTime", "contents")
+      status[["CONTENTS"]][[global$datapath]] <- attrs # global datapath store reactive dirPath value
 
       # Write status list to the statusFile:
       yaml::write_yaml( yaml::as.yaml(status), statusFile )

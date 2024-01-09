@@ -339,20 +339,20 @@ insert_doc_task_section <- function(selection,
 
 
 
-#' Insert a Protocol from Source Project Note into a new Project Note
+#' Insert Content from Source Project Note into a new Project Note
 #'
-#' This Function adds a Protocol to a Project Note - protocols are created and
-#'  formed in a Source Project Note.
+#' This Function adds Insertable Content in to a Project Note. Insertable Content
+#' are Document Sections between special syntax that exist in a Source Project
+#' Note - created with `create_content()` function.
 #'
-#' * Recommended to place all Project Notes that define Protocols into a
-#'  Programme-wide directory with clear name (eg. protocol/), so all protocols
-#'  for a programme can be easily and quickly located.
+#' * The special syntax in the Content `{{INSERTABLE_CONTENT_LINK}}` is replaced
+#'  with a relative link from Destination to the Source Project Note.
 #'
-#' All links in the Protocol are UPDATED to work from the destination Project
+#' * All links in the Content are UPDATED to work from the destination Project
 #'  Note.
 #'
-#' All graphics included in a knitr::include_graphics() r code chunk are
-#'  transferred to the new Project Note DIR and linked appropriately.
+#' All graphics files included in `knitr::include_graphics()` r calls are
+#'  linked to the new Project Note appropriately.
 #'
 #' @param selectionSource Selection object from Project Note file containing
 #'  the Protocol to be inserted.  The selection must be on the FIRST PROTOCOL
@@ -364,20 +364,20 @@ insert_doc_task_section <- function(selection,
 #'  the protocol is to be inserted.  Use `projectmanagr::cursor_selection()` or
 #'  `projectmanagr::user_selection()` to create this object.
 #'
-#' @param protocolInsertionTemplate Template file that contains boilerplate content
-#' for protocol insertion into project note.
-#'
 #' @export
-insert_protocol <- function(selectionSource, selectionDestination,
-                            protocolInsertionTemplate="Protocol-Insertion-Template.Rmd") {
+insert_content <- function(selectionSource, selectionDestination) {
 
-  cat( "\nprojectmanagr::insert_protocol():\n" )
+  cat( "\nprojectmanagr::insert_content():\n" )
+
+  # @param contentInsertionTemplate Template file that contains boilerplate content
+  # for content insertion into project note.
+  # contentInsertionTemplate="Content-Insertion-Template.Rmd"
 
 
   #### Set Instance Variables ####
 
   sourceNoteRmdPath <- selectionSource[["filePath"]] # presumed to be project note Rmd
-  sourceNoteProtocolIndex <- selectionSource[["originalLineNumber"]]
+  sourceNoteContentIndex <- selectionSource[["originalLineNumber"]]
 
   destNoteRmdPath <- selectionDestination[["filePath"]] # presumed to be project note Rmd
   noteInsertionIndex <- selectionDestination[["originalLineNumber"]]
@@ -401,37 +401,8 @@ insert_protocol <- function(selectionSource, selectionDestination,
   settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
   settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
-  # open protocol sep delimiter
-  protocolSepContents <- read_file( paste0( tempPath, .Platform$file.sep, "PROTOCOL_SEP.txt") )
-
-  # get the progPath:
-  #progPath <- find_prog_dir(projNoteRmdPath, settings)
-
-  # get protocol directory path:
-  #protocolsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
-
-  # define protocol Dir path + Rmd path
-  #protocolDirPath <- paste0( protocolsPath, .Platform$file.sep, protocolName)
-  #protocolRmdPath <- paste0( protocolDirPath, .Platform$file.sep, protocolName, ".Rmd")
-
-  # define protocol title from name - remove - & _ and make first letter CAPITAL
-  #protocolTitle <- gsub("-", " ", gsub("_", " ", protocolName) )
-  #protocolTitle <- gsub("(^|[[:space:]])([[:alpha:]])", "\\1\\U\\2", protocolTitle, perl = TRUE)
-
-
-  #### CHECK FOR ERRORS IN INPUT ####
-
-  # check selectionDestination is a Project Note - simple or sub or head
-  if( selectionDestination[["rmdType"]] != "NOTE"
-      && selectionDestination[["rmdType"]] != "SUB"
-      && selectionDestination[["rmdType"]] != "HEAD" ) {
-    stop( paste0("  selectionDestination is not a Project Note: ", projNoteRmdPath) )
-  }
-
-  # Check protocolRmdPath doesnt exist
-  #if( file.exists(protocolRmdPath) == FALSE ) {
-  #  stop( paste0("  protocol of this name doesn't exists: ", protocolRmdPath) )
-  #}
+  # open content sep delimiter
+  contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
 
 
   #### Read Source Rmd ####
@@ -439,77 +410,126 @@ insert_protocol <- function(selectionSource, selectionDestination,
   sourceNoteRmdContents <- read_file(sourceNoteRmdPath)
 
 
-  #### Check Protocol Exists @ selectionSource ####
+  #### Check content Exists @ selectionSource ####
 
-  # check protocol sep exists in sourceNoteRmdContents from sourceNoteProtocolIndex
-  sourceNoteProtocolEnd <- sourceNoteProtocolIndex + length(protocolSepContents) - 1
+  # check content sep exists in sourceNoteRmdContents from sourceNoteContentIndex
+  sourceNoteContentEnd <- sourceNoteContentIndex + length(contentSepContents) - 1
 
-  # each element in protocolSepContents must match each element in sourceNoteRmdContents from sourceNoteProtocolIndex
-  if( ! all(sourceNoteRmdContents[sourceNoteProtocolIndex:sourceNoteProtocolEnd] == protocolSepContents) ) {
-    stop( paste0("  sourceNoteRmdContents does not contain a protocol delimiter at sourceNoteProtocolIndex: ",
-                 sourceNoteRmdContents[sourceNoteProtocolIndex:sourceNoteProtocolEnd], " delimiter: ", protocolSepContents) )
+  # each element in contentSepContents must match each element in sourceNoteRmdContents from sourceNoteContentIndex
+  if( ! all(sourceNoteRmdContents[sourceNoteContentIndex:sourceNoteContentEnd] == contentSepContents) ) {
+    stop( paste0("  sourceNoteRmdContents does not contain a content delimiter at sourceNoteContentIndex: ",
+                 sourceNoteRmdContents[sourceNoteContentIndex:sourceNoteContentEnd], " delimiter: ", contentSepContents) )
   }
 
 
   #### Read Destination & template Rmds ####
 
   destNoteRmdContents <- read_file(destNoteRmdPath)
-  protocolInsertionContents <- read_file( paste0(tempPath, .Platform$file.sep, protocolInsertionTemplate) )
+
+  # no longer using insertion template - just insert the content as extracted from source project note
+  #contentInsertionContents <- read_file( paste0(tempPath, .Platform$file.sep, contentInsertionTemplate) )
 
 
-  #### Get Protocol from source note ####
+  #### Get Content from source note ####
 
-  # compute location of protocol header & title in sourceNoteRmdContents
-  protocolHeader <- get_protocol_header(sourceNoteRmdContents, sourceNoteProtocolIndex, settings, orgPath)
-  protocolTitle <- get_protocol_title(sourceNoteRmdContents, sourceNoteProtocolIndex, settings, orgPath)
+  # compute location of Content header & title in sourceNoteRmdContents
+  contentHeader <- get_content_header(sourceNoteRmdContents, sourceNoteContentIndex, settings, orgPath)
+  contentTitle <- get_content_title(sourceNoteRmdContents, sourceNoteContentIndex, settings, orgPath)
 
-  # form a link to the Protocol in the Source Note from destination note
-  protocolLink <- create_hyperlink_section(basename(sourceNoteRmdPath), protocolHeader, sourceNoteRmdPath, destNoteRmdPath)
+  # form a link to the Content in the Source Note from destination note
+  contentLink <- create_hyperlink_section(basename(sourceNoteRmdPath), contentHeader, sourceNoteRmdPath, destNoteRmdPath)
 
-  # get protocol contents
-  protocolDelimiterIndices <- match_vector(protocolSepContents,
-                                           sourceNoteRmdContents[sourceNoteProtocolIndex:length(sourceNoteRmdContents)])
-  # the protocol of interest is between FIRST and SECOND delim indices
-  protocolStartIndex <- sourceNoteProtocolIndex + length(protocolSepContents)
-  protocolEndIndex <- sourceNoteProtocolIndex + protocolDelimiterIndices[2] - length(protocolSepContents)
+  # get Content contents
+  contentDelimiterIndices <- match_vector(contentSepContents,
+                                           sourceNoteRmdContents[sourceNoteContentIndex:length(sourceNoteRmdContents)])
+  # the Content of interest is between FIRST and SECOND delim indices
+  contentStartIndex <- sourceNoteContentIndex + length(contentSepContents)
+  contentEndIndex <- sourceNoteContentIndex + contentDelimiterIndices[2] - length(contentSepContents)
 
-  protocolContents <- sourceNoteRmdContents[protocolStartIndex:protocolEndIndex]
-
-
-  #### Add Protocol to Insertion Template ####
-
-  protocolInsertionContents <- sub_template_param(protocolInsertionContents,
-                                                  "{{PROTOCOL_INSERTION_SEP}}",
-                                                  settings[["ProtocolInsertionSep"]],
-                                                  orgPath)
-
-  protocolInsertionContents <- sub_template_param(protocolInsertionContents,
-                                                  "{{PROTOCOL_INSERTION_TITLE}}",
-                                                  paste0(settings[["ProtocolInsertionTitle"]], protocolTitle),
-                                                  orgPath)
-
-  protocolInsertionContents <- sub_template_param(protocolInsertionContents,
-                                                  "{{PROTOCOL_INSERTION_LINK}}",
-                                                  protocolLink, orgPath)
+  contentContents <- sourceNoteRmdContents[contentStartIndex:contentEndIndex]
 
 
-  protocolInsertionContents <- sub_template_param(protocolInsertionContents,
-                                                  "{{PROTOCOL_INSERTION_CONTENT}}",
-                                                  protocolContents, orgPath)
+  #### Replace Template Params ####
 
+  # replace {{INSERTABLE_CONTENT_LINK}} template param
+  contentContents <- sub_template_param(contentContents, "{{INSERTABLE_CONTENT_LINK}}",
+                                        contentLink, orgPath)
 
+  # replace {{PREFIX}} template param with Destination Project Note Prefix
+  contentContents <- sub_template_param(contentContents, "{{PREFIX}}",
+                                        get_prefix(destNoteRmdPath, settings), orgPath)
+
+  # every knitr::include_graphics link, replace the path!
+  contentContents <- replace_knitr_include_graphics_link(contentContents, sourceNoteRmdPath,
+                                                         destNoteRmdPath, settings, orgPath)
 
   #### Add Protocol Insertion Template to Destination Project Note
 
   destNoteRmdContents <- insert_at_indices(destNoteRmdContents,
-                                        noteInsertionIndex, protocolInsertionContents)
+                                        noteInsertionIndex, contentContents)
 
 
   #### write Project Note ####
 
   write_file(destNoteRmdContents, destNoteRmdPath)
 
-  cat( "  Inserted Protocol into Project Note: ", destNoteRmdPath, "\n" )
+  cat( "  Inserted Content into Project Note: ", destNoteRmdPath, "\n" )
+
+}
+
+
+
+#' Insert lines into a Project Note
+#'
+#' This Function adds `lines` to a Project Note.
+#'
+#' @param selection Selection object from Project Note.
+#' @param lines character vector of lines to insert.
+#'
+#' @export
+insert_lines <- function(selection, lines) {
+
+  cat( "\nprojectmanagr::insert_lines():\n" )
+
+
+  #### Set Instance Variables ####
+
+  sourceNoteRmdPath <- selection[["filePath"]] # presumed to be project note Rmd
+  sourceNoteLineIndex <- selection[["originalLineNumber"]]
+
+  # get orgPath
+  orgPath <- find_org_directory(sourceNoteRmdPath)
+
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  Cannot identify organisation directory: ", sourceNoteRmdPath) )
+  }
+  # orgPath is root dir of the organisation - same for both source and destination
+
+  # set confPath + tempPath - these names are FIXED:
+  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+
+  # load settings file for user defined settings
+  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+
+
+  #### Read Source Rmd ####
+
+  sourceNoteRmdContents <- read_file(sourceNoteRmdPath)
+
+
+  #### Add lines to Project Note ####
+
+  sourceNoteRmdContents <- insert_at_indices(sourceNoteRmdContents,
+                                             sourceNoteLineIndex, lines)
+
+
+  #### write Project Note ####
+
+  write_file(sourceNoteRmdContents, sourceNoteRmdPath)
+
+  cat( "  Inserted lines into Project Note: ", sourceNoteRmdPath, "\n" )
 
 }
 
