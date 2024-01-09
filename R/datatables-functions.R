@@ -26,46 +26,142 @@ datatable_create_rmd <- function( rmd_path, rmd_line,
 
   cat( "\nprojectmanagr::datatable_create_rmd():\n" )
 
-  # if not an absolute path:
-  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
-    rmd_path <- R.utils::getAbsolutePath(rmd_path )
-  }
-
-  # CONFIRM rmd_path is a project doc or note:
-   # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-    # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
-  orgPath <- dirname( dirname(rmd_path) )
-
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
-    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
 
   cat( "  Reading Rmd...\n" )
+  rmd_contents <- read_file(rmd_path)
 
-  # read rmd_path file:
-  rmd_file_conn <- file( rmd_path )
-  rmd_contents <- readLines( rmd_file_conn )
-  close(rmd_file_conn)
-
-  data_tables <- datatable_create( IDs, data_cols, datatable_name, dt_length )
+  data_tables <- datatable_create( IDs, data_cols, datatable_name, default_data_vals=list(), dt_length=dt_length )
 
   # write these to the file:
   cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
   rmd_contents <- c( rmd_contents[1:(rmd_line-1)], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
    # rmd_line-1 to REMOVE CURRENT LINE
 
-  rmd_file_conn <- file( rmd_path )
-  writeLines(rmd_contents, rmd_file_conn)
-  close(rmd_file_conn)
+  write_file(rmd_contents, rmd_path)
 
+}
+
+
+#' Create new Sample DataTable from TEMPLATE and insert into Rmd
+#'
+#' Creates a Sample DataTable in specified Rmd file from the template that
+#' should be present between specified start & end line.
+#'
+#' The template Sample DataTable will contain an initial ID column containing
+#' a default IDs vector (which will be replaced with IDs from selected existing
+#' datatable), and any other columns will have their initial data
+#' value replicated along the length of the datatable.
+#'
+#' @param rmd_path path to Rmd file
+#'
+#' @param rmd_startline line in Rmd file where TEMPLATE datatable starts
+#'
+#' @param rmd_endline line in Rmd file where TEMPLATE datatable ends
+#'
+#' @param IDs Character vector of sample IDs
+#'
+#' @param datatable_name String of data table name - default "samples".
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#' @export
+datatable_create_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
+                                           IDs, datatable_name = "samples", dt_length = 120 ) {
+
+  cat( "\nprojectmanagr::datatable_create_template_rmd():\n" )
+
+
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
+
+  cat( "  Reading Rmd...\n" )
+  rmd_contents <- read_file(rmd_path)
+
+  # get the template
+  template_table <- rmd_contents[ rmd_startline : rmd_endline ]
+
+  # extract template_table string as list
+  #template_list <- datatable_extract(template_table)
+
+  # REPLACE IDs in the list
+  #template_list[[1]] <- c(template_list[[1]][1], IDs)
+
+  # and add MULTIPLES of current content in each other vector in list according to IDs length
+  #for(i in 2:length(template_list) ) {
+  #  template_list[[i]] <- c(template_list[[i]][1], rep(template_list[[i]][2], length(IDs) ) )
+  #}
+
+  #template_list <- template_list[2:length(template_list)]
+
+  # get just the data_cols:
+  #data_cols <- unlist( lapply(template_list, `[[`, 1) )
+
+
+  template_data <- datatable_extract(template_table)
+
+  # ids from template - should include special syntax <<IDS>>
+  template_ids <- template_data[[1]][2:length(template_data[[1]])]
+
+  # extract the data_col names and values from template_data
+  data_cols <- unlist(lapply(template_data[2:length(template_data)], function(l) l[[1]]))
+  data_col_values <- lapply(template_data[2:length(template_data)], function(l) l[2:length(l)])
+
+  # adjust the IDs - replacing <<IDS>> with IDs from selected DT
+  # also create a new list for each col
+  ids_v <- c()
+  for(id in IDs) {
+    ids_v <- c(ids_v, sub("<<IDS>>", id, template_ids, fixed=TRUE))
+  }
+  ids <- ids_v
+
+  # also adjust the data col values
+  dcv_l <- list()
+  for(dcvI in 1:length(data_col_values)) {
+    dcv_l[[dcvI]] <-rep(data_col_values[[dcvI]], length(IDs))
+  }
+  default_data_vals <- dcv_l
+
+  # remove IDs that already exist in previous dt of same name
+
+  # read datatables upto startline
+  dts <- datatable_read_vector(rmd_contents[1:rmd_startline])
+
+  if( any(names(dts) == datatable_name) ) {
+    # the datatable to be created does exist
+    # so get the IDs that already exist:
+    ids_exist <-dts[[datatable_name]][['ID']]
+    # FIRST remove default data vals for each element in list
+    for(ddvi in 1:length(default_data_vals) ) {
+      default_data_vals[[ddvi]] <- default_data_vals[[ddvi]][ !(ids %in% ids_exist) ]
+    }
+    # and THEN remove these from ids
+    ids <- ids[ !(ids %in% ids_exist) ]
+  }
+  # now ids has had EXISTING ids removed
+
+  if( length(ids) == 0 ) {
+    # all ids already defined - so FAIL with sensible error message
+    stop( paste0("  All IDs already defined in existing datatables of this name: ", datatable_name) )
+
+  }
+
+  #### datatable create ####
+
+  data_tables <- datatable_create(
+                    IDs= ids,
+                    data_cols= data_cols,
+                    datatable_name = datatable_name,
+                    default_data_vals = default_data_vals,
+                    dt_length = dt_length
+                 )
+
+  # write these to the file:
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_startline )
+  rmd_contents <- c( rmd_contents[1:(rmd_startline-1)], data_tables, rmd_contents[(rmd_endline+1):length(rmd_contents)] )
+
+  write_file(rmd_contents, rmd_path)
 
 }
 
@@ -88,8 +184,8 @@ datatable_create_rmd <- function( rmd_path, rmd_line,
 #' @param dt_length Int of data table max length in characters - default 120.
 #'
 #' @export
-datatable_create <- function( IDs="", data_cols="",
-                              datatable_name = "samples", dt_length = 120 ) {
+datatable_create <- function( IDs="", data_cols="", datatable_name = "samples",
+                              default_data_vals=list(), dt_length = 120 ) {
 
   cat( "\nprojectmanagr::datatable_create():\n" )
 
@@ -110,31 +206,46 @@ datatable_create <- function( IDs="", data_cols="",
     IDs <- obs_default_val_8
   }
 
-  # determine widths of data cols
-  data_col_wds <- c()
-  for(i in 1:length(data_cols) ) {
-    # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
-    if( endsWith(data_cols[i], "_dt") ) {
-      data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 18)
-    } else {
-      data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 5) #pmax ensures min col width is 5!
-    }
-  }
-
   # use data_col_wds to calc correct length of default_data_vals:
-  default_data_vals <- list()
-  for( i in 1:length(data_cols) ) {
-    # add default data vals to the data col for each ID
-     # first compute the most appropriate default data val to add - based on width of column
-    if( endsWith(data_cols[i], "_dt") ) {
-      default_data_vals[[i]] <- rep(obs_default_val_dt, length(IDs) )
-    } else if( data_col_wds[i] > 9 ) {
-      default_data_vals[[i]] <- rep(obs_default_val_8, length(IDs) )
-    } else if( data_col_wds[i] > 6 ) {
-      default_data_vals[[i]] <- rep(obs_default_val_5, length(IDs) )
-    } else {
-      default_data_vals[[i]] <- rep(obs_default_val_3, length(IDs) )
+  if( length(default_data_vals) == 0 ) { # default_data_vals is a BLANK LIST - so fill with default_data_vals
+    for( i in 1:length(data_cols) ) {
+      # add default data vals to the data col for each ID
+       # first compute the most appropriate default data val to add - based on width of column
+      if( endsWith(data_cols[i], "_dt") ) {
+        default_data_vals[[i]] <- rep(obs_default_val_dt, length(IDs) )
+      } else if( data_col_wds[i] > 9 ) {
+        default_data_vals[[i]] <- rep(obs_default_val_8, length(IDs) )
+      } else if( data_col_wds[i] > 6 ) {
+        default_data_vals[[i]] <- rep(obs_default_val_5, length(IDs) )
+      } else {
+        default_data_vals[[i]] <- rep(obs_default_val_3, length(IDs) )
+      }
     }
+
+    # determine widths of data cols
+    data_col_wds <- c()
+    for(i in 1:length(data_cols) ) {
+      # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
+      if( endsWith(data_cols[i], "_dt") ) {
+        data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 18)
+      } else {
+        data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 5) #pmax ensures min col width is 5!
+      }
+    }
+
+  } else { # default_data_vals has been supplied with values
+
+    # just check these are valid
+    if( length(default_data_vals) != length(data_cols)) {
+      stop( paste0("  number of default data vals does not match data_cols length: ", default_data_vals, " ", data_cols) )
+    }
+
+    # and identify data_col_wds based on data_cols && default_data_vals
+    data_col_wds <- c()
+    for(i in 1:length(data_cols) ) {
+      data_col_wds[i] <- max(nchar(c(data_cols[[i]], default_data_vals[[i]]) ))+2
+    }
+
   }
 
   data_tables <- build_datatable("ID", IDs, data_cols, default_data_vals,
@@ -148,80 +259,10 @@ datatable_create <- function( IDs="", data_cols="",
 
 
 
-#' Create new Sample Data Table and insert into Rmd
-#'
-#' Creates a Sample DataTable in specified Rmd file from the template that
-#' should be present between specified start & end line.
-#'
-#' The template Sample DataTable will contain an initial ID column containing
-#' the IDs vector, and any other columns will have their initial data value
-#' replicated along the length of the datatable.
-#'
-#' @param rmd_path path to Rmd file
-#'
-#' @param rmd_startline line in Rmd file where TEMPLATE datatable starts
-#'
-#' @param rmd_endline line in Rmd file where TEMPLATE datatable ends
-#'
-#' @param IDs Character vector of sample IDs
-#'
-#' @param datatable_name String of data table name - default "samples".
-#'
-#' @param dt_length Int of data table max length in characters - default 120.
-#'
-#' @export
-datatable_create_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
-                                  IDs="", datatable_name = "samples", dt_length = 120 ) {
-
-  cat( "\nprojectmanagr::datatable_create_template_rmd():\n" )
-
-
-  # if not an absolute path:
-  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
-    rmd_path <- R.utils::getAbsolutePath(rmd_path )
-  }
-
-  # CONFIRM rmd_path is a project doc or note:
-  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
-  orgPath <- dirname( dirname(rmd_path) )
-
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
-    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
-
-  cat( "  Reading Rmd...\n" )
-
-  # read rmd_path file:
-  rmd_file_conn <- file( rmd_path )
-  rmd_contents <- readLines( rmd_file_conn )
-  close(rmd_file_conn)
-
-  # get the template
-  template_table <- rmd_contents[ rmd_startline : rmd_endline ]
-
-  data_tables <- datatable_create_template( IDs, template_table, datatable_name, dt_length )
-
-  # write these to the file:
-  cat( "\n  write data table(s) to Rmd at line: ", rmd_startline )
-  rmd_contents <- c( rmd_contents[1:(rmd_startline-1)], data_tables, rmd_contents[(rmd_endline+1):length(rmd_contents)] )
-
-  rmd_file_conn <- file( rmd_path )
-  writeLines(rmd_contents, rmd_file_conn)
-  close(rmd_file_conn)
-
-}
-
-
 #' Create new Sample Data Table from Template
+#'
+#' DEPRECATED : Using datatable_create to handle both novel & templated
+#' datatable create generation.
 #'
 #' Creates a new Sample DataTable vector. The Sample DataTable will contain an
 #' initial ID column containing the IDs vector, and an optional set of extra
@@ -235,17 +276,17 @@ datatable_create_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
 #' @param template_table A character vector of the template table, as presented
 #' in the Rmd file.
 #'
-#' @param datatable_name String of data table name - default "samples".
+#' @param datatable_name String of data table name.
 #'
 #' @param dt_length Int of data table max length in characters - default 120.
 #'
 #' @export
-datatable_create_template <- function( IDs="", template_table="",
-                              datatable_name = "samples", dt_length = 120 ) {
+datatable_create_template <- function( IDs, template_table, datatable_name,
+                                       dt_length = 120 ) {
 
   cat( "\nprojectmanagr::datatable_create_template():\n" )
 
-  # extract as list
+  # extract template_table string as list
   template_list <- datatable_extract(template_table)
 
   # REPLACE IDs in the list
@@ -552,8 +593,6 @@ build_datatable <- function( ID_col, IDs, data_cols, data, dt_function,
       data_table_ids,
       "",
       "+===============================================================================",
-      "",
-      "",
       ""    )
 
   }
@@ -578,9 +617,9 @@ build_datatable <- function( ID_col, IDs, data_cols, data, dt_function,
         # first calc the number of chars to add to datatable
         row_length <- row_length + (data_col_wds[i]+2) #+2 for 2 spaces at end
 
-        #cat( "\n  data col::", data_cols[i], " index: ", i )
-        #cat( "\n    data_col_wds:", data_col_wds[i] )
-        #cat( "\n    col_spacers_len:", col_spacers_len )
+        cat( "\n  data col::", data_cols[i], " index: ", i )
+        cat( "\n    data_col_wds:", data_col_wds[i] )
+        cat( "\n    col_spacers_len:", col_spacers_len )
 
         # add the data col and the default data vals for each ID
 
@@ -650,7 +689,6 @@ build_datatable <- function( ID_col, IDs, data_cols, data, dt_function,
           }
 
         }
-
 
       }
       # at end of a:
@@ -837,7 +875,6 @@ OLD_datatable_build <- function() {
 }
 
 
-
 #' Create new Sample Data Table and insert into Rmd
 #'
 #' Creates a new Sample DataTable in specified Rmd file at specified line.
@@ -873,45 +910,96 @@ datatable_add_data_samples_rmd <- function( rmd_path, rmd_line, data_cols, datat
 
   cat( "\nprojectmanagr::datatable_add_data_samples_rmd():\n" )
 
-  # if not an absolute path:
-  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
-    rmd_path <- R.utils::getAbsolutePath(rmd_path )
-  }
-
-  # CONFIRM rmd_path is a project doc or note:
-  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
-  orgPath <- dirname( dirname(rmd_path) )
-
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
-    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
 
   cat( "  Reading Rmd...\n" )
-
-  # read rmd_path file:
-  rmd_file_conn <- file( rmd_path )
-  rmd_contents <- readLines( rmd_file_conn )
-  close(rmd_file_conn)
+  rmd_contents <- read_file(rmd_path)
 
   data_tables <- datatable_add_data_samples( rmd_contents[1:rmd_line], data_cols, datatable_name,
-                                             ids_vector, dt_length, summarise_reps )
+                                             ids_vector, default_data_vals=list(), dt_length, summarise_reps )
 
   # write these to the file:
   cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
   rmd_contents <- c( rmd_contents[1:(rmd_line-1)], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
 
-  rmd_file_conn <- file( rmd_path )
-  writeLines(rmd_contents, rmd_file_conn)
-  close(rmd_file_conn)
+  write_file(rmd_contents, rmd_path)
+
+}
+
+
+#' Add Data to Sample DataTable from TEMPLATE and insert into Rmd
+#'
+#' Creates a Sample DataTable in specified Rmd file from the template that
+#' should be present between specified start & end line.
+#'
+#' The template Sample DataTable will contain an initial ID column containing
+#' a default IDs vector (which will be replaced with IDs from selected existing
+#' datatable), and any other columns will have their initial data
+#' value replicated along the length of the datatable.
+#'
+#' @param rmd_path path to Rmd file
+#'
+#' @param rmd_startline line in Rmd file where TEMPLATE datatable starts
+#'
+#' @param rmd_endline line in Rmd file where TEMPLATE datatable ends
+#'
+#' @param IDs Character vector of sample IDs
+#'
+#' @param datatable_name String of data table name.
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#' @param summarise_reps Whether to summarise reps of samples in the new datatable.
+#'
+#' @export
+datatable_add_data_samples_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
+                                                     IDs, datatable_name, dt_length = 120, summarise_reps = FALSE ) {
+
+  cat( "\nprojectmanagr::datatable_add_data_samples_template_rmd():\n" )
+
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
+
+  cat( "  Reading Rmd...\n" )
+  rmd_contents <- read_file(rmd_path)
+
+  template_table <- rmd_contents[rmd_startline:rmd_endline]
+
+  # extract as list
+  template_list <- datatable_extract(template_table)
+
+  # remove IDs col - first index
+  template_list <- template_list[2:length(template_list)]
+
+  # get the data_cols:
+  data_cols <- unlist( lapply(template_list, `[[`, 1) )
+
+  # get the default_data_vals
+  default_data_vals <- lapply(template_list, `[[`, 2)
+
+  # CHECK data_cols are all unique
+  if( anyDuplicated(data_cols) != 0 ) {
+    stop( paste0("  duplicate column headers: ", data_cols[duplicated(data_cols)]) )
+  }
+
+
+  #### datatable add data samples ####
+
+  data_tables <- datatable_add_data_samples(
+                  contents = rmd_contents[1:(rmd_startline-1)],
+                  data_cols = data_cols,
+                  datatable_name = datatable_name,
+                  ids_vector = IDs,
+                  default_data_vals = default_data_vals,
+                  dt_length = dt_length,
+                  summarise_reps = summarise_reps
+                )
+
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_startline )
+  rmd_contents <- c( rmd_contents[1:(rmd_startline-1)], data_tables, rmd_contents[(rmd_endline+1):length(rmd_contents)] )
+
+  write_file(rmd_contents, rmd_path)
 
 }
 
@@ -943,6 +1031,8 @@ datatable_add_data_samples_rmd <- function( rmd_path, rmd_line, data_cols, datat
 #' IDs (which must already be declared in datatable name under a 'group-' data
 #' column), or (a subset of) IDs from datatable.
 #'
+#' @param default_data_vals List of default data values to add to data cols.
+#'
 #' @param dt_length Int of data table max length in characters - default 120.
 #'
 #' @param summarise_reps Boolean to indicate whether reps should be summarised in
@@ -953,7 +1043,8 @@ datatable_add_data_samples_rmd <- function( rmd_path, rmd_line, data_cols, datat
 #'
 #' @export
 datatable_add_data_samples <- function( contents, data_cols, datatable_name,
-                                        ids_vector="", dt_length = 120, summarise_reps = FALSE  ) {
+                                        ids_vector="", default_data_vals=list(),
+                                        dt_length = 120, summarise_reps = FALSE  ) {
 
 
   # DEFINE NAMED CONSTANTS
@@ -985,37 +1076,41 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
     # no datatable of name datatable_name to add data to - STOP
     stop( paste0("  No datatable of this name exists in vector: ", datatable_name ) )
   }
+
+  # define datatable - the datatable named datatable_name
+  datatable <- datatables[[ datatable_name ]]
+
    # ?? THEN check col ID exists ??:
-  if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
+  if( any( names( datatable ) == "ID" ) == FALSE ) {
     stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
   }
 
   # create boolean rep_exists initiate as FALSE - so group/ALL processing is handled correctly below with datatable creation!
   rep_exists <- FALSE
 
-  # DEFINE IDs:
-  if( length(ids_vector)== 1 && ids_vector == "" ) {
-    # if this is BLANK, define IDs as ALL IDs that EXIST:
+  #### DEFINE IDs:
 
-    # FIRST split whether rep col exists && summairse_reps is TRUE:
-    rep_exists <- any( names( datatables[[ datatable_name ]]) == "rep" )
+  if( length(ids_vector)== 1 && ids_vector == "" ) { # if this is BLANK, define IDs as ALL IDs that EXIST:
 
-    if( summarise_reps == FALSE || rep_exists == FALSE) {
+    # determine whether reps exist in datatable : ie. the datatable was created by a subsampling with more than 1 rep
+    rep_exists <- any( names( datatable) == "rep" )
+
+    if( summarise_reps == FALSE || rep_exists == FALSE) { # FIRST split whether rep col exists && summarise_reps is TRUE:
 
       # get ALL EXISTING IDs - all that have NOT been exported, disposed, resampled
       if( rep_exists == TRUE ) { # also get EXISTING REPs if rep_exists
-        ID_rep <- check_divisions_ids_reps( datatables[[datatable_name]] )
+        ID_rep <- check_divisions_ids_reps( datatable )
         IDs <- ID_rep$IDs
         REPs <- ID_rep$REPs
       } else {
-        IDs <- check_divisions_ids( datatables[[datatable_name]] )
+        IDs <- check_divisions_ids( datatable )
       }
 
     } else if( summarise_reps == TRUE && rep_exists == TRUE ) {
        # rep_exists is TRUE - so need to process IDs and REPs accordingly
 
       # get ALL EXISTING IDs & REPs - all that have NOT been exported, disposed, resampled
-      ID_rep <- check_divisions_ids_reps( datatables[[datatable_name]] )
+      ID_rep <- check_divisions_ids_reps( datatable )
       IDs <- ID_rep$IDs
       REPs <- ID_rep$REPs
 
@@ -1031,15 +1126,15 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
     # ids_vector contains either ALL, <group-names>, <ID-names>
     # CHECK they are VALID
 
-    gdt <- dplyr::select(datatables[[datatable_name]], dplyr::starts_with("group-"))
-    iddt <- datatables[[ datatable_name ]]$ID
+    gdt <- dplyr::select(datatable, dplyr::starts_with("group-"))
+    iddt <- datatable$ID
 
     if( length(ids_vector)==1 && ids_vector[1] == "ALL" ) {
       # all good - set IDs to ALL
       IDs <- ids_vector[1]
 
       # NEED TO SUMMARISE REPS IF THEY EXIST:
-      rep_exists <- any( names( datatables[[ datatable_name ]]) == "rep" )
+      rep_exists <- any( names( datatable) == "rep" )
 
       if(rep_exists == TRUE) {
         summarise_reps <- TRUE
@@ -1067,11 +1162,11 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
         IDs <- ids_vector # THIS MAY BE A SUBSET OF IDs!!
 
         # NEED TO GET REPS IF THEY EXIST:
-        rep_exists <- any( names( datatables[[ datatable_name ]]) == "rep" )
+        rep_exists <- any( names( datatable) == "rep" )
 
         if( rep_exists == TRUE) { # for each ID in IDs, get the VALID reps:
            # first get all IDs/REPs
-          ID_rep <- check_divisions_ids_reps( datatables[[datatable_name]] )
+          ID_rep <- check_divisions_ids_reps( datatable )
           # now filter through ID_rep$IDs/REPs saving only ones which match IDs
           IDs2 <- c()
           REPs2 <- c()
@@ -1084,13 +1179,29 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
           # and set IDs and REPs to these new filtered values
           IDs <- IDs2
           REPs <- REPs2 # now these contain the subset of IDs and their REPs
-        }
 
-        if(summarise_reps == TRUE) {
-          # summarise the REPs variable (and IDs variable!)
-          ID_rep <- summarise_id_rep(IDs, REPs)
-          IDs <- ID_rep$IDs
-          REPs <- ID_rep$REPs
+          # deal with summarising reps ONLY if rep_exists
+          if(summarise_reps == TRUE) {
+            # summarise the REPs variable (and IDs variable!)
+            ID_rep <- summarise_id_rep(IDs, REPs)
+            IDs <- ID_rep$IDs
+            REPs <- ID_rep$REPs
+          }
+
+        } else { # there are no reps, just check_divisions for IDs and only use VALID IDs
+
+          # first get all IDs/REPs
+          ID <- check_divisions_ids( datatable )
+          # now filter through ID_rep$IDs/REPs saving only ones which match IDs
+          IDs2 <- c()
+          for(o in 1:length( ID ) ) {
+            if( any(ID[o] == IDs) ) {
+              IDs2 <- c(IDs2, ID[o])
+            }
+          }
+          # and set IDs and REPs to these new filtered values
+          IDs <- IDs2
+
         }
 
       } else if( any(sort( unlist(gdt)[ !is.na(unlist(gdt)) ] ) == ids_vector[1]) ) { # CHECK GROUPs
@@ -1132,68 +1243,376 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
 
     }
 
-  }
+  } #### END DEFINE IDs
 
-  # CHECK none of data_cols already exists in datatables[[datatable_name]]
-  dc <- c(data_cols, names(datatables[[datatable_name]]) )
+
+  # CHECK none of data_cols already exists in datatable
+  dc <- c(data_cols, names(datatable) )
   # CHECK data_cols are all unique
   if( anyDuplicated(dc) != 0 ) {
-    stop( paste0("  Column headers already exist in datatable: ", dc[duplicated(dc)]) )
-  }
+
+    # if dcs exist in datatable, check the values in these columns for all IDs - only keep IDs that contain NA in all the data cols
+    ids_l <- list()
+    l_i <- 1
+    for(dc in data_cols) {
+
+      if( any( names(datatable) == dc ) ) {
+        # identify the indices that are NA in dc in datatable
+        # and use this to extract a vector of IDs from ID col into ids_l list
+        ids_l[[l_i]] <- datatable[['ID']][which( !is.na(datatable[[dc]]) )]
+      }
+      l_i <- l_i + 1 # increment index
+    }
+    ids_exclude <- unique(unlist(ids_l)) # get unique vector of all IDs to exclude
+    IDs <-  IDs[!(IDs %in% ids_exclude)] # remove IDs to exclude from IDs
+    if( length(IDs) == 0 ) {
+      stop( paste0("  Column headers already exist in all samples in datatable: ", dc[duplicated(dc)]) )
+    }
+
+    if( rep_exists == TRUE ) {
+      # also modify the REPs array
+      # re run through this code from DEFINE IDs
+      ID_rep <- check_divisions_ids_reps( datatable )
+      # now filter through ID_rep$IDs/REPs saving only ones which match IDs
+      IDs2 <- c()
+      REPs2 <- c()
+      for(o in 1:length( ID_rep$IDs ) ) {
+        if( any(ID_rep$IDs[o] == IDs) ) {
+          IDs2 <- c(IDs2, ID_rep$IDs[o])
+          REPs2 <- c(REPs2, ID_rep$REPs[o])
+        }
+      }
+      # and set IDs and REPs to these new filtered values
+      IDs <- IDs2
+      REPs <- REPs2 # now these contain the subset of IDs and their REPs
+
+      # deal with summarising reps ONLY if rep_exists
+      if(summarise_reps == TRUE) {
+        # summarise the REPs variable (and IDs variable!)
+        ID_rep <- summarise_id_rep(IDs, REPs)
+        IDs <- ID_rep$IDs
+        REPs <- ID_rep$REPs
+      }
+    } # end rep_exists
+  } # end CHECK data_cols unique
 
 
-  # THEN check col rep exists - if so must copy the REPS to the new datatable
-   # col rep is what is defined when a resampling generates many SECTIONS or REPS
-   # its NOT the same as reps!
-  # THIS ENSURES REPS ARE SUPPORTED IN ADD DATA TO SAMPLES!
-  if( rep_exists == TRUE ) {
-    # add rep col to data_cols to add!
-    data_cols <- c("rep", data_cols)
-  }
+  # use data_col_wds to calc correct length of default_data_vals:
+  if( length(default_data_vals) == 0 ) { # default_data_vals is a BLANK LIST - so fill with default_data_vals
 
+    # THEN check col rep exists - if so must copy the REPS to the new datatable
+    # col rep is what is defined when a resampling generates many SECTIONS or REPS
+    # its NOT the same as reps!
+    # THIS ENSURES REPS ARE SUPPORTED IN ADD DATA TO SAMPLES!
+    if( rep_exists == TRUE ) {
+      # add rep col to data_cols to add!
+      data_cols <- c("rep", data_cols)
+    }
 
-  # determine default widths of data cols
-  data_col_wds <- c()
-  for(i in 1:length(data_cols) ) {
-    # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
-    if( data_cols[i] == "rep" ) {
+    # determine default widths of data cols
+    data_col_wds <- c()
+    for(i in 1:length(data_cols) ) {
+      # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
+      if( data_cols[i] == "rep" ) {
 
-      #if( summarise_reps == TRUE && rep_exists == TRUE ) { # summarising reps to r vector format
-          # format stored in string - REPs
+        #if( summarise_reps == TRUE && rep_exists == TRUE ) { # summarising reps to r vector format
+        # format stored in string - REPs
         # calc width based on REPs nchar!
         data_col_wds[i] <- pmax(nchar(data_cols[i])+4,
                                 max(nchar(REPs)),
                                 5)
 
-      #} else {
-      # need to calc width based on the widths of the CURRENT REP col in datatables
-      #data_col_wds[i] <- pmax(nchar(data_cols[i])+4,
-       #                       max(nchar(datatables[[ datatable_name ]][[ "rep" ]])),
+        #} else {
+        # need to calc width based on the widths of the CURRENT REP col in datatables
+        #data_col_wds[i] <- pmax(nchar(data_cols[i])+4,
+        #                       max(nchar(datatable[[ "rep" ]])),
         #                      5)
-      #}
-    } else if( endsWith(data_cols[i], "_dt") ) {
-      data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 18)
+        #}
+      } else if( endsWith(data_cols[i], "_dt") ) {
+        data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 18)
+      } else {
+        data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 5) #pmax ensures min col width is 5!
+      }
+    }
+
+    # compute default data values
+    for( i in 1:length(data_cols) ) {
+      # add default data vals to the data col for each ID
+      # first compute the most appropriate default data val to add - based on width of column
+      if( data_cols[i] == "rep" ) {
+
+        #if( summarise_reps == TRUE && rep_exists == TRUE ) { # summarising reps to r vector format
+          # format stored in string - REPs
+          default_data_vals[[i]] <- REPs
+
+        #} else { # just use the rep col from datatable:
+         # default_data_vals[[i]] <- datatable[[ "rep" ]]
+        #}
+
+      } else if( endsWith(data_cols[i], "_dt") ) {
+        default_data_vals[[i]] <- rep(obs_default_val_dt, length(IDs) )
+      } else if( data_col_wds[i] > 9 ) {
+        default_data_vals[[i]] <- rep(obs_default_val_8, length(IDs) )
+      } else if( data_col_wds[i] > 6 ) {
+        default_data_vals[[i]] <- rep(obs_default_val_5, length(IDs) )
+      } else {
+        default_data_vals[[i]] <- rep(obs_default_val_3, length(IDs) )
+      }
+    }
+  } else {
+
+    # using default_data_vals as passed to this function
+    # confirm the number of default_data_vals at first LIST level is the same as data_cols
+    if( length(default_data_vals) != length(data_cols)) {
+      stop( paste0("  number of default data vals does not match data_cols length: ", default_data_vals, " ", data_cols) )
+    }
+
+    # THEN check col rep exists - if so must copy the REPS to the new datatable
+    # col rep is what is defined when a resampling generates many SECTIONS or REPS
+    # its NOT the same as reps!
+    # THIS ENSURES REPS ARE SUPPORTED IN ADD DATA TO SAMPLES!
+    if( rep_exists == TRUE ) {
+      # add rep col to data_cols to add!
+      data_cols <- c("rep", data_cols)
+      # and add REPs to default_data_vals for rep
+      ddv <- list(REPs)
+      for(i in 1:length(default_data_vals) ) {
+        ddv[[(i+1)]] <- default_data_vals[[i]]
+      }
+      default_data_vals <- ddv
+    }
+
+    # determine widths of data cols
+    data_col_wds <- c()
+    for(i in 1:length(data_cols) ) {
+      data_col_wds[i] <- max(nchar(c(data_cols[[i]], default_data_vals[[i]]) ))+2
+    }
+
+    # now EXPAND default data values
+    ddv <- list()
+    for( i in 1:length(data_cols) ) {
+      # add default data vals to the data col for each ID
+      # first compute the most appropriate default data val to add - based on width of column
+      if( data_cols[i] == "rep" ) {
+
+        #if( summarise_reps == TRUE && rep_exists == TRUE ) { # summarising reps to r vector format
+        # format stored in string - REPs
+        ddv[[i]] <- REPs
+
+        #} else { # just use the rep col from datatable:
+        # default_data_vals[[i]] <- datatable[[ "rep" ]]
+        #}
+
+      } else {
+        ddv[[i]] <- rep(default_data_vals[[i]], length(IDs) )
+      }
+    }
+    default_data_vals <- ddv # default_data_vals should have correct number of reps using default vals passed to this function
+
+    # finally to handle multi-obs data - split at any SPACE in default_data_vals
+    # build_data : supports adding multi-obs data
+    for( i in 1:length(data_cols) ) {
+      default_data_vals[[i]] <- unlist(strsplit(default_data_vals[[i]], ' '))
+    }
+
+  }
+
+  data_tables <- build_datatable("ID", IDs, data_cols, default_data_vals,
+                                 "ADD_DATA", datatable_name, dt_length,
+                                 DATATABLE_SPACER_CHAR)
+
+  # return
+  data_tables
+
+}
+
+
+#' Create new Sample Data Table and insert into Rmd
+#'
+#' Creates a new Sample DataTable in specified Rmd file at specified line.
+#' The Sample DataTable will contain an initial ID column containing the
+#' IDs vector, and an optional set of extra data columns as specified in the
+#' data_cols vector.  If the table exceeds dt_length characters (default 120),
+#' then the table is split into multiple tables, with IDs as first col, and
+#' subsequent data_cols given in subsequent tables.
+#'
+#' @param rmd_path path to Rmd file
+#'
+#' @param rmd_line line in Rmd file to insert table
+#'#'
+#' @param var_names Names of variables to be added to first column.
+#'
+#' @param datatable_name The EXISTING datatable from which the IDs must be drawn.
+#'
+#' @param group_names Vector of sample IDs or GROUP NAMES from a group set, which will
+#' constitute the remaining column headers.  These will typically be group
+#' names.
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#' @export
+datatable_add_data_variables_rmd <- function( rmd_path, rmd_line, var_names, datatable_name, group_names,
+                                              dt_length = 120 ) {
+
+  cat( "\nprojectmanagr::datatable_add_data_variables_rmd():\n" )
+
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
+
+  cat( "  Reading Rmd...\n" )
+  rmd_contents <- read_file(rmd_path)
+
+  data_tables <- datatable_add_data_variables( rmd_contents[1:rmd_line], var_names, datatable_name, group_names, dt_length )
+
+  # write these to the file:
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
+  rmd_contents <- c( rmd_contents[1:(rmd_line-1)], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
+
+  rmd_file_conn <- file( rmd_path )
+  writeLines(rmd_contents, rmd_file_conn)
+  close(rmd_file_conn)
+
+}
+
+
+#' Add a variable-first data table
+#'
+#' for procedure data
+#'
+#' First column contains a list of variables, subsequent column titles are
+#' typically group IDs, and data values are in cells.
+#'
+#' @param contents character vector containing current document with
+#' existing data tables.
+#'
+#' @param var_names Names of variables to be added to first column.
+#'
+#' @param datatable_name The EXISTING datatable from which the IDs must be drawn.
+#'
+#' @param group_names Vector of sample IDs or GROUP NAMES from a group set, which will
+#' constitute the remaining column headers.  These will typically be group
+#' names.
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#' @export
+datatable_add_data_variables <- function(contents, var_names, datatable_name, group_names,
+                                         dt_length = 120  ) {
+
+
+  cat( "\nprojectmanagr::datatable_add_data_variables():\n" )
+
+
+  #cat( "\n  var_names: ", var_names )
+  #cat( "\n  datatable_name: ", datatable_name )
+  #cat( "\n  group_names: ", group_names )
+
+  data_cols <- var_names
+  # CHECK data_cols are all unique
+  if( anyDuplicated(data_cols) != 0 ) {
+    stop( paste0("  duplicate column headers: ", data_cols[duplicated(data_cols)]) )
+  }
+
+  ### NAMED CONSTANTS ###
+  DATATABLE_SPACER_CHAR <- "="
+  obs_default_val_3 <- "VAL" # fill all data_cols with this value
+  obs_default_val_5 <- "VALUE" # fill all data_cols with this value
+  obs_default_val_8 <- "DATA_VAL" # fill all data_cols with this value
+  obs_default_val_dt <- "INSERT__DATETIME" # this occupies 16 chars
+  # same length as datetime String: 2021/02/26:18:35
+
+  # parse all lines in contents to extract all datatables:
+  datatables <- datatable_read_vector(contents)
+
+  # identify datatable_name
+
+  # FIRST check datatable_name EXISTS in rmd_contents!
+  if( any(names(datatables) == datatable_name) == FALSE ) {
+    # no datatable of name datatable_name to add data to - STOP
+    stop( paste0("  No datatable of this name exists in vector: ", datatable_name ) )
+  }
+  # TODO
+  # THEN check the table has not been exported or resampled:
+
+  # ?? THEN check col ID exists ??:
+  if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
+    stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
+  }
+
+  # save to local var:
+  dt <- datatables[[ datatable_name ]]
+  gdt <- dplyr::select(dt, dplyr::starts_with("group-")) # get all group cols in one dt
+
+  # Set IDs (values to go in first col) to var_names
+  IDs <- var_names
+
+  # converts group_names to vector same length as dt[["ID"]]
+  group_names_comp_ids <- rep(sort(group_names), ((length(dt[["ID"]]) / length(sort(group_names)))+1) )[1:length(dt[["ID"]])]
+
+  # CHECK the group_names exist in the datatable
+  # either they are sample IDs, in which case they are from the $ID col
+  # or it is the special group `ALL` - so just check this
+  # or the group names are the names from a group declared in samples datatable
+  if( length(group_names)==1 && group_names[1] == "ALL" ) {
+
+    cat( "  group_names is 'ALL'\n" )
+
+  } else if( length(group_names) == length(dt$ID) && all( group_names_comp_ids ==  sort(dt$ID) ) ) {
+
+    # SHOULD NOT ALLOW THIS
+    # gets complicated to handle if IDs have reps
+    # so can only add ALL or groups to this kind of datatable..
+    stop( paste0("  group names  CANNOT be IDs for var-first layout - use sample-first layout: datatables_add_data_samples"))
+
+    cat( "  group_names are IDs\n" )
+
+  } else {
+
+    # check all group cols
+    group_names_match_group_cols <- c()
+    for( i in 1:length(gdt) ) {
+      group_names_match_group_cols[i] <- all( unique(gdt[[i]]) %in% group_names )
+    }
+
+    if( any(group_names_match_group_cols) == TRUE ) {
+      # group_names represent a group
+      cat( "  group_names is a group: ", names(gdt)[group_names_match_group_cols], "\n" )
+    }
+    else {
+      # group_names is INVALID
+      stop( paste0("  group_names is invalid: Must be ALL, <all-sample-IDs> or names from EXISTING GROUP: ", group_names))
+    }
+
+  }
+
+  # remove an NA from group_names
+  group_names <- group_names[!is.na(group_names)]
+
+
+  # CHECK none of data_cols already exists in dt
+  dc <- c(data_cols, names(dt) )
+  # CHECK data_cols are all unique
+  if( anyDuplicated(dc) != 0 ) {
+    stop( paste0("  Column headers already exist in datatable: ", dc[duplicated(dc)]) )
+  }
+
+  # determine default widths of data cols
+  data_col_wds <- c()
+  for(i in 1:length(group_names) ) {
+    # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
+    if( any(endsWith(data_cols, "_dt")) ) { # if any data_col is dt add the dt length to wds
+      data_col_wds[i] <- 18
     } else {
-      data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 5) #pmax ensures min col width is 5!
+      data_col_wds[i] <- pmax(nchar(group_names[i])+2, 5) #pmax ensures min col width is 5!
     }
   }
 
   # use data_col_wds to calc correct length of default_data_vals:
   default_data_vals <- list()
-  for( i in 1:length(data_cols) ) {
+  for( i in 1:length(group_names) ) {
     # add default data vals to the data col for each ID
     # first compute the most appropriate default data val to add - based on width of column
-    if( data_cols[i] == "rep" ) {
-
-      #if( summarise_reps == TRUE && rep_exists == TRUE ) { # summarising reps to r vector format
-        # format stored in string - REPs
-        default_data_vals[[i]] <- REPs
-
-      #} else { # just use the rep col from datatable:
-       # default_data_vals[[i]] <- datatables[[ datatable_name ]][[ "rep" ]]
-      #}
-
-    } else if( endsWith(data_cols[i], "_dt") ) {
+    if( any(endsWith(data_cols, "_dt"))) { # if any data_col is _dt add the dt default val
       default_data_vals[[i]] <- rep(obs_default_val_dt, length(IDs) )
     } else if( data_col_wds[i] > 9 ) {
       default_data_vals[[i]] <- rep(obs_default_val_8, length(IDs) )
@@ -1203,6 +1622,298 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
       default_data_vals[[i]] <- rep(obs_default_val_3, length(IDs) )
     }
   }
+
+  data_tables <- build_datatable("variables", IDs, group_names, default_data_vals,
+                                 "ADD_DATA", datatable_name, dt_length,
+                                 DATATABLE_SPACER_CHAR)
+
+  # return
+  data_tables
+
+}
+
+
+
+#' Create new Sample Data Table and insert into Rmd
+#'
+#' Creates a new Sample DataTable in specified Rmd file at specified line.
+#' The Sample DataTable will contain an initial ID column containing the
+#' IDs vector, and an optional set of extra data columns as specified in the
+#' data_cols vector.  If the table exceeds dt_length characters (default 120),
+#' then the table is split into multiple tables, with IDs as first col, and
+#' subsequent data_cols given in subsequent tables.
+#'
+#' @param rmd_path path to Rmd file
+#'
+#' @param rmd_line line in Rmd file to insert table
+#'
+#' @param step_names Character vector of names of procedure steps to add to
+#' timetable. Must NOT contain any spaces - use '-' or '_'.
+#'
+#' @param datatable_name The EXISTING datatable from which the IDs must be drawn.
+#'
+#' @param group_names Vector of sample IDs or GROUP NAMES from a group set, which will
+#' constitute the remaining column headers.  These will typically be group
+#' names. Must EXIST in contents and be declared from datatable_name IDs!
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#' @export
+datatable_add_data_timetable_rmd <- function( rmd_path, rmd_line, step_names, datatable_name, group_names,
+                                              dt_length = 120 ) {
+
+  cat( "\nprojectmanagr::datatable_add_data_timetable_rmd():\n" )
+
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
+
+  cat( "  Reading Rmd...\n" )
+  rmd_contents <- read_file(rmd_path)
+
+  data_tables <- datatable_add_data_timetable( rmd_contents[1:rmd_line], step_names, datatable_name, group_names, dt_length )
+
+  # write these to the file:
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
+  rmd_contents <- c( rmd_contents[1:(rmd_line-1)], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
+
+  rmd_file_conn <- file( rmd_path )
+  writeLines(rmd_contents, rmd_file_conn)
+  close(rmd_file_conn)
+
+}
+
+#' Create a time table - for staggered timings of procedures
+#'
+#' First column contains a list of timings, subsequent column titles are
+#' typically group IDs, with a final `change_dt` column for actual datetimes,
+#'  and data values are protocol steps, placed in cells under group headers.
+#'
+#' @param contents character vector containing current document with
+#' existing data tables.
+#'
+#' @param step_names Character vector of names of procedure steps to add to
+#' timetable. Must NOT contain any spaces - use '-' or '_'.
+#'
+#' @param datatable_name The EXISTING datatable from which the IDs must be drawn.
+#'
+#' @param group_names Vector of sample IDs or GROUP NAMES from a group set, which will
+#' constitute the remaining column headers.  These will typically be group
+#' names. Must EXIST in contents and be declared from datatable_name IDs!
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#' @export
+datatable_add_data_timetable <- function(contents, step_names, datatable_name, group_names,
+                                         dt_length = 120 ) {
+
+  cat( "\nprojectmanagr::datatable_add_data_timetable():\n" )
+
+  # for timetable will add DEFAULT first and last column:
+  # first col: timetable
+  # will fill with RELATIVE TIMINGS of the protocol
+  # last col: change_dt
+  # will fill with ACTUAL DATETIME of execution of the step in the protocol
+
+  # STEP NAMES will be added as data_cols when read and added to samples df!
+  data_cols <- step_names
+  # CHECK data_cols are all unique
+  if( anyDuplicated(data_cols) != 0 ) {
+    stop( paste0("  duplicate column headers: ", data_cols[duplicated(data_cols)]) )
+  }
+  # check step_names have no spaces
+  if( any( grepl(" ", step_names) ) ) {
+    stop( paste0("  step_names contains a space: ", step_names) )
+  }
+
+  ### NAMED CONSTANTS ###
+  DATATABLE_SPACER_CHAR <- "="
+  obs_default_val_3 <- "VAL" # fill all data_cols with this value
+  obs_default_val_5 <- "VALUE" # fill all data_cols with this value
+  obs_default_val_8 <- "DATA_VAL" # fill all data_cols with this value
+  obs_default_val_dt <- "INSERT__DATETIME" # this occupies 16 chars
+  # same length as datetime String: 2021/02/26:18:35
+
+  # parse all lines in contents to extract all datatables:
+  datatables <- datatable_read_vector(contents)
+
+  # identify datatable_name
+
+  # FIRST check datatable_name EXISTS in rmd_contents!
+  if( any(names(datatables) == datatable_name) == FALSE ) {
+    # no datatable of name datatable_name to add data to - STOP
+    stop( paste0("  No datatable of this name exists in vector: ", datatable_name ) )
+  }
+  # TODO
+  # THEN check the table has not been exported or resampled:
+
+  # ?? THEN check col ID exists ??:
+  if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
+    stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
+  }
+
+  # save to local var:
+  dt <- datatables[[ datatable_name ]]
+  gdt <- dplyr::select(dt, dplyr::starts_with("group-")) # get all group cols in one dt
+
+  # Set IDs (values to go in first col) to values 0:00 0:10, 0;20 .. up to number of step_names
+  IDs <- c("0:00", paste0( "0:", seq(10, ((length(step_names)-1)*10), 10) ) )
+
+  # CHECK the group_names exist in the datatable
+  # either they are sample IDs, in which case they are from the $ID col
+  # or it is the special group `ALL` - so just check this
+  # or the group names are the names from a group declared in samples datatable
+  if( length(group_names)==1 && group_names[1] == "ALL" ) {
+
+    # no need to use timetable with ALL - so STOP and suggest var-first datatable
+    cat( "  group_names is 'ALL'\n" )
+    stop("  Cannot add timetable to ALL - use variable-first or sample-first layout: ")
+
+  } else if( length(group_names) == length(dt$ID) && all( sort(group_names) ==  sort(dt$ID) ) ) {
+
+    # SHOULD NOT ALLOW THIS
+    # gets complicated to handle if IDs have reps
+    # so can only add ALL or groups to this kind of datatable..
+    stop( paste0("  group names CANNOT be IDs for timetable layout - create new group col and use this for timetable layout."))
+
+    cat( "  group_names are IDs\n" )
+
+  } else {
+
+    # check all group cols
+    group_names_match_group_cols <- c()
+    for( i in 1:length(gdt) ) {
+      group_names_match_group_cols[i] <- all( unique(gdt[i]) == group_names )
+    }
+
+    if( any(group_names_match_group_cols) == TRUE ) {
+      # group_names represent a group
+      cat( "  group_names is a group: ", names(gdt)[group_names_match_group_cols], "\n" )
+    }
+    else {
+      # group_names is INVALID
+      stop( paste0("  group_names is invalid: Must be ALL, <all-sample-IDs> or names from EXISTING GROUP: ", group_names))
+    }
+
+  }
+
+
+  # CHECK none of data_cols already exists in dt
+  dc <- c(data_cols, names(dt) )
+  # CHECK data_cols are all unique
+  if( anyDuplicated(dc) != 0 ) {
+    stop( paste0("  Column headers already exist in datatable: ", dc[duplicated(dc)]) )
+  }
+
+  # determine default widths of data cols
+  data_col_wds <- c()
+  for(i in 1:length(group_names) ) {
+    # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
+    if( endsWith(group_names[i], "_dt") ) {
+      data_col_wds[i] <- 18
+    } else {
+      data_col_wds[i] <- pmax(
+        nchar(group_names[i])+2,
+        max(nchar(step_names))+2,
+        5) #pmax ensures min col width is 5!
+    }
+  }
+
+  # use data_col_wds to calc correct length of default_data_vals:
+  default_data_vals <- list()
+  for( i in 1:length(group_names) ) {
+    # add default data vals to the data col for each ID
+    # this is just the step_names for each col!
+    default_data_vals[[i]] <- step_names
+  }
+
+  # now add the last col - change_dt
+  group_names <- c(group_names, "change_dt")
+  default_data_vals[[ length(group_names) ]] <- rep(obs_default_val_dt, length(IDs) )
+
+  # create timetable:
+  data_tables <- build_datatable("timetable", IDs, group_names, default_data_vals,
+                                 "ADD_DATA", datatable_name, dt_length,
+                                 DATATABLE_SPACER_CHAR)
+
+  # return
+  data_tables
+
+}
+
+
+#' Add Data to Sample Data Table from Template
+#'
+#' DEPRECATED : Using datatable_add_data_samples() function to fill template from
+#' datatable_add_data_samples_template_rmd() now
+#'
+#' Creates add dataSample DataTable vector. The Sample DataTable will contain an
+#' initial ID column containing the IDs vector, and set of extra
+#' data columns as specified in the data_cols vector.  If the table exceeds
+#' `dt_length` characters (default 120), then the table is split into multiple
+#' tables, with IDs as first col, and subsequent data_cols given in subsequent
+#' tables.
+#'
+#' @param IDs Character vector of sample IDs
+#'
+#' @param template_table A character vector of the template table, as presented
+#' in the Rmd file.
+#'
+#' @param datatable_name String of data table name.
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+datatable_add_data_samples_template <- function( IDs, template_table, datatable_name,
+                                       dt_length = 120 ) {
+
+  cat( "\nprojectmanagr::datatable_add_data_samples_template():\n" )
+
+  # extract as list
+  template_list <- datatable_extract(template_table)
+
+  # REPLACE IDs in the list
+  template_list[[1]] <- c(template_list[[1]][1], IDs)
+
+  # and add MULTIPLES of current content in each other vector in list according to IDs length
+  #for(i in 2:length(template_list) ) {
+  #  template_list[[i]] <- c(template_list[[i]][1], rep(template_list[[i]][2], length(IDs) ) )
+  #}
+
+  # remove IDs col - first index
+  template_list <- template_list[2:length(template_list)]
+
+  # get the data_cols:
+  data_cols <- unlist( lapply(template_list, `[[`, 1) )
+
+  # get the default_data_vals
+  default_data_vals <- unlist( lapply(template_list, `[[`, 2) )
+
+
+  ### NAMED CONSTANTS ###
+  DATATABLE_SPACER_CHAR <- "="
+
+  # CHECK data_cols are all unique
+  if( anyDuplicated(data_cols) != 0 ) {
+    stop( paste0("  duplicate column headers: ", data_cols[duplicated(data_cols)]) )
+  }
+
+  # set IDs to a value if needed:
+  if( IDs[1] == "" ) {
+    IDs <- obs_default_val_8
+  }
+
+  # determine widths of data cols
+  data_col_wds <- c()
+  for(i in 1:length(template_list) ) {
+    data_col_wds[i] <- max(nchar(template_list[[i]]))+2
+  }
+
+  # use data_col_wds to calc correct length of default_data_vals:
+  #default_data_vals <- list()
+  #for( i in 1:length(template_list) ) {
+    # add default data vals to the data col for each ID
+    # first compute the most appropriate default data val to add - based on width of column
+  #  default_data_vals[[i]] <- template_list[[i]][ 2:length(template_list[[i]]) ]
+  #}
 
   data_tables <- build_datatable("ID", IDs, data_cols, default_data_vals,
                                  "ADD_DATA", datatable_name, dt_length,
@@ -1343,45 +2054,41 @@ summarise_id_rep <- function(IDs, REPs) {
 #' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.
 #'
 #' @export
-datatable_add_group_rmd <- function(rmd_path, rmd_line, group_names, datatable_name,
+datatable_add_group_rmd <- function(rmd_path, rmd_startline, rmd_endline, group_names, datatable_name,
                                     groups, dt_length = 120, summarise_reps = FALSE  ) {
 
   cat( "\nprojectmanagr::datatable_group_rmd():\n" )
 
-  # if not an absolute path:
-  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
-    rmd_path <- R.utils::getAbsolutePath(rmd_path )
-  }
-
-  # CONFIRM rmd_path is a project doc or note:
-   # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-    # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
-  orgPath <- dirname( dirname(rmd_path) )
-
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
-    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
 
   cat( "  Reading Rmd...\n" )
+  rmd_contents <- read_file(rmd_path)
 
-  # read rmd_path file:
-  rmd_file_conn <- file( rmd_path )
-  rmd_contents <- readLines( rmd_file_conn )
-  close(rmd_file_conn)
+  data_tables <- datatable_add_group(
+                  contents = rmd_contents[1:rmd_startline],
+                  group_names = group_names,
+                  datatable_name = datatable_name,
+                  groups = groups,
+                  dt_length = dt_length,
+                  summarise_reps = summarise_reps
+                  )
 
-  data_tables <- datatable_add_group( rmd_contents[1:rmd_line], group_names, datatable_name, groups, dt_length, summarise_reps )
+  # deal with case of selecting group declarations
+  if( rmd_startline < rmd_endline ) {
+    # have made a selection
+    cont_sel <- rmd_contents[rmd_startline:rmd_endline]
+    # just adjust the startline to be first line with COMMENTS
+    if( any(grepl(">>>>", cont_sel, fixed=TRUE)) ) {
+      startLine <- ( grep(">>>>", cont_sel, fixed=TRUE)[1] + rmd_startline - 1)
+    } else{
+      startLine <- (length(cont_sel) + rmd_startline - 1) # or essentially rmd_endline
+    }
+  }
 
   # write these to the file:
-  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
-  rmd_contents <- c( rmd_contents[1:(rmd_line-1)], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_startline )
+  rmd_contents <- c( rmd_contents[1:(startLine-1)], data_tables, rmd_contents[(rmd_endline+1):length(rmd_contents)] )
 
   rmd_file_conn <- file( rmd_path )
   writeLines(rmd_contents, rmd_file_conn)
@@ -1467,7 +2174,7 @@ datatable_add_group <- function( contents, group_names, datatable_name,
 
   # get IDs/REPs
 
-  # FIRST split whether rep col exists && summairse_reps is TRUE:
+  # FIRST split whether rep col exists && summarise_reps is TRUE:
   rep_exists <- any( names( datatables[[ datatable_name ]]) == "rep" )
 
   if( summarise_reps == FALSE || rep_exists == FALSE) {
@@ -1497,12 +2204,55 @@ datatable_add_group <- function( contents, group_names, datatable_name,
   }
 
 
-  # CHECK none of data_cols already exists in datatables[[datatable_name]]
-  dc <- c(data_cols, names(datatables[[datatable_name]]) )
+  datatable <- datatables[[datatable_name]]
+  dc <- c(data_cols, names(datatable) )
   # CHECK data_cols are all unique
   if( anyDuplicated(dc) != 0 ) {
-    stop( paste0("  Column headers already exist in datatable: ", dc[duplicated(dc)]) )
-  }
+
+    # if dcs exist in datatable, check the values in these columns for all IDs - only keep IDs that contain NA in all the data cols
+    ids_l <- list()
+    l_i <- 1
+    for(dc in data_cols) {
+
+      if( any( names(datatable) == dc ) ) {
+        # identify the indices that are NA in dc in datatable
+        # and use this to extract a vector of IDs from ID col into ids_l list
+        ids_l[[l_i]] <- datatable[['ID']][which( !is.na(datatable[[dc]]) )]
+      }
+      l_i <- l_i + 1 # increment index
+    }
+    ids_exclude <- unique(unlist(ids_l)) # get unique vector of all IDs to exclude
+    IDs <-  IDs[!(IDs %in% ids_exclude)] # remove IDs to exclude from IDs
+    if( length(IDs) == 0 ) {
+      stop( paste0("  Column headers already exist in all samples in datatable: ", dc[duplicated(dc)]) )
+    }
+
+    if( rep_exists == TRUE ) {
+      # also modify the REPs array
+      # re run through this code from DEFINE IDs
+      ID_rep <- check_divisions_ids_reps( datatable )
+      # now filter through ID_rep$IDs/REPs saving only ones which match IDs
+      IDs2 <- c()
+      REPs2 <- c()
+      for(o in 1:length( ID_rep$IDs ) ) {
+        if( any(ID_rep$IDs[o] == IDs) ) {
+          IDs2 <- c(IDs2, ID_rep$IDs[o])
+          REPs2 <- c(REPs2, ID_rep$REPs[o])
+        }
+      }
+      # and set IDs and REPs to these new filtered values
+      IDs <- IDs2
+      REPs <- REPs2 # now these contain the subset of IDs and their REPs
+
+      # deal with summarising reps ONLY if rep_exists
+      if(summarise_reps == TRUE) {
+        # summarise the REPs variable (and IDs variable!)
+        ID_rep <- summarise_id_rep(IDs, REPs)
+        IDs <- ID_rep$IDs
+        REPs <- ID_rep$REPs
+      }
+    } # end rep_exists
+  } # end CHECK data_cols unique
 
 
   # THEN check col rep exists - if so must copy the REPS to the new datatable
@@ -1592,6 +2342,158 @@ datatable_add_group <- function( contents, group_names, datatable_name,
   data_tables
 
 }
+
+
+
+#' Add Groups to Sample DataTable from TEMPLATE and insert into Rmd
+#'
+#' Creates a Sample DataTable in specified Rmd file from the template that
+#' should be present between specified start & end line.
+#'
+#' The template Sample DataTable will contain an initial ID column containing
+#' a default IDs vector (which will be replaced with IDs from selected existing
+#' datatable), and all group columns will have their initial data
+#' value replicated along the length of the datatable, serially assigning groups
+#' to sample IDs.
+#'
+#' @param rmd_path path to Rmd file
+#'
+#' @param rmd_startline line in Rmd file where TEMPLATE datatable starts
+#'
+#' @param rmd_endline line in Rmd file where TEMPLATE datatable ends
+#'
+#' @param IDs Character vector of sample IDs
+#'
+#' @param datatable_name String of data table name.
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#' @param summarise_reps Whether to summarise reps of samples in the new datatable.
+#'
+#' @export
+datatable_add_group_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
+                                              IDs, datatable_name, dt_length = 120,
+                                              summarise_reps = FALSE ) {
+
+  cat( "\nprojectmanagr::datatable_add_group_template_rmd():\n" )
+
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
+
+  cat( "  Reading Rmd...\n" )
+  rmd_contents <- read_file(rmd_path)
+
+  template_table <- rmd_contents[ rmd_startline : rmd_endline ]
+
+  # extract as list
+  template_list <- datatable_extract(template_table)
+
+  # remove IDs col - first index
+  template_list <- template_list[2:length(template_list)]
+
+  # get the data_cols:
+  data_cols <- unlist( lapply(template_list, `[[`, 1) )
+
+  # get the default_data_vals
+  default_data_vals <- lapply(template_list, `[[`, 2)
+
+  # CHECK data_cols are all unique
+  if( anyDuplicated(data_cols) != 0 ) {
+    stop( paste0("  duplicate column headers: ", data_cols[duplicated(data_cols)]) )
+  }
+
+
+  data_tables <- datatable_add_data_samples( rmd_contents[1:(rmd_startline-1)], data_cols, datatable_name,
+                                             IDs, default_data_vals, dt_length, summarise_reps )
+
+  data_tables <- datatable_add_group( IDs, template_table, datatable_name, dt_length )
+
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_startline )
+  rmd_contents <- c( rmd_contents[1:(rmd_startline-1)], data_tables, rmd_contents[(rmd_endline+1):length(rmd_contents)] )
+
+  write_file(rmd_contents, rmd_path)
+
+}
+
+
+#' Add Group to Sample Data Table from Template
+#'
+#' Creates add dataSample DataTable vector. The Sample DataTable will contain an
+#' initial ID column containing the IDs vector, and set of extra group
+#' data columns as specified in the data_cols vector.  If the table exceeds
+#' `dt_length` characters (default 120), then the table is split into multiple
+#' tables, with IDs as first col, and subsequent group data_cols given in
+#' subsequent tables.
+#'
+#' @param IDs Character vector of sample IDs
+#'
+#' @param template_table A character vector of the template table, as presented
+#' in the Rmd file.
+#'
+#' @param datatable_name String of data table name.
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#' @export
+datatable_add_group_template <- function( IDs, template_table, datatable_name,
+                                         dt_length = 120 ) {
+
+  cat( "\nprojectmanagr::datatable_add_group_template():\n" )
+
+  # extract as list
+  template_list <- datatable_extract(template_table)
+
+  # REPLACE IDs in the list
+  template_list[[1]] <- c(template_list[[1]][1], IDs)
+
+  # and add MULTIPLES of current content in each other vector in list according to IDs length
+  for(i in 2:length(template_list) ) {
+    template_list[[i]] <- c(template_list[[i]][1], rep(template_list[[i]][2], length(IDs) ) )
+  }
+
+  template_list <- template_list[2:length(template_list)]
+
+  # get just the data_cols:
+  data_cols <- unlist( lapply(template_list, `[[`, 1) )
+
+
+  ### NAMED CONSTANTS ###
+  DATATABLE_SPACER_CHAR <- "="
+
+  # CHECK data_cols are all unique
+  if( anyDuplicated(data_cols) != 0 ) {
+    stop( paste0("  duplicate column headers: ", data_cols[duplicated(data_cols)]) )
+  }
+
+  # set IDs to a value if needed:
+  if( IDs[1] == "" ) {
+    IDs <- obs_default_val_8
+  }
+
+  # determine widths of data cols
+  data_col_wds <- c()
+  for(i in 1:length(template_list) ) {
+    data_col_wds[i] <- max(nchar(template_list[[i]]))+2
+  }
+
+  # use data_col_wds to calc correct length of default_data_vals:
+  default_data_vals <- list()
+  for( i in 1:length(template_list) ) {
+    # add default data vals to the data col for each ID
+    # first compute the most appropriate default data val to add - based on width of column
+    default_data_vals[[i]] <- template_list[[i]][ 2:length(template_list[[i]]) ]
+  }
+
+  data_tables <- build_datatable("ID", IDs, data_cols, default_data_vals,
+                                 "GROUP", datatable_name, dt_length,
+                                 DATATABLE_SPACER_CHAR)
+
+  # return
+  data_tables
+
+}
+
+
 
 
 datatable_Add_Groups2 <- function () {
@@ -1778,465 +2680,6 @@ datatable_Add_Groups2 <- function () {
 
 
 
-#' Create new Sample Data Table and insert into Rmd
-#'
-#' Creates a new Sample DataTable in specified Rmd file at specified line.
-#' The Sample DataTable will contain an initial ID column containing the
-#' IDs vector, and an optional set of extra data columns as specified in the
-#' data_cols vector.  If the table exceeds dt_length characters (default 120),
-#' then the table is split into multiple tables, with IDs as first col, and
-#' subsequent data_cols given in subsequent tables.
-#'
-#' @param rmd_path path to Rmd file
-#'
-#' @param rmd_line line in Rmd file to insert table
-#'#'
-#' @param var_names Names of variables to be added to first column.
-#'
-#' @param datatable_name The EXISTING datatable from which the IDs must be drawn.
-#'
-#' @param group_names Vector of sample IDs or GROUP NAMES from a group set, which will
-#' constitute the remaining column headers.  These will typically be group
-#' names.
-#'
-#' @param dt_length Int of data table max length in characters - default 120.
-#'
-#' @export
-datatable_add_data_variables_rmd <- function( rmd_path, rmd_line, var_names, datatable_name, group_names,
-                                              dt_length = 120 ) {
-
-  cat( "\nprojectmanagr::datatable_add_data_variables_rmd():\n" )
-
-  # if not an absolute path:
-  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
-    rmd_path <- R.utils::getAbsolutePath(rmd_path )
-  }
-
-  # CONFIRM rmd_path is a project doc or note:
-  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
-  orgPath <- dirname( dirname(rmd_path) )
-
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
-    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
-
-  cat( "  Reading Rmd...\n" )
-
-  # read rmd_path file:
-  rmd_file_conn <- file( rmd_path )
-  rmd_contents <- readLines( rmd_file_conn )
-  close(rmd_file_conn)
-
-  data_tables <- datatable_add_data_variables( rmd_contents[1:rmd_line], var_names, datatable_name, group_names, dt_length )
-
-  # write these to the file:
-  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
-  rmd_contents <- c( rmd_contents[1:(rmd_line-1)], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
-
-  rmd_file_conn <- file( rmd_path )
-  writeLines(rmd_contents, rmd_file_conn)
-  close(rmd_file_conn)
-
-}
-
-
-#' Add a variable-first data table
-#'
-#' for procedure data
-#'
-#' First column contains a list of procedures, subsequent column titles are
-#' typically group IDs, and data values are in cells.
-#'
-#' @param contents character vector containing current document with
-#' existing data tables.
-#'
-#' @param var_names Names of variables to be added to first column.
-#'
-#' @param datatable_name The EXISTING datatable from which the IDs must be drawn.
-#'
-#' @param group_names Vector of sample IDs or GROUP NAMES from a group set, which will
-#' constitute the remaining column headers.  These will typically be group
-#' names.
-#'
-#' @param dt_length Int of data table max length in characters - default 120.
-#'
-#' @export
-datatable_add_data_variables <- function(contents, var_names, datatable_name, group_names,
-                                         dt_length = 120  ) {
-
-
-  cat( "\nprojectmanagr::datatable_add_data_variables():\n" )
-
-
-  #cat( "\n  var_names: ", var_names )
-  #cat( "\n  datatable_name: ", datatable_name )
-  #cat( "\n  group_names: ", group_names )
-
-  data_cols <- var_names
-  # CHECK data_cols are all unique
-  if( anyDuplicated(data_cols) != 0 ) {
-    stop( paste0("  duplicate column headers: ", data_cols[duplicated(data_cols)]) )
-  }
-
-  ### NAMED CONSTANTS ###
-  DATATABLE_SPACER_CHAR <- "="
-  obs_default_val_3 <- "VAL" # fill all data_cols with this value
-  obs_default_val_5 <- "VALUE" # fill all data_cols with this value
-  obs_default_val_8 <- "DATA_VAL" # fill all data_cols with this value
-  obs_default_val_dt <- "INSERT__DATETIME" # this occupies 16 chars
-  # same length as datetime String: 2021/02/26:18:35
-
-  # parse all lines in contents to extract all datatables:
-  datatables <- datatable_read_vector(contents)
-
-  # identify datatable_name
-
-  # FIRST check datatable_name EXISTS in rmd_contents!
-  if( any(names(datatables) == datatable_name) == FALSE ) {
-    # no datatable of name datatable_name to add data to - STOP
-    stop( paste0("  No datatable of this name exists in vector: ", datatable_name ) )
-  }
-  # TODO
-  # THEN check the table has not been exported or resampled:
-
-  # ?? THEN check col ID exists ??:
-  if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
-    stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
-  }
-
-  # save to local var:
-  dt <- datatables[[ datatable_name ]]
-  gdt <- dplyr::select(dt, dplyr::starts_with("group-")) # get all group cols in one dt
-
-  # Set IDs (values to go in first col) to var_names
-  IDs <- var_names
-
-  # converts group_names to vector same length as dt[["ID"]]
-  group_names_comp_ids <- rep(sort(group_names), ((length(dt[["ID"]]) / length(sort(group_names)))+1) )[1:length(dt[["ID"]])]
-
-  # CHECK the group_names exist in the datatable
-   # either they are sample IDs, in which case they are from the $ID col
-   # or it is the special group `ALL` - so just check this
-   # or the group names are the names from a group declared in samples datatable
-  if( length(group_names)==1 && group_names[1] == "ALL" ) {
-
-    cat( "  group_names is 'ALL'\n" )
-
-  } else if( length(group_names) == length(dt$ID) && all( group_names_comp_ids ==  sort(dt$ID) ) ) {
-
-    # SHOULD NOT ALLOW THIS
-      # gets complicated to handle if IDs have reps
-      # so can only add ALL or groups to this kind of datatable..
-    stop( paste0("  group names  CANNOT be IDs for var-first layout - use sample-first layout: datatables_add_data_samples"))
-
-    cat( "  group_names are IDs\n" )
-
-  } else {
-
-   # check all group cols
-   group_names_match_group_cols <- c()
-   for( i in 1:length(gdt) ) {
-     group_names_match_group_cols[i] <- all( unique(gdt[[i]]) %in% group_names )
-   }
-
-   if( any(group_names_match_group_cols) == TRUE ) {
-     # group_names represent a group
-     cat( "  group_names is a group: ", names(gdt)[group_names_match_group_cols], "\n" )
-   }
-   else {
-     # group_names is INVALID
-     stop( paste0("  group_names is invalid: Must be ALL, <all-sample-IDs> or names from EXISTING GROUP: ", group_names))
-   }
-
-  }
-
-  # remove an NA from group_names
-  group_names <- group_names[!is.na(group_names)]
-
-
-  # CHECK none of data_cols already exists in dt
-  dc <- c(data_cols, names(dt) )
-  # CHECK data_cols are all unique
-  if( anyDuplicated(dc) != 0 ) {
-    stop( paste0("  Column headers already exist in datatable: ", dc[duplicated(dc)]) )
-  }
-
-  # determine default widths of data cols
-  data_col_wds <- c()
-  for(i in 1:length(group_names) ) {
-    # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
-    if( any(endsWith(data_cols, "_dt")) ) { # if any data_col is dt add the dt length to wds
-      data_col_wds[i] <- 18
-    } else {
-      data_col_wds[i] <- pmax(nchar(group_names[i])+2, 5) #pmax ensures min col width is 5!
-    }
-  }
-
-  # use data_col_wds to calc correct length of default_data_vals:
-  default_data_vals <- list()
-  for( i in 1:length(group_names) ) {
-    # add default data vals to the data col for each ID
-    # first compute the most appropriate default data val to add - based on width of column
-    if( any(endsWith(data_cols, "_dt"))) { # if any data_col is _dt add the dt default val
-      default_data_vals[[i]] <- rep(obs_default_val_dt, length(IDs) )
-    } else if( data_col_wds[i] > 9 ) {
-      default_data_vals[[i]] <- rep(obs_default_val_8, length(IDs) )
-    } else if( data_col_wds[i] > 6 ) {
-      default_data_vals[[i]] <- rep(obs_default_val_5, length(IDs) )
-    } else {
-      default_data_vals[[i]] <- rep(obs_default_val_3, length(IDs) )
-    }
-  }
-
-  data_tables <- build_datatable("variables", IDs, group_names, default_data_vals,
-                                 "ADD_DATA", datatable_name, dt_length,
-                                 DATATABLE_SPACER_CHAR)
-
-  # return
-  data_tables
-
-}
-
-
-
-#' Create new Sample Data Table and insert into Rmd
-#'
-#' Creates a new Sample DataTable in specified Rmd file at specified line.
-#' The Sample DataTable will contain an initial ID column containing the
-#' IDs vector, and an optional set of extra data columns as specified in the
-#' data_cols vector.  If the table exceeds dt_length characters (default 120),
-#' then the table is split into multiple tables, with IDs as first col, and
-#' subsequent data_cols given in subsequent tables.
-#'
-#' @param rmd_path path to Rmd file
-#'
-#' @param rmd_line line in Rmd file to insert table
-#'
-#' @param step_names Character vector of names of procedure steps to add to
-#' timetable. Must NOT contain any spaces - use '-' or '_'.
-#'
-#' @param datatable_name The EXISTING datatable from which the IDs must be drawn.
-#'
-#' @param group_names Vector of sample IDs or GROUP NAMES from a group set, which will
-#' constitute the remaining column headers.  These will typically be group
-#' names. Must EXIST in contents and be declared from datatable_name IDs!
-#'
-#' @param dt_length Int of data table max length in characters - default 120.
-#'
-#' @export
-datatable_add_data_timetable_rmd <- function( rmd_path, rmd_line, step_names, datatable_name, group_names,
-                                              dt_length = 120 ) {
-
-  cat( "\nprojectmanagr::datatable_add_data_timetable_rmd():\n" )
-
-  # if not an absolute path:
-  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
-    rmd_path <- R.utils::getAbsolutePath(rmd_path )
-  }
-
-  # CONFIRM rmd_path is a project doc or note:
-  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
-  orgPath <- dirname( dirname(rmd_path) )
-
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
-    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
-
-  cat( "  Reading Rmd...\n" )
-
-  # read rmd_path file:
-  rmd_file_conn <- file( rmd_path )
-  rmd_contents <- readLines( rmd_file_conn )
-  close(rmd_file_conn)
-
-  data_tables <- datatable_add_data_timetable( rmd_contents[1:rmd_line], step_names, datatable_name, group_names, dt_length )
-
-  # write these to the file:
-  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
-  rmd_contents <- c( rmd_contents[1:(rmd_line-1)], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
-
-  rmd_file_conn <- file( rmd_path )
-  writeLines(rmd_contents, rmd_file_conn)
-  close(rmd_file_conn)
-
-}
-
-#' Create a time table - for staggered timings of procedures
-#'
-#' First column contains a list of timings, subsequent column titles are
-#' typically group IDs, with a final `change_dt` column for actual datetimes,
-#'  and data values are protocol steps, placed in cells under group headers.
-#'
-#' @param contents character vector containing current document with
-#' existing data tables.
-#'
-#' @param step_names Character vector of names of procedure steps to add to
-#' timetable. Must NOT contain any spaces - use '-' or '_'.
-#'
-#' @param datatable_name The EXISTING datatable from which the IDs must be drawn.
-#'
-#' @param group_names Vector of sample IDs or GROUP NAMES from a group set, which will
-#' constitute the remaining column headers.  These will typically be group
-#' names. Must EXIST in contents and be declared from datatable_name IDs!
-#'
-#' @param dt_length Int of data table max length in characters - default 120.
-#'
-#' @export
-datatable_add_data_timetable <- function(contents, step_names, datatable_name, group_names,
-                                         dt_length = 120 ) {
-
-  cat( "\nprojectmanagr::datatable_add_data_timetable():\n" )
-
-  # for timetable will add DEFAULT first and last column:
-   # first col: timetable
-    # will fill with RELATIVE TIMINGS of the protocol
-   # last col: change_dt
-    # will fill with ACTUAL DATETIME of execution of the step in the protocol
-
-  # STEP NAMES will be added as data_cols when read and added to samples df!
-  data_cols <- step_names
-  # CHECK data_cols are all unique
-  if( anyDuplicated(data_cols) != 0 ) {
-    stop( paste0("  duplicate column headers: ", data_cols[duplicated(data_cols)]) )
-  }
-  # check step_names have no spaces
-  if( any( grepl(" ", step_names) ) ) {
-    stop( paste0("  step_names contains a space: ", step_names) )
-    }
-
-  ### NAMED CONSTANTS ###
-  DATATABLE_SPACER_CHAR <- "="
-  obs_default_val_3 <- "VAL" # fill all data_cols with this value
-  obs_default_val_5 <- "VALUE" # fill all data_cols with this value
-  obs_default_val_8 <- "DATA_VAL" # fill all data_cols with this value
-  obs_default_val_dt <- "INSERT__DATETIME" # this occupies 16 chars
-  # same length as datetime String: 2021/02/26:18:35
-
-  # parse all lines in contents to extract all datatables:
-  datatables <- datatable_read_vector(contents)
-
-  # identify datatable_name
-
-  # FIRST check datatable_name EXISTS in rmd_contents!
-  if( any(names(datatables) == datatable_name) == FALSE ) {
-    # no datatable of name datatable_name to add data to - STOP
-    stop( paste0("  No datatable of this name exists in vector: ", datatable_name ) )
-  }
-  # TODO
-  # THEN check the table has not been exported or resampled:
-
-  # ?? THEN check col ID exists ??:
-  if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
-    stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
-  }
-
-  # save to local var:
-  dt <- datatables[[ datatable_name ]]
-  gdt <- dplyr::select(dt, dplyr::starts_with("group-")) # get all group cols in one dt
-
-  # Set IDs (values to go in first col) to values 0:00 0:10, 0;20 .. up to number of step_names
-  IDs <- c("0:00", paste0( "0:", seq(10, ((length(step_names)-1)*10), 10) ) )
-
-  # CHECK the group_names exist in the datatable
-  # either they are sample IDs, in which case they are from the $ID col
-  # or it is the special group `ALL` - so just check this
-  # or the group names are the names from a group declared in samples datatable
-  if( length(group_names)==1 && group_names[1] == "ALL" ) {
-
-     # no need to use timetable with ALL - so STOP and suggest var-first datatable
-    cat( "  group_names is 'ALL'\n" )
-    stop("  Cannot add timetable to ALL - use variable-first or sample-first layout: ")
-
-  } else if( length(group_names) == length(dt$ID) && all( sort(group_names) ==  sort(dt$ID) ) ) {
-
-    # SHOULD NOT ALLOW THIS
-     # gets complicated to handle if IDs have reps
-      # so can only add ALL or groups to this kind of datatable..
-    stop( paste0("  group names CANNOT be IDs for timetable layout - create new group col and use this for timetable layout."))
-
-    cat( "  group_names are IDs\n" )
-
-  } else {
-
-    # check all group cols
-    group_names_match_group_cols <- c()
-    for( i in 1:length(gdt) ) {
-      group_names_match_group_cols[i] <- all( unique(gdt[i]) == group_names )
-    }
-
-    if( any(group_names_match_group_cols) == TRUE ) {
-      # group_names represent a group
-      cat( "  group_names is a group: ", names(gdt)[group_names_match_group_cols], "\n" )
-    }
-    else {
-      # group_names is INVALID
-      stop( paste0("  group_names is invalid: Must be ALL, <all-sample-IDs> or names from EXISTING GROUP: ", group_names))
-    }
-
-  }
-
-
-  # CHECK none of data_cols already exists in dt
-  dc <- c(data_cols, names(dt) )
-  # CHECK data_cols are all unique
-  if( anyDuplicated(dc) != 0 ) {
-    stop( paste0("  Column headers already exist in datatable: ", dc[duplicated(dc)]) )
-  }
-
-  # determine default widths of data cols
-  data_col_wds <- c()
-  for(i in 1:length(group_names) ) {
-    # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
-    if( endsWith(group_names[i], "_dt") ) {
-      data_col_wds[i] <- 18
-    } else {
-      data_col_wds[i] <- pmax(
-        nchar(group_names[i])+2,
-        max(nchar(step_names))+2,
-        5) #pmax ensures min col width is 5!
-    }
-  }
-
-  # use data_col_wds to calc correct length of default_data_vals:
-  default_data_vals <- list()
-  for( i in 1:length(group_names) ) {
-    # add default data vals to the data col for each ID
-      # this is just the step_names for each col!
-    default_data_vals[[i]] <- step_names
-  }
-
-  # now add the last col - change_dt
-  group_names <- c(group_names, "change_dt")
-  default_data_vals[[ length(group_names) ]] <- rep(obs_default_val_dt, length(IDs) )
-
-  # create timetable:
-  data_tables <- build_datatable("timetable", IDs, group_names, default_data_vals,
-                                 "ADD_DATA", datatable_name, dt_length,
-                                 DATATABLE_SPACER_CHAR)
-
-  # return
-  data_tables
-
-}
-
 
 
 #' Dispose of a set of Samples from Rmd
@@ -2269,34 +2712,11 @@ datatable_dispose_rmd <- function( rmd_path, rmd_line, datatable_name,
 
   cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
 
-  # if not an absolute path:
-  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
-    rmd_path <- R.utils::getAbsolutePath(rmd_path )
-  }
-
-  # CONFIRM rmd_path is a project doc or note:
-  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
-  orgPath <- dirname( dirname(rmd_path) )
-
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
-    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
 
   cat( "  Reading Rmd...\n" )
-
-  # read rmd_path file:
-  rmd_file_conn <- file( rmd_path )
-  rmd_contents <- readLines( rmd_file_conn )
-  close(rmd_file_conn)
+  rmd_contents <- read_file(rmd_path)
 
   data_tables <- datatable_dispose( rmd_contents[1:rmd_line], datatable_name, dt_length, summarise_reps )
 
@@ -2502,34 +2922,11 @@ datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name,
 
   cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
 
-  # if not an absolute path:
-  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
-    rmd_path <- R.utils::getAbsolutePath(rmd_path )
-  }
-
-  # CONFIRM rmd_path is a project doc or note:
-  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
-  orgPath <- dirname( dirname(rmd_path) )
-
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
-    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
 
   cat( "  Reading Rmd...\n" )
-
-  # read rmd_path file:
-  rmd_file_conn <- file( rmd_path )
-  rmd_contents <- readLines( rmd_file_conn )
-  close(rmd_file_conn)
+  rmd_contents <- read_file(rmd_path)
 
   data_tables <- datatable_resample( rmd_contents[1:rmd_line], datatable_name, resample_vector, dt_length )
 
@@ -2580,7 +2977,7 @@ datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name,
 #' @param dt_length Int of data table max length in characters - default 120.
 #'
 #' @export
-datatable_resample <- function( contents, datatable_name, resample_vector,
+datatable_resample <- function( contents, datatable_name, resample_vector, rep_vector = c(1),
                                 dt_length = 120 ) {
 
   cat( "\nprojectmanagr::datatable_resample():\n" )
@@ -2613,6 +3010,12 @@ datatable_resample <- function( contents, datatable_name, resample_vector,
     stop( paste0("  resample_vector cannot contain any UNDERSCORES - use `-`: ", resample_vector[grepl("_", resample_vector)] ) )
   }
 
+  # check rep_vector is length 1 or length equal to resample_vector
+  if( !(length(rep_vector) == 1) && !(length(rep_vector) == length(resample_vector)) ) {
+    stop( paste0("  rep_vector must be length 1 or same length as resample_vector - rep_vector: ",
+                 rep_vector, " resample_vector: ", resample_vector ) )
+  }
+
 
   # DEFINE IDs (& REPs if necessary):
 
@@ -2639,7 +3042,11 @@ datatable_resample <- function( contents, datatable_name, resample_vector,
     default_data_vals <- list()
     default_data_vals[[1]] <- REPs # first col is rep - fill with REPs
     default_data_vals[[2]] <- rep(resample_vector, length(IDs) ) # resample col - fill each ID with resample vector
-    default_data_vals[[3]] <- rep("1", (length(IDs)*length(resample_vector)) ) # reps - fill be default with "1"
+    if( length(rep_vector) == 1) {
+      default_data_vals[[3]] <- rep(rep_vector, (length(IDs)*length(resample_vector)) ) # reps - fill with value of rep_vector
+    } else { # rep_vector is same length as resample_vector - will affiliate these to each resample_vector across IDs
+      default_data_vals[[3]] <- rep(rep_vector, (length(IDs)) ) # reps - fill be default with "1"
+    }
 
 
   } else if( reps_exist == FALSE ) {
@@ -2654,7 +3061,11 @@ datatable_resample <- function( contents, datatable_name, resample_vector,
      # 2 reps
     default_data_vals <- list()
     default_data_vals[[1]] <- rep(resample_vector, length(IDs) ) # resample col - fill each ID with resample vector
-    default_data_vals[[2]] <- rep("1", (length(IDs)*length(resample_vector)) ) # reps - fill be default with "1"
+    if( length(rep_vector) == 1) {
+      default_data_vals[[2]] <- rep(rep_vector,(length(IDs)*length(resample_vector)) ) # reps - fill with value of rep_vector
+    } else { # rep_vector is same length as resample_vector - will affiliate these to each resample_vector across IDs
+      default_data_vals[[2]] <- rep(rep_vector, (length(IDs)) ) # reps - fill be default with "1"
+    }
 
   }
 
@@ -2670,6 +3081,74 @@ datatable_resample <- function( contents, datatable_name, resample_vector,
 
 }
 
+
+
+#' Resample Sample from TEMPLATE and insert into Rmd
+#'
+#' Creates a Sample DataTable in specified Rmd file from the template that
+#' should be present between specified start & end line.
+#'
+#' The template Sample DataTable will contain an initial ID column containing
+#' a default IDs vector (which will be replaced with IDs from selected existing
+#' datatable), and any other columns will have their initial data
+#' value replicated along the length of the datatable.
+#'
+#' @param rmd_path path to Rmd file
+#'
+#' @param rmd_startline line in Rmd file where TEMPLATE datatable starts
+#'
+#' @param rmd_endline line in Rmd file where TEMPLATE datatable ends
+#'
+#' @param IDs Character vector of sample IDs
+#'
+#' @param datatable_name String of data table name.
+#'
+#' @param dt_length Int of data table max length in characters - default 120.
+#'
+#'
+#' @export
+datatable_resample_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
+                                             datatable_name, dt_length = 120 ) {
+
+  cat( "\nprojectmanagr::datatable_resample_template_rmd():\n" )
+
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
+
+  cat( "  Reading Rmd...\n" )
+  rmd_contents <- read_file(rmd_path)
+
+  template_table <- rmd_contents[rmd_startline:rmd_endline]
+
+  # extract as list
+  template_list <- datatable_extract(template_table)
+
+  # remove IDs col - first index
+  template_list <- template_list[2:length(template_list)]
+
+  # get resample_vector
+  resample_vector <- unlist(strsplit(template_list[[1]][2], ' '))
+
+  # get rep_vector
+  rep_vector <- unlist(strsplit(template_list[[2]][2], ' '))
+
+  # CHECK data_cols are all unique
+  if( length(resample_vector) != length(rep_vector) ) {
+    stop( paste0("  incorrect length of resample & rep vectors: ", resample_vector, " : ", rep_vector) )
+  }
+
+
+  #### datatable resample ####
+
+  data_tables <- datatable_resample( rmd_contents[1:(rmd_startline-1)], datatable_name,
+                                     resample_vector, rep_vector, dt_length)
+
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_startline )
+  rmd_contents <- c( rmd_contents[1:(rmd_startline-1)], data_tables, rmd_contents[(rmd_endline+1):length(rmd_contents)] )
+
+  write_file(rmd_contents, rmd_path)
+
+}
 
 
 
@@ -2690,34 +3169,11 @@ datatable_split_rmd <- function(rmd_path, rmd_line, datatable_name,
 
   cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
 
-  # if not an absolute path:
-  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
-    rmd_path <- R.utils::getAbsolutePath(rmd_path )
-  }
-
-  # CONFIRM rmd_path is a project doc or note:
-  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
-  orgPath <- dirname( dirname(rmd_path) )
-
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
-    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
 
   cat( "  Reading Rmd...\n" )
-
-  # read rmd_path file:
-  rmd_file_conn <- file( rmd_path )
-  rmd_contents <- readLines( rmd_file_conn )
-  close(rmd_file_conn)
+  rmd_contents <- read_file(rmd_path)
 
   data_tables <- datatable_split( rmd_contents[1:rmd_line], datatable_name, split_vector, dt_length )
 
@@ -4050,9 +4506,17 @@ datatable_read_vector <- function(rmd_contents) {
   # identify the lines that begin with "+==="
   indices <- which( startsWith(rmd_contents, "+===") )
 
+  if( length(indices) < 2 ) {
+    # there are no datatables
+    # return a blank list
+    return( list() )
+  }
+
   # from indices extract the actual tables - they sit between the first and second dividers
-  if((length(indices) %% 2) == 1) {
-    stop( paste0("  datatable divider numbers are odd - syntax error in the Rmd: ", length(indices)) )
+  if( (length(indices) %% 2) == 1 ) {
+    #stop( paste0("  datatable divider numbers are odd - syntax error in the Rmd: ", length(indices)) )
+    # dont fail, just do not read the odd index
+    indices <- indices[1:(length(indices)-1)]
   }
 
   if( length(indices) == 0 ) {
@@ -4080,7 +4544,7 @@ datatable_read_vector <- function(rmd_contents) {
    # samples can be GROUPED - save group tables and apply any further group refs to the samples directly
 
   for(i in 1:length(tables) ) {
-  #for(i in 1:14 ) {
+  #for(i in 1:5 ) {
 
     # parse each table IN ORDER
      # tables[[i]][4] contains the table NAME then FUNCTION
@@ -4089,89 +4553,98 @@ datatable_read_vector <- function(rmd_contents) {
     table_name <- trimws(strsplit( as.character(tables[[i]][4]), ":")[[1]][1])
     table_function <- trimws(strsplit( as.character(tables[[i]][4]), ":")[[1]][2])
 
+    if( table_name != "TEMPLATE" ) { # only parse if datatable is not template
 
-    if( table_function == "CREATE" ) {
+      if( table_function == "CREATE" ) {
 
-        # CREATE : just parse the tables character vector to create a tibble
-      datatables[[ table_name ]] <- parse_datatable_create(tables[[i]])
+          # CREATE : just parse the tables character vector to create a tibble
+        datatables[[ table_name ]] <- parse_datatable_create(tables[[i]], datatables, table_name)
 
 
-    } else if( table_function == "ADD_DATA" ) {
+      } else if( (table_function == "ADD_DATA") || (table_function == "GROUP") ) {
+        # using parse_datatable_add_data() for both ADD_DATA and GROUP datatables
 
-      # DEAL WITH NEW SYNTAX - declaring multiple datatable names in one:
-      table_names <- unlist(strsplit( table_name, " ") )
-       # remove blank elements - happens if the table_names were separated by MORE THAN ONE SPACE
-      table_names <- table_names[table_names != ""]
+        # DEAL WITH NEW SYNTAX - declaring multiple datatable names in one:
+        table_names <- unlist(strsplit( table_name, " ") )
+         # remove blank elements - happens if the table_names were separated by MORE THAN ONE SPACE
+        table_names <- table_names[table_names != ""]
 
-      for(f in 1:length(table_names) ) {
+        for(f in 1:length(table_names) ) {
 
-        t_n <- table_names[f]
+          t_n <- table_names[f]
 
-        # FIRST check that table_name ALREADY EXISTS in datatables
-        if( any(names(datatables) == t_n) == FALSE ) {
-          # no datatable of name table_name to add data to - STOP
-          stop( paste0("  No datatable exists to add data to: ", t_n, " table index: ", i) )
+          # FIRST check that table_name ALREADY EXISTS in datatables
+          if( any(names(datatables) == t_n) == FALSE ) {
+            # no datatable of name table_name to add data to - STOP
+            stop( paste0("  No datatable exists to add data to: ", t_n, " table index: ", i) )
+          }
+
+            # ADD_DATA : parse tables character vector and CHECK AGAINST EXISTING datatables to ADD DATA TO TABLE
+          datatables[[ t_n ]] <- parse_datatable_add_data( tables[[i]], datatables[[ t_n ]], t_n )
+
         }
 
-          # ADD_DATA : parse tables character vector and CHECK AGAINST EXISTING datatables to ADD DATA TO TABLE
-        datatables[[ t_n ]] <- parse_datatable_add_data( tables[[i]], datatables[[ t_n ]], t_n )
 
-      }
-
-
-    } else if( table_function == "GROUP" ) {
-
-      # FIRST check that table_name ALREADY EXISTS in datatables
-      if( any(names(datatables) == table_name) == FALSE ) {
-        # no datatable of name table_name to add data to - STOP
-        stop( paste0("  No datatable exists to add data to: ", table_name, " table index: ", i) )
-      }
-
-      # GROUP : parse tables character vector and CHECK AGAINST EXISTING datatables to ADD GROUP DATA TO TABLE
-      datatables[[ table_name ]] <- parse_datatable_group(tables[[i]], datatables[[ table_name ]])
-
-    } else if( table_function == "RESAMPLE" ) {
-
-      # FIRST check that table_name ALREADY EXISTS in datatables
-      if( any(names(datatables) == table_name) == FALSE ) {
-        # no datatable of name table_name to add data to - STOP
-        stop( paste0("  No datatable exists to add data to: ", table_name, " table index: ", i) )
-      }
-
-      # RESAMPLE : parse tables character vector and the datatables list,
-       # return the new datatables list with NEW DATATABLES ADDED:
-      datatables <- parse_datatable_resample(tables[[i]], datatables, table_name)
-
-    } else if( table_function == "IMPORT" ) {
-
-      # IMPORT : parse as CREATE: parse the tables character vector to create a tibble
-      datatables[[ table_name ]] <- parse_datatable_create(tables[[i]])
-
-
-    } else if( table_function == "EXPORT" ) {
-
-      # DEAL WITH NEW SYNTAX - declaring multiple datatable names in one:
-      table_names <- unlist(strsplit( table_name, " ") )
-      # remove blank elements - happens if the table_names were separated by MORE THAN ONE SPACE
-      table_names <- table_names[table_names != ""]
-
-      for(f in 1:length(table_names) ) {
-
-        t_n <- table_names[f]
+      #} else if( table_function == "GROUP" ) {
 
         # FIRST check that table_name ALREADY EXISTS in datatables
-        if( any(names(datatables) == t_n) == FALSE ) {
+      #  if( any(names(datatables) == table_name) == FALSE ) {
           # no datatable of name table_name to add data to - STOP
-          stop( paste0("  No datatable exists to add data to: ", t_n, " table index: ", i) )
+      #    stop( paste0("  No datatable exists to add data to: ", table_name, " table index: ", i) )
+      #  }
+
+        # GROUP : parse tables character vector and CHECK AGAINST EXISTING datatables to ADD GROUP DATA TO TABLE
+      #  datatables[[ table_name ]] <- parse_datatable_group(tables[[i]], datatables[[ table_name ]])
+
+      # DEPRECATED - using parse_datatable_add_data to parse GROUP datatables now tro handle adding GROUPS across different IDs spread
+        # across separate datatables..
+
+
+      } else if( table_function == "RESAMPLE" ) {
+
+        # FIRST check that table_name ALREADY EXISTS in datatables
+        if( any(names(datatables) == table_name) == FALSE ) {
+          # no datatable of name table_name to add data to - STOP
+          stop( paste0("  No datatable exists to add data to: ", table_name, " table index: ", i) )
         }
 
-        # EXPORT : just add data to the relevant datatable!
-          # ADD_DATA : parse tables character vector and CHECK AGAINST EXISTING datatables to ADD DATA TO TABLE
-        datatables[[ t_n ]] <- parse_datatable_add_data( tables[[i]], datatables[[ t_n ]] )
+        # RESAMPLE : parse tables character vector and the datatables list,
+         # return the new datatables list with NEW DATATABLES ADDED:
+        datatables <- parse_datatable_resample(tables[[i]], datatables, table_name)
 
-      }
 
-    }
+      } else if( table_function == "IMPORT" ) {
+
+        # IMPORT : parse as CREATE: parse the tables character vector to create a tibble
+        datatables[[ table_name ]] <- parse_datatable_create(tables[[i]])
+
+
+      } else if( table_function == "EXPORT" ) {
+
+        # DEAL WITH NEW SYNTAX - declaring multiple datatable names in one:
+        table_names <- unlist(strsplit( table_name, " ") )
+        # remove blank elements - happens if the table_names were separated by MORE THAN ONE SPACE
+        table_names <- table_names[table_names != ""]
+
+        for(f in 1:length(table_names) ) {
+
+          t_n <- table_names[f]
+
+          # FIRST check that table_name ALREADY EXISTS in datatables
+          if( any(names(datatables) == t_n) == FALSE ) {
+            # no datatable of name table_name to add data to - STOP
+            stop( paste0("  No datatable exists to add data to: ", t_n, " table index: ", i) )
+          }
+
+          # EXPORT : just add data to the relevant datatable!
+            # ADD_DATA : parse tables character vector and CHECK AGAINST EXISTING datatables to ADD DATA TO TABLE
+          datatables[[ t_n ]] <- parse_datatable_add_data( tables[[i]], datatables[[ t_n ]] )
+
+        } # for f
+
+      } # end if EXPORT
+
+    } # end if TEMPLATE
 
   } # for i
 
@@ -4191,7 +4664,7 @@ datatable_read_vector <- function(rmd_contents) {
 #' further data.
 #'
 #'
-parse_datatable_create <- function(dt_vector) {
+parse_datatable_create <- function(dt_vector, dt_list, table_name) {
 
   # CHECK VALIDITY FIRST:
 
@@ -4244,11 +4717,84 @@ parse_datatable_create <- function(dt_vector) {
     }
   }
 
+  # check if dt_list contains a datatable of same name
+  if( length(dt_list) > 0 ) { # if the dt_list is not blank
+    dt_names <- names(dt_list) # get names
+
+    if( any(dt_names == table_name) ) { # if the table already exists
+      # combine dt with this datatable
+      dt_existing <- dt_list[[table_name]]
+
+      # some basic checks
+      # NO IDS MATCH between new dt and existing dt
+      for(id in dt$ID) {
+        if( any(id == dt_existing$ID) ) {
+          stop( paste0("  Existing Datatable has ID: ", id, " datatable: ", table_name) )
+        }
+      } # all IDs checked
+      # ALL COLS do match - cols in dt all exist in dt_existing
+      for(col in names(dt) ) {
+        if( any(col == names(dt_existing) ) == FALSE ) {
+          stop( paste0("  Existing Datatable does not have Column: ", col) )
+        }
+      }
+
+      # now INTEGRATE dt into dt_existing
+      dt <- dplyr::bind_rows(dt_existing, dt)
+      # this automatically fills all non-existant cols in dt_existing that are not in dt with NAs
+      # correct behaviour!
+
+    } # dt_names == table_name
+  } # dt_list > 0
+
   # return dataframe
   dt
 
 }
 
+
+
+#' Add data of col type to datatable
+#'
+#' Accepts an existing dataframe, colname and data to insert.  Adds data
+#' as type `char` to avoid issues when adding data with default or error values
+#' from combining with furhter datatables with specific data types.
+#'
+#' User should convert cols to appropriate datatypes as needed in analyses.
+#'
+#' This function adds a char column, renames the col to `name`, and
+#' finally converts data to char datatype and inserts into datatable.
+#'
+#' DT row length MUST equal the length of data.  `data` and `name` must be
+#' character vectors.
+#'
+#' Can optionally use indices to insert data into specific row indices in new col
+#' in dt.
+#'
+add_data_col_type <- function(dt, name, data, indices="") {
+
+  add_col <- TRUE
+  if( any(names(dt) == name) == TRUE ) {
+    add_col <- FALSE
+  }
+
+  # newCol will be a character column
+  newCol <- NA_character_
+
+  if(add_col == TRUE) { # only add column if it doesnt already exist!
+    dt <- tibble::add_column( dt, newCol )
+    names(dt)[names(dt) == "newCol"] <- name # set name IMMEDIATELY
+  }
+
+  if( all(indices == "") ) {
+    dt[[ name ]] <- data
+  } else {
+    dt[[ name ]][indices] <- data
+  }
+
+  dt # return the modified datatable
+
+}
 
 
 #' Add data of col type to datatable
@@ -4264,7 +4810,7 @@ parse_datatable_create <- function(dt_vector) {
 #' Can optionally use indices to insert data into specific row indices in new col
 #' in dt.
 #'
-add_data_col_type <- function(dt, name, data, indices="") {
+add_data_col_typeOLD <- function(dt, name, data, indices="") {
 
   add_col <- TRUE
   if( any(names(dt) == name) == TRUE ) {
@@ -4274,7 +4820,7 @@ add_data_col_type <- function(dt, name, data, indices="") {
   # parsing datetime and date first to avoid converting them to double cols..
   if( lubridate::is.instant(data[1]) ) {
     # if true, data is already in the datetime format
-    newCol <- as.POSIXct(NA)
+    newCol <- as.POSIXct(NA, tz = "UTC")
 
     if(add_col == TRUE) { # only add column if it doesnt already exist!
       dt <- tibble::add_column( dt, newCol )
@@ -4306,7 +4852,7 @@ add_data_col_type <- function(dt, name, data, indices="") {
 
   } else if( !is.na( suppressWarnings(lubridate::ymd_hm(data[1])) ) ) {
 
-    newCol <- as.POSIXct(NA)
+    newCol <- as.POSIXct(NA, tz = "UTC")
 
     if(add_col == TRUE) { # only add column if it doesnt already exist!
       dt <- tibble::add_column( dt, newCol )
@@ -5245,10 +5791,10 @@ parse_datatable_group <- function(dt_vector, dt) {
       for(i in 3:length(data) ) { # SKIP index 1+2 - this IS ID COL & REP COL - which already exist in dt!
 
         # check dt doesnt already contain col of same name?
-        if( any(names(dt) == data[[i]][1] ) ) {
-          stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
-                       " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
-        }
+        #if( any(names(dt) == data[[i]][1] ) ) {
+        #  stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
+        #               " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
+        #}
 
         #dt <- tibble::add_column( dt, newCol )
         #names(dt)[names(dt) == "newCol"] <- data[[i]][1] # and SET THE NAME IMMEDIATELY!
@@ -5326,10 +5872,10 @@ parse_datatable_group <- function(dt_vector, dt) {
       for(i in 2:length(data) ) { # SKIP index 1 - this IS ID COL - which already exists in dt!
 
         # check dt doesnt already contain col of same name?
-        if( any(names(dt) == data[[i]][1] ) ) {
-          stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
-                       " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
-        }
+        #if( any(names(dt) == data[[i]][1] ) ) {
+        #  stop( paste0("  Data col already exists in datatable: ", data[[i]][1],
+        #               " dt name: ", trimws(strsplit( as.character(dt_vector[4]), ":")[[1]][1])))
+        #}
 
         dt <- tibble::add_column( dt, newCol )
         names(dt)[names(dt) == "newCol"] <- data[[i]][1] # and SET THE NAME IMMEDIATELY!
@@ -6459,6 +7005,8 @@ datatable_extract <- function(dt_vector) {
     # if character(0), ignore this line
     if( identical(d, character(0)) ) {
       # line is blank - IGNORE
+    } else if( startsWith(trimws(dt_vector[j]), '>')) {
+      # line is comment - IGNORE
     } else { # parse the line
 
       if( length(d) == headers_length ) {
