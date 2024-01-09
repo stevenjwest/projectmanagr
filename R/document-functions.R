@@ -931,7 +931,7 @@ create_selection <- function(filePath, contents, line, settings) {
     }
     else {
 
-      output <- create_no_selection(rmdType, errorMessage, filePath)
+      output <- create_no_selection(rmdType, errorMessage, filePath, originalLine, originalLineNumber)
 
     }
 
@@ -1009,7 +1009,8 @@ create_selection <- function(filePath, contents, line, settings) {
     #### Deal with unidentified Rmd file ####
 
     errorMessage <- "Unidentified file type selected."
-    output <- create_no_selection("UNKNOWN", errorMessage, filePath)
+    output <- create_no_selection("UNKNOWN", errorMessage, filePath,
+                                  originalLine, originalLineNumber)
 
   }
 
@@ -1027,9 +1028,12 @@ create_selection <- function(filePath, contents, line, settings) {
 #' an `errorMessage`.
 #'
 #'
-create_no_selection <- function(rmdType, errorMessage, filePath) {
-  output <- list( rmdType, errorMessage, filePath )
-  names(output) <- c( "rmdType", "errorMessage", "filePath")
+create_no_selection <- function(rmdType, errorMessage, filePath,
+                                originalLine, originalLineNumber) {
+  output <- list( rmdType, errorMessage, filePath,
+                  originalLine, originalLineNumber )
+  names(output) <- c( "rmdType", "errorMessage", "filePath",
+                      "originalLine", "originalLineNumber")
   output # return output
 
 }
@@ -1348,6 +1352,50 @@ replace_markdown_header  <- function(templateContents, orgPath,
 }
 
 
+
+replace_knitr_include_graphics_link <- function(contentContents, sourceNoteRmdPath,
+                                                destNoteRmdPath, settings, orgPath,
+                                                knitrGraphics='knitr::include_graphics(',
+                                                knitrGraphicsEnd=')') {
+
+  sourceNoteDirPath <- get_project_note_dir_path(sourceNoteRmdPath, settings)
+  destNoteDirPath <- get_project_note_dir_path(destNoteRmdPath, settings)
+
+  knitrGraphicsIndex <- grep(knitrGraphics, contentContents, fixed=TRUE)
+
+  for( kgi in knitrGraphicsIndex) {
+    # get knitr line then path
+    kLine <- contentContents[kgi]
+    kPathStartIndex <- (regexpr(knitrGraphics, kLine, fixed=TRUE) + nchar(knitrGraphics) + 1)
+    kPathEndIndex <- (regexpr(knitrGraphicsEnd, kLine, fixed=TRUE) - nchar(knitrGraphicsEnd) - 1)
+
+    kPath <- substring(kLine, kPathStartIndex, kPathEndIndex)
+
+    # assuming kPath is a path inside the Project Note Dir - this collapses the Project Note Dir Name
+    kPathFull <- R.utils::getAbsolutePath( paste0(sourceNoteDirPath,
+                                                  .Platform$file.sep, "..",
+                                                  .Platform$file.sep, kPath))
+
+    # get relative link
+    RelLink <- R.utils::getRelativePath(sourceNoteDirPath, relativeTo=destNoteDirPath)
+    RelLink <- substring(RelLink, first=4, last=nchar(RelLink)) # remove first `../`
+    relPathFull <- R.utils::getRelativePath( paste0(RelLink,.Platform$file.sep, "..",
+                                                    .Platform$file.sep, kPath))
+
+    # replace path in kLine with relPathFull
+    contentContents[kgi] <- paste0(
+      substring(kLine, 1, (kPathStartIndex-1) ),
+      relPathFull,
+      substring(kLine, (kPathEndIndex+1), nchar(kLine)) )
+
+  }
+
+  # return
+  contentContents
+
+}
+
+
 #' Create Hyperlink
 #'
 #' creates string for hyperlink in Rmd, using `toFileName` as the hyperlink text,
@@ -1625,24 +1673,24 @@ get_name_from_file_name <- function(projectFileName, settings) {
 
 
 
-#' Find Protocols in Project Note
+#' Find Insertable Contents in Project Notes from Dir Tree
 #'
-#' Searches through dirTree (non-recursively) for Project Notes, and then looks
-#' for Protocols in these based on the protocol sep delimiter (identified in
-#' `config/templates/PROTOCOL_SEP.txt`).
+#' Searches through dirTree recursively for Project Notes, and then looks
+#' for Insertable Contents in these based on the content sep delimiter - defined
+#' in `CONTENT_SEP.txt`: by default the delimiter is a series of `====`.
 #'
-#' Returns a structured lists that describe each protocol in the project notes:
+#' Returns a structured lists that describe each contents in the project notes:
 #'
-#' Each Structured List is comprised
-#' [[3]] : Name of Protocol in the Project Note
-#' [[1]] : ProjectNotePath
-#' [[2]] : Project Note Line Number where Protocol BEGINS (start of first delimiter)
+#' Each Structured List contains: is a character vector comprised
+#' name() : ProjectNotePath && Project Note Line Number where Insertable
+#' Contents BEGINS (start of first delimiter), separated with `:::`
+#' [["contentTitle"]] : Title of Insertable Contents in the Project Note
 #'
-find_protocols_in_dir_tree <- function(dirTree,  orgPath, settings) {
+find_contents_in_dir_tree <- function(dirTree, orgPath, settings) {
 
   #### instance variables ####
 
-  protocols <- list() # to store all retrieved protocols metadata in
+  contents <- list() # to store all retrieved contents metadata in
 
   confPath <- paste0( orgPath, .Platform$file.sep, "config" )
   tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
@@ -1652,156 +1700,164 @@ find_protocols_in_dir_tree <- function(dirTree,  orgPath, settings) {
   settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
   # load status file for projectmanagr org status
-  # contains information on protocols DIRs && index of protocols in those files with retrieval datetime
+  # contains information on contents DIRs && index of contents in those files with retrieval datetime
   statusFile <- paste0(confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
   status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
 
-  # read status information for PROTOCOLS if it exists
-  protocolsStatus <- status[['PROTOCOLS']]
+  # read status information for CONTENTS if it exists
+  contentsStatus <- status[['CONTENTS']]
 
-  protocolSepContents <- read_file( paste0( tempPath, .Platform$file.sep, "PROTOCOL_SEP.txt") )
+  contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
   # as this is called in a for loop, better to open this file external to that loop and pass as param
+
 
   #### loop through filePaths ####
 
-  # first screen filePaths for project notes
-  filePaths <- get_project_note_paths(dirTree, settings)
+  # get all project notes in dirTree RECURSIVELY
+  fileList <- list()
+  filePaths <- get_file_list_to_project_notes(fileList, dirTree, settings)
+  # get all project notes in dirTree
+  #filePaths <- get_project_note_paths(dirTree, settings)
 
+  # for all identified project notes identify all insertable contents
   for( f in filePaths) {
-
-    pr <- get_protocols(f, protocolSepContents, settings, orgPath)
-    protocols[names(pr)] <- pr
-
+    pr <- get_contents(f, contentSepContents, settings, orgPath)
+    contents[names(pr)] <- pr
   }
 
   # return structured list
-  protocols
+  contents
 
 }
 
 
-#' Get Protocols from file path
+#' Get Insertable Contents from file path
 #'
-#' Get protocols from file path (`f`)
+#' Get insertable contents from file path (`f`)
 #'
-get_protocols <- function(f, protocolSepContents, settings, orgPath) {
+#' Returns named list of `contentTitle` with elements: `projectNotePath`,
+#' `startLineNum`
+#'
+get_contents <- function(f, contentSepContents, settings, orgPath) {
 
-  protocols <- list()
+  contents <- list()
 
   # check the filePath is a project note
   ft <- get_file_type(f, settings)
 
   if( ft == "SUB" | ft == "NOTE" ) {
-    # check file contents for protocols
+    # check file contents for contents
     fc <- read_file(f)
 
-    ps <- match_vector(protocolSepContents, fc)
+    ps <- match_vector(contentSepContents, fc)
 
-    # protocol seps should be in PAIRS
+    # content seps should be in PAIRS
     if( length(ps) %% 2 != 0 ) {
       # DEAL WITH ERROR
-      stop( cat("  file contains uneven number of protocol separators: ", f))
+      stop( cat("  file contains uneven number of content separators: ", f))
     }
 
     # if the length is 0 just return blank list
     if(length(ps) == 0 ) {
-      return( protocols )
+      return( contents )
     }
 
-    # extract metadata from each protocol - PROTOCOL_TITLE, START_LINE_NUM, PROJECT_NOTE_PATH
+    # extract metadata from each content - CONTENT_TITLE, START_LINE_NUM, PROJECT_NOTE_PATH
     for( i in 1:(length(ps)/2) ) {
       j <- (i*2)-1
       startSep <- ps[j]
       endSep <- ps[(j+1)]
 
-      # get the protocol title
-      protocolTitle <- get_protocol_title(fc, startSep, settings, orgPath)
+      # get the content title
+      contentTitle <- get_content_title(fc, startSep, settings, orgPath)
 
-      attrs <- list(f, startSep )
-      names(attrs) <- c("projectNotePath","startLineNum")
-      protocols[[protocolTitle]] <- attrs
+      attrs <- list(contentTitle )
+      names(attrs) <- c("contentTitle")
+      id <- paste0(f,':::',startSep)
+      contents[[id]] <- attrs
 
     }
   }
 
-  protocols
+  contents
 
 }
 
 
-#' Get Protocol Description
+#' Get Insertable Content Description
 #'
-#' From the note rmdContents, the protocol with startSep at startSepLineIndex.
+#' From the note rmdContents, the insertable content with startSep at startSepLineIndex.
 #'
-get_protocol_description <- function(rmdContents, startSepLineIndex, settings, orgPath) {
+get_content_description <- function(rmdContents, startSepLineIndex, settings, orgPath) {
 
-  protocolDescriptionLine <- grep_line_index_from_rev(
-                               load_param_vector(settings[["ProtocolDescriptionField"]], orgPath),
+  contentDescriptionLine <- grep_line_index_from_rev(
+                               load_param_vector(settings[["ContentDescriptionField"]], orgPath),
                                rmdContents, startSepLineIndex)
 
   # return
-  rmdContents[(protocolDescriptionLine+1):(startSepLineIndex-1)]
+  rmdContents[(contentDescriptionLine+1):(startSepLineIndex-1)]
 
 }
 
 
-#' Get Protocol Header
+#' Get Insertable Content Header
 #'
-#' From the note rmdContents, the protocol with startSep at startSepLineIndex.
+#' From the note rmdContents, the insertable content with startSep at startSepLineIndex.
 #'
-get_protocol_header <- function(rmdContents, startSepLineIndex, settings, orgPath) {
+get_content_header <- function(rmdContents, startSepLineIndex, settings, orgPath) {
 
-  headerLine <- grep_line_index_from_rev(load_param_vector(settings[["ProtocolHeader"]], orgPath),
+  headerLine <- grep_line_index_from_rev(load_param_vector(settings[["ContentHeader"]], orgPath),
                                          rmdContents, startSepLineIndex)
 
-  protocolHeader <- rmdContents[headerLine]
+  contentHeader <- rmdContents[headerLine]
 
   # return
-  protocolHeader
+  contentHeader
 
 }
 
 
-#' Get Protocol Title
+#' Get Content Title
 #'
-#' From the note rmdContents, the protocol with startSep at startSepLineIndex.
+#' From the note rmdContents, the content with startSep at startSepLineIndex.
 #'
-get_protocol_title <- function(rmdContents, startSepLineIndex, settings, orgPath) {
+get_content_title <- function(rmdContents, startSepLineIndex, settings, orgPath) {
 
-  protocolHeader <- get_protocol_header(rmdContents, startSepLineIndex, settings, orgPath)
+  contentHeader <- get_content_header(rmdContents, startSepLineIndex, settings, orgPath)
 
-  # get the protocol title from headerLine
-  protocolTitle <- toupper(substring(protocolHeader,
-                                     nchar(load_param_vector(settings[["ProtocolHeader"]], orgPath))+1,
-                                     nchar(protocolHeader)))
+  # get the content title from headerLine
+  contentTitle <- substring(contentHeader,
+                            nchar(load_param_vector(settings[["ContentHeader"]], orgPath))+1,
+                            nchar(contentHeader))
 
   # return
-  protocolTitle
+  contentTitle
 
 }
 
 
-#' Update Protocols in List
+#' Update Insertable Contents in List
 #'
-#' Updates the protocols found
+#' Updates the contents found
+#'
 #' Searches through dirTree (non-recursively) for Project Notes, and then looks
-#' for Protocols in these based on the protocol sep delimiter (identified in
-#' `config/templates/PROTOCOL_SEP.txt`).
+#' for Contents in these based on the content sep delimiter (identified in
+#' `config/templates/` & `settings[["ContentSep"]]`).
 #'
-#' Returns a structured lists that describe each protocol in the project notes:
+#' Returns a structured lists that describe each content in the project notes:
 #'
-#' Each Structured List is comprised
-#' [[3]] : Name of Protocol in the Project Note
-#' [[1]] : ProjectNotePath
-#' [[2]] : Project Note Line Number where Protocol BEGINS (start of first delimiter)
+#' Each Structured List contains: is a character vector comprised
+#' name() : ProjectNotePath && Project Note Line Number where Insertable
+#' Contents BEGINS (start of first delimiter), separated with `:::`
+#' [["contentTitle"]] : Title of Insertable Contents in the Project Note
 #'
-update_protocols_in_list <- function(protocolsStatus, dirPath, orgPath, settings) {
+update_contents_in_list <- function(contentsStatus, dirPath, orgPath, settings) {
 
   #### instance variables ####
 
-  protocolRetrievalDateTime <- protocolsStatus[[dirPath]]$protocolRetrievalDateTime
-  prdt <- lubridate::ymd_hm(protocolRetrievalDateTime) # get as datetime
-  protocols <- protocolsStatus[[dirPath]]$protocols
+  contentRetrievalDateTime <- contentsStatus[[dirPath]]$contentRetrievalDateTime
+  prdt <- lubridate::ymd_hm(contentRetrievalDateTime) # get as datetime
+  contents <- contentsStatus[[dirPath]]$contents
 
   confPath <- paste0( orgPath, .Platform$file.sep, "config" )
   tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
@@ -1810,7 +1866,7 @@ update_protocols_in_list <- function(protocolsStatus, dirPath, orgPath, settings
   settingsFile <- paste0(confPath, .Platform$file.sep, "settings.yml")
   settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
-  protocolSepContents <- read_file( paste0( tempPath, .Platform$file.sep, "PROTOCOL_SEP.txt") )
+  contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
   # in case needed to check new files
 
   #### loop through filePaths ####
@@ -1826,23 +1882,23 @@ update_protocols_in_list <- function(protocolsStatus, dirPath, orgPath, settings
     if( prdt < updateTime ) {
 
       # if TRUE : retrieval datetime BEFORE updateTime of file
-      # potentially new protocols may have been added to this protocol
+      # potentially new contents may have been added to this content
 
-      # so retrieve protocols information from the project note
-      pr <- get_protocols(f, protocolSepContents, settings, orgPath)
-      protocols[names(pr)] <- pr # update the contents of protocols
+      # so retrieve contents information from the project note - this handles blank lists!
+      pr <- get_contents(f, contentSepContents, settings, orgPath)
+      contents[names(pr)] <- pr # update the contents of contents
 
     }
   }
 
-  # update protocols
-  protocolsStatus[[dirPath]]$protocols <- protocols
+  # update contents
+  contentsStatus[[dirPath]]$contents <- contents
 
   # update retrieval time
-  protocolsStatus[[dirPath]]$protocolRetrievalDateTime <- get_datetime()
+  contentsStatus[[dirPath]]$contentRetrievalDateTime <- get_datetime()
 
-  # return protocolsStatus for dirPath
-  protocolsStatus[[dirPath]]
+  # return contentsStatus for dirPath
+  contentsStatus[[dirPath]]
 
 }
 
