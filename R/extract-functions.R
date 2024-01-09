@@ -15,13 +15,16 @@
 #' of the date & scope (location directory name or project-note title) :
 #' `YYYMMDD_SCOPE.Rmd`
 #'
-#' @param location A Project Note file or Directory inside an Organisation
-#' where TODO lists should be extracted from each GDT.  Can be Organisation
-#' root, a programme, any sub-directory that contains project notes, or a
-#' single project note.
+#' @param location A path to a Directory or Project Note file inside an
+#' Organisation where TODO lists should be extracted from each GDT.  Can be
+#' Organisation root, a programme, any sub-directory that contains project
+#' notes, or a single project note.
+#'
+#' @param date The date of extraction, default is today's date. Should be in
+#' char format as 'YYYY-MM-DD' - added to header of Todo Collection.
 #'
 #' @export
-extract_todos <- function(location, fileNamingConvention="YYYYMMDD_SCOPE",
+extract_todos <- function(location, date=get_date(split='-'),
                           todoGDTExtractionTemplate="Todo-GDT-Extraction-Template.Rmd",
                           todoExtractionTemplate="Todo-Extraction-Template.Rmd",
                           todoProgCollectionTemplate="Todo-Programme-Collection-Template.Rmd",
@@ -49,7 +52,9 @@ extract_todos <- function(location, fileNamingConvention="YYYYMMDD_SCOPE",
   settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
 
   # define todoCollectionFileName with fileNamingConvention
-  fileNamingConvention <- sub("YYYYMMDD", get_date(split=""), fileNamingConvention )
+  #fileNamingConvention <- sub("YYYYMMDD", get_date(split=""), fileNamingConvention )
+
+  # define scope
   scope <- basename(location)
   if( substr(scope, nchar(scope)-3, nchar(scope)-3) == '.' ) {
     scope <- substr(scope, 1, nchar(scope)-4) # trim file extension
@@ -57,15 +62,16 @@ extract_todos <- function(location, fileNamingConvention="YYYYMMDD_SCOPE",
     # if location is ProgrammeProjectsDir give the programme name too!
     scope <- paste0( basename(dirname(location)), "-", scope)
   }
-  fileNamingConvention <- sub("SCOPE", scope, fileNamingConvention )
+
+  #fileNamingConvention <- sub("SCOPE", scope, fileNamingConvention )
 
   # define todoCollectionPath - where to save todo collection
-  todoCollectionDir <- paste0(orgPath, .Platform$file.sep, settings[["TodoCollectionDir"]])
-  if(dir.exists(todoCollectionDir) == FALSE) {
-    dir.create(todoCollectionDir)
-  }
-  todoCollectionPath <- paste0(todoCollectionDir, .Platform$file.sep, fileNamingConvention,
-                               ".", settings[["FileTypeSuffix"]])
+  #todoCollectionDir <- paste0(orgPath, .Platform$file.sep, settings[["TodoCollectionDir"]])
+  #if(dir.exists(todoCollectionDir) == FALSE) {
+  #  dir.create(todoCollectionDir)
+  #}
+  #todoCollectionPath <- paste0(todoCollectionDir, .Platform$file.sep, fileNamingConvention,
+  #                             ".", settings[["FileTypeSuffix"]])
 
   # get all project notes that exist within location
   projectNotePaths <- check_location_project_notes(location, settings)
@@ -93,12 +99,16 @@ extract_todos <- function(location, fileNamingConvention="YYYYMMDD_SCOPE",
   for(p in projectNoteProgPaths) {
     # for each programme
 
-    # put programme basename as header
+    # put programme basename as header - basename in first index of char vector
     progCollection <- sub_template_param(todoProgCollectionContents, "{{PROGRAMME_HEADER}}",
                                           paste0("# ", basename(p[1])), orgPath)
 
+    cat( "\n    Programme:", basename(p[1]),"\n" )
+
     # extract each project note todos to extraction template
     for(pn in p[2:length(p)]) {
+
+      cat( "\n      Project Note:", basename(pn) )
 
       # set flag to determine whether to add this note to collection
       incompleteTodoFound <- FALSE
@@ -162,20 +172,19 @@ extract_todos <- function(location, fileNamingConvention="YYYYMMDD_SCOPE",
         }
 
 
-      }
+      }# dGDT
 
       # append only if incomplete TODOs were found
-      if( incompleteTodoFound == TRUE) {
+      if( incompleteTodoFound == TRUE ) {
         # REMOVE GDT_TODO_SUMMARY marker - set to blank
         todoExtract <- sub_template_param(todoExtract, "{{GDT_TODO_SUMMARY}}",
                                              "", orgPath)
-
         # APPEND to progCollection
         pnTodoSummLine <- grep_line_index("{{PROJECT_NOTE_TODO_SUMMARY}}", progCollection)
         progCollection <- insert_at_indices(progCollection, pnTodoSummLine, todoExtract)
       }
 
-    }
+    } # pn
 
     # REMOVE PROJECT_NOTE_TODO_SUMMARY marker - set to blank
     progCollection <- sub_template_param(progCollection, "{{PROJECT_NOTE_TODO_SUMMARY}}",
@@ -191,12 +200,23 @@ extract_todos <- function(location, fileNamingConvention="YYYYMMDD_SCOPE",
   todoCollectionContents <- sub_template_param(todoCollectionContents, "{{PROGRAMME_TODO_SUMMARY}}",
                                        "", orgPath)
 
+  # ADD DATE
+  todoCollectionContents <- sub_template_param(todoCollectionContents, "{{DATE}}",
+                                               date, orgPath)
 
-  #### write todo collection ####
+  # ADD SCOPE
+  todoCollectionContents <- sub_template_param(todoCollectionContents, "{{SCOPE}}",
+                                               scope, orgPath)
 
-  write_file(todoCollectionContents, todoCollectionPath)
 
-  cat( "  written todo collection to disk: ", todoCollectionPath, "\n" )
+  #### return todo collection char vector ####
+
+  cat("  return todo collection")
+  return(todoCollectionContents)
+
+  #write_file(todoCollectionContents, todoCollectionPath)
+
+  #cat( "  written todo collection to disk: ", todoCollectionPath, "\n" )
 
 }
 
