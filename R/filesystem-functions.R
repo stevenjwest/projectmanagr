@@ -37,6 +37,38 @@ find_org_directory <- function( path ) {
 }
 
 
+#` confirm rmd_path
+#'
+#' Path in org && Project Doc or Note (subdir of programme)
+#' && absolute + normalised
+confirm_rmd_path <- function(rmd_path) {
+
+  # if not an absolute path:
+  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
+    rmd_path <- R.utils::getAbsolutePath(rmd_path )
+  }
+
+  # CONFIRM rmd_path is a project doc or note:
+  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
+  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
+  orgPath <- dirname( dirname(rmd_path) )
+
+  orgPath <- find_org_directory(orgPath)
+
+  if(orgPath == "" ) {
+    # the search reached the root of the filesystem without finding the Organisation files,
+    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
+    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # normalize path - remove HOME REF ~
+  rmd_path <- normalizePath(rmd_path)
+
+  # return
+  rmd_path
+}
+
 get_prefix <- function(filePath, settings) {
 
   substr(basename(filePath), 1,
@@ -221,7 +253,7 @@ get_datetime <- function(timezone = "UTC", split="-", splitTime=":") {
 #' Get Next Simple Prefix
 #'
 #' This method extracts the Prefix String from projectNotePath (isolated by extracting
-#' all letters and numbers up to the first "_").  It then checks the
+#' all letters and numbers up to the `projIndexSep`).  It then checks the
 #' Rmd Files in projectNotePath that begin with prefixString to compute the next SIMPLE
 #' Prefix - +1 from the highest prefix value.
 #'
@@ -665,29 +697,17 @@ find_prog_dir <- function( fileSystemPath, settings ) {
 #' Searches the orgPath to identify all programmes.
 #'
 #'
-find_prog_dirs <- function( orgPath ) {
+find_prog_dirs <- function( orgPath, settings ) {
 
-  # Check fileSystemPath is in a PROGRAMME:
+  # find all Programme DIRs in orgPath
+  progPaths <- list.dirs(orgPath, recursive=FALSE)
 
-  # look for the PROJECTS/ and SOP/ dirs:
-  projPath <- paste(fileSystemPath, .Platform$file.sep, "PROJECTS" , sep="")
-  tempPath <- paste(fileSystemPath, .Platform$file.sep, "SOP" , sep="")
+  # look for the PROJECTS/ dir from :
+  projPaths <- paste0(progPaths, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
 
-  fileSystemPath2 <- "/" # use this as placeholder of PREVIOUS fileSystemPath
-  # if fileSystemPath == fileSystemPath2, then have not found projects or template!
+  progPaths <- progPaths[which(dir.exists(projPaths))]
 
-  while(  !( file.exists(projPath) && file.exists(tempPath) )  ) {
-    fileSystemPath2 <- fileSystemPath # save in placeholder
-    fileSystemPath <- dirname(fileSystemPath)
-    if( fileSystemPath2 == fileSystemPath ) { # break if reached filesystem root
-      fileSystemPath <- ""
-      break
-    }
-    projPath <- paste(fileSystemPath, .Platform$file.sep, "PROJECTS" , sep="")
-    tempPath <- paste(fileSystemPath, .Platform$file.sep, "SOP", sep="")
-  }
-
-  fileSystemPath
+  return(progPaths)
 
 }
 
