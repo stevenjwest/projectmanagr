@@ -9,6 +9,7 @@ datatable_add_data_samples(
   data_cols,
   datatable_name,
   ids_vector = "",
+  default_data_vals = list(),
   dt_length = 120,
   summarise_reps = FALSE
 )
@@ -26,6 +27,8 @@ EXIST/BE DECLARED BEFORE rmd_line in rmd_path.}
 \item{ids_vector}{A vector containing the IDs to add: Can be "ALL", a set of GROUP
 IDs (which must already be declared in datatable name under a 'group-' data
 column), or (a subset of) IDs from datatable.}
+
+\item{default_data_vals}{List of default data values to add to data cols.}
 
 \item{dt_length}{Int of data table max length in characters - default 120.}
 

@@ -4,12 +4,15 @@
 \alias{addin_error}
 \title{Present Error Message as Addin}
 \usage{
-addin_error(errorTitle, errorMessage, settings)
+addin_error(errorTitle, errorMessage, settings = NULL)
 }
 \arguments{
 \item{errorTitle}{Title for gadgetTitleBar and dialogViewer.}
 
 \item{errorMessage}{Message presented on addin gadget.}
+
+\item{settings}{A settings object, if it has been created, otherwise null.
+Used to set the gadget width and height from settings, otherwise 1000x800}
 }
 \description{
 Present Error Message as Addin

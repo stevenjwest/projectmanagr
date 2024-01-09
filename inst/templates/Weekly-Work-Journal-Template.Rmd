@@ -1,0 +1,28 @@
+---
+title: '{{YYYY}}-{{MM}}-{{DD}} Weekly Work Journal'
+author: '{{AUTHOR}}'
+{{HTML_HEADER}}
+---
+
+
+
+
+{{WEEKLY_JOURNAL_PLAINTEXT_CALENDAR}}
+
+
+
+
+{{WEEKLY_JOURNAL_DAILY_JOURNAL}}
+
+
+
+
+{{SEP01}}
+
+
+
+
+__EXTRACT_TODOS_HERE__
+
+
+

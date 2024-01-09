@@ -4,7 +4,13 @@
 \alias{create_no_selection}
 \title{Create No Selection}
 \usage{
-create_no_selection(rmdType, errorMessage, filePath)
+create_no_selection(
+  rmdType,
+  errorMessage,
+  filePath,
+  originalLine,
+  originalLineNumber
+)
 }
 \description{
 Selection object that signifies No Selection, with error message.

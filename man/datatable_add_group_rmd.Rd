@@ -6,7 +6,8 @@
 \usage{
 datatable_add_group_rmd(
   rmd_path,
-  rmd_line,
+  rmd_startline,
+  rmd_endline,
   group_names,
   datatable_name,
   groups,
@@ -16,8 +17,6 @@ datatable_add_group_rmd(
 }
 \arguments{
 \item{rmd_path}{path to Rmd file}
-
-\item{rmd_line}{line in Rmd file to insert table}
 
 \item{group_names}{Character vector of data table column titles to add.
 CANNOT BE BLANK!}
@@ -35,6 +34,8 @@ the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
 otherwise if TRUE, all reps are summarised using r vector index syntax on
 one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
 indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.}
+
+\item{rmd_line}{line in Rmd file to insert table}
 }
 \description{
 Adds Groups to an EXISTING Data Table in specified Rmd file at specified line.

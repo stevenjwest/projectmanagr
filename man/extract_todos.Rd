@@ -6,7 +6,7 @@
 \usage{
 extract_todos(
   location,
-  fileNamingConvention = "YYYYMMDD_SCOPE",
+  date = get_date(split = "-"),
   todoGDTExtractionTemplate = "Todo-GDT-Extraction-Template.Rmd",
   todoExtractionTemplate = "Todo-Extraction-Template.Rmd",
   todoProgCollectionTemplate = "Todo-Programme-Collection-Template.Rmd",
@@ -14,10 +14,13 @@ extract_todos(
 )
 }
 \arguments{
-\item{location}{A Project Note file or Directory inside an Organisation
-where TODO lists should be extracted from each GDT.  Can be Organisation
-root, a programme, any sub-directory that contains project notes, or a
-single project note.}
+\item{location}{A path to a Directory or Project Note file inside an
+Organisation where TODO lists should be extracted from each GDT.  Can be
+Organisation root, a programme, any sub-directory that contains project
+notes, or a single project note.}
+
+\item{date}{The date of extraction, default is today's date. Should be in
+char format as 'YYYY-MM-DD' - added to header of Todo Collection.}
 }
 \description{
 Extracted to Todo-Extraction-Template.Rmd that provides a template to

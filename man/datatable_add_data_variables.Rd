@@ -30,6 +30,6 @@ names.}
 for procedure data
 }
 \details{
-First column contains a list of procedures, subsequent column titles are
+First column contains a list of variables, subsequent column titles are
 typically group IDs, and data values are in cells.
 }

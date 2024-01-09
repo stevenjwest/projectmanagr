@@ -19,9 +19,9 @@ Description: Create a New Project Note linked to a Project Document GDT.
 Binding: addin_create_project_note
 Interactive: true
 
-Name: ProjectManagr: Create Protocol
-Description: Create a New Protocol to a Project File.
-Binding: addin_create_protocol
+Name: ProjectManagr: Create Content Section
+Description: Create a New Content Section in a Project File.
+Binding: addin_create_content
 Interactive: true
 
 Name: ProjectManagr: Create Volume
@@ -58,6 +58,11 @@ Name: ProjectManagr: Datatable Resample
 Description: Resample a datatable via addin: select samples to resample, and optionally add resample codes.
 Binding: addin_datatable_resample
 Interactive: true
+
+Name: ProjectManagr: Extract ToDos
+Description: Extract all ToDos to the cursor location.
+Binding: addin_extract_todos
+Interactive: false
 
 Name: ProjectManagr: Navigate Markdown Link
 Description: Navigate relative link from current file to markdown destination file & header.
@@ -99,9 +104,9 @@ Description: Insert a New Hyper Link between the Active Document and another ope
 Binding: addin_insert_hyperlink
 Interactive: true
 
-Name: ProjectManagr: Insert Protocol
-Description: Insert a Protocol into a Project Note.
-Binding: addin_insert_protocol
+Name: ProjectManagr: Insert Content Section
+Description: Insert a Content Section into a Project Note.
+Binding: addin_insert_content
 Interactive: true
 
 Name: ProjectManagr: Insert Section Sep 1

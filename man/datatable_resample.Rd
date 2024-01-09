@@ -4,7 +4,13 @@
 \alias{datatable_resample}
 \title{Resample a set of samples}
 \usage{
-datatable_resample(contents, datatable_name, resample_vector, dt_length = 120)
+datatable_resample(
+  contents,
+  datatable_name,
+  resample_vector,
+  rep_vector = c(1),
+  dt_length = 120
+)
 }
 \arguments{
 \item{contents}{character vector containing current document with

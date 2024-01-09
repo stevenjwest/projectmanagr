@@ -8,6 +8,7 @@ datatable_create(
   IDs = "",
   data_cols = "",
   datatable_name = "samples",
+  default_data_vals = list(),
   dt_length = 120
 )
 }

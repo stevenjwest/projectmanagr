@@ -4,7 +4,7 @@
 \alias{parse_datatable_create}
 \title{CREATE a tibble from a datatable Rmd vector}
 \usage{
-parse_datatable_create(dt_vector)
+parse_datatable_create(dt_vector, dt_list, table_name)
 }
 \description{
 This datatable has the FUNCTION : CREATE

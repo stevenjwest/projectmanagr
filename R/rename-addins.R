@@ -100,7 +100,7 @@ addin_rename_project_file <- function() {
 
     addin_error_path("Rename Project File",
                      "No Valid Rmd file selected - ensure a Project Doc or Project Note is the active document.",
-                     selection$filePath)
+                     selection$filePath, settings)
     stop( paste0("  No Valid Rmd file selected - ensure a Project Doc or Project Note is the active document: \n    ", selection$filePath))
 
   }

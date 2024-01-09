@@ -2,15 +2,20 @@
 % Please edit documentation in R/addin-functions.R
 \name{addin_error_path}
 \alias{addin_error_path}
-\title{Present Error Message as Addin}
+\title{Present Error Message with path as Addin}
 \usage{
-addin_error_path(errorTitle, errorMessage, path, settings)
+addin_error_path(errorTitle, errorMessage, path, settings = NULL)
 }
 \arguments{
 \item{errorTitle}{Title for gadgetTitleBar and dialogViewer.}
 
 \item{errorMessage}{Message presented on addin gadget.}
+
+\item{path}{The path with the error}
+
+\item{settings}{A settings object, if it has been created, otherwise null.
+Used to set the gadget width and height from settings, otherwise 1000x800}
 }
 \description{
-Present Error Message as Addin
+Present Error Message with path as Addin
 }

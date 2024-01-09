@@ -7,12 +7,16 @@
 add_data_col_type(dt, name, data, indices = "")
 }
 \description{
-Accepts an existing dataframe, colname and data to insert.  Computes
-the type from the first value in data (data[1]): numeric, datetime, date,
-or character, then adds the correct column, renames the col to `name`, and
-finally converts data to correct datatype and inserts into datatable.
+Accepts an existing dataframe, colname and data to insert.  Adds data
+as type `char` to avoid issues when adding data with default or error values
+from combining with furhter datatables with specific data types.
 }
 \details{
+User should convert cols to appropriate datatypes as needed in analyses.
+
+This function adds a char column, renames the col to `name`, and
+finally converts data to char datatype and inserts into datatable.
+
 DT row length MUST equal the length of data.  `data` and `name` must be
 character vectors.
 

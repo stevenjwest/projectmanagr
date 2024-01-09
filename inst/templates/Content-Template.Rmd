@@ -2,28 +2,44 @@
 
 
 
-{{PROTOCOL_HEADER}}{{PROTOCOL_NAME}}
+{{CONTENT_HEADER}}{{CONTENT_NAME}}
 
 
-{{PROTOCOL_DESCRIPTION_FIELD}} 
+{{CONTENT_DESCRIPTION_FIELD}} 
 
-{{PROTOCOL_DESCRIPTION}}
+{{CONTENT_DESCRIPTION}}
 
 
 
-{{PROTOCOL_SEP}}
+{{CONTENT_SEP}}
+
+
+# {{CONTENT_NAME}}
+
+
+__implementation_summary__what_is_this_content_used_to_do__
+
+
+Template : {{INSERTABLE_CONTENT_LINK}}
+
+
+>>>>
+>>>> Example below of Protocol Content
+>>>>  Using SOP & LOG Sections
+>>>>
+
 
 {{SEP02}}
 
 
 
-# {{PROTOCOL_NAME}} SOP
+# {{CONTENT_NAME}} SOP
 
 
-Standard Operating Procedure(s) for {{PROTOCOL_NAME}}
+Standard Operating Procedure(s) for {{CONTENT_NAME}}
 
 >>>> 
->>>> Example of Protocol SOP Sections shown below
+>>>> Example of Protocol SOP Sections shown below (for mouse perfusion)
 >>>>  * Each Procedure has a separate Section Title
 >>>>  * Initial summary of procedure
 >>>>      + include schematic, photo or screenshot of the procedure for graphical summary if possible
@@ -252,7 +268,7 @@ knitr::include_graphics("img/03-overdose-mouse/01_mouse-od.png")
 
 
 
-## Perfuse Mouse
+## Perfuse Fix Mouse
 
 
 Perfusion is performed using the **manual syringe method**.  The heart is exposed, and buffer is perfused throughout the body via the circulatory system.  PBS is perfused first, to clear the blood; 4% Formaldehyde is then perfused to fix all body tissues.  It is critical to connect to the circulatory system tightly, and to use the correct pressure, for a good perfusion.
@@ -381,45 +397,15 @@ knitr::include_graphics("img/04-perfuse-mouse/04_perfuse-mouse.png")
         
         - Perfuse through all of the formaldehyde solution, and wait until any muscle movement ceases before continuing.
 
-        
-----
-
-
-
-## Post Fix Tissue
-
-
-Tissue immersed in fixative to continue fixation.
-
-
-```{r procedure-schematic, fig.cap="Procedure_schematic_caption"}
-
-#knitr::include_graphics("relative/path/to/img.svg")
-
-```
-
-
-
-* Tissue Post-Fixation
-
-    + 4% Formaldehyde in 0.15M PB : +/- 1% Methanol
-    
-        - 12mL (20x tissue vol MIN) in FILLED 15mL falcon tube
-        
-        - RT shaker
-        
-        - 1-3 days MIN
-
-
 
 {{SEP02}}
 
 
 
-# {{PROTOCOL_NAME}} LOG
+# {{CONTENT_NAME}} LOG
 
 
-LOG of {{PROTOCOL_NAME}}
+LOG of {{CONTENT_NAME}} : SOP followed except where noted
 
 >>>> 
 >>>> Example of Protocol LOG including
@@ -442,159 +428,42 @@ LOG of {{PROTOCOL_NAME}}
 
 
 
-# {{DATE}} Perfuse Fix Mouse LOG
+# Fix Perfuse Mouse : {{GROUP_STRING}}
 
 
-__description_of_protocol_execution__what_was_processed__
-
-
-----
-
-
-
-## [] Import Mouse Data from PYRAT LOG
-
-
-SOP : [Import Mouse Data from PYRAT](import-mouse-data-from-pyrat)
-
-
-Insert PyRAT metadata as datatable.
-
-
-
-* Move downloaded metadata file to Project Note DIR:
-
-
-```{bash, eval=FALSE}
-
-mkdir -p PREFIX/_data
-mv ~/Downloads/animallist.csv PREFIX/_data/animallist.csv
-
-```
-
-
-
-* Import as dataframe & wrangle into correct format
-
-
-```{r, eval=FALSE}
-
- # read - UTF-16!
-samples_df <- read.csv("PREFIX/_data/animallist.csv", fileEncoding = "UTF-16", sep = "\t")
-
- # convert to character cols
-samples_df <- data.frame(lapply(samples_df, as.character), stringsAsFactors=FALSE)
-
- # convert to tibble
-samples_df <- tibble::tibble(samples_df)
-
- # trim ID
-samples_df$ID <- substr(samples_df$ID, 5, nchar(samples_df$ID))
-
- # select cols needed to CREATE df:
-samples <- dplyr::select(samples_df, ID, Sex, DOB, Wean.date, dplyr::starts_with("Mutation"), dplyr::starts_with("Grade"), Line...Strain..Name., Line...Strain..Official.name., Cage, Cage.category )
-
- # unite the mutations and grades to form colony_genotype col:
-samples <- tidyr::unite(samples, Mutations, dplyr::starts_with("Mutation"))
-samples <- tidyr::unite(samples, Grades, dplyr::starts_with("Grade"))
-samples <- tidyr::unite(samples, colony_genotype, Mutations:Grades, sep = ":")
-
- # rename col names to match standard datatables layout:
-samples <- dplyr::transmute(samples, ID = ID, sex = Sex, dob_dt = DOB, colony_genotype = colony_genotype, treatment = "NAIVE", wean_dt = Wean.date, strain_code = Line...Strain..Name., strain = Line...Strain..Official.name., cage_ID = Cage, cage_type = Cage.category )
-
- # REPLACE all spaces that may come up
-samples$colony_genotype <-  gsub(" ", "-", samples$colony_genotype)
-samples$strain_code <-  gsub(" ", "-", samples$strain_code)
-samples$strain <-  gsub(" ", "", samples$strain)
-samples$cage_type <-  gsub(" ", ":", samples$cage_type)
-
-samples
-
- # samples can be used to embed a datatable now!
-
-```
-
-
-
-* Insert sample datatable
-        
-    + `sex             :  M, F`
-    
-    + `dob_dt          :  date of birth`
-    
-    + `colony_genotype :  Colony Code:genotype[wt,het,hom] -> e.g. Rbp4-cre:wt` 
-    
-    + `treatment       :  encode INTERVENTION: NAIVE, 21SNI, 7RHIZ, etc`
-
-    + `wean_dt          :  date of wean`
-    
-    + `strain_code      :  SWC code for mouse line`    
-    
-    + `strain           :  Official strain name`
-
-    + `cage_ID          :  ID of cage mice were in`
-
-    + `cage_type       :  Typically IVC`
-
-
-
-```{r, eval=FALSE}
-
- # HIGHLIGHT TEXT BELOW - then SAVE DOCUMENT - CTRL + S
-  # THEN run this chunk to insert datatable
-  # THEN delete this code chunk && SAVE DOCUMENT - CTRL + S
-projectmanagr::datatable_insert_from_dataframe(samples)
-
-```
-
-
-
-__HIGHLIGHT_TEXT_TO_INSERT_DATATABLE_HERE__
-
-
-
-
-
-```{r, eval=FALSE, include=FALSE}
- # CHECK sample datatables - place cursor HERE & run code chunk
-projectmanagr::datatable_read_to_selection()
-```
+__describe_protocol_execution__what_was_processed__
 
 
 ----
 
 
 
-## [] Post Fix Tissue LOG
+## [] Perfuse Fix Mouse LOG
 
 
-SOP : [Post Fix Tissue](post-fix-tissue)
+SOP : [Perfuse Fix Mouse](perfuse-fix-mouse)
 
 
-Tissue placed into fixative for preservation.
+Mice perfused with manual syringe method.
 
 
+* Mouse Perfusion
 
-* Log fixation data:
+    + __NOTES_any_changes_to_SOP__
+
+    + All perfusions followed SOP - moved to post-fix ~20min after perfusion
     
-    + `fix_01_dt           :  DATETIME of perfusion`
-
-    + `fix_01_condition  :  store condition code - PFA4_RT PFA4_MeOH1_RT `
-
-    + `fix_01_location   :  location code  L160:D4:B04 L160:S1:Rack2 `
 
 
 
+* Log perfusion data:
+    
+    + `perfuse_fix_01_dt           :  DATETIME of perfusion`
 
->>>> 
->>>> Fill Datatables Template with existing samples
->>>> 
->>>>  * Place cursor inside _TEMPLATE_ Datatable
->>>>  * Run projectmanagr::addin_datatable_add_data() : 
->>>>      + CTRL + M T A
->>>>  * Select existing datatable(s) 
->>>>      + 
->>>> 
+    + `perfuse_fix_01_condition    :  store condition code - F4PB_RT F4M1PB_RT `
+
+    + `perfuse_fix_01_location     :  location code  L160:HOOD-PERFUSION `
+
 
 
 +===============================================================================
@@ -603,32 +472,35 @@ Tissue placed into fixative for preservation.
     TEMPLATE  :  ADD_DATA
 
 
-        ID           fix_01_dt         fix_01_condition      fix_01_location    
-    =========  ====================  ====================  =====================  
+        ID      perfuse_fix_01_dt     perfuse_fix_01_condition    perfuse_fix_01_location    
+    =========  ====================  ==========================  =========================  
 
-     _SID_       INSERT__DATETIME      PFA4_RT              L160:HOOD-PERFUSION   
-                 INSERT__DATETIME      PFA4_MeOH1_RT        L160:HOOD-PERFUSION
+     _SID_       INSERT__DATETIME      F4PB_RT                     L160:HOOD-PERFUSION   
+
+
+>>>> 
+>>>> Fill Datatable Template column values with appropriate defaults
+>>>> 
+>>>> Place CURSOR on this line ... 
+>>>>   run projectmanagr::addin_datatable_add_data() - CTRL + M,T,A
+>>>>     Select appropriate datatable
+>>>>     Select appropriate IDs/Groups : all-IDs
+>>>>
 
 
 +===============================================================================
 
 
 
-* Notes
-
-    + _notes_
-
-
-```{r, eval=FALSE, include=FALSE}
- # CHECK sample datatables - place cursor HERE & run code chunk
+```{r, eval=FALSE}
+ # CHECK sample datatables - CURSOR HERE
 projectmanagr::datatable_read_to_selection()
 ```
 
 
-
 {{SEP01}}
 
-{{PROTOCOL_SEP}}
+{{CONTENT_SEP}}
 
 
 

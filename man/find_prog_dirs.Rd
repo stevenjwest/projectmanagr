@@ -4,7 +4,7 @@
 \alias{find_prog_dirs}
 \title{Find Programme Dirs from Organisation path}
 \usage{
-find_prog_dirs(orgPath)
+find_prog_dirs(orgPath, settings)
 }
 \description{
 Searches the orgPath to identify all programmes.
