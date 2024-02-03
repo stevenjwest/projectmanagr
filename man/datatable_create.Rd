@@ -9,7 +9,7 @@ datatable_create(
   data_cols = "",
   datatable_name = "samples",
   default_data_vals = list(),
-  dt_length = 120
+  dt_length = 100
 )
 }
 \arguments{
@@ -19,7 +19,7 @@ datatable_create(
 
 \item{datatable_name}{String of data table name - default "samples".}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 }
 \description{
 Creates a new Sample DataTable vector. The Sample DataTable will contain an

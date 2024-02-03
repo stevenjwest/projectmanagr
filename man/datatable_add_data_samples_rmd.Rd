@@ -10,7 +10,7 @@ datatable_add_data_samples_rmd(
   data_cols,
   datatable_name,
   ids_vector = "",
-  dt_length = 120,
+  dt_length = 100,
   summarise_reps = FALSE
 )
 }
@@ -28,7 +28,7 @@ datatable_add_data_samples_rmd(
 IDs (which must already be declared in datatable name under a 'group-' data
 column), or (a subset of) IDs from datatable.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 
 \item{summarise_reps}{Boolean to indicate whether reps should be summarised in
 the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,

@@ -8,7 +8,7 @@ datatable_add_group_template(
   IDs,
   template_table,
   datatable_name,
-  dt_length = 120
+  dt_length = 100
 )
 }
 \arguments{
@@ -19,7 +19,7 @@ in the Rmd file.}
 
 \item{datatable_name}{String of data table name.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 }
 \description{
 Creates add dataSample DataTable vector. The Sample DataTable will contain an

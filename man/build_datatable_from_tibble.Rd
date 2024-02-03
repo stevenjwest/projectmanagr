@@ -8,7 +8,7 @@ build_datatable_from_tibble(
   tb,
   datatable_name,
   dt_function = "CREATE",
-  dt_length = 120
+  dt_length = 100
 )
 }
 \arguments{

@@ -9,7 +9,7 @@ datatable_add_data_variables(
   var_names,
   datatable_name,
   group_names,
-  dt_length = 120
+  dt_length = 100
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ existing data tables.}
 constitute the remaining column headers.  These will typically be group
 names.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 }
 \description{
 for procedure data

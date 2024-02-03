@@ -7,7 +7,7 @@
 datatable_dispose(
   contents,
   datatable_name,
-  dt_length = 120,
+  dt_length = 100,
   summarise_reps = TRUE
 )
 }
@@ -19,7 +19,7 @@ existing data tables.}
 EXIST IN `contents`.  The resampling will be default include all sample IDs
 from this datatable.  The user may then delete sample IDs as appropriate.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 
 \item{summarise_reps}{Boolean to indicate whether reps should be summarised in
 the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,

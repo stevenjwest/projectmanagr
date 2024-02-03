@@ -4,7 +4,7 @@
 \alias{datatable_create_template}
 \title{Create new Sample Data Table from Template}
 \usage{
-datatable_create_template(IDs, template_table, datatable_name, dt_length = 120)
+datatable_create_template(IDs, template_table, datatable_name, dt_length = 100)
 }
 \arguments{
 \item{IDs}{Character vector of sample IDs}
@@ -14,7 +14,7 @@ in the Rmd file.}
 
 \item{datatable_name}{String of data table name.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 }
 \description{
 DEPRECATED : Using datatable_create to handle both novel & templated

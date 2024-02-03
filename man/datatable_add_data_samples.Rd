@@ -10,7 +10,7 @@ datatable_add_data_samples(
   datatable_name,
   ids_vector = "",
   default_data_vals = list(),
-  dt_length = 120,
+  dt_length = 100,
   summarise_reps = FALSE
 )
 }
@@ -30,7 +30,7 @@ column), or (a subset of) IDs from datatable.}
 
 \item{default_data_vals}{List of default data values to add to data cols.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 
 \item{summarise_reps}{Boolean to indicate whether reps should be summarised in
 the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,

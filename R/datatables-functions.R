@@ -17,12 +17,12 @@
 #'
 #' @param datatable_name String of data table name - default "samples".
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_create_rmd <- function( rmd_path, rmd_line,
                               IDs="", data_cols="",
-                              datatable_name = "samples", dt_length = 120 ) {
+                              datatable_name = "samples", dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_create_rmd():\n" )
 
@@ -64,11 +64,11 @@ datatable_create_rmd <- function( rmd_path, rmd_line,
 #'
 #' @param datatable_name String of data table name - default "samples".
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_create_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
-                                           IDs, datatable_name = "samples", dt_length = 120 ) {
+                                           IDs, datatable_name = "samples", dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_create_template_rmd():\n" )
 
@@ -181,11 +181,11 @@ datatable_create_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
 #'
 #' @param datatable_name String of data table name - default "samples".
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_create <- function( IDs="", data_cols="", datatable_name = "samples",
-                              default_data_vals=list(), dt_length = 120 ) {
+                              default_data_vals=list(), dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_create():\n" )
 
@@ -278,11 +278,11 @@ datatable_create <- function( IDs="", data_cols="", datatable_name = "samples",
 #'
 #' @param datatable_name String of data table name.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_create_template <- function( IDs, template_table, datatable_name,
-                                       dt_length = 120 ) {
+                                       dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_create_template():\n" )
 
@@ -896,7 +896,7 @@ OLD_datatable_build <- function() {
 #' IDs (which must already be declared in datatable name under a 'group-' data
 #' column), or (a subset of) IDs from datatable.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @param summarise_reps Boolean to indicate whether reps should be summarised in
 #' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
@@ -906,7 +906,7 @@ OLD_datatable_build <- function() {
 #'
 #' @export
 datatable_add_data_samples_rmd <- function( rmd_path, rmd_line, data_cols, datatable_name,
-                                            ids_vector="", dt_length = 120, summarise_reps = FALSE  ) {
+                                            ids_vector="", dt_length = 100, summarise_reps = FALSE  ) {
 
   cat( "\nprojectmanagr::datatable_add_data_samples_rmd():\n" )
 
@@ -948,13 +948,13 @@ datatable_add_data_samples_rmd <- function( rmd_path, rmd_line, data_cols, datat
 #'
 #' @param datatable_name String of data table name.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @param summarise_reps Whether to summarise reps of samples in the new datatable.
 #'
 #' @export
 datatable_add_data_samples_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
-                                                     IDs, datatable_name, dt_length = 120, summarise_reps = FALSE ) {
+                                                     IDs, datatable_name, dt_length = 100, summarise_reps = FALSE ) {
 
   cat( "\nprojectmanagr::datatable_add_data_samples_template_rmd():\n" )
 
@@ -1033,7 +1033,7 @@ datatable_add_data_samples_template_rmd <- function( rmd_path, rmd_startline, rm
 #'
 #' @param default_data_vals List of default data values to add to data cols.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @param summarise_reps Boolean to indicate whether reps should be summarised in
 #' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
@@ -1044,7 +1044,7 @@ datatable_add_data_samples_template_rmd <- function( rmd_path, rmd_startline, rm
 #' @export
 datatable_add_data_samples <- function( contents, data_cols, datatable_name,
                                         ids_vector="", default_data_vals=list(),
-                                        dt_length = 120, summarise_reps = FALSE  ) {
+                                        dt_length = 100, summarise_reps = FALSE  ) {
 
 
   # DEFINE NAMED CONSTANTS
@@ -1448,11 +1448,11 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
 #' constitute the remaining column headers.  These will typically be group
 #' names.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_add_data_variables_rmd <- function( rmd_path, rmd_line, var_names, datatable_name, group_names,
-                                              dt_length = 120 ) {
+                                              dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_add_data_variables_rmd():\n" )
 
@@ -1493,11 +1493,11 @@ datatable_add_data_variables_rmd <- function( rmd_path, rmd_line, var_names, dat
 #' constitute the remaining column headers.  These will typically be group
 #' names.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_add_data_variables <- function(contents, var_names, datatable_name, group_names,
-                                         dt_length = 120  ) {
+                                         dt_length = 100  ) {
 
 
   cat( "\nprojectmanagr::datatable_add_data_variables():\n" )
@@ -1656,11 +1656,11 @@ datatable_add_data_variables <- function(contents, var_names, datatable_name, gr
 #' constitute the remaining column headers.  These will typically be group
 #' names. Must EXIST in contents and be declared from datatable_name IDs!
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_add_data_timetable_rmd <- function( rmd_path, rmd_line, step_names, datatable_name, group_names,
-                                              dt_length = 120 ) {
+                                              dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_add_data_timetable_rmd():\n" )
 
@@ -1700,11 +1700,11 @@ datatable_add_data_timetable_rmd <- function( rmd_path, rmd_line, step_names, da
 #' constitute the remaining column headers.  These will typically be group
 #' names. Must EXIST in contents and be declared from datatable_name IDs!
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_add_data_timetable <- function(contents, step_names, datatable_name, group_names,
-                                         dt_length = 120 ) {
+                                         dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_add_data_timetable():\n" )
 
@@ -1860,10 +1860,10 @@ datatable_add_data_timetable <- function(contents, step_names, datatable_name, g
 #'
 #' @param datatable_name String of data table name.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 datatable_add_data_samples_template <- function( IDs, template_table, datatable_name,
-                                       dt_length = 120 ) {
+                                       dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_add_data_samples_template():\n" )
 
@@ -2045,7 +2045,7 @@ summarise_id_rep <- function(IDs, REPs) {
 #' @param groups A list of vectors containing the group labels for each group
 #' defined in group_names.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @param summarise_reps Boolean to indicate whether reps should be summarised in
 #' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
@@ -2055,7 +2055,7 @@ summarise_id_rep <- function(IDs, REPs) {
 #'
 #' @export
 datatable_add_group_rmd <- function(rmd_path, rmd_startline, rmd_endline, group_names, datatable_name,
-                                    groups, dt_length = 120, summarise_reps = FALSE  ) {
+                                    groups, dt_length = 100, summarise_reps = FALSE  ) {
 
   cat( "\nprojectmanagr::datatable_group_rmd():\n" )
 
@@ -2120,7 +2120,7 @@ datatable_add_group_rmd <- function(rmd_path, rmd_startline, rmd_endline, group_
 #' @param groups A list of vectors containing the group labels for each group
 #' defined in group_names
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @param summarise_reps Boolean to indicate whether reps should be summarised in
 #' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
@@ -2130,7 +2130,7 @@ datatable_add_group_rmd <- function(rmd_path, rmd_startline, rmd_endline, group_
 #'
 #' @export
 datatable_add_group <- function( contents, group_names, datatable_name,
-                                  groups, dt_length = 120, summarise_reps = FALSE   ) {
+                                  groups, dt_length = 100, summarise_reps = FALSE   ) {
 
 
   cat( "\nprojectmanagr::datatable_add_groups():\n" )
@@ -2366,13 +2366,13 @@ datatable_add_group <- function( contents, group_names, datatable_name,
 #'
 #' @param datatable_name String of data table name.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @param summarise_reps Whether to summarise reps of samples in the new datatable.
 #'
 #' @export
 datatable_add_group_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
-                                              IDs, datatable_name, dt_length = 120,
+                                              IDs, datatable_name, dt_length = 100,
                                               summarise_reps = FALSE ) {
 
   cat( "\nprojectmanagr::datatable_add_group_template_rmd():\n" )
@@ -2432,11 +2432,11 @@ datatable_add_group_template_rmd <- function( rmd_path, rmd_startline, rmd_endli
 #'
 #' @param datatable_name String of data table name.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_add_group_template <- function( IDs, template_table, datatable_name,
-                                         dt_length = 120 ) {
+                                         dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_add_group_template():\n" )
 
@@ -2698,7 +2698,7 @@ datatable_Add_Groups2 <- function () {
 #' EXIST IN `contents`.  The resampling will be default include all sample IDs
 #' from this datatable.  The user may then delete sample IDs as appropriate.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @param summarise_reps Boolean to indicate whether reps should be summarised in
 #' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
@@ -2708,7 +2708,7 @@ datatable_Add_Groups2 <- function () {
 #'
 #' @export
 datatable_dispose_rmd <- function( rmd_path, rmd_line, datatable_name,
-                                   dt_length = 120, summarise_reps = TRUE ) {
+                                   dt_length = 100, summarise_reps = TRUE ) {
 
   cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
 
@@ -2748,7 +2748,7 @@ datatable_dispose_rmd <- function( rmd_path, rmd_line, datatable_name,
 #' EXIST IN `contents`.  The resampling will be default include all sample IDs
 #' from this datatable.  The user may then delete sample IDs as appropriate.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @param summarise_reps Boolean to indicate whether reps should be summarised in
 #' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
@@ -2757,7 +2757,7 @@ datatable_dispose_rmd <- function( rmd_path, rmd_line, datatable_name,
 #' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.
 #'
 #' @export
-datatable_dispose <- function( contents, datatable_name, dt_length = 120, summarise_reps = TRUE ) {
+datatable_dispose <- function( contents, datatable_name, dt_length = 100, summarise_reps = TRUE ) {
 
   cat( "\nprojectmanagr::datatable_dispose():\n" )
 
@@ -2914,11 +2914,11 @@ get_current_datetime_string <- function() {
 #' @param resample_vector A character vector that contains all the resample
 #' codes to be added to each sample/rep in the resample table.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name,
-                                    resample_vector, dt_length = 120 ) {
+                                    resample_vector, dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
 
@@ -2974,11 +2974,11 @@ datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name,
 #' @param resample_vector A character vector that contains all the resample
 #' codes to be added to each sample/rep in the resample table.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_resample <- function( contents, datatable_name, resample_vector, rep_vector = c(1),
-                                dt_length = 120 ) {
+                                dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_resample():\n" )
 
@@ -3103,12 +3103,12 @@ datatable_resample <- function( contents, datatable_name, resample_vector, rep_v
 #'
 #' @param datatable_name String of data table name.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #'
 #' @export
 datatable_resample_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
-                                             datatable_name, dt_length = 120 ) {
+                                             datatable_name, dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_resample_template_rmd():\n" )
 
@@ -3165,7 +3165,7 @@ datatable_resample_template_rmd <- function( rmd_path, rmd_startline, rmd_endlin
 #' JUST USE GROUP - no need to split!
 #'
 datatable_split_rmd <- function(rmd_path, rmd_line, datatable_name,
-                                split_vector, dt_length = 120 ) {
+                                split_vector, dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
 
@@ -3204,7 +3204,7 @@ datatable_split_rmd <- function(rmd_path, rmd_line, datatable_name,
 #' JUST USE GROUP - no need to split!
 #'
 datatable_split <- function(contents, datatable_name, split_vector,
-                            dt_length = 120 ) {
+                            dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_resample():\n" )
 
@@ -3735,14 +3735,14 @@ datatable_find_old_code <- function() {
 #' each sample ID appears once in export datatable, and reps are abbreviated as 1:3, 4:5, etc (depending
 #' on which reps are exported). True by default.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @return List of all character vectors of EXPORT datatables inserted into notes, with attr "path" that
 #' contains the absolute path of the source note.
 #'
 #' @export
 datatable_export <- function(samples_summary, destination_note_path, datetime="", summarise_reps = TRUE,
-                             dt_length = 120) {
+                             dt_length = 100) {
 
   cat( "\nprojectmanagr::datatable_export():\n" )
 
@@ -4023,12 +4023,12 @@ datatable_export <- function(samples_summary, destination_note_path, datetime=""
 #' each sample ID appears once in import datatable, and reps are abbreviated as 1:3, 4:5, etc (depending
 #' on which reps are imported). FALSE by default - so each rep is on its own line.
 #'
-#' @param dt_length Int of data table max length in characters - default 120.
+#' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
 datatable_import <- function(export_datatables, destination_note_path, destination_note_line,
                              datetime="", summarise_reps = FALSE,
-                             dt_length = 120) {
+                             dt_length = 100) {
 
 
   cat( "\nprojectmanagr::datatable_import():\n" )
@@ -7057,7 +7057,7 @@ datatable_extract <- function(dt_vector) {
 
 
 
-get_col_indices <- function(di, delim_indices, dt_length = 120) {
+get_col_indices <- function(di, delim_indices, dt_length = 100) {
 
   delim_indices <- c(delim_indices, dt_length) # combine
   ci <- c()
@@ -7585,7 +7585,7 @@ build_datatable_from_dataframe <- function( ID_col, IDs, data_cols, data, dt_fun
 #' @param dt_function CREATE ADD_DATA RESAMPLE IMPORT EXPORT
 #'
 #' @export
-build_datatable_from_tibble <- function(tb, datatable_name, dt_function = "CREATE", dt_length = 120 ) {
+build_datatable_from_tibble <- function(tb, datatable_name, dt_function = "CREATE", dt_length = 100 ) {
 
   cat( "\nprojectmanagr::build_datatable_from_tibble():\n" )
 
@@ -8149,7 +8149,7 @@ datatable_datetimes_to_durations <- function( dt,
 #'
 #' @export
 datatable_insert_from_dataframe <- function( df,
-                                             dt_function = "CREATE", dt_length = 120 ) {
+                                             dt_function = "CREATE", dt_length = 100 ) {
 
   DATATABLE_SPACER_CHAR <- "="
 

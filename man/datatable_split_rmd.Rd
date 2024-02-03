@@ -9,7 +9,7 @@ datatable_split_rmd(
   rmd_line,
   datatable_name,
   split_vector,
-  dt_length = 120
+  dt_length = 100
 )
 }
 \description{

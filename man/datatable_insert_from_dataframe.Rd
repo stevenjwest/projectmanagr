@@ -4,7 +4,7 @@
 \alias{datatable_insert_from_dataframe}
 \title{Insert a datatable from a dataframe}
 \usage{
-datatable_insert_from_dataframe(df, dt_function = "CREATE", dt_length = 120)
+datatable_insert_from_dataframe(df, dt_function = "CREATE", dt_length = 100)
 }
 \arguments{
 \item{df}{a dataframe/tibble with data to insert into Rmd}

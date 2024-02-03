@@ -10,7 +10,7 @@ datatable_create_rmd(
   IDs = "",
   data_cols = "",
   datatable_name = "samples",
-  dt_length = 120
+  dt_length = 100
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ datatable_create_rmd(
 
 \item{datatable_name}{String of data table name - default "samples".}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 }
 \description{
 Creates a new Sample DataTable in specified Rmd file at specified line.

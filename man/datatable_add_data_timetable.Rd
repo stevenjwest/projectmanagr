@@ -9,7 +9,7 @@ datatable_add_data_timetable(
   step_names,
   datatable_name,
   group_names,
-  dt_length = 120
+  dt_length = 100
 )
 }
 \arguments{
@@ -25,7 +25,7 @@ timetable. Must NOT contain any spaces - use '-' or '_'.}
 constitute the remaining column headers.  These will typically be group
 names. Must EXIST in contents and be declared from datatable_name IDs!}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 }
 \description{
 First column contains a list of timings, subsequent column titles are

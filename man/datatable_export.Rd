@@ -9,7 +9,7 @@ datatable_export(
   destination_note_path,
   datetime = "",
   summarise_reps = TRUE,
-  dt_length = 120
+  dt_length = 100
 )
 }
 \arguments{
@@ -25,7 +25,7 @@ will be moved to.}
 each sample ID appears once in export datatable, and reps are abbreviated as 1:3, 4:5, etc (depending
 on which reps are exported). True by default.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 }
 \value{
 List of all character vectors of EXPORT datatables inserted into notes, with attr "path" that

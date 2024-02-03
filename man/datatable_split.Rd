@@ -4,7 +4,7 @@
 \alias{datatable_split}
 \title{Split Samples into separate datatables}
 \usage{
-datatable_split(contents, datatable_name, split_vector, dt_length = 120)
+datatable_split(contents, datatable_name, split_vector, dt_length = 100)
 }
 \description{
 This is NOW DEPRECATED - not using SPLIT as this interferes with the FIND function:

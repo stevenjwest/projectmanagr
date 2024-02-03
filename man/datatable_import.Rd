@@ -10,7 +10,7 @@ datatable_import(
   destination_note_line,
   datetime = "",
   summarise_reps = FALSE,
-  dt_length = 120
+  dt_length = 100
 )
 }
 \arguments{
@@ -29,7 +29,7 @@ will be copied to.}
 each sample ID appears once in import datatable, and reps are abbreviated as 1:3, 4:5, etc (depending
 on which reps are imported). FALSE by default - so each rep is on its own line.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 
 \item{samples_summary}{A summary tibble from datatable_find, with the final IMPORT column
 curated to include the number of reps to export from each sample/rep.}

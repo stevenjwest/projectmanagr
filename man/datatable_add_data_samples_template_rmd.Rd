@@ -10,7 +10,7 @@ datatable_add_data_samples_template_rmd(
   rmd_endline,
   IDs,
   datatable_name,
-  dt_length = 120,
+  dt_length = 100,
   summarise_reps = FALSE
 )
 }
@@ -25,7 +25,7 @@ datatable_add_data_samples_template_rmd(
 
 \item{datatable_name}{String of data table name.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 
 \item{summarise_reps}{Whether to summarise reps of samples in the new datatable.}
 }

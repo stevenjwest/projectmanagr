@@ -9,7 +9,7 @@ datatable_resample_rmd(
   rmd_line,
   datatable_name,
   resample_vector,
-  dt_length = 120
+  dt_length = 100
 )
 }
 \arguments{
@@ -22,7 +22,7 @@ datatable_resample_rmd(
 \item{resample_vector}{A character vector that contains all the resample
 codes to be added to each sample/rep in the resample table.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 }
 \description{
 Creates a resample datatable consisting of: sample ID column containing all

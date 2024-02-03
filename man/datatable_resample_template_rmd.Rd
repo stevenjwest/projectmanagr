@@ -9,7 +9,7 @@ datatable_resample_template_rmd(
   rmd_startline,
   rmd_endline,
   datatable_name,
-  dt_length = 120
+  dt_length = 100
 )
 }
 \arguments{
@@ -21,7 +21,7 @@ datatable_resample_template_rmd(
 
 \item{datatable_name}{String of data table name.}
 
-\item{dt_length}{Int of data table max length in characters - default 120.}
+\item{dt_length}{Int of data table max length in characters - default 100.}
 
 \item{IDs}{Character vector of sample IDs}
 }
