@@ -5,10 +5,11 @@
 \title{Create Weekly Journal}
 \usage{
 create_weekly_journal(
-  date,
-  organisationPath,
-  journalFileNameTemplate = "YYYY-MM-DD",
-  journalTemplate = "Weekly-Work-Journal-Template.Rmd"
+  date = lubridate::today(),
+  organisationPath = getwd(),
+  journalFileNameTemplate = "{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
+  journalTemplate = "Weekly-Work-Journal-Template.Rmd",
+  openJournal = TRUE
 )
 }
 \arguments{

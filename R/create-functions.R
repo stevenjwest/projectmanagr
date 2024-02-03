@@ -1724,9 +1724,11 @@ create_content <- function(selection, contentName, contentDescription,
 #' for the weekly journal.
 #'
 #' @export
-create_weekly_journal <- function(date, organisationPath,
-                                  journalFileNameTemplate="YYYY-MM-DD",
-                                  journalTemplate="Weekly-Work-Journal-Template.Rmd") {
+create_weekly_journal <- function(date=lubridate::today(),
+                                  organisationPath=getwd(),
+                                  journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
+                                  journalTemplate="Weekly-Work-Journal-Template.Rmd",
+                                  openJournal = TRUE) {
 
 
   #### Instance Variables ####
@@ -1744,6 +1746,9 @@ create_weekly_journal <- function(date, organisationPath,
 
   # get the orgPath from organisationPath
   orgPath <- find_org_directory(organisationPath)
+
+  # get the organisation name
+  orgName <- basename(orgPath)
 
   if(orgPath == "" ) { # only blank if orgPath not identified
     stop( paste0("  organisationPath is not in an Organisation: ", organisationPath) )
@@ -1779,10 +1784,12 @@ create_weekly_journal <- function(date, organisationPath,
 
   #### create Journal Rmd file ####
 
-  # modify journalFileNameTemplate
-  journalFileNameTemplate <- gsub('YYYY', year, journalFileNameTemplate)
-  journalFileNameTemplate <- gsub('MM', month, journalFileNameTemplate)
-  journalFileNameTemplate <- gsub('DD', day, journalFileNameTemplate)
+  # modify journalFileNameTemplate - with any variable syntax
+  journalFileNameTemplate <- gsub('{{YYYY}}', year, journalFileNameTemplate, fixed = TRUE)
+  journalFileNameTemplate <- gsub('{{MM}}', month, journalFileNameTemplate, fixed = TRUE)
+  journalFileNameTemplate <- gsub('{{DD}}', day, journalFileNameTemplate, fixed = TRUE)
+
+  journalFileNameTemplate <- gsub('{{ORGNAME}}', orgName, journalFileNameTemplate, fixed = TRUE)
 
   journalRmdPath <- paste0(journalPath, .Platform$file.sep, journalFileNameTemplate, ".Rmd")
   done <- file.create(journalRmdPath)
@@ -1839,6 +1846,20 @@ create_weekly_journal <- function(date, organisationPath,
   write_file(journalContents, journalRmdPath)
 
   cat( "  Written template to Journal .Rmd file: ", journalRmdPath, "\n" )
+
+  # open the newly created journal
+  if( openJournal == TRUE ) {
+
+    # navigate to journalk file:
+    rstudioapi::navigateToFile(journalRmdPath)
+
+    journalDirPath <- dirname(journalRmdPath)
+    # navigate to containing dir
+    rstudioapi::filesPaneNavigate(journalDirPath)
+    # and set working directory
+    setwd(journalDirPath)
+
+  }
 
 }
 
