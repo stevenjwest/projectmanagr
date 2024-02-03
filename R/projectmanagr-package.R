@@ -1,9 +1,7 @@
-#' projectmanagr
-#'
-#' Use projectmanagr \R functions to manage project documentation in Rmd Files.
-#'
-#' @name projectmanagr
-#' @docType package
-#' @import shiny miniUI rstudioapi shinyFiles
-NULL
+#' @keywords internal
+"_PACKAGE"
 
+## usethis namespace: start
+#' @import shiny miniUI rstudioapi shinyFiles
+## usethis namespace: end
+NULL
