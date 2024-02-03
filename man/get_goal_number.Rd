@@ -7,6 +7,6 @@
 get_goal_number(goal, settings)
 }
 \description{
-`goal` as collected from selection[["goal"]] - fitting the format specified
-in settings[["ProjectGoalHeader"]].
+\code{goal} as collected from selection[\link{"goal"}] - fitting the format specified
+in settings[\link{"ProjectGoalHeader"}].
 }

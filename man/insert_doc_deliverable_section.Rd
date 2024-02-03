@@ -12,7 +12,7 @@ insert_doc_deliverable_section(
 \arguments{
 \item{selection}{Selection object from the Project Doc file where the
 deliverable section is to be inserted.  Use
-`projectmanagr::cursor_selection()` or `projectmanagr::user_selection()` to
+\code{projectmanagr::cursor_selection()} or \code{projectmanagr::user_selection()} to
 create this object.}
 
 \item{deliverableSectionTemplate}{Template file that contains boilerplate
@@ -27,5 +27,5 @@ incremented from the last Deliverable Section number.
 \details{
 This function will only work if the selection is in a Project Doc.  The
 deliverable section will be placed in correction position and with correct
-spacing according to the `deliverableSectionTemplate`.
+spacing according to the \code{deliverableSectionTemplate}.
 }

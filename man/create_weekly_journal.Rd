@@ -15,7 +15,7 @@ create_weekly_journal(
 \arguments{
 \item{date}{The start date of the Weekly Journal - typically a Monday.  This
 should be in 'YYYY-MM-DD' format, and can be a String. Can create a Date
-object with code `as.Date(paste(year, month, "01", sep = "-"))`.}
+object with code \code{as.Date(paste(year, month, "01", sep = "-"))}.}
 
 \item{organisationPath}{The path to the Organisation where the weekly
 journal is created & saved.}
@@ -30,5 +30,5 @@ for the weekly journal.}
 Saved in directory indicated in settings under "WeeklyJournalDir".
 }
 \details{
-Can optionally extract TODOs to this file with the `extract_todos()` function.
+Can optionally extract TODOs to this file with the \code{extract_todos()} function.
 }

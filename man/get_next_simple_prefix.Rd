@@ -12,7 +12,7 @@ into.}
 }
 \description{
 This method extracts the Prefix String from projectNotePath (isolated by extracting
-all letters and numbers up to the `projIndexSep`).  It then checks the
+all letters and numbers up to the \code{projIndexSep}).  It then checks the
 Rmd Files in projectNotePath that begin with prefixString to compute the next SIMPLE
 Prefix - +1 from the highest prefix value.
 }

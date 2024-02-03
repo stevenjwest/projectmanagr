@@ -15,7 +15,6 @@ methods.
 
 line - the line number to generate the selection list from.
 
-
 This function first identifies if the line in projectDocPath is on a GROUP (HEADER NOTE or SUBNOTE).
 It then searches back through the Active Document to find the first line starting with
 "##" - if this is a "#### TASK" line, then the first previous "### DELIVERABLE" line and
@@ -24,35 +23,34 @@ the first previous "### GOAL" line is also identified.
 If TASK, DELIVERABLE and GOAL lines are all successfully found, this method returns
 a LIST:
 
-[[1]] or [["task"]] - contains the line that starts "#### TASK" in the Active Document.
+[\link{1}] or [\link{"task"}] - contains the line that starts "#### TASK" in the Active Document.
 
-[[2]] or [["taskLine"]] - the task line number (index) in the Active Document.
+[\link{2}] or [\link{"taskLine"}] - the task line number (index) in the Active Document.
 
-[[3]] or [["deliverable"]] - contains the line that starts "### DELIVERABLE" in the Active Document.
+[\link{3}] or [\link{"deliverable"}] - contains the line that starts "### DELIVERABLE" in the Active Document.
 
-[[4]] or [["deliverableLine"]] - the deliverable line number (index) in the Active Document.
+[\link{4}] or [\link{"deliverableLine"}] - the deliverable line number (index) in the Active Document.
 
-[[5]] or [["goal"]] - contains the line that starts "## GOAL" in the Active Document.
+[\link{5}] or [\link{"goal"}] - contains the line that starts "## GOAL" in the Active Document.
 
-[[6]] or [["goalLine"]] - the goal line number (index) in the Active Document.
+[\link{6}] or [\link{"goalLine"}] - the goal line number (index) in the Active Document.
 
-[[7]] or [["originalLine"]] - the original line where the Active Cursor was on in the Active Document.
+[\link{7}] or [\link{"originalLine"}] - the original line where the Active Cursor was on in the Active Document.
 
-[[8]] or [["originalLineNumber"]] - the original line number where the Active Cursor was on in the Active Document.
+[\link{8}] or [\link{"originalLineNumber"}] - the original line number where the Active Cursor was on in the Active Document.
 
-[[9]] or [["addingSubNote"]] - a Boolean value indicating the Cursor was on a GROUP (HEADER NOTE or SUBNOTE).
+[\link{9}] or [\link{"addingSubNote"}] - a Boolean value indicating the Cursor was on a GROUP (HEADER NOTE or SUBNOTE).
 
-[[10]] or [["headerNoteLink"]] - if addingSubNote is TRUE, contains the link to the headerSubNote, AS IS GIVEN
+[\link{10}] or [\link{"headerNoteLink"}] - if addingSubNote is TRUE, contains the link to the headerSubNote, AS IS GIVEN
 IN THE PROJECT DO (i.e. the link TITLE and then the link ADDRESS - for example
-**[LAB~001-00~ GARS SC Clearing Labelling](../LAB/LAB~001-00~_GARS_SC_Clearing_Labelling.Rmd)**), else is BLANK
+\strong{\href{../LAB/LAB~001-00~_GARS_SC_Clearing_Labelling.Rmd}{LAB~001-00~ GARS SC Clearing Labelling}}), else is BLANK
 
-[[11]] or [["headerNoteLineNumber"]] - if addingSubNote is TRUE, contains the line that contains the headerSubNoteLink, else is BLANK.
+[\link{11}] or [\link{"headerNoteLineNumber"}] - if addingSubNote is TRUE, contains the line that contains the headerSubNoteLink, else is BLANK.
 
-[[12]] or [["projectDocPath"]] - the projectDocPath
-
+[\link{12}] or [\link{"projectDocPath"}] - the projectDocPath
 
 If this method is unsuccessful (there is an error), it returns a LIST that contains:
 
-[[1]] - contains the String "FALSE"
-[[2]] - contains the errorMessage - a String indicating why the method failed.
+[\link{1}] - contains the String "FALSE"
+[\link{2}] - contains the errorMessage - a String indicating why the method failed.
 }

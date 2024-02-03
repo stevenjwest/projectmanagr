@@ -11,7 +11,7 @@ Return all datatables which contain sample IDs that are ACTIVE : they have
 not been resampled or exported.
 }
 \details{
-Will exclude any tables that contain the `resample` or `export` columns only.
+Will exclude any tables that contain the \code{resample} or \code{export} columns only.
 It is true they may not be filled for all sample IDs, but in these cases any
 further resampling or exporting should be performed in the original table
 in order to keep all the data log for resampling or exporting of sample IDs

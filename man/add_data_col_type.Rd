@@ -8,16 +8,16 @@ add_data_col_type(dt, name, data, indices = "")
 }
 \description{
 Accepts an existing dataframe, colname and data to insert.  Adds data
-as type `char` to avoid issues when adding data with default or error values
+as type \code{char} to avoid issues when adding data with default or error values
 from combining with furhter datatables with specific data types.
 }
 \details{
 User should convert cols to appropriate datatypes as needed in analyses.
 
-This function adds a char column, renames the col to `name`, and
+This function adds a char column, renames the col to \code{name}, and
 finally converts data to char datatype and inserts into datatable.
 
-DT row length MUST equal the length of data.  `data` and `name` must be
+DT row length MUST equal the length of data.  \code{data} and \code{name} must be
 character vectors.
 
 Can optionally use indices to insert data into specific row indices in new col

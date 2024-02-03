@@ -7,6 +7,6 @@
 create_hyperlink(toFileName, toFilePath, fromFilePath)
 }
 \description{
-creates string for hyperlink in Rmd, using `toFileName` as the hyperlink text,
-and generating a RELATIVE LINK to `toFilePath` from `fromFilePath`.
+creates string for hyperlink in Rmd, using \code{toFileName} as the hyperlink text,
+and generating a RELATIVE LINK to \code{toFilePath} from \code{fromFilePath}.
 }

@@ -7,9 +7,9 @@
 get_rstudio_doc_list_filtered_reordered(filePath, settings)
 }
 \description{
-Filtered to ensure only files that are in the `filePath` orgPath and are
+Filtered to ensure only files that are in the \code{filePath} orgPath and are
 project notes (not unknown files or project docs).
 }
 \details{
-Reordered to list all files from the right of the selected file (`filePath`).
+Reordered to list all files from the right of the selected file (\code{filePath}).
 }

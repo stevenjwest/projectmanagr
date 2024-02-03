@@ -16,26 +16,26 @@ link_doc_project_note(
 \arguments{
 \item{selection}{List containing the Goal, Del, Task selected from the Project
 Doc, as well as other useful information - lines of Task/Del/Goal, projectDoc
-path content of selection line.  See `cursor_selection()` or `user_selection()`.}
+path content of selection line.  See \code{cursor_selection()} or \code{user_selection()}.}
 
 \item{projNoteRmdPath}{Path to existing Project Note Rmd, in same Org as the
-Project Doc `selection` object.}
+Project Doc \code{selection} object.}
 
 \item{projNoteLinkTemplate}{Template with structure to add the Project Doc
 Goal/Del/Task link in the Project Note.  Includes Project Doc title, link,
 and then links to Goal / Del / Task, plus a Summary Info section (filled
-with the content from `taskSectionHeaderTemplate`).}
+with the content from \code{taskSectionHeaderTemplate}).}
 
 \item{projNoteLinkSummaryTemplate}{Template with structure to add underneath the
 Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-and a 'todo' section by default, linked to `NoteObjectivesSummarySectionHeader`
-& `NoteObjectivesTodoSectionHeader` in `config/settings.yml`}
+and a 'todo' section by default, linked to \code{NoteObjectivesSummarySectionHeader}
+& \code{NoteObjectivesTodoSectionHeader} in \code{config/settings.yml}}
 
 \item{projNoteSummaryTemplate}{Template with structure to add Project Note
 summary to Project Doc under Goal/Del/Task.}
 }
 \description{
 Add a cross-reference between a Project Doc at the Goal-Del-Task as shown in
-`selection` with the simple project note at `projNoteRmdPath`, using the
+\code{selection} with the simple project note at \code{projNoteRmdPath}, using the
 provided templates.
 }

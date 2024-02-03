@@ -25,5 +25,5 @@ columns based on the col header and contents widths.
 \details{
 NOT CLEAR THIS FUNCTION HANDLES VARIALBE MULTI-ROWS CORRECTLY!
 
-Use `build_datatable_from_dataframe()`
+Use \code{build_datatable_from_dataframe()}
 }

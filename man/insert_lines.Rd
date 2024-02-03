@@ -12,5 +12,5 @@ insert_lines(selection, lines)
 \item{lines}{character vector of lines to insert.}
 }
 \description{
-This Function adds `lines` to a Project Note.
+This Function adds \code{lines} to a Project Note.
 }

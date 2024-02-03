@@ -22,13 +22,13 @@ Fix Fog Drosophila.}
 \item{contentDescription}{Description of the protocol - shown
 to users when choosing a protocol to insert.}
 
-\item{contentTemplate}{Template to use, as found in the `config/templates/`
+\item{contentTemplate}{Template to use, as found in the \verb{config/templates/}
 directory.  Default is "Protocol-Template.Rmd"}
 }
 \description{
-This Function create new boilerplate Content, based on the `contentTemplate`,
+This Function create new boilerplate Content, based on the \code{contentTemplate},
 which is inserted into selected Project Note.  The base content template is
-located in the organisation : `config/templates/Content-Template.Rmd` &
+located in the organisation : \code{config/templates/Content-Template.Rmd} &
 provides suggested layout for a Protocol.
 }
 \details{
@@ -36,8 +36,8 @@ Content is any templated insertable text for boilerplate content.  Typically
 in ProjectManage it is used to define a set of Standard Operating
 Procedures (SOPs) & LOG Sections that record Protocol execution.  The
 Content is defined between specific delimiters, defined in
-`CONTENT_SEP.txt`: by default the delimiter is a series of `====`.
+\code{CONTENT_SEP.txt}: by default the delimiter is a series of \verb{====}.
 
 Content defined in a source Project Note can be inserted into new Project
-Notes, using the `insert_content()` function.
+Notes, using the \code{insert_content()} function.
 }

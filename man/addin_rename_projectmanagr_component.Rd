@@ -11,24 +11,25 @@ This Addin provides access to renaming any projectmanagr component,
 including:
 }
 \details{
-* ProjectManagr Project Note filenames
-
-* ProjectManagr Project Doc filenames
-
-* Directories inside a ProjectManagr Organisation
+\itemize{
+\item ProjectManagr Project Note filenames
+\item ProjectManagr Project Doc filenames
+\item Directories inside a ProjectManagr Organisation
+}
 
 This Addin ensures any renaming will automatically update all ProjectManagr
 components to this change, including hyperlinks, GDT links, and paths, as
 needed:
-
-* ProjectManagr Project Note renaming will update all hyperlinks to the note
+\itemize{
+\item ProjectManagr Project Note renaming will update all hyperlinks to the note
 to use the new name.
-
-* ProjectManagr Project Doc renaming will update all hyperlinks & GDT links
+\item ProjectManagr Project Doc renaming will update all hyperlinks & GDT links
 to the Doc to use the new name.
-
-* Directory renaming will depend on the directory type:
-    + If a user-defined directory containing project notes, all note prefixes
-      (inherited from the directory name) will update, as well as any strings
-      that contain /{{DIRNAME}}/?? To update all links that contain the dir?
+\item Directory renaming will depend on the directory type:
+\itemize{
+\item If a user-defined directory containing project notes, all note prefixes
+(inherited from the directory name) will update, as well as any strings
+that contain /{{DIRNAME}}/?? To update all links that contain the dir?
+}
+}
 }

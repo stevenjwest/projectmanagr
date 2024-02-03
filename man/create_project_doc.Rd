@@ -23,7 +23,7 @@ create_project_doc(
 organisation, and containing a PROJECTS/ directory.  The Project will be placed into the PROJECTS/ directory.
 If none found, the method will end without making a Project}
 
-\item{projectTitle}{Title of project - by default set to `projectName` with "_" & "-" replaced with spaces.}
+\item{projectTitle}{Title of project - by default set to \code{projectName} with "_" & "-" replaced with spaces.}
 
 \item{projDocTemplate}{Rmd template used to create the Project Doc - default is "Project-Doc-Template.Rmd"}
 

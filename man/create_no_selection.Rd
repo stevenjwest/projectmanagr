@@ -17,5 +17,5 @@ Selection object that signifies No Selection, with error message.
 }
 \details{
 Consists of a list with first item the string "FALSE", and second item
-an `errorMessage`.
+an \code{errorMessage}.
 }

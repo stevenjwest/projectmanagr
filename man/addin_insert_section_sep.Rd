@@ -7,6 +7,6 @@
 addin_insert_section_sep(index)
 }
 \description{
-Load section `sep<index>`` from templates DIR and insert into current
+Load section `sep\if{html}{\out{<index>}}`` from templates DIR and insert into current
 cursor position.
 }

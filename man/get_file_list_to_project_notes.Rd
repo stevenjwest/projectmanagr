@@ -21,6 +21,6 @@ get_file_list_to_project_notes(
 \item{fileExtensions}{File extensions of files to list.}
 }
 \description{
-Traverses all directory tree in `dl` but only
+Traverses all directory tree in \code{dl} but only
 get fileList recursively but only down to project note parent dir level
 }

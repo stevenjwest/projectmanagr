@@ -33,7 +33,7 @@ MUST be a sub-directory or lower inside a PROGRAMME Directory.}
 
 \item{selection}{List containing the Goal, Del, Task selected from the Project
 Doc, as well as other useful information - lines of Task/Del/Goal, projectDoc
-path content of selection line.  See `cursor_selection()` or `user_selection()`.}
+path content of selection line.  See \code{cursor_selection()} or \code{user_selection()}.}
 
 \item{subNoteName}{The First SubNote name, added to the Project Note Group
 in the Header Note DIR.}
@@ -46,21 +46,21 @@ is linked in the ProjectDoc G/D/T as a simple note.}
 \item{subNoteTitle}{OPTIONAL title for the Project Sub Note.  Default is to
 use subNoteName and replace all _ and - with SPACES.}
 
-\item{projNoteTemplate}{Template to use, as found in the `config/templates/`
+\item{projNoteTemplate}{Template to use, as found in the \verb{config/templates/}
 directory.  Default is "Project-Header-Note-Template.Rmd"}
 
-\item{subNoteTemplate}{Template to use, as found in the `config/templates/`
+\item{subNoteTemplate}{Template to use, as found in the \verb{config/templates/}
 directory.  Default is "Project-Sub-Note-Template.Rmd"}
 
 \item{projNoteLinkTemplate}{Template with structure to add the Project Doc
 Goal/Del/Task link in the Project Note.  Includes Project Doc title, link,
 and then links to Goal / Del / Task, plus a Summary Info section (filled
-with the content from `taskSectionHeaderTemplate`).}
+with the content from \code{taskSectionHeaderTemplate}).}
 
 \item{projNoteLinkSummaryTemplate}{Template with structure to add underneath the
 Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-and a 'todo' section by default, linked to `NoteObjectivesSummarySectionHeader`
-& `NoteObjectivesTodoSectionHeader` in `config/settings.yml`}
+and a 'todo' section by default, linked to \code{NoteObjectivesSummarySectionHeader}
+& \code{NoteObjectivesTodoSectionHeader} in \code{config/settings.yml}}
 
 \item{projNoteSummaryTemplate}{Template with structure to add Project Note
 summary to Project Doc under Goal/Del/Task.}
@@ -74,11 +74,11 @@ is to use groupNoteName and replaceall _ and - with SPACES.}
 \description{
 This Function adds a Project Note Group - consisting of one HEADER
 Note, and one SUBNOTE inside the Header Note Dir, named with a computed
-`groupNotePrefix`  including identifier and Major Numbering, separated by
-`GroupNotePrefixSep` & `HeaderNotePrefix` for header note or first subNote
-index for subNote, as specified in `settings.yml`.
+\code{groupNotePrefix}  including identifier and Major Numbering, separated by
+\code{GroupNotePrefixSep} & \code{HeaderNotePrefix} for header note or first subNote
+index for subNote, as specified in \code{settings.yml}.
 }
 \details{
 This Note Group can be expanded by adding further SubNotes - useful for
-Optimisation and Experimental Repeats - see `create_sub_note()`.
+Optimisation and Experimental Repeats - see \code{create_sub_note()}.
 }

@@ -7,6 +7,6 @@
 get_deliverable_number(deliverable, settings)
 }
 \description{
-`deliverable` as collected from selection[["deliverable"]] - fitting the format specified
-in settings[["ProjectDeliverableHeader"]].
+\code{deliverable} as collected from selection[\link{"deliverable"}] - fitting the format specified
+in settings[\link{"ProjectDeliverableHeader"}].
 }

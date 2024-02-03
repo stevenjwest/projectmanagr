@@ -2,14 +2,14 @@
 % Please edit documentation in R/document-functions.R
 \name{load_param_vector}
 \alias{load_param_vector}
-\title{Load `paramContents` (a param from settings.yml) correctly}
+\title{Load \code{paramContents} (a param from settings.yml) correctly}
 \usage{
 load_param_vector(paramContents, orgPath)
 }
 \description{
-Some params start with keyword `template:` which indicates the relative path
+Some params start with keyword \verb{template:} which indicates the relative path
 from the templatesDir to the template file to be loaded.
 }
 \details{
-Else `paramContents` is returned unchanged.
+Else \code{paramContents} is returned unchanged.
 }

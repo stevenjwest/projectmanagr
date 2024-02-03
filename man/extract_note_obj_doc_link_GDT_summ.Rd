@@ -17,5 +17,5 @@ deliverable, task for all objectives, and summary & todo for single &
 subnotes (not header notes).
 }
 \details{
-If no objectives are identified, a BLANK LIST `list()` is returned.
+If no objectives are identified, a BLANK LIST \code{list()} is returned.
 }

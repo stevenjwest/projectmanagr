@@ -8,16 +8,16 @@ get_rstudio_open_doc_IDs()
 }
 \description{
 Returns an ordered list of all open RStudio Documents.  The list contains a set
-of VECTORS that contain the RStudio Document ID [1] and the RStudio Document absolute
-path [2].
+of VECTORS that contain the RStudio Document ID \link{1} and the RStudio Document absolute
+path \link{2}.
 }
 \details{
 The order of the open RStudio documents in the list matches the order they are open
 in RStudio.
 
-fileList[[i]][1] - RStudio i'th Document ID.
+fileList[\link{i}][1] - RStudio i'th Document ID.
 
-fileList[[i]][2] - RStudio i'th Document Absolute Path, or null if the file is not saved to disk.
+fileList[\link{i}][2] - RStudio i'th Document Absolute Path, or null if the file is not saved to disk.
 
 NOTE: This method returns open documents in the BASE RStudio Session, and not in any opened project.
 }

@@ -29,6 +29,6 @@ names. Must EXIST in contents and be declared from datatable_name IDs!}
 }
 \description{
 First column contains a list of timings, subsequent column titles are
-typically group IDs, with a final `change_dt` column for actual datetimes,
- and data values are protocol steps, placed in cells under group headers.
+typically group IDs, with a final \code{change_dt} column for actual datetimes,
+and data values are protocol steps, placed in cells under group headers.
 }

@@ -11,9 +11,10 @@ In a string vector, replace every instance of SEP values - syntax used to denote
 separators between document sections in projectmanagr templates.
 }
 \details{
-* Six separators strings are defined in config/templates in projectmanagr org
-in the files: `SEP01.txt` to `SEP06.txt`
-
-* Syntax in projectmanagr templates for inserting the separators in projectmanagr
-templates: `{{SEP01}}` to `{{SEP06}}`
+\itemize{
+\item Six separators strings are defined in config/templates in projectmanagr org
+in the files: \code{SEP01.txt} to \code{SEP06.txt}
+\item Syntax in projectmanagr templates for inserting the separators in projectmanagr
+templates: \code{{{SEP01}}} to \code{{{SEP06}}}
+}
 }

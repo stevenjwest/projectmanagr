@@ -9,7 +9,7 @@ addin_insert_content()
 \description{
 A Directory Tree within the Organisation is used to screen all Project Notes
 for all declared Contents, based on the Content Delimiter Syntax (defined
-in `settings[["ContentSep"]]`).  This Directory Tree can be adjusted.
+in \code{settings[["ContentSep"]]}).  This Directory Tree can be adjusted.
 }
 \details{
 All Insertable Content present in Project Notes in the Directory Tree are

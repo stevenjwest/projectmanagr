@@ -9,7 +9,7 @@ datatable_find(path, datatable_name_prefix = "samples", updateProgress = NULL)
 \arguments{
 \item{path}{Path in a projectmanagr organisation to search projectmanagr Rmd files.}
 
-\item{datatable_name_prefix}{Prefix for datatables, default `samples`}
+\item{datatable_name_prefix}{Prefix for datatables, default \code{samples}}
 
 \item{updateProgress}{Function to use with shiny progress bar - null by default.}
 }
@@ -24,26 +24,21 @@ exported, disposed).
 }
 \details{
 SUMMARY tibble includes following columns:
-
-* ID - sample ID
-
-* SAMPLE: Composite of all subsampling - what the sample is
-
-* COUNT: Number of reps of the sample available (sections)
-
-* EXP: The experiment PREFIX ID and EXPERIMENT TITLE - title can help identify
+\itemize{
+\item ID - sample ID
+\item SAMPLE: Composite of all subsampling - what the sample is
+\item COUNT: Number of reps of the sample available (sections)
+\item EXP: The experiment PREFIX ID and EXPERIMENT TITLE - title can help identify
 where the tissue comes from/its properties - as using functional names for
-experiments eg. `NRF~005-001~_SLEIGH_CNS_GARS_01_SC-LUM` know tissue is from
+experiments eg. \verb{NRF~005-001~_SLEIGH_CNS_GARS_01_SC-LUM} know tissue is from
 James Sleigh, and its GARS mutant or WT control.
+\item PATH: The absolute path to the Experiment DIR ??
+\item LOCATION : values of last \verb{_location} col - where was the samples last known
+location?  Only defined last if currently in storage!
+\item CONDITION : value of last \verb{_condition} col - what was the samples last
+known condition?
+}
 
-* PATH: The absolute path to the Experiment DIR ??
-
-* LOCATION : values of last `_location` col - where was the samples last known
-  location?  Only defined last if currently in storage!
-
-* CONDITION : value of last `_condition` col - what was the samples last
-  known condition?
-
-If further metadata is needed - can use `datatable_get_sample_data_history()`
+If further metadata is needed - can use \code{datatable_get_sample_data_history()}
 and filter for relevant information.
 }

@@ -7,6 +7,6 @@
 get_project_note_paths(parentDirectory, settings)
 }
 \description{
-Get project note paths from directory tree.  Assumes `parentDirectory` is in
+Get project note paths from directory tree.  Assumes \code{parentDirectory} is in
 Organisation, returns blank vector if no project notes are identified.
 }

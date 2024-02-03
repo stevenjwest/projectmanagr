@@ -2,10 +2,10 @@
 % Please edit documentation in R/document-functions.R
 \name{replace_params_with_vector}
 \alias{replace_params_with_vector}
-\title{Replace every instance of `templateParam` in `templateContents` with `paramContents`.}
+\title{Replace every instance of \code{templateParam} in \code{templateContents} with \code{paramContents}.}
 \usage{
 replace_params_with_vector(templateContents, templateParam, paramContents)
 }
 \description{
-Replace every instance of `templateParam` in `templateContents` with `paramContents`.
+Replace every instance of \code{templateParam} in \code{templateContents} with \code{paramContents}.
 }

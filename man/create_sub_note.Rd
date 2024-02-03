@@ -26,25 +26,25 @@ replaced with - or _ by default.}
 \item{subNotePath}{The directory where the Sub Note will be stored.  This will
 be the Project Group Note Directory.  Must be an ABSOLUTE path!}
 
-\item{selection}{List containing `rmdType` that defines the current selection.
-From this the `headerNoteRmdPath` is defined.  The function will deal with
+\item{selection}{List containing \code{rmdType} that defines the current selection.
+From this the \code{headerNoteRmdPath} is defined.  The function will deal with
 SubNote generation with a valid selection of a DOC HEAD or SUB file.}
 
 \item{subNoteTitle}{OPTIONAL title for the Project SubNote.  Default is to use
 subNoteName and replace all _ and - with SPACES.}
 
-\item{subNoteTemplate}{Template to use, as found in the `config/templates/`
+\item{subNoteTemplate}{Template to use, as found in the \verb{config/templates/}
 directory.  Default is "Project-Sub-Note-Template.Rmd"}
 
 \item{projNoteLinkTemplate}{Template with structure to add the Project Doc
 Goal/Del/Task link in the Project Note.  Includes Project Doc title, link,
 and then links to Goal / Del / Task, plus a Summary Info section (filled
-with the content from `taskSectionHeaderTemplate`).}
+with the content from \code{taskSectionHeaderTemplate}).}
 
 \item{projNoteLinkSummaryTemplate}{Template with structure to add underneath the
 Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-and a 'todo' section by default, linked to `NoteObjectivesSummarySectionHeader`
-& `NoteObjectivesTodoSectionHeader` in `config/settings.yml`}
+and a 'todo' section by default, linked to \code{NoteObjectivesSummarySectionHeader}
+& \code{NoteObjectivesTodoSectionHeader} in \code{config/settings.yml}}
 
 \item{projNoteSummaryTemplate}{Template with structure to add Project Note
 summary to Project Doc under Goal/Del/Task.}
@@ -60,7 +60,7 @@ Note is added to the project Group Header Note contents section.
 }
 \details{
 If a Project Doc is in the selection, a Project Note Group must be in the
-selection  (`addingSubNote` must be TRUE), and all Project Doc links from the
+selection  (\code{addingSubNote} must be TRUE), and all Project Doc links from the
 Header Note  are added to the new SubNote.  If a Header Note is in the
 selection, all Project Doc links from the Header Note are added to the new
 SubNote.  If a SubNote is in the selection, all Project Doc links from the

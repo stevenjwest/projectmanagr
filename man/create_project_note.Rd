@@ -23,29 +23,29 @@ not contain any SPACES.}
 \item{projectNotePath}{The directory where the Project Note will be stored.
 This may be a Project Directory, or another Directory specified by the User.
 MUST be a sub-directory or lower inside a PROGRAMME Directory. The
-`projectNotePrefix` is computed from this directory - where the string identifier
-is the first string in the directory name up to `ProjectIdentifierSep` (specified
-in `settings.yml`, default is '_').}
+\code{projectNotePrefix} is computed from this directory - where the string identifier
+is the first string in the directory name up to \code{ProjectIdentifierSep} (specified
+in \code{settings.yml}, default is '_').}
 
 \item{selection}{List containing the Goal, Del, Task selected from the Project
 Doc, as well as other useful information - lines of Task/Del/Goal, projectDoc
-path content of selection line.  See `cursor_selection()` or `user_selection()`.}
+path content of selection line.  See \code{cursor_selection()} or \code{user_selection()}.}
 
 \item{projectNoteTitle}{OPTIONAL title for the Project Note.  Default is to use
-projectNoteName and replace all `_` and `-` with SPACES.}
+projectNoteName and replace all \verb{_} and \code{-} with SPACES.}
 
-\item{projNoteTemplate}{Template to use, as found in the `config/templates/`
+\item{projNoteTemplate}{Template to use, as found in the \verb{config/templates/}
 directory.  Default is "Project-Note-Template.Rmd"}
 
 \item{projNoteLinkTemplate}{Template with structure to add the Project Doc
 Goal/Del/Task link in the Project Note.  Includes Project Doc title, link,
 and then links to Goal / Del / Task, plus a Summary Info section (filled
-with the content from `taskSectionHeaderTemplate`).}
+with the content from \code{taskSectionHeaderTemplate}).}
 
 \item{projNoteLinkSummaryTemplate}{Template with structure to add underneath the
 Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-and a 'todo' section by default, linked to `NoteObjectivesSummarySectionHeader`
-& `NoteObjectivesTodoSectionHeader` in `config/settings.yml`}
+and a 'todo' section by default, linked to \code{NoteObjectivesSummarySectionHeader}
+& \code{NoteObjectivesTodoSectionHeader} in \code{config/settings.yml}}
 
 \item{projNoteSummaryTemplate}{Template with structure to add Project Note
 summary to Project Doc under Goal/Del/Task.}
@@ -53,7 +53,7 @@ summary to Project Doc under Goal/Del/Task.}
 \description{
 This Addin adds a single Project Note to a Poject Doc under a Goal / Del /
 Task - the Project Note consists of one Rmd Note and its corresponding
-Directory, named with a computed `projectNotePrefix` including identifier
-and Major Numbering, separated by `ProjectIndexSep`, as specified in
-`settings.yml`, and `projectNoteName`.
+Directory, named with a computed \code{projectNotePrefix} including identifier
+and Major Numbering, separated by \code{ProjectIndexSep}, as specified in
+\code{settings.yml}, and \code{projectNoteName}.
 }

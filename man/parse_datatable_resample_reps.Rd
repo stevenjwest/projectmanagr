@@ -9,28 +9,28 @@ parse_datatable_resample_reps(dt_vector, datatables, table_name)
 \description{
 This will generate the new datatables from a resample dt_vector that contains
 set of REPS SOURCE sample IDS.  This means the SOURCE SAMPLES consist of two or more
-REPLICATES.  To uniquely identify the replicates, a second `rep` column is presented
-next to the `ID` column to denote each REP within each ID.
+REPLICATES.  To uniquely identify the replicates, a second \code{rep} column is presented
+next to the \code{ID} column to denote each REP within each ID.
 }
 \details{
 When resampling samples which contain REPS, each ID/REP will be given as a new entry,
-and `resample` and `reps` columns will be added.  The resample vector is given in
+and \code{resample} and \code{reps} columns will be added.  The resample vector is given in
 each ID/REP row - with each resample code given in adjoining rows for a given ID/REP.
 
 Further reps can be made of each ID/REP from the parent sample!  And these reps are
-entered into the `reps` column.
+entered into the \code{reps} column.
 
 Importantly, when the subsample datatable/tibbles are made they are named according to
 the parent resample CODE PLUS the parent resample rep, separated by a dash.
 
-eg. From `samples_SC-CER` datatable, if these samples were resampled with code
-`100µm`, and ID `1001` had 4 reps created, if this was further resampled with
-a new vector (eg. it was split into `LT` and `RT` sections), then in
-`samples_SC-CER_100µm` each ID/REP would have its own line (1001/1 1001/2 1001/3
-1001/4), and each entry would have a resample column with `LT` and `RT` in it.
+eg. From \code{samples_SC-CER} datatable, if these samples were resampled with code
+\verb{100µm}, and ID \code{1001} had 4 reps created, if this was further resampled with
+a new vector (eg. it was split into \code{LT} and \code{RT} sections), then in
+\code{samples_SC-CER_100µm} each ID/REP would have its own line (1001/1 1001/2 1001/3
+1001/4), and each entry would have a resample column with \code{LT} and \code{RT} in it.
 
 THEN when this resample table is read, new datatable tibbles will be created, with
-names: `samples_SC-CER_100µm-1_LT` `samples_SC-CER_100µm-1_RT`
-`samples_SC-CER_100µm-2_LT` `samples_SC-CER_100µm-2_RT` etc.  These will
-contain ID `1001` and represent each new subsample of each 100µm rep!
+names: \verb{samples_SC-CER_100µm-1_LT} \verb{samples_SC-CER_100µm-1_RT}
+\verb{samples_SC-CER_100µm-2_LT} \verb{samples_SC-CER_100µm-2_RT} etc.  These will
+contain ID \code{1001} and represent each new subsample of each 100µm rep!
 }

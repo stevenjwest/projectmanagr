@@ -7,9 +7,9 @@
 get_contents(f, contentSepContents, settings, orgPath)
 }
 \description{
-Get insertable contents from file path (`f`)
+Get insertable contents from file path (\code{f})
 }
 \details{
-Returns named list of `contentTitle` with elements: `projectNotePath`,
-`startLineNum`
+Returns named list of \code{contentTitle} with elements: \code{projectNotePath},
+\code{startLineNum}
 }

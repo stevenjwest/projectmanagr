@@ -7,5 +7,5 @@
 read_file(filePath)
 }
 \description{
-Returns a string vector of text file at `filePath`.
+Returns a string vector of text file at \code{filePath}.
 }

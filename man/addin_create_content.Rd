@@ -15,17 +15,17 @@ Content is any templated insertable text for boilerplate content.  Typically
 in ProjectManage it is used to define a set of Standard Operating
 Procedures (SOPs) & LOG Sections that record Protocol execution.  The
 Content is defined between specific delimiters, defined in
-`CONTENT_SEP.txt`: by default the delimiter is a series of `====`.
+\code{CONTENT_SEP.txt}: by default the delimiter is a series of \verb{====}.
 
 User defines the following in the gadget interface:
-
-* `contentName` : A descriptive name for the block of insertable content.
-
-* `contentDescription` : A concise description of the block of insertable
-  content - what will this content be used for?
+\itemize{
+\item \code{contentName} : A descriptive name for the block of insertable content.
+\item \code{contentDescription} : A concise description of the block of insertable
+content - what will this content be used for?
+}
 
 Stipulates any errors in the input, and can only be completed
 when these errors have been resolved.
 
-This addin calls `create_content()` with appropriate ARGs.
+This addin calls \code{create_content()} with appropriate ARGs.
 }

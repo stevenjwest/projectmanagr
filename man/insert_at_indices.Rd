@@ -7,6 +7,6 @@
 insert_at_indices(templateContents, indices, replacementVector)
 }
 \description{
-Inserts `replacementVector` into `templateContents` at `indices` WITHOUT
+Inserts \code{replacementVector} into \code{templateContents} at \code{indices} WITHOUT
 replacing the content at each index.
 }

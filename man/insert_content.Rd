@@ -10,25 +10,26 @@ insert_content(selectionSource, selectionDestination)
 \item{selectionSource}{Selection object from Project Note file containing
 the Protocol to be inserted.  The selection must be on the FIRST PROTOCOL
 DELIMITER that indicates the start of the Protocol. Use
-`projectmanagr::cursor_selection()` or `projectmanagr::user_selection()` to
+\code{projectmanagr::cursor_selection()} or \code{projectmanagr::user_selection()} to
 create this object.}
 
 \item{selectionDestination}{Selection object from the Project Note file where
-the protocol is to be inserted.  Use `projectmanagr::cursor_selection()` or
-`projectmanagr::user_selection()` to create this object.}
+the protocol is to be inserted.  Use \code{projectmanagr::cursor_selection()} or
+\code{projectmanagr::user_selection()} to create this object.}
 }
 \description{
 This Function adds Insertable Content in to a Project Note. Insertable Content
 are Document Sections between special syntax that exist in a Source Project
-Note - created with `create_content()` function.
+Note - created with \code{create_content()} function.
 }
 \details{
-* The special syntax in the Content `{{INSERTABLE_CONTENT_LINK}}` is replaced
- with a relative link from Destination to the Source Project Note.
+\itemize{
+\item The special syntax in the Content \code{{{INSERTABLE_CONTENT_LINK}}} is replaced
+with a relative link from Destination to the Source Project Note.
+\item All links in the Content are UPDATED to work from the destination Project
+Note.
+}
 
-* All links in the Content are UPDATED to work from the destination Project
- Note.
-
-All graphics files included in `knitr::include_graphics()` r calls are
- linked to the new Project Note appropriately.
+All graphics files included in \code{knitr::include_graphics()} r calls are
+linked to the new Project Note appropriately.
 }

@@ -14,7 +14,7 @@ datatable_dispose_rmd(
 }
 \arguments{
 \item{datatable_name}{String of data table name: This data table MUST ALREADY
-EXIST IN `contents`.  The resampling will be default include all sample IDs
+EXIST IN \code{contents}.  The resampling will be default include all sample IDs
 from this datatable.  The user may then delete sample IDs as appropriate.}
 
 \item{dt_length}{Int of data table max length in characters - default 100.}
@@ -34,6 +34,6 @@ longer exist.
 }
 \details{
 Datatable comprises the dataframe NAME, sample IDs, reps (if applicable), and
-the special column titled `dispose`.  In this column the datetime of disposal
+the special column titled \code{dispose}.  In this column the datetime of disposal
 (i.e. time of creation of dispose datatable) is written.
 }

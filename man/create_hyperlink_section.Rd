@@ -7,7 +7,7 @@
 create_hyperlink_section(toFileName, toFileSection, toFilePath, fromFilePath)
 }
 \description{
-creates string for hyperlink in Rmd, using `toFileName : toFileSection` as
+creates string for hyperlink in Rmd, using \code{toFileName : toFileSection} as
 the hyperlink text, and generating a RELATIVE LINK to
-`toFilePath#toFileSection` from `fromFilePath`.
+\code{toFilePath#toFileSection} from \code{fromFilePath}.
 }

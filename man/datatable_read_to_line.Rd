@@ -9,7 +9,7 @@ datatable_read_to_line(line)
 \description{
 Function to read all projectmanagr datatables up to line number
 in the active plain text document (typically an R Markdown doc), and return
-them as tibbles. Extracts all datatables between `+===` markers, and checks
+them as tibbles. Extracts all datatables between \verb{+===} markers, and checks
 the validity of each datatable declared.
 }
 \details{
@@ -19,23 +19,22 @@ in ADD_DATA tables.  IDs from a given datatable can be put into new groups
 using a GROUP table.
 
 Adding data can use various layouts:
-
-* Sample-first layout:  Typically used for measurements made on each sample
+\itemize{
+\item Sample-first layout:  Typically used for measurements made on each sample
 individually - sample IDs are in first col, subsequent cols contain the
 measurement data.
-
-* Variable-first layout: Typically used to add datetimes of procedures -
+\item Variable-first layout: Typically used to add datetimes of procedures -
 procedure titles are laid out in first col, and subsequent cols are GORUPS
 which are processed together.  This allows timing data to be added cleanly
 and easily across all samples in a group (including the special group ALL).
-
-* TIMETABLE: Used for measuring the actual timings used during optimisation
+\item TIMETABLE: Used for measuring the actual timings used during optimisation
 of a protocol.  When time is varied in a protocol it is very difficult to
 plan and track this.  The timetable provides a convenient layout for planning
 the groups and the timings of changes over the procedure where timing is being
 optimised.  It then allows the ACTUAL TIMINGS to be inserted into the table
 as the procedures are followed - and these are linked to the original samples,
 making this data available in further analyses.
+}
 
 Samples in datatables can be subsampled - destroying the original sample,
 and creating one or more sub-samples.  The parent samples can no longer

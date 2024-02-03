@@ -20,7 +20,7 @@ rep indexes as needed for generating the import datatable(s).}
 \item{destination_note_path}{Path within a projectmanagr organisation where the imported samples/reps
 will be moved to.}
 
-\item{destination_note_line}{Line within `destination_note_path` where the imported samples/reps
+\item{destination_note_line}{Line within \code{destination_note_path} where the imported samples/reps
 will be copied to.}
 
 \item{datetime}{The datetime of import - if blank, current datetime is generated automatically.}

@@ -8,12 +8,12 @@ create_selection(filePath, contents, line, settings)
 }
 \description{
 Creates a selection list generated from a filePath, its contents, and an
-existing line.  The selection list consists of a `rmdType` named vector that
-defines what kind of file is in the current selection: `DOC` `HEAD` `SUB`
-`NOTE` or `FALSE`.
+existing line.  The selection list consists of a \code{rmdType} named vector that
+defines what kind of file is in the current selection: \code{DOC} \code{HEAD} \code{SUB}
+\code{NOTE} or \code{FALSE}.
 }
 \details{
-If a Project Document (`DOC`) is selected, the returned list contains several
+If a Project Document (\code{DOC}) is selected, the returned list contains several
 other useful parameters:
 
 From project doc filepath contents and selection line.

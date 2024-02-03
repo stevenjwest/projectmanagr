@@ -7,6 +7,6 @@
 get_doc_gdt_project_note_paths(projectDocPath, projDocContents, settings)
 }
 \description{
-Get project note paths from doc GDT links  Assumes `projDocContents` is a
+Get project note paths from doc GDT links  Assumes \code{projDocContents} is a
 character vector from a project doc.
 }

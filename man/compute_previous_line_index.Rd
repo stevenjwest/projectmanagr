@@ -12,6 +12,6 @@ compute_previous_line_index(lineIndex, contents)
 \item{contents}{a vector of strings, the index of the first instance of line in this vector is returned.}
 }
 \description{
-Returns the index of the Previous Line in contents that contains any content ("[A-z,0-9]"), looking back
+Returns the index of the Previous Line in contents that contains any content ("\link{A-z,0-9}"), looking back
 from lineIndex to 1.
 }

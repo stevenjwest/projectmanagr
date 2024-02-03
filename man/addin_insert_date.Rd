@@ -8,10 +8,10 @@ addin_insert_date()
 }
 \description{
 Inserts the current date into the current selection in RStudio Source
-Editor.  Uses `YYYY/MM/DD` format.
+Editor.  Uses \code{YYYY/MM/DD} format.
 }
 \details{
-The timezone used is specified in settings.yml under the `DateTimeZone`
-parameter if settings.yml can be found, otherwise it uses the `UTC`
+The timezone used is specified in settings.yml under the \code{DateTimeZone}
+parameter if settings.yml can be found, otherwise it uses the \code{UTC}
 timezone.
 }

@@ -2,15 +2,15 @@
 % Please edit documentation in R/datatables-functions.R
 \name{datatable_datetimes_to_durations}
 \alias{datatable_datetimes_to_durations}
-\title{Convert datetime (suffix `_dt`) columns to DURATIONS}
+\title{Convert datetime (suffix \verb{_dt}) columns to DURATIONS}
 \usage{
 datatable_datetimes_to_durations(dt, include_now = FALSE, cumulative = FALSE)
 }
 \arguments{
-\item{dt}{a datatable (tibble) that contains datetime columns (suffix `_dt`)}
+\item{dt}{a datatable (tibble) that contains datetime columns (suffix \verb{_dt})}
 
 \item{include_now}{Boolean to indicate whether the last datetime should have
-its duration set up to the current time.  The last `_dt` column has its
+its duration set up to the current time.  The last \verb{_dt} column has its
 duration calculated from the current time.  FALSE by default, meaning the
 last datetime will not have a duration set.}
 
@@ -21,18 +21,18 @@ independent durations}
 }
 \value{
 A new tibble with all datetime columns replaced with duration
-columns (suffix `_dur`), containing the duration data in`HH:MM` format.
+columns (suffix \verb{_dur}), containing the duration data in\code{HH:MM} format.
 }
 \description{
-This extracts all columns in dt that end in `_dt` (the conventional suffix
+This extracts all columns in dt that end in \verb{_dt} (the conventional suffix
 in projectmanagr datatable columns for a DATETIME), and computes the
 DURATIONS between these columns.
 }
 \details{
 The durations are returned in a new tibble, along with any non-datetime
 columns, using the same naming convention as the original datatable, with
-the `_dt` suffix replaced with `_dur`.
+the \verb{_dt} suffix replaced with \verb{_dur}.
 
-The duration data is in the format `HH:MM`, indicating the duration in
+The duration data is in the format \code{HH:MM}, indicating the duration in
 hours:minutes of the step.
 }

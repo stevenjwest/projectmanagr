@@ -32,7 +32,7 @@ replaces - & _ with spaces from name.}
 replaces - & _ with spaces from name.}
 }
 \description{
-Updates every hyperlink in all files within `dirTree`, replacing
-`oldFileName` (the basename of the file, including prefix and extension) with
-`newName` (the new file name, without prefix or extension).
+Updates every hyperlink in all files within \code{dirTree}, replacing
+\code{oldFileName} (the basename of the file, including prefix and extension) with
+\code{newName} (the new file name, without prefix or extension).
 }

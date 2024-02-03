@@ -7,5 +7,5 @@
 find_header_Rmd_path(subNoteRmdPath, settings)
 }
 \description{
-From the `subNoteRmdPath` - an absolute path.
+From the \code{subNoteRmdPath} - an absolute path.
 }

@@ -16,5 +16,5 @@ deletes the old Project Note DIR, and symlinks to the new Project Note DIR.
 
 Finally, changes the location of the volume in the Project Note itself.
 
- NO LONGER export - deprecated
+NO LONGER export - deprecated
 }

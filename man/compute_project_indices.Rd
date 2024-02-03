@@ -7,7 +7,7 @@
 compute_project_indices(projsPath, programmePrefix)
 }
 \description{
-From the PROJECTS dir in a programme (`projsPath`), compute the available indices
-for creating new project doc and DIR, based on all DIRs in `projsPath` that start
-with `programmePrefix` and return a numeric array of these.
+From the PROJECTS dir in a programme (\code{projsPath}), compute the available indices
+for creating new project doc and DIR, based on all DIRs in \code{projsPath} that start
+with \code{programmePrefix} and return a numeric array of these.
 }

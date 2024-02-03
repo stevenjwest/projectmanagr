@@ -11,8 +11,10 @@ Compute a Project Note Path from a fileSystem path and a projectNote Name.
 }
 \details{
 The fileSystemPath must be a DIRECTORY and sub-dir in a PROGRAMME DIRECTORY
-- either a project Document DIR, or another Directory in a PROGRAMME for
+\itemize{
+\item either a project Document DIR, or another Directory in a PROGRAMME for
 storing Project Notes.
+}
 
 The NAME of the selected Directory is used to derive the PREFIX for files within this
 Directory - it uses all LETTERS and NUMBERS UP TO the first "_" in the directory name.

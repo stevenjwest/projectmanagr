@@ -10,9 +10,9 @@ parse_datatable_resample(dt_vector, datatables, table_name)
 This dt_vector has the FUNCTION : CREATE
 }
 \details{
-It MUST have IDs in the first column, then `resample` and `reps` cols.
+It MUST have IDs in the first column, then \code{resample} and \code{reps} cols.
 
 It will add these resample and reps cols to the PARENT datatable, THEN will
 create NEW DATATABLES - one for each resample element - which are added to
-the `datatables` list and returned.
+the \code{datatables} list and returned.
 }

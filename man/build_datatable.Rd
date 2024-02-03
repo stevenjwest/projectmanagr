@@ -27,7 +27,7 @@ datatable.  Length of list must match length of data_cols vector.
 This method now supports adding multi-obs data.  Length of each
 vector in data must be a MULTIPLE of IDs length.  If 2 or more multiples,
 the data is added in a multi-obs set of rows for each ID: Added in data-first
-order - so ID[1] gets data[1], data[2]; ID[2] gets data[3], data[4] etc.}
+order - so ID\link{1} gets data\link{1}, data\link{2}; ID\link{2} gets data\link{3}, data\link{4} etc.}
 
 \item{dt_function}{The FUNCTION of the datatable to be built.}
 
@@ -43,14 +43,14 @@ Typically '='.}
 Creates a new Sample DataTable vector. The Sample DataTable will contain an
 initial ID column containing the IDs vector, and an optional set of extra
 data columns as specified in the data_cols vector.  If the table exceeds
-`dt_length` characters (default 120), then the table is split into multiple
+\code{dt_length} characters (default 120), then the table is split into multiple
 tables, with IDs as first col, and subsequent data_cols given in subsequent
 tables.
 }
 \details{
 This method also supports adding Multi-Observations:  Multiple data points
 for a given ID.  These are entered under the data_col and split across
-lines next to an ID.  The length of each vector in `data` must be a multiple
+lines next to an ID.  The length of each vector in \code{data} must be a multiple
 of length of IDs.  If more than 1, the data is split between IDs in
 data-first order.
 }

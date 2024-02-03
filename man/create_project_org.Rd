@@ -31,24 +31,22 @@ Default is "Org-Template.Rmd".}
 
 \item{organisationSiteDirectory}{an absolute path that defines where the compiled
 HTML from the organisation is written. If left blank, the default site directory
-will be the organisation directory path, with directory name suffixed with `_site`.}
+will be the organisation directory path, with directory name suffixed with \verb{_site}.}
 }
 \description{
 Generates the layout for a new Project Organisation in the File System.
 }
 \details{
 The function generates the organisation directory and its initial contents:
-
-* `index_<orgName>.Rmd` the landing page for the organisation.
-
-* `config/` directory with the config files and templates/ directory containing
+\itemize{
+\item \verb{index_<orgName>.Rmd} the landing page for the organisation.
+\item \verb{config/} directory with the config files and templates/ directory containing
 component templates.
-
-* `docs/` directory, that will hold documentation for a projectmanagr usage.
-
-* `volumes/` directory, that will hold all volumes for managing data storage.
+\item \verb{docs/} directory, that will hold documentation for a projectmanagr usage.
+\item \verb{volumes/} directory, that will hold all volumes for managing data storage.
+}
 
 A HTML site directory is created which will contain the generated html site.
 By default this directory will exist next to org directory, suffixed with
-`_site`.  This can be modified with the `organsiationSiteDirectory` parameter.
+\verb{_site}.  This can be modified with the \code{organsiationSiteDirectory} parameter.
 }

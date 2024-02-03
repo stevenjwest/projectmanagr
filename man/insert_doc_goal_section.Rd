@@ -11,8 +11,8 @@ insert_doc_goal_section(
 }
 \arguments{
 \item{selection}{Selection object from the Project Doc file where the goal
-section is to be inserted.  Use `projectmanagr::cursor_selection()` or
-`projectmanagr::user_selection()` to create this object.}
+section is to be inserted.  Use \code{projectmanagr::cursor_selection()} or
+\code{projectmanagr::user_selection()} to create this object.}
 
 \item{goalSectionTemplate}{Template file that contains boilerplate content
 for goal section insertion into project doc}
@@ -25,5 +25,5 @@ section template, incremented from the last Goal Section number.
 \details{
 This function will only work if the selection is in a project doc.  The goal
 section will be placed in correction position and with correct spacing
-according to the `goalSectionTemplate`.
+according to the \code{goalSectionTemplate}.
 }

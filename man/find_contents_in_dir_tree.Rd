@@ -9,13 +9,13 @@ find_contents_in_dir_tree(dirTree, orgPath, settings)
 \description{
 Searches through dirTree recursively for Project Notes, and then looks
 for Insertable Contents in these based on the content sep delimiter - defined
-in `CONTENT_SEP.txt`: by default the delimiter is a series of `====`.
+in \code{CONTENT_SEP.txt}: by default the delimiter is a series of \verb{====}.
 }
 \details{
 Returns a structured lists that describe each contents in the project notes:
 
 Each Structured List contains: is a character vector comprised
 name() : ProjectNotePath && Project Note Line Number where Insertable
-Contents BEGINS (start of first delimiter), separated with `:::`
-[["contentTitle"]] : Title of Insertable Contents in the Project Note
+Contents BEGINS (start of first delimiter), separated with \code{:::}
+[\link{"contentTitle"}] : Title of Insertable Contents in the Project Note
 }

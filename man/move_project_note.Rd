@@ -14,8 +14,8 @@ move_project_note(
 \item{protocolName}{The name of the Protocol Rmd file - WITHOUT extension.}
 
 \item{selection}{Selection object from the Project Note file where the protocol
-is to be inserted.  Use `projectmanagr::cursor_selection()` or
-`projectmanagr::user_selection()` to create this object.}
+is to be inserted.  Use \code{projectmanagr::cursor_selection()} or
+\code{projectmanagr::user_selection()} to create this object.}
 
 \item{protocolInsertionTemplate}{Template file that contains boilerplate content
 for protocol insertion into project note.}
@@ -25,15 +25,15 @@ This Function moves a Project Note
 }
 \details{
 adds a Protocol to a Project Note - protocols are found in the
- PROGRAMMES' protocols/ Dir.
+PROGRAMMES' protocols/ Dir.
 
 Inserted protocols add each Procedure defined under the '# PROTOCOL' section
- of the document. Notes sections (FALSE by default) and the Equipment section
+of the document. Notes sections (FALSE by default) and the Equipment section
 (TRUE by default) can be optionally included in the inserted protocol.
 
 All links in the Protocol are UPDATED to work from the destination Project
- Note.
+Note.
 
 All graphics included in a knitr::include_graphics() r code chunk are
- transferred to the new Project Note DIR and linked appropriately.
+transferred to the new Project Note DIR and linked appropriately.
 }

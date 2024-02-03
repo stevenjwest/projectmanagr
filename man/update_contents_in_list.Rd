@@ -12,12 +12,12 @@ Updates the contents found
 \details{
 Searches through dirTree (non-recursively) for Project Notes, and then looks
 for Contents in these based on the content sep delimiter (identified in
-`config/templates/` & `settings[["ContentSep"]]`).
+\verb{config/templates/} & \code{settings[["ContentSep"]]}).
 
 Returns a structured lists that describe each content in the project notes:
 
 Each Structured List contains: is a character vector comprised
 name() : ProjectNotePath && Project Note Line Number where Insertable
-Contents BEGINS (start of first delimiter), separated with `:::`
-[["contentTitle"]] : Title of Insertable Contents in the Project Note
+Contents BEGINS (start of first delimiter), separated with \code{:::}
+[\link{"contentTitle"}] : Title of Insertable Contents in the Project Note
 }

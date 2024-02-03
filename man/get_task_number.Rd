@@ -7,6 +7,6 @@
 get_task_number(task, settings)
 }
 \description{
-`task` as collected from selection[["task"]] - fitting the format specified
-in settings[["ProjectTaskHeader"]].
+\code{task} as collected from selection[\link{"task"}] - fitting the format specified
+in settings[\link{"ProjectTaskHeader"}].
 }

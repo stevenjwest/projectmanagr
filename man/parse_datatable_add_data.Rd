@@ -13,15 +13,12 @@ This datatable has the FUNCTION : ADD_DATA
 It can have IDs, variables, or timetable in the first column.
 
 It will have subsequent columns with further data DEPENDING on the first col:
+\itemize{
+\item ID: subsequent cols are variables - can be added directly to dt.
+\item variables:
+\item timetable:
 
-* ID: subsequent cols are variables - can be added directly to dt.
-
-
-* variables:
-
-
-* timetable:
-
-  dt_vector <- tables[[i]]
-  dt <- datatables[[ table_name ]]
+dt_vector <- tables[\link{i}]
+dt <- datatables[\link{ table_name }]
+}
 }

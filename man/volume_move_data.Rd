@@ -26,13 +26,12 @@ the volumes/volumes.Rmd file.
 \details{
 This is a convenience function to move or copy data associated with a project
 note between volumes.
-
-* All data is associated with a project note, and the project note path must
+\itemize{
+\item All data is associated with a project note, and the project note path must
 be supplied.  The project note Rmd file contains a section (# DATA STORAGE)
 that describes each sub-DIR that has previously been moved via this function,
 and is initially read by this function.
-
-* Data is moved from a sub-DIR in the project note DIR.  Any data associated
+\item Data is moved from a sub-DIR in the project note DIR.  Any data associated
 with a Project Note MUST exist within the Project Note DIR - if the sub-DIR
 has been moved to a volume, it will be symlinked to the Project Note DIR, and
 therefore will EXIST as a sub-DIR in the Project Note DIR as long as the
@@ -40,31 +39,28 @@ volume is mounted.  The sub-DIR name is given in the from_dir arg - and this
 sub-DIR MUST be available (exist and be mounted) in the Project Note DIR for
 the transfer of data to take place!  So CHECK the volume is mounted for this
 sub-DIR if its a symlink!
-
-* The Data is moved to a new volume.  The volume can be any existing volume
+\item The Data is moved to a new volume.  The volume can be any existing volume
 in the volumes/ DIR, or it can be the local volume (which is the Project Note
 DIR itself!), in which case the current symlink is deleted in local.  All data
 is moved recursively - first the directory structure is generated and then all
 data files are copied over, and finally the copy is confirmed as complete by
 comparing DIR/FILE TREES between source and destination.  Only once this is
 confirmed is the source data deleted.
-
-* The data can be copied rather than moved, in which case the deletion is not
+\item The data can be copied rather than moved, in which case the deletion is not
 performed.
-
-* If the data has been moved to a volume other than local, a symlink is made
+\item If the data has been moved to a volume other than local, a symlink is made
 in local to the new volume. The symlink is given the same name as the
 original DIR. If the data is moved to local, no symlink is needed. If the
 data is COPIED from local to a volume, again no symlink is needed (as the
 data will still exist locally!). The new copy on the volume is a SECONDARY
 COPY - and will be updated to the PRIMARY COPY (on local) when
 volume_update_copies() is run.
-
-* Finally, this operation is logged in the project note under the DATA
+\item Finally, this operation is logged in the project note under the DATA
 STORAGE Section:  If the sub-DIR is already listed, its listing is updated
 with the new destination (overwriting the appropriate old DIR, or adding to
 the destination list if copied).  If the sub-DIR does not exist on the list,
 it is added and its destination(s) added as appropriate to the operation.
+}
 
 The DATA STORAGE Section in a Project Note will list a subDIR name, followed
 by its destination(s): Each destination is listed in a comma separated list
@@ -74,8 +70,9 @@ local, this is always listed first.  Otherwise the primary link to this data
 via a symlink in local is listed first.  This is the primary data storage
 location.  This is followed with secondary storage locations which can be
 used to backup the data (HIGHLY RECOMMENDED!).
-
-* The secondary storage locations can be kept in sync with the primary data
+\itemize{
+\item The secondary storage locations can be kept in sync with the primary data
 storage location via volume_update_copies(), this method receives the project
 note as input, and will update any data copies as needed.
+}
 }

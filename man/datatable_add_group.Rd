@@ -18,7 +18,7 @@ datatable_add_group(
 existing data tables.}
 
 \item{group_names}{Character vector of data table column titles to add.
-CANNOT BE BLANK!  MUST start all group names with `group-`.}
+CANNOT BE BLANK!  MUST start all group names with \verb{group-}.}
 
 \item{datatable_name}{String of data table name: This data table MUST ALREADY
 EXIST/BE DECLARED BEFORE rmd_line in rmd_path.}
@@ -35,7 +35,7 @@ one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
 indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.}
 }
 \description{
-Adds Groups to an EXISTING Data Table in the character vector `contents`.
+Adds Groups to an EXISTING Data Table in the character vector \code{contents}.
 The Groups DataTable will contain an initial ID column containing all
 sample IDs, and a series of extra data columns named using the
 group_names vector.

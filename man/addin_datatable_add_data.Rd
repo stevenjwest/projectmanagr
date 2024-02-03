@@ -18,7 +18,7 @@ User selects datatable layout : samples, variables, timetable.
 
 User selects the ID format to add : ALL, all-IDs, or a group set.
 
-User defines the data table column names : using the suffix `_dt` denotes
+User defines the data table column names : using the suffix \verb{_dt} denotes
 that the column is a DATETIME and it appropriately spaced to hold a datetime.
 Otherwise columns are spaced according to the width of the column title.
 

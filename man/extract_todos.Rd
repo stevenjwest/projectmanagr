@@ -37,5 +37,5 @@ deleting the project note / doc GDT / TODOs.
 The filled Todo-Extraction-Template.Rmd is saved to the todo directory,
 defined in settings.  The TODO extraction is saved using a naming convention
 of the date & scope (location directory name or project-note title) :
-`YYYMMDD_SCOPE.Rmd`
+\code{YYYMMDD_SCOPE.Rmd}
 }

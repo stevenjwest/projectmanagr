@@ -12,27 +12,24 @@ datatables that exist in a source Project Note into the currently active
 destination Project Note.
 }
 \details{
-* User selects the line in the current Project Note where the IMPORT will
+\itemize{
+\item User selects the line in the current Project Note where the IMPORT will
 be written.
-
-* User selects a source Project Note, from the current ORGANISATION: This
+\item User selects a source Project Note, from the current ORGANISATION: This
 note is read for all EXISTING samples/reps in all datatables, which are
 presented in SUMMARY FORMAT
-
-* User filters the datatable for desired characteristics of samples/reps for
+\item User filters the datatable for desired characteristics of samples/reps for
 import.
-
-* User selects the samples by clicking on the rows in the datatable.
-
-* User selects reps by filling in the rep number in the left hand column of
+\item User selects the samples by clicking on the rows in the datatable.
+\item User selects reps by filling in the rep number in the left hand column of
 selected sample rows.
-
-* User selects DONE : samples/reps are first
-
-  + EXPORTED from the source Project Note : Export datatable is updated/written
-    as needed in the source note, pointing to the destination Project Note
-
-  + IMPORTED to the destination Project Note : Import datatable is written
-    which includes the samples/reps selected, pointing to the source Project
-    Note.
+\item User selects DONE : samples/reps are first
+\itemize{
+\item EXPORTED from the source Project Note : Export datatable is updated/written
+as needed in the source note, pointing to the destination Project Note
+\item IMPORTED to the destination Project Note : Import datatable is written
+which includes the samples/reps selected, pointing to the source Project
+Note.
+}
+}
 }

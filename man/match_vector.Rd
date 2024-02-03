@@ -7,6 +7,6 @@
 match_vector(vector, parent, nomatch = 0L)
 }
 \description{
-Identifies each initial index of `vector` in `parent` where all elements in
-`vector` match elements in `parent` in order.
+Identifies each initial index of \code{vector} in \code{parent} where all elements in
+\code{vector} match elements in \code{parent} in order.
 }

@@ -23,7 +23,7 @@ To create a database, a filename String and a columns character vector
 must be provided.  An empty tibble is formed and returned from this
 function: it contains the specified columns, and this tibble contains
 a 'path' attribute, that indicates where it is stored RELATIVE TO THE
-CURRENT RMD FILE, and this can be retrieved using `attr(tibble, "path")`.
+CURRENT RMD FILE, and this can be retrieved using \code{attr(tibble, "path")}.
 
 The database is stored alongside the Rmd that calls it in the file
 system - therefore this function can only be called from an Rmd, and

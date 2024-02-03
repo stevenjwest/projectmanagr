@@ -7,5 +7,5 @@
 write_file(contents, filePath)
 }
 \description{
-Writes `contents` to `filePath`.
+Writes \code{contents} to \code{filePath}.
 }

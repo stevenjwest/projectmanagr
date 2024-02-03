@@ -23,12 +23,12 @@ link_sub_note_doc(
 }
 \description{
 Single internal function to perform the linking between all project doc GDT
-links the `linkNoteRmdContents` and the `subNoteRmdPath`.
+links the \code{linkNoteRmdContents} and the \code{subNoteRmdPath}.
 }
 \details{
 Assumes these are both in the same project note group -
-`linkNoteRmdContents` should be either the header note of the group, or a
-subnote, and `subNoteRmdPath` should be a new subnote in the project note
+\code{linkNoteRmdContents} should be either the header note of the group, or a
+subnote, and \code{subNoteRmdPath} should be a new subnote in the project note
 group with no links. This function is used exclusively for the addition of
 new sub-notes to a project note group.
 }

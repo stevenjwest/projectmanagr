@@ -15,7 +15,7 @@ User selects a datatable name : list of existing datatables
 in the current Rmd.
 
 User defines the data table column names and values : these MUST begin with
-the prefix `group-` to define each group set.  Then the group codes are
+the prefix \verb{group-} to define each group set.  Then the group codes are
 entered, separated by spaces after the group column name.
 
 Multiple groups can be entered by repeating this layout.  The groups are

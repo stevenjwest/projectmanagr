@@ -10,6 +10,8 @@ get_project_doc_dir_path(projectDocPath, settings)
 Retrieves the projectDoc DIR from the projectDoc path:
 }
 \details{
-- Removes the projectDocTitle and EXT from the path, and returns
+\itemize{
+\item Removes the projectDocTitle and EXT from the path, and returns
 the ProjectDoc Dir - the path plus the projectDoc PREFIX.
+}
 }

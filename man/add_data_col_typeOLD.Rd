@@ -8,12 +8,12 @@ add_data_col_typeOLD(dt, name, data, indices = "")
 }
 \description{
 Accepts an existing dataframe, colname and data to insert.  Computes
-the type from the first value in data (data[1]): numeric, datetime, date,
-or character, then adds the correct column, renames the col to `name`, and
+the type from the first value in data (data\link{1}): numeric, datetime, date,
+or character, then adds the correct column, renames the col to \code{name}, and
 finally converts data to correct datatype and inserts into datatable.
 }
 \details{
-DT row length MUST equal the length of data.  `data` and `name` must be
+DT row length MUST equal the length of data.  \code{data} and \code{name} must be
 character vectors.
 
 Can optionally use indices to insert data into specific row indices in new col
