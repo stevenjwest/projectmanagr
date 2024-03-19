@@ -46,10 +46,10 @@ is linked in the ProjectDoc G/D/T as a simple note.}
 \item{subNoteTitle}{OPTIONAL title for the Project Sub Note.  Default is to
 use subNoteName and replace all _ and - with SPACES.}
 
-\item{projNoteTemplate}{Template to use, as found in the \verb{config/templates/}
+\item{projNoteTemplate}{Template to use, as found in the \verb{.config/templates/}
 directory.  Default is "Project-Header-Note-Template.Rmd"}
 
-\item{subNoteTemplate}{Template to use, as found in the \verb{config/templates/}
+\item{subNoteTemplate}{Template to use, as found in the \verb{.config/templates/}
 directory.  Default is "Project-Sub-Note-Template.Rmd"}
 
 \item{projNoteLinkTemplate}{Template with structure to add the Project Doc
@@ -60,7 +60,7 @@ with the content from \code{taskSectionHeaderTemplate}).}
 \item{projNoteLinkSummaryTemplate}{Template with structure to add underneath the
 Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
 and a 'todo' section by default, linked to \code{NoteObjectivesSummarySectionHeader}
-& \code{NoteObjectivesTodoSectionHeader} in \code{config/settings.yml}}
+& \code{NoteObjectivesTodoSectionHeader} in \code{.config/settings.yml}}
 
 \item{projNoteSummaryTemplate}{Template with structure to add Project Note
 summary to Project Doc under Goal/Del/Task.}

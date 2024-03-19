@@ -9,6 +9,7 @@ datatable_resample_template_rmd(
   rmd_startline,
   rmd_endline,
   datatable_name,
+  settings,
   dt_length = 100
 )
 }

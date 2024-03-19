@@ -7,12 +7,13 @@
 find_org_directory(path)
 }
 \arguments{
-\item{fileSystemPath}{an absolute path in the filesystem - should be within an Organisation.}
+\item{path}{an absolute path in the filesystem - should be within an
+Organisation.}
 }
 \description{
 Searches fileSystemPath's parent directories to identify
 a Project Organisation directory.  This is identified by
-finding a 'config/' directory and a 'config/templates/' directory.
+finding a '.config/' directory and a '.config/templates/' directory.
 }
 \details{
 If an Organisation path is identified, it is returned, otherwise

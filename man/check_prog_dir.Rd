@@ -6,12 +6,17 @@
 \usage{
 check_prog_dir(fileSystemPath, settings)
 }
+\arguments{
+\item{fileSystemPath}{Path to possible programme directory}
+
+\item{settings}{List from \code{.config/settings.yml} file.}
+}
 \description{
 Checks fileSystemPath is pointing to a PROGRAMME directory.
 A Programme Directory is a direct sub-dir to a Organisation
 directory, so this method establishes this is the case by checking
-the parent Dir to fileSystemPath, to see if 'config/' and
-'config/templates/' exist.
+the parent Dir to fileSystemPath, to see if '.config/' and
+'.config/templates/' exist.
 }
 \details{
 Secondly, it checks the 'PROJECTS/' directory exists in this

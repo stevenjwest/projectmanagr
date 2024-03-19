@@ -5,20 +5,21 @@
 \title{Create a New Project Organisation}
 \usage{
 create_project_org(
+  orgParentPath,
   orgName,
-  orgTitle,
-  organisationParentDirectory,
+  orgTitle = "",
   settingsYamlPath = "",
-  orgTemplate = "Org-Template.Rmd"
+  orgTemplate = "Org-Template.Rmd",
+  utime = ""
 )
 }
 \arguments{
+\item{orgParentPath}{defines where the organisation directory is
+written, Default is the working directory.}
+
 \item{orgName}{defines the directory name of the Organisation.}
 
 \item{orgTitle}{defines the title of the Organisation, in its document.}
-
-\item{organisationParentDirectory}{defines where the organisation directory is
-written, Default is the working directory.}
 
 \item{settingsYamlPath}{A VALID YAML file for establishing the projectmanagr
 organisation layout.  For this function the SitePath VolumesDir DocsDir ConfigDir
@@ -29,9 +30,14 @@ values.}
 \item{orgTemplate}{defines the template to use from the projectmanagr package.
 Default is "Org-Template.Rmd".}
 
+\item{utime}{Add update time to write to status.yml - for automated testing.}
+
 \item{organisationSiteDirectory}{an absolute path that defines where the compiled
 HTML from the organisation is written. If left blank, the default site directory
 will be the organisation directory path, with directory name suffixed with \verb{_site}.}
+}
+\value{
+orgIndexPath The path to the organisation index Rmd file.
 }
 \description{
 Generates the layout for a new Project Organisation in the File System.
@@ -40,7 +46,7 @@ Generates the layout for a new Project Organisation in the File System.
 The function generates the organisation directory and its initial contents:
 \itemize{
 \item \verb{index_<orgName>.Rmd} the landing page for the organisation.
-\item \verb{config/} directory with the config files and templates/ directory containing
+\item \verb{.config/} directory with the config files and templates/ directory containing
 component templates.
 \item \verb{docs/} directory, that will hold documentation for a projectmanagr usage.
 \item \verb{volumes/} directory, that will hold all volumes for managing data storage.

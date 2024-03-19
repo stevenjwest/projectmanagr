@@ -6,6 +6,13 @@
 \usage{
 compute_deliverable_link(del, DocLink, settings)
 }
+\arguments{
+\item{del}{Deliverable Header String}
+
+\item{DocLink}{Link to Project Doc.}
+
+\item{settings}{projectmanagr settings list.}
+}
 \description{
 generate new link from project doc with html # tag for deliverable section.
 }

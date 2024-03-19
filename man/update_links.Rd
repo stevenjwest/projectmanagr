@@ -5,31 +5,27 @@
 \title{Update links}
 \usage{
 update_links(
-  oldFileName,
-  newName,
+  oldLinkSuffix,
+  newLinkSuffix,
   dirTree,
   settings,
+  oldLinkString = "",
+  newLinkString = "",
   fileExtensions = list("Rmd")
 )
 }
 \arguments{
-\item{oldFileName}{defines the OLD name that will be in Hyperlinks.  Should be
-the FILE NAME - with no spaces, including PREFIX and .Rmd EXTENSION}
+\item{oldLinkSuffix}{Old link string to be updated.}
 
-\item{newName}{defines the NEW name to be written into Hyperlinks.  Should
-be the FILE NAME - with no spaces.}
+\item{newLinkSuffix}{New link string to replace \code{oldLinkSuffix}.}
 
 \item{dirTree}{Directory tree to search for files for replacing links in.}
+
+\item{settings}{projectmanagr settings list.}
 
 \item{fileExtensions}{List of file extensions indicating what types of files
 should be searched for links and have links replaced.  Must be plaintext file
 type.  Default is Rmd files only.}
-
-\item{oldTitle}{defines the OLD TITLE that will be in Hyperlinks.  By default
-replaces - & _ with spaces from name.}
-
-\item{newTitle}{defines the NEW TITLE that will be in Hyperlinks.  By default
-replaces - & _ with spaces from name.}
 }
 \description{
 Updates every hyperlink in all files within \code{dirTree}, replacing

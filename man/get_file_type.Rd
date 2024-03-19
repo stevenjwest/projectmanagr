@@ -9,7 +9,7 @@ get_file_type(filePath, settings)
 \arguments{
 \item{filePath}{the Absolute path to the file.}
 
-\item{settings}{A named list of the settings.yml file in projectmanagr organisation.}
+\item{settings}{List from \code{.config/settings.yml} file.}
 }
 \description{
 Determine if the current file is a PROJECT DOC (it is inside the PROJECTS/ Directory),

@@ -6,6 +6,9 @@
 \usage{
 format_group_declaration_bullets(content_selection)
 }
+\arguments{
+\item{content_selection}{Selection of GROUP TITLEs and GOUP IDs in bullets}
+}
 \description{
 Convert the bulleted list of GROUP TITLEs and GROUP IDs to space-separated
 string, for use in the addin_datatable_add_groups ADDIN.

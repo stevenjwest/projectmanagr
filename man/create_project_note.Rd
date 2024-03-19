@@ -34,7 +34,7 @@ path content of selection line.  See \code{cursor_selection()} or \code{user_sel
 \item{projectNoteTitle}{OPTIONAL title for the Project Note.  Default is to use
 projectNoteName and replace all \verb{_} and \code{-} with SPACES.}
 
-\item{projNoteTemplate}{Template to use, as found in the \verb{config/templates/}
+\item{projNoteTemplate}{Template to use, as found in the \verb{.config/templates/}
 directory.  Default is "Project-Note-Template.Rmd"}
 
 \item{projNoteLinkTemplate}{Template with structure to add the Project Doc
@@ -45,7 +45,7 @@ with the content from \code{taskSectionHeaderTemplate}).}
 \item{projNoteLinkSummaryTemplate}{Template with structure to add underneath the
 Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
 and a 'todo' section by default, linked to \code{NoteObjectivesSummarySectionHeader}
-& \code{NoteObjectivesTodoSectionHeader} in \code{config/settings.yml}}
+& \code{NoteObjectivesTodoSectionHeader} in \code{.config/settings.yml}}
 
 \item{projNoteSummaryTemplate}{Template with structure to add Project Note
 summary to Project Doc under Goal/Del/Task.}

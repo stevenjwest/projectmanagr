@@ -6,10 +6,13 @@
 \usage{
 check_prog_sub_dir(fileSystemPath)
 }
+\arguments{
+\item{fileSystemPath}{Path to location inside programme directory}
+}
 \description{
 Searches fileSystemPath's parent directories to identify
 a Project Organisation directory.  This is identified by
-finding a 'config/' directory and a 'config/templates/' directory.
+finding a '.config/' directory and a '.config/templates/' directory.
 }
 \details{
 For the fileSystemPath to be successfully returned, the directory

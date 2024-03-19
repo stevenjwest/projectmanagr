@@ -2,14 +2,14 @@
 % Please edit documentation in R/insert-functions.R
 \name{insert_content}
 \alias{insert_content}
-\title{Insert Content from Source Project Note into a new Project Note}
+\title{Insert Content from Source Content File into a Project Note}
 \usage{
 insert_content(selectionSource, selectionDestination)
 }
 \arguments{
 \item{selectionSource}{Selection object from Project Note file containing
 the Protocol to be inserted.  The selection must be on the FIRST PROTOCOL
-DELIMITER that indicates the start of the Protocol. Use
+DELIMITER that indicates the start of the Protocol declaration. Use
 \code{projectmanagr::cursor_selection()} or \code{projectmanagr::user_selection()} to
 create this object.}
 
@@ -19,12 +19,12 @@ the protocol is to be inserted.  Use \code{projectmanagr::cursor_selection()} or
 }
 \description{
 This Function adds Insertable Content in to a Project Note. Insertable Content
-are Document Sections between special syntax that exist in a Source Project
-Note - created with \code{create_content()} function.
+are text files that contain templated content for use in project notes -
+created with \code{create_content()} function.
 }
 \details{
 \itemize{
-\item The special syntax in the Content \code{{{INSERTABLE_CONTENT_LINK}}} is replaced
+\item The declared parameter in the Content \code{{{INSERTABLE_CONTENT_LINK}}} is replaced
 with a relative link from Destination to the Source Project Note.
 \item All links in the Content are UPDATED to work from the destination Project
 Note.

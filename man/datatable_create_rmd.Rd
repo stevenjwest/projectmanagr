@@ -7,6 +7,7 @@
 datatable_create_rmd(
   rmd_path,
   rmd_line,
+  settings,
   IDs = "",
   data_cols = "",
   datatable_name = "samples",

@@ -6,6 +6,11 @@
 \usage{
 find_header_Rmd_path(subNoteRmdPath, settings)
 }
+\arguments{
+\item{subNoteRmdPath}{Path to sub note Rmd file}
+
+\item{settings}{List from \code{.config/settings.yml} file.}
+}
 \description{
 From the \code{subNoteRmdPath} - an absolute path.
 }

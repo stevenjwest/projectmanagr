@@ -8,6 +8,7 @@ datatable_resample_rmd(
   rmd_path,
   rmd_line,
   datatable_name,
+  settings,
   resample_vector,
   dt_length = 100
 )

@@ -5,7 +5,10 @@
 \title{Path in org && Project Doc or Note (subdir of programme)
 && absolute + normalised}
 \usage{
-confirm_rmd_path(rmd_path)
+confirm_rmd_path(rmd_path, settings)
+}
+\arguments{
+\item{rmd_path}{Path to Rmd file to check.}
 }
 \description{
 Path in org && Project Doc or Note (subdir of programme)

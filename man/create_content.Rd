@@ -2,41 +2,73 @@
 % Please edit documentation in R/create-functions.R
 \name{create_content}
 \alias{create_content}
-\title{Create Boilerplate Content in a Project Note}
+\title{Create Insertable Content in a Project Note}
 \usage{
 create_content(
   selection,
   contentName,
   contentDescription,
-  contentTemplate = "Content-Template.Rmd"
+  contentSourcePath,
+  contentTitle = "",
+  contentDeclarationTemplate = "Content-Declaration-Template.Rmd",
+  contentSourceTemplate = "Content-Source-Template.Rmd"
 )
 }
 \arguments{
 \item{selection}{projectmanagr selection object indicating the type of file
-currently selects.  The current file must be a Project Note.}
+currently selected.  The current file must be a Project Note.}
 
-\item{contentName}{The name of the Protocol.  RECOMMEND to use a VERB-DRIVEN
-Naming Convention && use the common verb words first. eg. Fix Perfuse Mouse,
+\item{contentName}{The name of the Content; a String that should
+not contain any SPACES. For Protocols RECOMMEND using a VERB-DRIVEN Naming
+Convention && use the common verb words first. eg. Fix Perfuse Mouse,
 Fix Fog Drosophila.}
 
-\item{contentDescription}{Description of the protocol - shown
-to users when choosing a protocol to insert.}
+\item{contentDescription}{Description of the protocol - shown to users when
+choosing a protocol to insert.}
 
-\item{contentTemplate}{Template to use, as found in the \verb{config/templates/}
-directory.  Default is "Protocol-Template.Rmd"}
+\item{contentSourcePath}{Path to where the content Dir & Rmd should be stored.
+This can be any location on the filesystem, but RECOMMEND placing it within
+the project note's directory where the content declaration link will be written.}
+
+\item{contentDeclarationTemplate}{Template used for content declaration,
+found in the \verb{.config/templates/}directory.  Default is
+"Protocol-Declaration-Template.Rmd"}
+
+\item{contentSourceTemplate}{Template used for source of insertable text,
+found in the \verb{.config/templates/} directory.  Default is
+"Protocol-Source-Template.Rmd", a blank Rmd file.}
+
+\item{projectNoteTitle}{OPTIONAL title for the Content.  Default is a blank
+string (\code{""}), in which case the function will use contentName and replace
+all \verb{_} and \code{-} with SPACES.}
 }
 \description{
-This Function create new boilerplate Content, based on the \code{contentTemplate},
-which is inserted into selected Project Note.  The base content template is
-located in the organisation : \code{config/templates/Content-Template.Rmd} &
-provides suggested layout for a Protocol.
+This Function declares new Insertable Content, based on the
+\code{contentDeclarationTemplate}, which is inserted into selected Project Note.
+This contains key parameters to declare Insertable Content:
 }
 \details{
-Content is any templated insertable text for boilerplate content.  Typically
-in ProjectManage it is used to define a set of Standard Operating
-Procedures (SOPs) & LOG Sections that record Protocol execution.  The
-Content is defined between specific delimiters, defined in
-\code{CONTENT_SEP.txt}: by default the delimiter is a series of \verb{====}.
+\itemize{
+\item \code{CONTENT_NAME} specifies a name for the content, which can be used to select
+content to be inserted by the \code{insert_content()} function.
+\item \code{CONTENT_DESCRIPTION} gives a succinct description of the insertable content
+what it contains & how it can be used.
+\item \code{CONTENT_SOURCE_LINK} relative path to project note DIR for the content
+source Rmd file.
+}
+
+The actual insertable content is located in a separate Rmd, pointed to by the
+CONTENT_SOURCE_LINK parameter.  This is initially a blank Rmd document by
+default, that should be filled with the content to be inserted, including all
+whitespace.  The \code{contentSourceTemplate} can be modified to any existing Rmd
+file, to provide a base parameterised template for consistent generation of
+specific types of documentation (eg. suggested layouts, specific header
+ordering, etc).
+
+Content is any templated insertable text.  Typically in ProjectManager it is
+used to define a set of Standard Operating Procedures (SOPs) and/or LOG
+Sections that record Protocol execution.  The Content Declaration is defined
+between specific delimiters, defined in \code{CONTENT_SEP.txt}.
 
 Content defined in a source Project Note can be inserted into new Project
 Notes, using the \code{insert_content()} function.

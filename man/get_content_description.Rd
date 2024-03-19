@@ -2,10 +2,22 @@
 % Please edit documentation in R/document-functions.R
 \name{get_content_description}
 \alias{get_content_description}
-\title{Get Insertable Content Description}
+\title{Get Content Description}
 \usage{
-get_content_description(rmdContents, startSepLineIndex, settings, orgPath)
+get_content_description(contentDeclContents, settings, orgPath)
+}
+\arguments{
+\item{contentDeclContents}{The Content Declaration Contents - character vector that
+includes all lines between content separators.}
+
+\item{settings}{ProjectManagr organisation settings.yml file}
+
+\item{orgPath}{The path to the root of the organisation}
+}
+\value{
+the Content Description value as string
 }
 \description{
-From the note rmdContents, the insertable content with startSep at startSepLineIndex.
+Extract content description from the content Contents, using the ContentDescriptionField
+parameter declared in settings.
 }

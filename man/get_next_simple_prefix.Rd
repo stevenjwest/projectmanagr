@@ -9,6 +9,8 @@ get_next_simple_prefix(projectNotePath, settings)
 \arguments{
 \item{projectNotePath}{Is the path the new simple project note is to be placed
 into.}
+
+\item{settings}{List from \code{.config/settings.yml} file.}
 }
 \description{
 This method extracts the Prefix String from projectNotePath (isolated by extracting

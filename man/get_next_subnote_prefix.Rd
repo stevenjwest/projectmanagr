@@ -8,6 +8,8 @@ get_next_subnote_prefix(headerNoteDir, settings)
 }
 \arguments{
 \item{headerNoteDir}{The Group Header Note Directory.}
+
+\item{settings}{List from \code{.config/settings.yml} file.}
 }
 \description{
 This method extracts the Prefix String from headerNoteDir, then checks the

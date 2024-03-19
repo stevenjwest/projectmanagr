@@ -6,12 +6,15 @@
 \usage{
 check_prog_file(fileSystemPath)
 }
+\arguments{
+\item{fileSystemPath}{Path to possible programme directory}
+}
 \description{
 Checks fileSystemPath is inside a PROGRAMME directory.
 A Programme Directory is a direct sub-dir to a Organisation
 directory, so this method establishes this is the case by checking
-the parent Dir to fileSystemPath, to see if 'config/' and
-'config/templates/' exist.
+the parent Dir to fileSystemPath, to see if '.config/' and
+'.config/templates/' exist.
 }
 \details{
 Secondly, it checks the 'PROJECTS/' directory exists in this

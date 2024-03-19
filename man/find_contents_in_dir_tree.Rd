@@ -6,16 +6,43 @@
 \usage{
 find_contents_in_dir_tree(dirTree, orgPath, settings)
 }
+\arguments{
+\item{dirTree}{Directory tree to search for content declarations in within
+project notes.}
+
+\item{orgPath}{Organisation path.}
+
+\item{settings}{settings.yml in org config.}
+}
+\value{
+List of content declaration containing named parameters: "contentTitle",
+"contentDescription", "contentSource", "contentStartLine", "contentEndLine",
+"projectNotePath", "projectNoteContentHeader"
+}
 \description{
 Searches through dirTree recursively for Project Notes, and then looks
 for Insertable Contents in these based on the content sep delimiter - defined
-in \code{CONTENT_SEP.txt}: by default the delimiter is a series of \verb{====}.
+in \code{CONTENT_SEP.txt}.
 }
 \details{
-Returns a structured lists that describe each contents in the project notes:
+Returns structured lists that describe each contents in the project notes:
 
 Each Structured List contains: is a character vector comprised
 name() : ProjectNotePath && Project Note Line Number where Insertable
 Contents BEGINS (start of first delimiter), separated with \code{:::}
+
 [\link{"contentTitle"}] : Title of Insertable Contents in the Project Note
+
+[\link{"contentDescription"}] : Description of Insertable Contents in the Project Note
+
+[\link{"contentSource"}] : Absolute Path to Contents declared in the Project Note
+
+[\link{"contentStartLine"}] : Start line of the contents declaration in Project Note
+
+[\link{"contentEndLine"}] : End line of the contents declaration in Project Note
+
+[\link{"projectNotePath"}] : Path to Project Note
+
+[\link{"projectNoteContentHeader"}] : Identified markdwon header section that the
+Contents Declaration is in.
 }

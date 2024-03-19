@@ -11,9 +11,8 @@ Generates a Shiny Gadget for creating a new Project Doc inside
 a Programme.
 }
 \details{
-User selects a destination in
-the file system (MUST be a Programme Dir), Project name, and
-Project title (for the html page).
+User selects a Programme, then destination in the file system (MUST be within
+a Programme Dir), Project name, and Project title (for the html page).
 
 Stipulates any errors in the input, and can only be completed
 when these errors have been resolved.

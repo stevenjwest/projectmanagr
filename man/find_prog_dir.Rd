@@ -4,14 +4,17 @@
 \alias{find_prog_dir}
 \title{Find Programme Dir}
 \usage{
-find_prog_dir(fileSystemPath, settings)
+find_prog_dir(fileSystemPaths)
+}
+\arguments{
+\item{fileSystemPaths}{a vector of paths to identify programme paths from.}
 }
 \description{
-Searches fileSystemPath's parent directories to identify
-a Programme directory.  This is identified by
-finding a 'PROJECTS/' directory.
+Recursively searches fileSystemPaths to identify a
+Programme directory.  This is identified by identifying the organisation root
+directory from each parent direcotry searched.
 }
 \details{
-If a Programme path is identified, it is returned, otherwise
-the function returns a BLANK string "".
+If Programme paths are identified, they are  returned, otherwise
+the function returns BLANK strings "".
 }

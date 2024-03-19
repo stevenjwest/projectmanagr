@@ -6,6 +6,13 @@
 \usage{
 get_datetime(timezone = "UTC", split = "-", splitTime = ":")
 }
+\arguments{
+\item{timezone}{Timezone code to use. Default "UTC".}
+
+\item{split}{Chracter to split YYYY & MM & DD. Default "/".}
+
+\item{splitTime}{Chracter to split DD & hh & mm. Default ":".}
+}
 \description{
 internal function to get datetime in YYYY/MM/DD:hh:mm format
 }

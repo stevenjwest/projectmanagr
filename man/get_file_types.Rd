@@ -7,7 +7,7 @@
 get_file_types(filePaths, settings)
 }
 \arguments{
-\item{settings}{A named list of the settings.yml file in projectmanagr organisation.}
+\item{settings}{List from \code{.config/settings.yml} file.}
 
 \item{filePath}{the Absolute path to the file.}
 }

@@ -6,6 +6,11 @@
 \usage{
 write_file(contents, filePath)
 }
+\arguments{
+\item{contents}{Character vector to write to filePath}
+
+\item{filPath}{path to file to write}
+}
 \description{
 Writes \code{contents} to \code{filePath}.
 }

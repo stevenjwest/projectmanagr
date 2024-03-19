@@ -9,6 +9,7 @@ datatable_add_data_samples_rmd(
   rmd_line,
   data_cols,
   datatable_name,
+  settings,
   ids_vector = "",
   dt_length = 100,
   summarise_reps = FALSE

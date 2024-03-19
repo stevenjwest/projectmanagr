@@ -11,6 +11,7 @@ datatable_add_group_rmd(
   group_names,
   datatable_name,
   groups,
+  settings,
   dt_length = 100,
   summarise_reps = FALSE
 )

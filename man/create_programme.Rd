@@ -6,19 +6,15 @@
 \usage{
 create_programme(
   programmeName,
-  programmePrefix,
   organisationPath,
   programmeTitle = "",
   progTemplate = "Programme-Template.Rmd",
-  progSummaryTemplate = "Programme-Summary-Template.Rmd"
+  progSummaryTemplate = "Programme-Summary-Template.Rmd",
+  ctime = ""
 )
 }
 \arguments{
 \item{programmeName}{Name of Progamme - must NOT contain a space.}
-
-\item{programmePrefix}{PREFIX used for all new PROJECTS in this PROGRAMME -
-should use ALL CAPS, and NO NUMBERS.  Must not contain a space. Ideally two
-or three letters long.}
 
 \item{organisationPath}{Path to insert the PROGRAMME into.  If this is not an
 Organisation Directory, will search up the directory tree to attempt to find
@@ -27,20 +23,27 @@ one.  If none found, the method will end without making a PROGRAMME.}
 \item{programmeTitle}{Title of programme - typically the programmeName with
 "_" & "-" replaced with spaces.}
 
-\item{progTemplate}{The Rmd file to use as a template to create the Programme.  This is set to "Programme-Template.Rmd" in
-projectmanagr.}
+\item{progTemplate}{The Rmd file to use as a template to create the Programme.
+Default is "Programme-Template.Rmd" from projectmanagr templates.}
+
+\item{progSummaryTemplate}{The Rmd file to use as a template to create the
+Programme Summary. Default is "Programme-Summary-Template.Rmd" from
+projectmanagr templates.}
+
+\item{ctime}{Add creation time to write to status.yml - for automated testing.}
+}
+\value{
+progIndexPath The path to the programme index Rmd file.
 }
 \description{
-Generates a new Programme at the top level of the Organisation.  If the
-organisationPath is not at the top of the Organisation, will traverse until
-it is found.  This function will halt if no Organisation is found - the
-organisation root is defined by the presence of config/ and config/templates
-dirs at root.
+Generates a new Programme in an Organisation.  Generates a directory for the
+programme, and an initial \verb{_index_} .Rmd file that defines the programme
+homepage.
 }
 \details{
-User must supply the programmeName and programmePrefix.  The
-programmeName must NOT contain a space, and programmePrefix should be two to three
-CAPITAL LETTERS.  An optional programmeTitle (which if not supplied will default
-to the programmeName, replacing "_" & "-" with " ").  The default organisationPath
-is the working directory.
+If \code{organisationPath} is not at the top of the Organisation, will traverse until
+it is found.  This function will halt if no Organisation is found - the
+organisation root is defined by the presence of .config/ and .config/templates
+dirs at root. An optional programmeTitle (which if not supplied will default
+to the programmeName, replacing "_" & "-" with " ").
 }

@@ -12,11 +12,43 @@ Identify the selection from the Active Cursor position in current R Studio file.
 \details{
 First identifies if the current Cursor position is on a GROUP (HEADER NOTE or SUBNOTE).
 It then searches back through the Active Document to find the first line starting with
-"##" - if this is a "#### TASK" line, then the first previous "### DELIVERABLE" line and
-the first previous "### GOAL" line is also identified.
+"##" - if this is a \code{TASK} line, then the first previous \code{DELIVERABLE} line and
+the first previous \code{GOAL} line are also identified.
 
 If TASK, DELIVERABLE and GOAL lines are all successfully found, this method returns
 a LIST:
+
+[\link{1}] or [\link{"rmdType"}] - type of file selected: DOC, HEAD, SUB, NOTE, or UNKNOWN
+
+[\link{2}] or [\link{"task"}]
+
+[\link{3}] or [\link{"taskLine"}]
+
+[\link{4}] or [\link{"deliverable"}]
+
+[\link{5}] or [\link{"delLine"}]
+
+[\link{6}] or [\link{"goal"}]
+
+[\link{7}] or [\link{"goalLine"}]
+
+[\link{8}] or [\link{"originalLine"}]
+
+[\link{9}] or [\link{"originalLineNumber"}]
+
+[\link{10}] or [\link{"addingSubNote"}]
+
+[\link{11}] or [\link{"headerNoteLink"}]
+
+[\link{12}] or [\link{"headerNoteRmdPath"}]
+
+[\link{13}] or [\link{"headerNoteName"}]
+
+[\link{14}] or [\link{"headerNoteLineNumber"}]
+
+[\link{15}] or [\link{"filePath"}]
+
+[\link{16}] or [\link{"defaultPath"}]
 
 [\link{1}] or [\link{"task"}] - contains the line that starts "#### TASK" in the Active Document.
 

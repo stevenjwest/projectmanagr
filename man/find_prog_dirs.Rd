@@ -6,6 +6,17 @@
 \usage{
 find_prog_dirs(orgPath, settings)
 }
+\arguments{
+\item{orgPath}{Path to a projectmanagr organisation.}
+
+\item{settings}{List object of extracted metadata from organisation
+\code{.config/settings.yml} file.}
+}
+\value{
+programmePaths character vector containing all identified programme
+absolute paths.
+}
 \description{
-Searches the orgPath to identify all programmes.
+Searches the orgPath to identify all programmes. Programme paths are returned
+after extracting the names from the status.yml file under PROGRAMMES section.
 }

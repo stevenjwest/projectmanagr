@@ -2,22 +2,22 @@
 % Please edit documentation in R/datatables-addins.R
 \name{addin_datatable_import}
 \alias{addin_datatable_import}
-\title{Import EXISTING samples and reps from Datatable in source Project Note}
+\title{Import EXISTING samples and reps from Datatables in source Project Note(s)}
 \usage{
 addin_datatable_import()
 }
 \description{
 Generates a Shiny Gadget for importing existing samples and reps derived from
-datatables that exist in a source Project Note into the currently active
+datatables that exist in source Project Note(s), into the currently active
 destination Project Note.
 }
 \details{
 \itemize{
 \item User selects the line in the current Project Note where the IMPORT will
 be written.
-\item User selects a source Project Note, from the current ORGANISATION: This
-note is read for all EXISTING samples/reps in all datatables, which are
-presented in SUMMARY FORMAT
+\item User selects a dirTree, from the current ORGANISATION: All project notes
+identified recursively are is read for all EXISTING samples/reps in datatables,
+which are presented in SUMMARY FORMAT
 \item User filters the datatable for desired characteristics of samples/reps for
 import.
 \item User selects the samples by clicking on the rows in the datatable.

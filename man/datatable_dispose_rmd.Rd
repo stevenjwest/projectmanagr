@@ -8,6 +8,7 @@ datatable_dispose_rmd(
   rmd_path,
   rmd_line,
   datatable_name,
+  settings,
   dt_length = 100,
   summarise_reps = TRUE
 )

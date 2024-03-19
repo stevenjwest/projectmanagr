@@ -8,6 +8,7 @@ datatable_create_template_rmd(
   rmd_path,
   rmd_startline,
   rmd_endline,
+  settings,
   IDs,
   datatable_name = "samples",
   dt_length = 100

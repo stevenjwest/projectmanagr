@@ -7,7 +7,7 @@
 create_project_doc(
   projectPrefix,
   projectName,
-  programmePath,
+  projectParentPath,
   projectTitle = "",
   projDocTemplate = "Project-Doc-Template.Rmd",
   projDocSummaryTemplate = "Project-Doc-Summary-Template.Rmd",
@@ -19,7 +19,7 @@ create_project_doc(
 
 \item{projectName}{Name of Project - must NOT contain a space.}
 
-\item{programmePath}{Path to insert the Project into.  This must be a Programme dir, one level below the
+\item{projectParentPath}{Path to insert the Project into.  This must be a Programme dir, one level below the
 organisation, and containing a PROJECTS/ directory.  The Project will be placed into the PROJECTS/ directory.
 If none found, the method will end without making a Project}
 
@@ -30,8 +30,11 @@ If none found, the method will end without making a Project}
 \item{projectIndex}{If 0, the function will determine the projectIndex by searching the PROJECTS/ directory.
 Otherwise, the projectIndex is used to number the Project in its Prefix.}
 }
+\value{
+projectDocRmd The path to the project docRmd file.
+}
 \description{
-Generates a new Project inside a Programme in an Organisation.  The programmePath
+Generates a new Project inside a Programme in an Organisation.  The projectParentPath
 must be in the Programme directory, which is the sub-Dir to the root ORGANISATION
 dir.
 }
@@ -41,5 +44,5 @@ the next number in the sequence, as well as deriving the Programme Prefix.
 
 User must supply the project name, which must contain NO SPACES, and optionally a project
 title.  If no title is provided, the Title is derived from the project name, replacing any
-"_" & "-" with " ". The default programmePath is the working directory.
+"_" & "-" with " ". The default projectParentPath is the working directory.
 }

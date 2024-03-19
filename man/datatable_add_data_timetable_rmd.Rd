@@ -10,6 +10,7 @@ datatable_add_data_timetable_rmd(
   step_names,
   datatable_name,
   group_names,
+  settings,
   dt_length = 100
 )
 }

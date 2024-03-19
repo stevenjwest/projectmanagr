@@ -10,6 +10,7 @@ datatable_add_data_samples_template_rmd(
   rmd_endline,
   IDs,
   datatable_name,
+  settings,
   dt_length = 100,
   summarise_reps = FALSE
 )

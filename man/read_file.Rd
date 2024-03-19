@@ -6,6 +6,9 @@
 \usage{
 read_file(filePath)
 }
+\arguments{
+\item{filPath}{path to file to read}
+}
 \description{
 Returns a string vector of text file at \code{filePath}.
 }
