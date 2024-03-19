@@ -140,7 +140,7 @@ This Organisation is managed using `projectmanagr`
 
 * ProjectManagr : R Package for Project Management using R Markdown Documents
 
-    + See [projectmanagr overview](docs/projectmanagr_overview.Rmd) for usage instructions
+    + See [projectmanagr wiki](https://github.com/stevenjwest/projectmanagr/wiki) for usage instructions
 
 
 * ProjectManagr supports external drives and data servers for external data storage:
