@@ -525,7 +525,7 @@ addin_insert_content <- function() {
   server <- function(input, output, session) {
 
 
-    #### compute Dir selection####
+    #### compute Dir selection ####
 
     global <- reactiveValues(datapath = dirPath )
     # this sets initial value of global$datapath
@@ -630,10 +630,13 @@ addin_insert_content <- function() {
         #paste0("row: ", input$mytable1_rows_selected, " line: ",
         #       CONTENT_LINE_NUM[[input$mytable1_rows_selected]],
         #       " path: ", CONTENT_NOTE_PATH[[input$mytable1_rows_selected]])
-        desc <- get_content_description(read_file(gt$paths[[input$mytable1_rows_selected]]),
-                                 as.numeric(gt$lines[[input$mytable1_rows_selected]]),
-                                 settings, orgPath)
+        cnts <- get_content_declaration_contents(read_file(gt$paths[[input$mytable1_rows_selected]]),
+                                                 as.numeric(gt$lines[[input$mytable1_rows_selected]]),
+                                                 settings, orgPath)
+        desc <- get_content_description(cnts, settings, orgPath)
+
         HTML(paste0(desc[desc!=""], sep='<br/>') )
+
       }
     })
 
@@ -643,10 +646,13 @@ addin_insert_content <- function() {
     observeEvent(input$done, {
 
       cat( paste0("  inserting content into: ", basename(projNoteRmdPath), " at line: ", noteInsertionIndex, "\n") )
+
       projectmanagr::insert_content(
-        user_selection(gt$paths[[input$mytable1_rows_selected]],
+
+        selectionSource = user_selection(gt$paths[[input$mytable1_rows_selected]],
                        as.numeric(gt$lines[[input$mytable1_rows_selected]]) ),
-        user_selection(projNoteRmdPath, noteInsertionIndex)
+
+        selectionDestination = user_selection(projNoteRmdPath, noteInsertionIndex)
       )
 
       # add found contents cache to status

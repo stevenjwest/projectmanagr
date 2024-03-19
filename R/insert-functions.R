@@ -66,13 +66,6 @@ insert_doc_goal_section <- function(selection,
   # remake selection object at last line - will return the final goal section position
   selection <- user_selection(projDocPath, length(projDocContents))
 
-  # compute next goal number & add to goal section
-  goalNum <- get_goal_number(selection[["goal"]], settings)
-  goalNumNext <- goalNum + 1
-
-  goalSectionContents <- sub_template_param(goalSectionContents, "{{GOAL_NUMBER}}",
-                                            goalNumNext, orgPath)
-
   # modify goal/del/task sep, header, footer vals
   goalSectionContents <- sub_template_param(goalSectionContents, "{{GOAL_SEP}}",
                                             settings[["ProjectGoalSep"]], orgPath)
@@ -92,9 +85,7 @@ insert_doc_goal_section <- function(selection,
   goalSectionContents <- sub_template_param(goalSectionContents, "{{TASK_FOOTER}}",
                                             settings[["ProjectTaskFooter"]], orgPath)
 
-  # write Task Overview & Task Log values
-  goalSectionContents <- sub_template_param(goalSectionContents, "{{PROJECT_TASK_OVERVIEW}}",
-                                        settings[["ProjectTaskOverviewHeader"]], orgPath)
+  # write Task Task Log header
   goalSectionContents <- sub_template_param(goalSectionContents, "{{PROJECT_TASK_LOG}}",
                                         settings[["ProjectTaskLogHeader"]], orgPath)
 
@@ -185,14 +176,6 @@ insert_doc_deliverable_section <- function(selection,
   selection <- user_selection(projDocPath, goalFooterLine) # selection now captures LAST deliverable in this goal section
 
 
-  # compute next deliverable number & add to deliverable section
-  delNum <- get_deliverable_number(selection[["deliverable"]], settings)
-  delNumNext <- delNum + 1
-
-  deliverableSectionContents <- sub_template_param(deliverableSectionContents,
-                                                   "{{DELIVERABLE_NUMBER}}",
-                                                   delNumNext, orgPath)
-
   # modify del/task sep, header, footer vals
   deliverableSectionContents <- sub_template_param(deliverableSectionContents, "{{DELIVERABLE_SEP}}",
                                             settings[["ProjectDeliverableSep"]], orgPath)
@@ -207,9 +190,7 @@ insert_doc_deliverable_section <- function(selection,
   deliverableSectionContents <- sub_template_param(deliverableSectionContents, "{{TASK_FOOTER}}",
                                             settings[["ProjectTaskFooter"]], orgPath)
 
-  # write Task Overview & Task Log values
-  deliverableSectionContents <- sub_template_param(deliverableSectionContents, "{{PROJECT_TASK_OVERVIEW}}",
-                                            settings[["ProjectTaskOverviewHeader"]], orgPath)
+  # write Task Task Log header
   deliverableSectionContents <- sub_template_param(deliverableSectionContents, "{{PROJECT_TASK_LOG}}",
                                             settings[["ProjectTaskLogHeader"]], orgPath)
 
@@ -274,13 +255,10 @@ insert_doc_task_section <- function(selection,
   }
   # now, orgPath should be the root dir of the organisation
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
 
   #### Read Rmds ####
@@ -296,15 +274,6 @@ insert_doc_task_section <- function(selection,
 
   selection <- user_selection(projDocPath, deliverableFooterLine) # selection now captures LAST task in this del section
 
-
-  # compute next task number & add to task section
-  taskNum <- get_task_number(selection[["task"]], settings)
-  taskNumNext <- taskNum + 1
-
-  taskSectionContents <- sub_template_param(taskSectionContents,
-                                                   "{{TASK_NUMBER}}",
-                                                   taskNumNext, orgPath)
-
   # modify task sep, header, footer vals
   taskSectionContents <- sub_template_param(taskSectionContents, "{{TASK_SEP}}",
                                                    settings[["ProjectTaskSep"]], orgPath)
@@ -313,9 +282,7 @@ insert_doc_task_section <- function(selection,
   taskSectionContents <- sub_template_param(taskSectionContents, "{{TASK_FOOTER}}",
                                                    settings[["ProjectTaskFooter"]], orgPath)
 
-  # write Task Overview & Task Log values
-  taskSectionContents <- sub_template_param(taskSectionContents, "{{PROJECT_TASK_OVERVIEW}}",
-                                                   settings[["ProjectTaskOverviewHeader"]], orgPath)
+  # write Task Task Log header
   taskSectionContents <- sub_template_param(taskSectionContents, "{{PROJECT_TASK_LOG}}",
                                                    settings[["ProjectTaskLogHeader"]], orgPath)
 
@@ -333,13 +300,13 @@ insert_doc_task_section <- function(selection,
 
 
 
-#' Insert Content from Source Project Note into a new Project Note
+#' Insert Content from Source Content File into a Project Note
 #'
 #' This Function adds Insertable Content in to a Project Note. Insertable Content
-#' are Document Sections between special syntax that exist in a Source Project
-#' Note - created with `create_content()` function.
+#' are text files that contain templated content for use in project notes -
+#' created with `create_content()` function.
 #'
-#' * The special syntax in the Content `{{INSERTABLE_CONTENT_LINK}}` is replaced
+#' * The declared parameter in the Content `{{INSERTABLE_CONTENT_LINK}}` is replaced
 #'  with a relative link from Destination to the Source Project Note.
 #'
 #' * All links in the Content are UPDATED to work from the destination Project
@@ -350,7 +317,7 @@ insert_doc_task_section <- function(selection,
 #'
 #' @param selectionSource Selection object from Project Note file containing
 #'  the Protocol to be inserted.  The selection must be on the FIRST PROTOCOL
-#'  DELIMITER that indicates the start of the Protocol. Use
+#'  DELIMITER that indicates the start of the Protocol declaration. Use
 #'  `projectmanagr::cursor_selection()` or `projectmanagr::user_selection()` to
 #'  create this object.
 #'
@@ -362,10 +329,6 @@ insert_doc_task_section <- function(selection,
 insert_content <- function(selectionSource, selectionDestination) {
 
   cat( "\nprojectmanagr::insert_content():\n" )
-
-  # @param contentInsertionTemplate Template file that contains boilerplate content
-  # for content insertion into project note.
-  # contentInsertionTemplate="Content-Insertion-Template.Rmd"
 
 
   #### Set Instance Variables ####
@@ -387,80 +350,52 @@ insert_content <- function(selectionSource, selectionDestination) {
   }
   # orgPath is root dir of the organisation - same for both source and destination
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-
-  # open content sep delimiter
-  contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
 
-  #### Read Source Rmd ####
+  #### Extract Content Declaration parameters ####
 
-  sourceNoteRmdContents <- read_file(sourceNoteRmdPath)
-
-
-  #### Check content Exists @ selectionSource ####
-
-  # check content sep exists in sourceNoteRmdContents from sourceNoteContentIndex
-  sourceNoteContentEnd <- sourceNoteContentIndex + length(contentSepContents) - 1
-
-  # each element in contentSepContents must match each element in sourceNoteRmdContents from sourceNoteContentIndex
-  if( ! all(sourceNoteRmdContents[sourceNoteContentIndex:sourceNoteContentEnd] == contentSepContents) ) {
-    stop( paste0("  sourceNoteRmdContents does not contain a content delimiter at sourceNoteContentIndex: ",
-                 sourceNoteRmdContents[sourceNoteContentIndex:sourceNoteContentEnd], " delimiter: ", contentSepContents) )
-  }
+  contentDeclaration <- get_content_declaration(sourceNoteRmdPath, selectionSource,
+                                                  settings, orgPath)
 
 
-  #### Read Destination & template Rmds ####
+  #### Read Destination Rmd ####
 
   destNoteRmdContents <- read_file(destNoteRmdPath)
-
-  # no longer using insertion template - just insert the content as extracted from source project note
-  #contentInsertionContents <- read_file( paste0(tempPath, .Platform$file.sep, contentInsertionTemplate) )
 
 
   #### Get Content from source note ####
 
-  # compute location of Content header & title in sourceNoteRmdContents
-  contentHeader <- get_content_header(sourceNoteRmdContents, sourceNoteContentIndex, settings, orgPath)
-  contentTitle <- get_content_title(sourceNoteRmdContents, sourceNoteContentIndex, settings, orgPath)
+  contentSourceContents <- read_file(contentDeclaration$contentSource)
+
+
 
   # form a link to the Content in the Source Note from destination note
-  contentLink <- create_hyperlink_section(basename(sourceNoteRmdPath), contentHeader, sourceNoteRmdPath, destNoteRmdPath)
-
-  # get Content contents
-  contentDelimiterIndices <- match_vector(contentSepContents,
-                                           sourceNoteRmdContents[sourceNoteContentIndex:length(sourceNoteRmdContents)])
-  # the Content of interest is between FIRST and SECOND delim indices
-  contentStartIndex <- sourceNoteContentIndex + length(contentSepContents)
-  contentEndIndex <- sourceNoteContentIndex + contentDelimiterIndices[2] - length(contentSepContents)
-
-  contentContents <- sourceNoteRmdContents[contentStartIndex:contentEndIndex]
+  contentLink <- create_hyperlink_section(basename(sourceNoteRmdPath), contentDeclaration$projectNoteContentHeader,
+                                          sourceNoteRmdPath, destNoteRmdPath)
 
 
   #### Replace Template Params ####
 
   # replace {{INSERTABLE_CONTENT_LINK}} template param
-  contentContents <- sub_template_param(contentContents, "{{INSERTABLE_CONTENT_LINK}}",
+  contentSourceContents <- sub_template_param(contentSourceContents, "{{INSERTABLE_CONTENT_LINK}}",
                                         contentLink, orgPath)
 
   # replace {{PREFIX}} template param with Destination Project Note Prefix
-  contentContents <- sub_template_param(contentContents, "{{PREFIX}}",
+  contentSourceContents <- sub_template_param(contentSourceContents, "{{PREFIX}}",
                                         get_prefix(destNoteRmdPath, settings), orgPath)
 
   # every knitr::include_graphics link, replace the path!
-  contentContents <- replace_knitr_include_graphics_link(contentContents, sourceNoteRmdPath,
+  contentSourceContents <- replace_knitr_include_graphics_link(contentSourceContents, sourceNoteRmdPath,
                                                          destNoteRmdPath, settings, orgPath)
 
   #### Add Protocol Insertion Template to Destination Project Note
 
   destNoteRmdContents <- insert_at_indices(destNoteRmdContents,
-                                        noteInsertionIndex, contentContents)
+                                        noteInsertionIndex, contentSourceContents)
 
 
   #### write Project Note ####
@@ -499,13 +434,10 @@ insert_lines <- function(selection, lines) {
   }
   # orgPath is root dir of the organisation - same for both source and destination
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
 
   #### Read Source Rmd ####
@@ -527,3 +459,54 @@ insert_lines <- function(selection, lines) {
 
 }
 
+
+
+#' Insert header link into subnote
+#'
+insert_header_link_subnote <- function(subNoteContents, headerNoteFileName,
+                                       headerNoteRmdPath, subNoteRmdPath,
+                                       headerNoteContentLinkContents,
+                                       settings, orgPath) {
+
+
+  #### Insert header link content into subnote ####
+
+  headerNoteContentLink <- create_hyperlink( headerNoteFileName, headerNoteRmdPath, subNoteRmdPath)
+  headerNoteContentLinkContents <- sub_template_param(headerNoteContentLinkContents,
+                                                      "{{SUB_NOTE_CONTENT_LINK}}",
+                                                      headerNoteContentLink, orgPath)
+
+  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["SubNoteContentsHeader"]], orgPath),
+                                             subNoteContents)
+  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["SubNoteContentsFooter"]], orgPath),
+                                                 subNoteContents, noteContentsHeadIndex)
+
+  subNoteContents <- insert_at_indices(subNoteContents, noteContentsFootIndex, headerNoteContentLinkContents)
+
+  subNoteContents # return
+
+}
+
+#' Insert header link into subnote
+#'
+
+insert_subnote_link_header <- function(headerNoteRmdContents, subNoteFileName,
+                           subNoteRmdPath, headerNoteRmdPath,
+                           subNoteContentLinkContents,
+                           settings, orgPath) {
+
+  subNoteContentLink <- create_hyperlink( subNoteFileName, subNoteRmdPath, headerNoteRmdPath)
+  subNoteContentLinkContents <- sub_template_param(subNoteContentLinkContents,
+                                                   "{{HEADER_NOTE_CONTENT_LINK}}",
+                                                   subNoteContentLink, orgPath)
+
+  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["HeaderNoteContentsHeader"]], orgPath),
+                                             headerNoteRmdContents)
+  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["HeaderNoteContentsFooter"]], orgPath),
+                                                 headerNoteRmdContents, noteContentsHeadIndex)
+
+  headerNoteRmdContents <- insert_at_indices(headerNoteRmdContents, noteContentsFootIndex, subNoteContentLinkContents)
+
+  headerNoteRmdContents # return
+
+}
