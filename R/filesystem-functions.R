@@ -2,12 +2,13 @@
 #'
 #' Searches fileSystemPath's parent directories to identify
 #' a Project Organisation directory.  This is identified by
-#' finding a 'config/' directory and a 'config/templates/' directory.
+#' finding a '.config/' directory and a '.config/templates/' directory.
 #'
 #' If an Organisation path is identified, it is returned, otherwise
 #' the function returns a BLANK string "".
 #'
-#' @param fileSystemPath an absolute path in the filesystem - should be within an Organisation.
+#' @param path an absolute path in the filesystem - should be within an
+#' Organisation.
 #'
 #' @export
 find_org_directory <- function( path ) {
@@ -15,13 +16,14 @@ find_org_directory <- function( path ) {
   origPath <- normalizePath(path)
   # Check path is at the root of an ORGANISATION:
 
-  # look for the config/ and templates/ dirs:
-  confPath <- paste(path, .Platform$file.sep, "config" , sep="")
-  tempPath <- paste(confPath, .Platform$file.sep, "templates" , sep="")
+  # look for the .config/ and templates/ dirs:
+  confPath <- get_config_dir(path)
+  tempPath <- get_template_dir(path)
 
-  path2 <- "/" # use this as placeholder of PREVIOUS orgPath - if orgPath == orgPath2, then have not found config or template!
+  # get the root of currently suuplied path - to exist recursive search
+  path2 <- unlist(fs::path_split(path))[1]
 
-  #### find org directory ####
+  #### recursive search for org directory ####
   while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
     path2 <- path # save in placeholder
     path <- dirname(path)
@@ -29,8 +31,8 @@ find_org_directory <- function( path ) {
       path <- ""
       break
     }
-    confPath <- paste(path, .Platform$file.sep, "config" , sep="")
-    tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
+    confPath <- get_config_dir(path)
+    tempPath <- get_template_dir(path)
   }
 
   path
@@ -41,7 +43,9 @@ find_org_directory <- function( path ) {
 #'
 #' Path in org && Project Doc or Note (subdir of programme)
 #' && absolute + normalised
-confirm_rmd_path <- function(rmd_path) {
+#'
+#' @param rmd_path Path to Rmd file to check.
+confirm_rmd_path <- function(rmd_path, settings) {
 
   # if not an absolute path:
   if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
@@ -49,11 +53,8 @@ confirm_rmd_path <- function(rmd_path) {
   }
 
   # CONFIRM rmd_path is a project doc or note:
-  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
-  orgPath <- dirname( dirname(rmd_path) )
-
-  orgPath <- find_org_directory(orgPath)
+  rmd_type <- get_file_type(rmd_path, settings)
+  orgPath <- find_org_directory(dirname(rmd_path))
 
   if(orgPath == "" ) {
     # the search reached the root of the filesystem without finding the Organisation files,
@@ -69,6 +70,12 @@ confirm_rmd_path <- function(rmd_path) {
   rmd_path
 }
 
+
+#' get prefix from path
+#'
+#' @param filePath Path to Project Note or Doc Rmd file.
+#'
+#' @param settings List from `.config/settings.yml` file.
 get_prefix <- function(filePath, settings) {
 
   substr(basename(filePath), 1,
@@ -84,8 +91,8 @@ get_prefix <- function(filePath, settings) {
 #' Returns the relevant String:  DOC, HEAD, SUB, NOTE, or UNKNOWN for unidentified file.
 #'
 #' @param filePath the Absolute path to the file.
-#' @param settings A named list of the settings.yml file in projectmanagr organisation.
 #'
+#' @param settings List from `.config/settings.yml` file.
 #'
 get_file_type <- function( filePath, settings ) {
 
@@ -94,20 +101,33 @@ get_file_type <- function( filePath, settings ) {
 
   # file types will depend on the LOCATION and FILENAME PREFIX
 
-  # Project Docs : Can only be defined by LOCATION - they MUST exist in the ProjectDocDir
-   # the name is in settings : ProgrammeProjectsDir
+  # Project Docs & Notes : These both will contain the prefixSep && have accompanying directory named prefix
+    # DOCS : Can be identified by fact their prefix does NOT match the parent directory they sit in
+    # NOTES : Can be identified by fact their prefix DOES match parent directory they sit in
 
   # get prefix string - extracts basename from start up to END OF ProjectPrefixSep
    # if ProjectPrefixSep doesnt exist this will be BLANK
   prefixSep <- substr(basename(filePath), 1,
-                      regexpr(settings[["ProjectPrefixSep"]], basename(filePath), fixed=TRUE)+(nchar(settings[["ProjectPrefixSep"]])-1) )
+                      regexpr(settings[["ProjectPrefixSep"]], basename(filePath), fixed=TRUE)
+                      +(nchar(settings[["ProjectPrefixSep"]])-1) )
    # this is useful as can identify the headerNote complete string: "-00~_"
 
   # extracts prefix up to JUST BEFORE ProjectPrefixSep
   prefix <- substr(basename(filePath), 1,
                    regexpr(settings[["ProjectPrefixSep"]], basename(filePath), fixed=TRUE)-1 )
 
-  # project notes are defined by FILENAME PREFIX:
+  # get just the STRING first part from prefix
+  # project notes have a prefix SRING then a NUMBER - so want to remove possible number
+  # these are separated by ~ - so return string up to but not including '~' : ProjectIndexSep
+  if( regexpr(settings[["ProjectIndexSep"]], prefix, fixed=TRUE) > -1 ) {
+    prefixStr <- substr(prefix, 1,
+                        regexpr(settings[["ProjectIndexSep"]], prefix, fixed=TRUE)-1 )
+  } else {
+    prefixStr <- prefix
+  }
+
+
+  # project notes subtypes are defined by FILENAME PREFIX:
    # looking at the PREFIX of the name will help identify the file
    # PREFIX layouts
     # simple note : PREFIXSTR~001~_...Rmd
@@ -138,10 +158,12 @@ get_file_type <- function( filePath, settings ) {
 
   #### parse filePath & prefix ####
 
-  TYPE <- "UNKNOWN"
+  if(prefix == "") {
+    # no prefix identified - must not be project doc or project note
+    TYPE <- "UNKNOWN"
 
-  if( basename(dirname(filePath)) == settings[["ProgrammeProjectsDir"]] ) {
-    # project docs can be defined by their position in the directory tree - name of parent directory
+  } else if( basename(dirname(filePath)) != prefixStr ) {
+    # project docs can be defined by a mismatch of parent directory name and prefix STRING name
     TYPE <- "DOC"
 
   } else if( grepl(headerTypeStr, prefixSep, fixed = TRUE) ) {
@@ -178,8 +200,8 @@ get_file_type <- function( filePath, settings ) {
 #' Returns the relevant String:  DOC, HEAD, SUB, NOTE, or UNKNOWN for unidentified file.
 #'
 #' @param filePath the Absolute path to the file.
-#' @param settings A named list of the settings.yml file in projectmanagr organisation.
 #'
+#' @param settings List from `.config/settings.yml` file.
 #'
 get_file_types <- function( filePaths, settings ) {
 
@@ -198,6 +220,7 @@ get_file_types <- function( filePaths, settings ) {
 #' internal function to get date in YYYY MM DD format
 #'
 #' @param timezone Timezone code to use. Default "UTC".
+#'
 #' @param split Chracter to split YYYY & MM & DD. Default "/".
 #'
 get_date <- function(timezone = "UTC", split="/") {
@@ -222,6 +245,13 @@ get_date <- function(timezone = "UTC", split="/") {
 
 
 #' internal function to get datetime in YYYY/MM/DD:hh:mm format
+#'
+#' @param timezone Timezone code to use. Default "UTC".
+#'
+#' @param split Chracter to split YYYY & MM & DD. Default "/".
+#'
+#' @param splitTime Chracter to split DD & hh & mm. Default ":".
+#'
 get_datetime <- function(timezone = "UTC", split="-", splitTime=":") {
 
   datetime <- lubridate::now(timezone) #Sys.time()
@@ -265,6 +295,7 @@ get_datetime <- function(timezone = "UTC", split="-", splitTime=":") {
 #' @param projectNotePath Is the path the new simple project note is to be placed
 #' into.
 #'
+#' @param settings List from `.config/settings.yml` file.
 #'
 get_next_simple_prefix <- function(projectNotePath, settings) {
 
@@ -358,8 +389,11 @@ get_next_simple_prefix <- function(projectNotePath, settings) {
 
 }
 
+#' get next header prefix from path
 #'
+#' @param groupNotePath Path to group Note.
 #'
+#' @param settings List from `.config/settings.yml` file.
 #'
 get_next_header_prefix <- function(groupNotePath, settings) {
 
@@ -382,6 +416,7 @@ get_next_header_prefix <- function(groupNotePath, settings) {
 #'
 #' @param headerNoteDir The Group Header Note Directory.
 #'
+#' @param settings List from `.config/settings.yml` file.
 #'
 get_next_subnote_prefix <- function(headerNoteDir, settings) {
 
@@ -457,9 +492,10 @@ get_next_subnote_prefix <- function(headerNoteDir, settings) {
 #'
 #' Returns a string vector of text file at `filePath`.
 #'
+#' @param filPath path to file to read
+#'
 read_file <- function(filePath) {
 
-  #### read file ####
   fileConn <- file(filePath)
   fileContents <- readLines(fileConn)
   close(fileConn)
@@ -472,13 +508,37 @@ read_file <- function(filePath) {
 #'
 #' Writes `contents` to `filePath`.
 #'
+#' @param contents Character vector to write to filePath
+#'
+#' @param filPath path to file to write
+#'
 write_file <- function(contents, filePath) {
-  #### write file ####
   fileConn <- file(filePath)
   writeLines(contents, fileConn)
   close(fileConn)
 }
 
+
+#' Check a path is the org root dir
+#'
+#' @param fileSystemPath String of a filesystem path.
+#'
+check_org_dir <- function(fileSystemPath) {
+
+  # look for the .config/ and templates/ dirs:
+  confPath <- get_config_dir(fileSystemPath)
+  tempPath <- get_template_dir(fileSystemPath)
+  settings <- get_settings_yml_file(fileSystemPath)
+
+  # of confPath and tempPath exist, this is the org (root) dir
+  if( fs::dir_exists(confPath) &
+      fs::dir_exists(tempPath) &
+      fs::file_exists(settings) ) {
+    return(TRUE)
+  } else{
+    return(FALSE)
+  }
+}
 
 
 
@@ -487,8 +547,8 @@ write_file <- function(contents, filePath) {
 #' Checks fileSystemPath is pointing to a PROGRAMME directory.
 #' A Programme Directory is a direct sub-dir to a Organisation
 #' directory, so this method establishes this is the case by checking
-#' the parent Dir to fileSystemPath, to see if 'config/' and
-#' 'config/templates/' exist.
+#' the parent Dir to fileSystemPath, to see if '.config/' and
+#' '.config/templates/' exist.
 #'
 #' Secondly, it checks the 'PROJECTS/' directory exists in this
 #' putative Programme Directory.
@@ -496,30 +556,73 @@ write_file <- function(contents, filePath) {
 #' If a Programme path is confirmed, it is returned, otherwise
 #' the function returns a BLANK string "".
 #'
+#' @param fileSystemPath Path to possible programme directory
+#'
+#' @param settings List from `.config/settings.yml` file.
 #'
 check_prog_dir <- function( fileSystemPath, settings ) {
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
   orgPath <- dirname(fileSystemPath)
+  is_org <- check_org_dir(orgPath)
 
-  # look for the config/ and templates/ dirs:
-  confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
-  tempPath <- paste(confPath, .Platform$file.sep, "templates" , sep="")
+  if(  !is_org  ) {
+    fileSystemPath <- ""
+  }
+
+  fileSystemPath
+}
+
+
+#' Check Programme SubDir
+#'
+#' Checks fileSystemPath is pointing inside a PROGRAMME directory.
+#' A Programme Directory is a direct sub-dir to a Organisation
+#' directory, so this method establishes this is the case by recursively checking
+#' the parent Dir to fileSystemPath, to see if '.config/' and
+#' '.config/templates/' exist.
+#'
+#' Secondly, it checks the 'PROJECTS/' directory exists in this
+#' putative Programme Directory.
+#'
+#' If a Programme path is confirmed, it is returned, otherwise
+#' the function returns a BLANK string "".
+#'
+#' @param fileSystemPath Path to possible programme directory
+#'
+#' @param settings List from `.config/settings.yml` file.
+#'
+check_prog_subdir <- function( fileSystemPath, settings ) {
+
+  # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
+  path <- dirname(fileSystemPath)
+  progPath <- fileSystemPath
+
+  # get config templates settings yml
+  confPath <- get_config_dir(path)
+  tempPath <- get_template_dir(path)
 
   if(  !( all(file.exists(confPath)) && all(file.exists(tempPath)) )  ) {
     fileSystemPath <- ""
   }
 
-  # fileSystemPath is therefore in a PROGRAMME DIR
+  path2 <- "/" # use this as placeholder of PREVIOUS orgPath - if orgPath == orgPath2, then have not found config or template!
 
-  # also check if the PROJECTS/ dir is in the current DIR, and if not, set path to blank string
-  projsPath <- paste(fileSystemPath, .Platform$file.sep, settings[["ProgrammeProjectsDir"]] , sep="")
-
-  if(  !( all(file.exists(projsPath)) )  ) {
-    fileSystemPath <- ""
+  while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
+    path2 <- path # save in placeholder
+    path <- dirname(path)
+    if( path2 == path ) {
+      path <- ""
+      progPath <- ""
+      break
+    }
+    confPath <- get_config_dir(path)
+    tempPath <- get_template_dir(path)
+    progPath <- dirname(progPath)
   }
 
-  fileSystemPath
+  # fileSystemPath is either a PROGRAMME DIR or blank - return
+  progPath
 
 }
 
@@ -529,8 +632,8 @@ check_prog_dir <- function( fileSystemPath, settings ) {
 #' Checks fileSystemPath is inside a PROGRAMME directory.
 #' A Programme Directory is a direct sub-dir to a Organisation
 #' directory, so this method establishes this is the case by checking
-#' the parent Dir to fileSystemPath, to see if 'config/' and
-#' 'config/templates/' exist.
+#' the parent Dir to fileSystemPath, to see if '.config/' and
+#' '.config/templates/' exist.
 #'
 #' Secondly, it checks the 'PROJECTS/' directory exists in this
 #' putative Programme Directory.
@@ -538,15 +641,16 @@ check_prog_dir <- function( fileSystemPath, settings ) {
 #' If a Programme path is confirmed, it returns the fileSystemPath, otherwise
 #' the function returns a BLANK string "".
 #'
+#' @param fileSystemPath Path to possible programme directory
 #'
 check_prog_file <- function( fileSystemPath ) {
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
   orgPath <- dirname(fileSystemPath)
 
-  # look for the config/ and templates/ dirs:
-  confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
-  tempPath = paste(confPath, .Platform$file.sep, "templates" , sep="")
+  # set confPath + tempPath:
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
 
   if(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
     fileSystemPath <- ""
@@ -564,8 +668,8 @@ check_prog_file <- function( fileSystemPath ) {
 #' Checks fileSystemPath is inside a sub-dir to a PROGRAMME directory.
 #' A Programme Directory is a direct sub-dir to a Organisation
 #' directory, so this method establishes this is the case by checking
-#' the parent Dir to fileSystemPath, to see if 'config/' and
-#' 'config/templates/' exist.
+#' the parent Dir to fileSystemPath, to see if '.config/' and
+#' '.config/templates/' exist.
 #'
 #' Secondly, it checks the 'PROJECTS/' directory exists in this
 #' putative Programme Directory.
@@ -575,6 +679,7 @@ check_prog_file <- function( fileSystemPath ) {
 #' If a Programme path is confirmed, it returns the fileSystemPath, otherwise
 #' the function returns a BLANK string "".
 #'
+#' @param fileSystemPath Path to possible project note
 #'
 check_proj_note <- function( fileSystemPath ) {
 
@@ -603,7 +708,7 @@ check_proj_note <- function( fileSystemPath ) {
 #'
 #' Searches fileSystemPath's parent directories to identify
 #' a Project Organisation directory.  This is identified by
-#' finding a 'config/' directory and a 'config/templates/' directory.
+#' finding a '.config/' directory and a '.config/templates/' directory.
 #'
 #' For the fileSystemPath to be successfully returned, the directory
 #' MUST be at least in level below a PROGRAMME directory.
@@ -611,15 +716,16 @@ check_proj_note <- function( fileSystemPath ) {
 #' The original path is returned if identified, otherwise
 #' the function returns a BLANK string "".
 #'
+#' @param fileSystemPath Path to location inside programme directory
 #'
 check_prog_sub_dir <- function( fileSystemPath ) {
 
   # Check fileSystemPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
   orgPath <- dirname(dirname(fileSystemPath))
 
-  # look for the config/ and templates/ dirs: these are FIXED
-  confPath = paste(orgPath, .Platform$file.sep, "config" , sep="")
-  tempPath = paste(confPath, .Platform$file.sep, "templates" , sep="")
+  # set confPath + tempPath:
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
 
   orgPath2 <- "/" # use this as placeholder of PREVIOUS orgPath - if orgPath == orgPath2, then have not found config or template!
 
@@ -630,13 +736,14 @@ check_prog_sub_dir <- function( fileSystemPath ) {
       fileSystemPath <- ""
       break
     }
-    confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
-    tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
+    # set confPath + tempPath:
+    confPath <- get_config_dir(orgPath)
+    tempPath <- get_template_dir(orgPath)
   }
 
-  if(fileSystemPath == "") {
-    stop(paste0("  Dir is NOT inside a PROGRAMME: ", fileSystemPath))
-  }
+  #if(fileSystemPath == "") {
+  #  stop(paste0("  Dir is NOT inside a PROGRAMME: ", fileSystemPath))
+  #}
 
   fileSystemPath
 
@@ -645,44 +752,43 @@ check_prog_sub_dir <- function( fileSystemPath ) {
 
 #' Find Programme Dir
 #'
-#' Searches fileSystemPath's parent directories to identify
-#' a Programme directory.  This is identified by
-#' finding a 'PROJECTS/' directory.
+#' Recursively searches fileSystemPaths to identify a
+#' Programme directory.  This is identified by identifying the organisation root
+#' directory from each parent direcotry searched.
 #'
-#' If a Programme path is identified, it is returned, otherwise
-#' the function returns a BLANK string "".
+#' If Programme paths are identified, they are  returned, otherwise
+#' the function returns BLANK strings "".
 #'
+#' @param fileSystemPaths a vector of paths to identify programme paths from.
 #'
-find_prog_dir <- function( fileSystemPath, settings ) {
+find_prog_dir <- function(fileSystemPaths) {
 
-  # Check fileSystemPath is in a PROGRAMME:
-  fileSystemPath <- normalizePath(fileSystemPath)
+  # ensure path is absolute
+  fileSystemPaths <- normalizePath(fileSystemPaths)
 
-  root <- "/" # use this as placeholder of PREVIOUS fileSystemPath
-  # if fileSystemPath == fileSystemPath2, then have not found projects or template!
+  root <- "/" # use to identify the root
 
-  fsp <- c()
+  # vector and index to store parsed filesystempaths
+  fsp <- c("")
   fspi <- 1
 
-  for(f in fileSystemPath) {
+  # for each path
+  for(f in fileSystemPaths) {
 
-    # look for the PROJECTS/ and protocol dirs:
-    projPath <- paste0(f, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
-    #proPath <- paste0(f, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
-    # no longer specifying protocols directory
+    # initially check the PARENT DIRECTORY is the root of an organisation
+    f_is_org <- check_org_dir(dirname(f))
 
-    while(  !( all(file.exists(projPath)) )  ) {
-      fileSystemPath2 <- f # save in placeholder
+    # recursively search for orgPath in parent directory
+    while(  !f_is_org  ) {
       f <- dirname(f)
       if( root == f ) { # break if reached filesystem root
         f <- ""
         break
       }
-      projPath <- paste0(f, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
-      #proPath <- paste0(f, .Platform$file.sep, settings[["ProgrammeProtocolsDir"]])
-      # no longer specifying protocols directory
+      f_is_org <- check_org_dir(dirname(f))
     }
 
+    # add returning vector and increment index
     fsp[fspi] <- f
     fspi <- fspi+1
   }
@@ -694,18 +800,28 @@ find_prog_dir <- function( fileSystemPath, settings ) {
 
 #' Find Programme Dirs from Organisation path
 #'
-#' Searches the orgPath to identify all programmes.
+#' Searches the orgPath to identify all programmes. Programme paths are returned
+#' after extracting the names from the status.yml file under PROGRAMMES section.
 #'
+#' @param orgPath Path to a projectmanagr organisation.
+#'
+#' @param settings List object of extracted metadata from organisation
+#' `.config/settings.yml` file.
+#'
+#' @return programmePaths character vector containing all identified programme
+#' absolute paths.
 #'
 find_prog_dirs <- function( orgPath, settings ) {
 
-  # find all Programme DIRs in orgPath
-  progPaths <- list.dirs(orgPath, recursive=FALSE)
+  # get all Programme DIRs from status.yml
 
-  # look for the PROJECTS/ dir from :
-  projPaths <- paste0(progPaths, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
+  # load status file for projectmanagr org status
+  # contains information on contents DIRs && index of contents in those files with retrieval datetime
+  status <- get_status_yml(orgPath, settings)
 
-  progPaths <- progPaths[which(dir.exists(projPaths))]
+  progNames <- lapply(status['PROGRAMMES'], names)
+
+  progPaths <- fs::path(orgPath, progNames$PROGRAMMES)
 
   return(progPaths)
 
@@ -715,6 +831,10 @@ find_prog_dirs <- function( orgPath, settings ) {
 #' Find Group Note Header Rmd Path
 #'
 #' From the `subNoteRmdPath` - an absolute path.
+#'
+#' @param subNoteRmdPath Path to sub note Rmd file
+#'
+#' @param settings List from `.config/settings.yml` file.
 #'
 find_header_Rmd_path <- function( subNoteRmdPath, settings ) {
 
@@ -798,6 +918,69 @@ compute_project_index <- function(projsPath, programmePrefix) {
   }
 }
 
+
+
+#' Get config dir
+#'
+#' This is set as `.config` GLOBALLY - used to identify
+#' a Project Organisation root directory.
+#'
+get_config_dir <- function(orgPath) {
+  confPath <- fs::path(orgPath, ".config")
+  return(confPath)
+}
+
+#' Get template dir
+#'
+#' This is set as `.config/templates` GLOBALLY - used to identify
+#' a Project Organisation root directory.
+#'
+get_template_dir <- function(orgPath) {
+  tempPath <- fs::path(orgPath, ".config", "templates")
+  return(tempPath)
+}
+#' Get settings yml file
+#'
+#' This is set as `.config/settings.yml` GLOBALLY - stores all settings for
+#' projectmanagr organisation.
+#'
+get_settings_yml_file <- function(orgPath) {
+  settingsYml <- fs::path(orgPath, ".config", "settings.yml")
+  return(settingsYml)
+}
+
+#' Get settings yml
+#'
+#' This is set as `.config/settings.yml` GLOBALLY - stores all settings for
+#' projectmanagr organisation.
+#'
+get_settings_yml <- function(orgPath) {
+  settingsYml <- get_settings_yml_file(orgPath)
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsYml ) )
+  return(settings)
+}
+
+
+#' Get status yml file
+#'
+#' This is stored in `.config` GLOBALLY - filename is derived from settings
+#' in `ConfigStatusYamlFile` parameter
+#'
+get_status_yml_file <- function(orgPath, settings) {
+  statusYml <- fs::path(orgPath, ".config", settings[["ConfigStatusYamlFile"]])
+  return(statusYml)
+}
+
+#' Get status yml
+#'
+#' This is stored in `.config` GLOBALLY - filename is derived from settings
+#' in `ConfigStatusYamlFile` parameter
+#'
+get_status_yml <- function(orgPath, settings) {
+  statusYml <- get_status_yml_file(orgPath, settings)
+  status <- yaml::yaml.load( yaml::read_yaml( statusYml ) )
+  return(status)
+}
 
 #' Get Project Doc Dir Path
 #'
@@ -981,67 +1164,34 @@ get_project_note_paths <- function(parentDirectory, settings) {
 }
 
 
-#' Compute Path
+#' Get Path from Link
 #'
-#' Compute Path from the fullPath combined with the relPath.
+#' Extracts the path from a markdown link - content between `](` && `)`.
 #'
-#' Relative Path is used to adjust the fullPath, and returns a fullPath
-#' that is directed to the relativePath location.
+#' @param linkString String containing at least one link.
 #'
-#' Examples
+#' @param linkIndex If the string contains more than one link, which link to
+#' get the path from. Default is the first (`1`).
 #'
-#' 01:
-#'
-#' fullPath <- "/Users/user/00_ORG/01-PROGRAMME/PROJECTS/P01/P01~001~_Project_Doc.Rmd"
-#'
-#' relPath <- "../../LAB/LAB01-00~_Exp_01.Rmd"
-#'
-#' Output: /Users/user/00_ORG/01-PROGRAMME/LAB/LAB01-00~_Exp_01.Rmd
-#'
-#' 02:
-#'
-#' fullPath <- "/Users/user/00_ORG/01-PROGRAMME/PROJECTS/P01/P01~001~_Project_Doc.Rmd"
-#'
-#' relPath <- "../../LAB"
-#'
-#' Output: /Users/user/00_ORG/01-PROGRAMME/LAB
-#'
-#' 03:
-#'
-#' fullPath <- "/Users/user/00_ORG/01-PROGRAMME/PROJECTS/P01/P01~001~_Project_Doc.Rmd"
-#'
-#' relPath <- "../../LAB/"
-#'
-#' Output: /Users/user/00_ORG/01-PROGRAMME/LAB/
-#'
-#'
-compute_path <- function( fullPath, relPath ) {
+get_path_from_link <- function(linkString, linkIndex=1) {
 
-  # first TRIM relPath to path with no pir jumps ("../"), and count number of "../" in the string
-  parentDir <- 0
+  firstPos <- (gregexpr("](", linkString, fixed=TRUE)[[1]][linkIndex])+2
+  lastPos <- (gregexpr(")", linkString, fixed=TRUE)[[1]][linkIndex])-1
+  substr(linkString, firstPos, lastPos)
 
-  while(TRUE) {
-    if( substring(relPath, 1, 3) == "../"  ) {
-      relPath <- substring(relPath, 4)
-      parentDir <- parentDir + 1 # count the number of 'jumps'
-    }
-    else {
-      break
-    }
-  }
+}
 
 
-  # next, trim fullPath to dir, then each dir by number of jumps (parentDir)
-  fullPath <- substring(fullPath, 1, regexpr("\\/[^\\/]*$", fullPath)-1 ) # trim to DIR (if this is a DIR it is NOT moved up to parent!)
-  if(parentDir > 0) {
-    for(l in 1:parentDir) {
-      fullPath <- dirname(fullPath)
-    }
-  }
+#' Get Absolute Path from full + relative paths
+#'
+#' Collapses paths to one absolute path
+#'
+#' @param fullPath initial full (absolute) path as source.
+#'
+#' @param relativePath A relative path from the fullPath, to collapse.
+get_absolute_path <- function(fullPath, relativePath) {
 
-  newPath <- paste(fullPath, .Platform$file.sep, relPath, sep="")
-
-  newPath
+  R.utils::getAbsolutePath( paste0(fullPath, .Platform$file.sep, relativePath))
 
 }
 
