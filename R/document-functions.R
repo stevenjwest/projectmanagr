@@ -1273,31 +1273,6 @@ sub_subnote_params <- function(subNoteContents, subNotePrefix,
 
 }
 
-#' Insert header link content into subnote
-#'
-insert_subnote_header_link <- function(subNoteContents, headerNoteFileName,
-                                       headerNoteRmdPath, subNoteRmdPath,
-                                       headerNoteContentLinkContents,
-                                       settings, orgPath) {
-
-
-  #### Insert header link content into subnote ####
-
-  headerNoteContentLink <- create_hyperlink( headerNoteFileName, headerNoteRmdPath, subNoteRmdPath)
-  headerNoteContentLinkContents <- sub_template_param(headerNoteContentLinkContents,
-                                                      "{{SUB_NOTE_CONTENT_LINK}}",
-                                                      headerNoteContentLink, orgPath)
-
-  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["SubNoteContentsHeader"]], orgPath),
-                                           subNoteContents)
-  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["SubNoteContentsFooter"]], orgPath),
-                                              subNoteContents, noteContentsHeadIndex)
-
-  subNoteContents <- insert_at_indices(subNoteContents, noteContentsFootIndex, headerNoteContentLinkContents)
-
-  subNoteContents # return
-
-}
 
 
 #' Substitute Note Link Summary in Contents
@@ -1371,9 +1346,11 @@ sub_template_param <- function(templateContents, templateParam, paramContents, o
 
     # check orgPath
     orgPath <- find_org_directory(orgPath)
-    # set confPath + tempPath:
-    confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
-    tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
+
+    # get config templates settings yml
+    confPath <- get_config_dir(orgPath)
+    tempPath <- get_template_dir(orgPath)
+    settings <- get_settings_yml(orgPath)
 
     # paramContents is a POINTER to a multi-line content file in templates dir
     # so open this and insert the multi-lined vector into templateContents
@@ -1427,9 +1404,11 @@ load_param_vector <- function(paramContents, orgPath) {
 
     # check orgPath
     orgPath <- find_org_directory(orgPath)
+
     # set confPath + tempPath:
-    confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
-    tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
+    # get config templates settings yml
+    confPath <- get_config_dir(orgPath)
+    tempPath <- get_template_dir(orgPath)
 
     # paramContents is a POINTER to a multi-line content file in templates dir
     # so open this and insert the multi-lined vector into templateContents
@@ -1461,8 +1440,9 @@ replace_sep_values <- function(templateContents, orgPath) {
 
 
   # set confPath + tempPath:
-  confPath <- paste0(orgPath, .Platform$file.sep, "config")
-  tempPath <- paste0(confPath, .Platform$file.sep, "templates")
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
 
   # get all SEP files form tempPath
   sepFiles <- list.files(tempPath)[ startsWith(list.files(tempPath), "SEP") ]
@@ -1527,9 +1507,9 @@ replace_markdown_header  <- function(templateContents, orgPath,
                                      htmlMarkdown="{{HTML_HEADER}}",
                                      htmlHeaderFilename="rmarkdown-html-header.txt") {
 
-  # set confPath + tempPath:
-  confPath <- paste0(orgPath, .Platform$file.sep, "config")
-  tempPath <- paste0(confPath, .Platform$file.sep, "templates")
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
 
   # get all SEP files form tempPath
   htmlHeaderFile <- file( paste0(tempPath, .Platform$file.sep, htmlHeaderFilename) )
