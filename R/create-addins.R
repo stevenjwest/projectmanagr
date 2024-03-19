@@ -105,24 +105,28 @@ addin_create_project_org <- function() {
           cat(paste0("global$datapath: ", global$datapath, "\n") )
 
           # call projectmanagr::create_project_org:
-          projectmanagr::create_project_org(
-                    orgName = input$organisationName,
-                    orgTitle = input$organisationTitle,
-                    organisationParentDirectory = global$datapath,
-                    settingsYamlPath = ""
-                          )
+          orgIndexPath <- projectmanagr::create_project_org(
+                            orgParentPath = global$datapath,
+                            orgName = input$organisationName,
+                            orgTitle = input$organisationTitle,
+                            settingsYamlPath = "",
+                            orgTemplate="Org-Template.Rmd"
+                              )
+
+          # define orgDir - parent of orgIndex
+          orgDir <- dirname(orgIndexPath)
 
           # navigate to org index file:
-          rstudioapi::navigateToFile( paste( global$datapath, .Platform$file.sep, input$organisationName, .Platform$file.sep,
-                                             "index_", input$organisationName, ".Rmd", sep=""))
+          rstudioapi::navigateToFile(orgIndexPath)
 
           # navigate to containing dir
-          rstudioapi::filesPaneNavigate( paste0(global$datapath, .Platform$file.sep, input$organisationName) )
+          rstudioapi::filesPaneNavigate(orgDir)
           # and set working directory
-          setwd( paste0(global$datapath, .Platform$file.sep, input$organisationName) )
+          setwd(orgDir)
 
           # Close Gadget after 'done' is clicked.
           stopApp()
+
         }
       })
     }
@@ -163,13 +167,10 @@ addin_create_programme <- function() {
     stop( paste0("  No Organisation identified - ensure working directory is in an Organisation: \n    ", getwd()))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
   # navigate to orgPath
   rstudioapi::filesPaneNavigate(orgPath)
@@ -194,10 +195,6 @@ addin_create_programme <- function() {
         fillRow(  textInput("programmeName", "Programme Directory Name:", value = "01-PROGRAMME", width="100%")  ),
 
         fillRow(  span( textOutput("warningName"), style="color:red")  ),
-
-        fillRow(  textInput("programmePrefix", "Programme Prefix:", value = "", width="100%")  ),
-
-        fillRow(   span( textOutput("warningPrefix"), style="color:red")  ),
 
         fillRow(  textInput("programmeTitle", "Programme Title:", value = "01 PROGRAMME", width="100%")  )
 
@@ -270,37 +267,28 @@ addin_create_programme <- function() {
         output$warningName <- renderText({
           "*** PROVIDE PROGRAMME NAME ***"
         })
-      } else if(input$programmePrefix == "") {
-        # set the warningPrefix TextOutput:
-        output$warningPrefix <- renderText({
-          "*** PROVIDE PROGRAMME PREFIX ***"
-        })
-      #}
-      #else if(global$datapath == "") {
-      #  output$warningDirectory <- renderText({
-      #    "*** DIR PATH NOT VALID ORGANISATION ***"
-      #  })
       } else {
 
         #### create programme ####
 
         # call projectmanagr::create_programme:
-        projectmanagr::create_programme(
-          programmeName = input$programmeName,
-          programmePrefix = input$programmePrefix,
-          organisationPath = orgPath,
-          programmeTitle = input$programmeTitle
-        )
+        progIndexPath <- projectmanagr::create_programme(
+                          programmeName = input$programmeName,
+                          organisationPath = orgPath,
+                          programmeTitle = input$programmeTitle
+                          )
+
+        # define programmeDir
+        progDir <- dirname(progIndexPath)
 
         # navigate to programme index file:
-        rstudioapi::navigateToFile( paste0( orgPath, .Platform$file.sep,
-                                           input$programmeName, .Platform$file.sep,
-                                           "index_", input$programmeName, ".Rmd"))
+        rstudioapi::navigateToFile(progIndexPath)
 
         # navigate to containing dir
-        rstudioapi::filesPaneNavigate( paste0(orgPath, .Platform$file.sep, input$programmeName) )
+        rstudioapi::filesPaneNavigate(progDir)
+
         # and set working directory
-        setwd( paste0(orgPath, .Platform$file.sep, input$programmeName) )
+        setwd(progDir)
 
         # Close Gadget after 'done' is clicked.
         stopApp()
@@ -324,13 +312,11 @@ addin_create_programme <- function() {
 #' Generates a Shiny Gadget for creating a new Project Doc inside
 #' a Programme.
 #'
-#' User selects a destination in
-#' the file system (MUST be a Programme Dir), Project name, and
-#' Project title (for the html page).
+#' User selects a Programme, then destination in the file system (MUST be within
+#' a Programme Dir), Project name, and Project title (for the html page).
 #'
 #' Stipulates any errors in the input, and can only be completed
 #' when these errors have been resolved.
-#'
 #'
 #' @export
 addin_create_project_doc <- function() {
@@ -354,34 +340,17 @@ addin_create_project_doc <- function() {
     stop( paste0("  No Organisation identified - ensure working directory is in an Organisation: \n    ", WD))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
-  # load settings file for user defined settings
-  settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml")
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get status yml
+  status <- get_status_yml(orgPath, settings)
 
-  # load status file for organisation status
-  statusFile <- paste0( confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
-
-
+  # get programe names
   programmeDirPaths <- find_prog_dirs(orgPath, settings)
   programmeDirNames <- basename(programmeDirPaths)
-
-  # no longer retireving using the status file..
-  # compute all programme directories
-  #programmeDirNames <- names(status$PROGRAMMES)
-  #programmeDirPaths <-  paste0(orgPath, .Platform$file.sep, programmeDirNames)
-
-  # check these exist
-  #if( any( check_prog_dir(programmeDirPaths, settings) == "" ) ) {
-  #  addin_error_path("Create Project Document",
-  #                   "Programme directories not identified - check the status.yaml file is correct.",
-  #                   programmeDirPaths[check_prog_dir(programmeDirPaths, settings) == "" ])
-  #  stop( paste0("  Programme directories not identified - check the status.yaml file is correct: \n    ", statusFile) )
-  #}
 
   # create named list of programmeDirNames
   programmeDirNamesChoices <- as.list(seq(length(programmeDirNames)))
@@ -389,13 +358,16 @@ addin_create_project_doc <- function() {
 
   # check whether the current working directory is inside a programme
   # if so determine the INDEX of this in programmeDirNames
-  currentProgDir <- find_prog_dir(WD, settings) # returns blank string if no prog dirs identified
+  currentProgDir <- find_prog_dir(WD) # returns blank string if no prog dirs identified
   if( currentProgDir == "" ) {
     progSelected <- 1
   } else {
     progSelected <- grep(currentProgDir, programmeDirPaths)
   }
 
+  # create vector of possible roots for dir selection in server()
+  roots <- programmeDirPaths # can use any of the programmePaths as root
+  names(roots) <- programmeDirNames
 
 
   #### user interface ####
@@ -412,19 +384,15 @@ addin_create_project_doc <- function() {
 
         fillRow( code( orgPath ) ),
 
-        fillRow( selectInput("selectProg", h3("Select Programme"),
-                             choices = programmeDirNamesChoices,
-                             selected = progSelected) ),
+        fillRow( flex = c(5, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Doc Parent Directory")  ),
+
+        fillRow( span( textOutput("warningDirectory"), style="color:red")  ),
 
         fillRow(  textInput("projectPrefix", "Project Prefix:", value = "", width="25%"), textInput("projectName", "Project Name:", value = "", width="75%")  ),
 
         fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
         fillRow(  textInput("projectTitle", "Project Title:", value = "", width="100%")  ),
-
-        #fillRow( flex = c(7, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Programme Parent Directory")  ),
-
-        #fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
 
         fillRow(   h3(textOutput("projectPathOutput"))  )
 
@@ -437,60 +405,63 @@ addin_create_project_doc <- function() {
 
   server <- function(input, output, session) {
 
-    # update programmeTitle when programmeName is changed:
+    # update projectTitle when projectName is changed:
     observe({
-
       updateTextInput(session, "projectTitle", value = gsub("-", " ", gsub("_", " ", input$projectName) )  )
-
     })
 
-
     # compute Dir selection:
-    #global <- reactiveValues(datapath = normalizePath(orgPath)) # this sets initial val to wd - current WD or the PROGRAMME if in the PROEJCTS DIR
+    global <- reactiveValues(datapath = roots[progSelected] )
+    # this sets initial value of global$datapath to the currently selected programme
 
-    # allows selection of Dir, with Volume set to HOME Dir
-    #shinyDirChoose(
-    #  input,
-    #  'dir',
-    #  roots = c(home = '~'),
-    #  filetypes = c('', 'txt', 'bigWig', "tsv", "csv", "bw")
-    #)
+    # allows selection of Dir, with roots set to all progDirs
+    shinyDirChoose(
+      input, 'dir',
+      defaultRoot = names(roots)[progSelected], # set default to identified progPath root
+      roots=roots, # can use any of the identified progPaths as roots
+      filetypes = c('', 'txt', 'Rmd', "tsv", "csv", "bw") # show text files
+    )
 
-    #dir <- reactive(input$dir)
+    dir <- reactive(input$dir)
+    # observe({ cat('\n  input$dir: _', input$dir[[1]], '_\n') }) this causes an error when input$dir becomes a list
+    # so check in the observeEvent() function below
 
-    #observeEvent(ignoreNULL = TRUE,
-    #             eventExpr = {
-    #               input$dir
-    #             },
-    #             handlerExpr = {
-    #               if (!"path" %in% names(dir())) return()
-    #               home <- normalizePath("~")
-    #               global$datapath <-
-    #                 file.path(home, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
-    #             })
 
-    #observe({
-    #  if(global$datapath != "") {
-    #    global$datapath <- check_prog_dir(global$datapath)
-    #  }
-    #})
+    # update global$datapath
+    observeEvent(ignoreNULL = TRUE,
+                 eventExpr = { # if input$dir is changed
+                   input$dir
+                 },
+                 handlerExpr = { # update datapath with dir() list
+                   if (!"path" %in% names(dir())) return() # check the path element exists in dir
+                   #cat("\n dir() names: ", names(dir())) # contains : root, path
+                   #cat("\n  dir$root: ", dir()$root) # name of the root selected in shinyDirChoose
+                   #cat("\n  dir$path: _", unlist( dir()$path ), "_" ) # list of each dir in dirTree, separated by space?
+                   #cat("\n  dir$path pasted with fileSep: _", paste( unlist( dir()$path ), collapse = .Platform$file.sep ), "_" )
+                   # list of each dir in dirTree created into a path
+                   #cat("\n  dir$path[-1]: _", unlist( dir()$path[-1] ), "_" ) # list of each dir in dirTree, separated by space?
+                   #cat("\n  dir$path[-1] pasted with fileSep: _", paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep ), "_" )
+                   # list of each dir in dirTree created into a path
+                   global$datapath <- file.path( # form path with
+                     roots[[dir()$root]], # shinyDirChoose selected ROOT (selected by its NAME found in dir()$root)
+                     paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep )  ) # shinyDirChoose selected PATH with file.sep added
+                 })
 
-    #output$dir <- renderText({
-    #  global$datapath
-    #})
+    observe({ cat('\n  global$datapath: _', global$datapath, '_\n') })
 
-    #observe({
-    #  if(global$datapath == "") {
-    #    output$warningDirectory <- renderText({
-    #      "DIR PATH NOT VALID PROGRAMME"
-    #    })
-    #  }
-    #  else {
-    #    output$warningDirectory <- renderText({
-    #      ""
-    #    })
-    #  }
-    #})
+
+
+    observe({
+      if( endsWith(global$datapath, .Platform$file.sep) ) {
+        global$datapath <- substr(global$datapath, 1, nchar(global$datapath)-1) # remove final file.sep!
+      }
+    })
+
+    # show the global$datapath computed from input$dir in output$dir (next to shinyDirButton!)
+    output$dir <- renderText({
+      global$datapath
+    })
+
 
 
     # projectPrefix error checking
@@ -529,24 +500,15 @@ addin_create_project_doc <- function() {
     observe({
 
       if( input$projectPrefix != "" && input$projectName != "" ) {
-        progPath <- programmeDirPaths[ as.integer(input$selectProg[1]) ]
-        projsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
-        progName <- basename(progPath)
-        #programmePrefix <- status[["PROGRAMMES"]][[progName]][["programmePrefix"]]
-        #projectIndex <- compute_project_index(projsPath, programmePrefix)
 
-        projPath <- paste0(progPath,
-                           .Platform$file.sep, settings[["ProgrammeProjectsDir"]],
-                           .Platform$file.sep, input$projectPrefix,
+        projPath <- paste0(global$datapath, .Platform$file.sep, input$projectPrefix,
                            settings[["ProjectPrefixSep"]], input$projectName, ".Rmd")
 
-        output$projectPathOutput <- renderText({
-          projPath
-        })
+        output$projectPathOutput <- renderText({projPath})
+
       } else {
-        output$projectPathOutput <- renderText({
-          ""
-        })
+
+        output$projectPathOutput <- renderText({""})
       }
 
     })
@@ -586,26 +548,27 @@ addin_create_project_doc <- function() {
 
         #### create project doc ####
 
-        progPath <- programmeDirPaths[ as.integer(input$selectProg[1]) ]
+        #progPath <- programmeDirPaths[ as.integer(input$selectProg[1]) ]
 
         # call projectmanagr::createProjectDoc:
-        projectmanagr::create_project_doc(
-          projectPrefix = input$projectPrefix,
-          projectName = input$projectName,
-          programmePath = progPath,
-          projectTitle = input$projectTitle
-        )
+        projectDocRmdPath <- projectmanagr::create_project_doc(
+                              projectPrefix = input$projectPrefix,
+                              projectName = input$projectName,
+                              projectParentPath = global$datapath,
+                              projectTitle = input$projectTitle
+                                )
 
+        # get project doc dir path
+        projectDocDirPath <- get_project_doc_dir_path(projectDocRmdPath, settings)
 
         # navigate to project doc file:
-        projsPath <- paste0(progPath, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])
-        rstudioapi::navigateToFile( paste0( projsPath, .Platform$file.sep,
-                                    list.files(projsPath)[grepl(input$projectName, list.files(projsPath))]  )  )
+        rstudioapi::navigateToFile(projectDocRmdPath)
 
         # navigate to containing dir
-        rstudioapi::filesPaneNavigate( projsPath )
+        rstudioapi::filesPaneNavigate(projectDocDirPath)
+
         # and set working directory
-        setwd( projsPath )
+        setwd(projectDocDirPath)
 
         # Close Gadget after 'done' is clicked.
         stopApp()
@@ -670,18 +633,16 @@ addin_create_project_note <- function() {
     stop( paste0("  No Organisation identified - ensure active document is in an Organisation: \n    ", selection$filePath))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
-  # load settings + status - settings.yml is FIXED:
-  settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  statusFile <- paste0( confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  # get status yml
+  status <- get_status_yml(orgPath, settings)
 
   # get progPath
-  progPath <- find_prog_dir(selection$filePath, settings)
+  progPath <- find_prog_dir(selection$filePath)
 
 
   #### Add Project Note Addins ####
@@ -749,39 +710,23 @@ addin_create_project_note_from_doc_gdt <- function(selection, settings, orgPath)
 
   # get projectDir & progDir
   projectDirPath <- get_project_doc_dir_path(selection[["filePath"]], settings)
-  progPath <- find_prog_dir(selection[["filePath"]], settings)
+  progPath <- find_prog_dir(selection[["filePath"]])
 
   # create vector of possible roots for dir selection in server()
   roots <- c(projectDirPath, progPath, orgPath) # can use projectDirPath, progPath, or orgPath as roots
   names(roots) <- c(basename(projectDirPath), basename(progPath), basename(orgPath))
 
-
-  # compute the goal/del/task NUM and TITLE:
-  glen <- nchar(unlist(strsplit(settings[["ProjectGoalHeader"]],
-                                split=settings[["ProjectGoalTitle"]], fixed=TRUE)))+1
-  goal <- substring(selection[["goal"]], first=glen)
-  goalTitle <- substring(goal,  first=(regexpr(":", goal)+2 ) )
-  goalNum <- as.integer(  substring(goal,  first=5, last=(regexpr(":", goal)-1) )  )
-
-  dlen <- nchar(unlist(strsplit(settings[["ProjectDeliverableHeader"]],
-                                split=settings[["ProjectDeliverableTitle"]], fixed=TRUE)))+1
-  del <- substring(selection[["deliverable"]], first=dlen)
-  delTitle <- substring(del,  first=(regexpr(":", del)+2 ) )
-  delNum <- as.integer(  substring(del,  first=12, last=(regexpr(":", del)-1) )  )
-
-  tlen <- nchar(unlist(strsplit(settings[["ProjectTaskHeader"]],
-                                split=settings[["ProjectTaskTitle"]], fixed=TRUE)))+1
-  task <- substring(selection[["task"]], first=tlen)
-  taskTitle <- substring(task,  first=(regexpr(":", task)+2 ) )
-  taskNum <- as.integer(  substring(task,  first=5, last=(regexpr(":", task)-1) )  )
-
+  # extract GDT titles from selection
+  goalTitle <- get_goal_title(selection[["goal"]], settings)
+  delTitle <- get_deliverable_title(selection[["deliverable"]], settings)
+  taskTitle <- get_deliverable_title(selection[["task"]], settings)
 
 
   #### user interface ####
 
   ui <- miniPage(
 
-    shinyjs::useShinyjs(),
+    shinyjs::useShinyjs(), # to enable & disable subNote input
 
     gadgetTitleBar("Add New Project Note"),
 
@@ -792,9 +737,9 @@ addin_create_project_note_from_doc_gdt <- function(selection, settings, orgPath)
         fillRow( h5("Add a new Project Note to a Project Document.") ),
 
         fillRow(
-          helpText(  h3(  paste("GOAL", goalNum), align="center" )   ),
-          helpText(  h3(  paste("DELIVERABLE", delNum), align="center" )   ),
-          helpText(  h3(  paste("TASK", taskNum) ), align="center"   )
+          helpText(  h3("GOAL", align="center")   ),
+          helpText(  h3("DELIVERABLE", align="center")   ),
+          helpText(  h3("TASK", align="center")   )
         ),
 
         fillRow(
@@ -802,6 +747,10 @@ addin_create_project_note_from_doc_gdt <- function(selection, settings, orgPath)
           helpText( p(delTitle, align="center") ),
           helpText( p(taskTitle, align="center") )
         ),
+
+        fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
+
+        fillRow( flex = c(5, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Parent Directory")  ),
 
         fillRow(  selectInput("prefixType", "Select Project Note Type:",
                               choices = list("Single" = 1, "Group" = 2),
@@ -812,11 +761,7 @@ addin_create_project_note_from_doc_gdt <- function(selection, settings, orgPath)
         fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
         fillRow(  textInput("projectNoteName", "Project Note Name:", value = "Note_Name", width='95%'),
-                  textInput("projectNoteTitle", "Project Note Title:", value = "Note Name", width='95%')   ),
-
-        fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
-
-        fillRow( flex = c(5, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Parent Directory")  ),
+                  textInput("projectNoteTitle", "Project Note Title:", value = "Note Title", width='95%')   ),
 
         fillRow(   textOutput("projectNotePath")  ),
 
@@ -858,8 +803,8 @@ addin_create_project_note_from_doc_gdt <- function(selection, settings, orgPath)
 
 
     # compute Dir selection:
-    global <- reactiveValues(datapath = projectDirPath )
-    # this sets initial value of global$datapath to projectDirPath
+    global <- reactiveValues(datapath = selection$defaultPath )
+    # this sets initial value of global$datapath to selections defaultPath (either projDocDir or selected note pir)
 
     # allows selection of Dir, with roots set to project doc DIR or ORG Dir
     shinyDirChoose(
@@ -1556,8 +1501,13 @@ addin_create_content <- function() {
   # Retrieve cursor_selection from current Active Doc in rstudio:
   selection <- cursor_selection() # Project Doc, Project Note - Simple, Header, SubNote
 
-  if(selection[["rmdType"]]=="UNKNOWN") { # return error message from selection
+  if(selection[["rmdType"]] == "UNKNOWN") { # return error message from selection
     addin_error("Add New Content", selection[["errorMessage"]])
+    stop( paste0("  ", selection[["errorMessage"]]))
+  }
+
+  if(selection[["rmdType"]] == "DOC") { # return error message from selection
+    addin_error("Add New Content", "Selection is a Project Doc - can only add content to Project Notes..")
     stop( paste0("  ", selection[["errorMessage"]]))
   }
 
@@ -1573,19 +1523,20 @@ addin_create_content <- function() {
     stop( paste0("  No Organisation identified - ensure active document is in an Organisation: \n    ", selection$filePath))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
-  # load settings + status - settings.yml is FIXED:
-  settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-
-  statusFile <- paste0( confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  # get status yml
+  status <- get_status_yml(orgPath, settings)
 
   context <- rstudioapi::getSourceEditorContext()
   cursor <- rstudioapi::primary_selection(context)
+
+  # create vector of possible roots for dir selection in server()
+  roots <- c(get_project_note_dir_path(selection$filePath, settings), orgPath) # use selected project note dir + orgPath as roots
+  names(roots) <- basename(roots)
 
 
   #### user interface ####
@@ -1602,7 +1553,12 @@ addin_create_content <- function() {
 
         #fillRow( p("Content Name MUST end with _Content:") ),
 
-        fillRow(  textInput("contentName", "Content Name", value='PROTOCOL NAME', width="100%")  ),
+        fillRow( flex = c(5, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory for Content", "Note Parent Directory")  ),
+
+        fillRow( span( textOutput("warningDirectory"), style="color:red")  ),
+
+        fillRow(  textInput("contentName", "Content Name:", value = "", width="50%"),
+                  textInput("contentTitle", "Content Title:", value = "", width="50%")  ),
 
         fillRow(  span( textOutput("warningName"), style="color:red")  ),
 
@@ -1621,24 +1577,118 @@ addin_create_content <- function() {
 
   server <- function(input, output, session) {
 
+    # update contentTitle when contentName is changed:
+    observe({
+      updateTextInput(session, "contentTitle", value = gsub("-", " ", gsub("_", " ", input$contentName) )  )
+    })
+
+    # compute Dir selection:
+    global <- reactiveValues(datapath = roots[1] )
+    # this sets initial value of global$datapath to the currently selected note dir
+
+    # allows selection of Dir, with roots set to all progDirs
+    shinyDirChoose(
+      input, 'dir',
+      defaultRoot = names(roots)[1], # set default to selected note dir
+      roots=roots, # can use any roots in this vector - only selected note dir!
+      filetypes = c('', 'txt', 'Rmd', "tsv", "csv", "bw") # show text files
+    )
+
+    dir <- reactive(input$dir)
+    # observe({ cat('\n  input$dir: _', input$dir[[1]], '_\n') }) this causes an error when input$dir becomes a list
+    # so check in the observeEvent() function below
+
+
+    # update global$datapath
+    observeEvent(ignoreNULL = TRUE,
+                 eventExpr = { # if input$dir is changed
+                   input$dir
+                 },
+                 handlerExpr = { # update datapath with dir() list
+                   if (!"path" %in% names(dir())) return() # check the path element exists in dir
+                   #cat("\n dir() names: ", names(dir())) # contains : root, path
+                   #cat("\n  dir$root: ", dir()$root) # name of the root selected in shinyDirChoose
+                   #cat("\n  dir$path: _", unlist( dir()$path ), "_" ) # list of each dir in dirTree, separated by space?
+                   #cat("\n  dir$path pasted with fileSep: _", paste( unlist( dir()$path ), collapse = .Platform$file.sep ), "_" )
+                   # list of each dir in dirTree created into a path
+                   #cat("\n  dir$path[-1]: _", unlist( dir()$path[-1] ), "_" ) # list of each dir in dirTree, separated by space?
+                   #cat("\n  dir$path[-1] pasted with fileSep: _", paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep ), "_" )
+                   # list of each dir in dirTree created into a path
+                   global$datapath <- file.path( # form path with
+                     roots[[dir()$root]], # shinyDirChoose selected ROOT (selected by its NAME found in dir()$root)
+                     paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep )  ) # shinyDirChoose selected PATH with file.sep added
+                 })
+
+    observe({ cat('\n  global$datapath: _', global$datapath, '_\n') })
+
+
+
+    observe({
+      if( endsWith(global$datapath, .Platform$file.sep) ) {
+        global$datapath <- substr(global$datapath, 1, nchar(global$datapath)-1) # remove final file.sep!
+      }
+    })
+
+    # show the global$datapath computed from input$dir in output$dir (next to shinyDirButton!)
+    output$dir <- renderText({
+      global$datapath
+    })
+
+
+    # render contentPath
+    observe({
+
+      if( input$contentName != "" ) {
+
+        contentRmdPath <- fs::path(global$datapath, input$contentName, paste0(input$contentName, ".Rmd"))
+        output$contentPath <- renderText({contentRmdPath})
+
+      } else {
+
+        output$contentPath <- renderText({""})
+      }
+
+    })
+
+
     # create new content in note
     observeEvent(input$done, {
 
-      if(input$contentName == "PROTOCOL NAME") {
-        output$warningName <- renderText({"*** PROVIDE PROTOCOL NAME ***"})
-      } else if( input$contentDescription == 'This Content '  ) {
-        output$warningDescription <- renderText({"*** PROVIDE PROTOCOL DESCRIPTION ***"})
+      if(input$contentName == "") {
+        output$warningName <- renderText({"*** PROVIDE CONTENT NAME ***"})
+
+      } else if( input$contentDescription == 'This Content specifies how to '  ) {
+        output$warningDescription <- renderText({"*** PROVIDE CONTENT DESCRIPTION ***"})
+
       } else {
 
-        # create content
-        projectmanagr::create_content(
+        # FIRST - save all open documents in RStudio:
+        rstudioapi::documentSaveAll()
+
+        #### create content ####
+        contentRmdPath <- projectmanagr::create_content(
           selection = selection,
           contentName = input$contentName,
           contentDescription = input$contentDescription,
-          contentTemplate="Content-Template.Rmd"
+          contentSourcePath = global$datapath,
+          contentTitle = input$contentTitle,
+          contentDeclarationTemplate="Content-Declaration-Template.Rmd",
+          contentSourceTemplate="Content-Source-Template.Rmd"
         )
 
-        # Close Gadget after computations are complete:
+        # get content dir path
+        contentDirPath <- dirname(contentRmdPath)
+
+        # navigate to content file:
+        rstudioapi::navigateToFile(contentRmdPath)
+
+        # navigate to containing dir
+        rstudioapi::filesPaneNavigate(contentDirPath)
+
+        # and set working directory
+        setwd(contentDirPath)
+
+        # close Gadget after computations are complete
         stopApp()
 
       }
