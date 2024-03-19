@@ -1592,8 +1592,8 @@ create_hyperlink_section <- function(toFileName, toFileSection, toFilePath, from
 
   NoteLink <- R.utils::getRelativePath(toFilePath, relativeTo=fromFilePath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  NoteLink <- paste0(NoteLink, '#', gsub("[ ]|[_]", "-", trimws( gsub("[^[:alnum:] ]", "", toFileSection) ) ) )
-  HyperLink <- paste("[", toFileName, " : ", toFileSection, "](", NoteLink, ")",  sep="")
+  NoteLink <- paste0(NoteLink, '#', gsub("[ ]|[_]", "-", trimws( tolower( gsub("[^[:alnum:] ]", "", toFileSection) ) ) ) )
+  HyperLink <- paste("[", toFileName, " : ", gsub('#', '', toFileSection, fixed=TRUE), "](", NoteLink, ")",  sep="")
   HyperLink # return
 }
 
@@ -1607,19 +1607,24 @@ create_hyperlink_section <- function(toFileName, toFileSection, toFilePath, from
 #'
 #' @param oldFileName defines the OLD name that will be in Hyperlinks.  Should be
 #' the FILE NAME - with no spaces, including PREFIX and .Rmd EXTENSION
+#'
 #' @param newName defines the NEW name to be written into Hyperlinks.  Should
 #' be the FILE NAME - with no spaces.
+#'
 #' @param dirTree Directory tree to search for files for replacing links in.
+#'
 #' @param oldTitle defines the OLD TITLE that will be in Hyperlinks.  By default
 #' replaces - & _ with spaces from name.
+#'
 #' @param newTitle defines the NEW TITLE that will be in Hyperlinks.  By default
 #' replaces - & _ with spaces from name.
+#'
 #' @param fileExtensions List of file extensions indicating what types of files
 #' should be searched for links and have links replaced.  Must be plaintext file
 #' type.  Default is Rmd files only.
 #'
 #' @export
-update_links <- function( oldFileName, newName, dirTree, settings,
+update_links_filenames <- function( oldFileName, newName, dirTree, settings,
                           fileExtensions = list("Rmd") ) {
 
   # check oldFileName contains NO SPACES:
@@ -1635,9 +1640,8 @@ update_links <- function( oldFileName, newName, dirTree, settings,
   # make dirTree full path
   dirTree <- normalizePath(dirTree)
 
-  # split oldFileName into PREFIX NAME and EXTENSION
-  oldPrefix <- substr(oldFileName, 1,
-                   regexpr(settings[["ProjectPrefixSep"]], oldFileName, fixed=TRUE)-1 )
+  # split oldFileName into PREFIX, NAME, EXTENSION
+  oldPrefix <- get_prefix(oldFileName, settings)
   oldFileNameExt <- tools::file_ext(oldFileName)
   oldName <- substr(oldFileName,
                     regexpr(settings[["ProjectPrefixSep"]], oldFileName, fixed=TRUE)+(nchar(settings[["ProjectPrefixSep"]])),
@@ -1656,7 +1660,8 @@ update_links <- function( oldFileName, newName, dirTree, settings,
   }
 
   # get config path to exclude files from (in case dirTree is orgPath!)
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
   volPath <- paste0(orgPath, .Platform$file.sep, settings[["VolumesDir"]])
 
 
@@ -1719,6 +1724,104 @@ update_links <- function( oldFileName, newName, dirTree, settings,
     }
   }
 }
+
+
+#' Update links
+#'
+#' Updates every hyperlink in all files within `dirTree`, replacing
+#' `oldFileName` (the basename of the file, including prefix and extension) with
+#' `newName` (the new file name, without prefix or extension).
+#'
+#' @param oldLinkSuffix Old link string to be updated.
+#'
+#' @param newLinkSuffix New link string to replace `oldLinkSuffix`.
+#'
+#' @param dirTree Directory tree to search for files for replacing links in.
+#'
+#' @param settings projectmanagr settings list.
+#'
+#' @param fileExtensions List of file extensions indicating what types of files
+#' should be searched for links and have links replaced.  Must be plaintext file
+#' type.  Default is Rmd files only.
+#'
+#' @export
+update_links <- function( oldLinkSuffix, newLinkSuffix, dirTree, settings,
+                          oldLinkString="", newLinkString="", fileExtensions = list("Rmd") ) {
+
+  # make dirTree full path
+  dirTree <- normalizePath(dirTree)
+
+  # get orgPath from dirTree
+  orgPath <- find_org_directory(dirTree)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNotePath) )
+  }
+
+  # get config path to exclude files from (in case dirTree is orgPath!)
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  volPath <- paste0(orgPath, .Platform$file.sep, settings[["VolumesDir"]])
+
+
+  #### get file list ####
+
+  # first grab all files WITHOUT RECURSION - all files in dirTree directory
+  fileList <- c()
+  for(fe in fileExtensions) {
+    fileList <- c(fileList,
+                  paste0( dirTree, .Platform$file.sep,
+                          list.files(path = dirTree, pattern = paste0("*.",fe),
+                                     all.files = TRUE, include.dirs = TRUE) ) )
+  }
+
+  # now grab all dirs WITHOUT RECURSION
+  dirsList <- list.dirs(path = dirTree, recursive=FALSE)
+
+  # and exclude confPath and volPath if present
+  dirsList <- dirsList[ dirsList != confPath]
+  dirsList <- dirsList[ dirsList != volPath]
+
+  # next traverse each directory - but only down to project note level
+  for(dl in dirsList) {
+    # get fileList recursively but only down to project note parent dir level
+    fileList <- get_file_list_to_project_notes(fileList, dl, settings, fileExtensions)
+  }
+
+  # now RECURSIVELY traverse EVERY Rmd file in dirTree
+  #fileList <- c()
+  #for(fe in fileExtensions) {
+  #  for(dl in dirsList) {
+  #    fileList <- c(fileList,
+  #                  paste0( dl, .Platform$file.sep,
+  #                          list.files(path = dl, pattern = paste0("*.",fe),
+  #                          all.files = TRUE, recursive = TRUE, include.dirs = TRUE) ) )
+  #  }
+  #}
+
+  # remove all files in config directory
+  #fileList <- fileList[ !startsWith(fileList, confPath)]
+
+
+  #### replace oldLinkSuffix with newLinkSuffix ####
+
+  for(fl in fileList) {
+
+    contents <- read_file(fl)
+    cL <- grepl(oldLinkSuffix, contents, fixed=TRUE )
+    if( any(cL) ) {
+      # replace oldLinkSuffix with newLinkSuffix in contents
+      contents[cL] <- gsub(oldLinkSuffix, newLinkSuffix, contents[cL], fixed=TRUE)
+      if(oldLinkString!="" && newLinkString!="") {
+        contents[cL] <- gsub(oldLinkString, newLinkString, contents[cL], fixed=TRUE)
+      }
+      # and save file
+      cat( "    replaced link(s) in file:", fl ,"\n" )
+      write_file(contents, fl)
+    }
+  }
+}
+
+
 
 
 #' get file list down to project notes
@@ -1838,25 +1941,312 @@ get_project_prefix_from_name <- function(projectFileName, settings) {
 #'
 #'
 get_name_from_file_name <- function(projectFileName, settings) {
-  substr(projectFileName,
-         regexpr(settings[["ProjectPrefixSep"]], projectFileName)+(nchar(settings[["ProjectPrefixSep"]]) ),
-         nchar(projectFileName)-(nchar(settings[["FileType"]])+1) )
+
+  substring(projectFileName,
+            first=regexpr(settings[["ProjectPrefixSep"]], projectFileName, fixed=TRUE) + nchar(settings[["ProjectPrefixSep"]]),
+            last=regexpr( paste0(".", settings[["FileTypeSuffix"]]), projectFileName, fixed=TRUE)-1  )
 }
 
 
+
+#' Get File Contents Headers
+#'
+#' Get every Markdown header line from text file - every line that begins with
+#' `#`.  Pre-filter contents to remove all code blocks, that may have lines
+#' beginning with `#` but are not markdown headers.
+#'
+#' @param contents Character vector containing the contents of the file.
+#'
+#' @return Character vector of every header line.
+get_file_contents_headers <- function(contents) {
+
+  # trim contents to remove all code sections - lines starting with ```
+  contentCodeIndices <- which(startsWith(contents, '```'))
+  if( length(contentCodeIndices) > 1 ) {
+    for(i in (floor((length(contentCodeIndices)-1)/2)):0 ) {
+      i1 <- (i*2+1)
+      i2 <- (i*2+2)
+      contents <- c(contents[1:contentCodeIndices[i1]], contents[contentCodeIndices[i2]:length(contents)])
+    }
+  }
+
+  # trim contents to all header lines - that start with #
+  contentHeaders <- contents[startsWith(contents, '#')]
+
+  contentHeaders
+
+}
+
+
+#' Get Content Declaration from Project Note
+#'
+#' Declarations of content identified as existing between `settings[["ContentSep"]]`
+#' delimiters.  This function gets all declared content from `sourceNoteRmdPath`,
+#' and then filters these to identify the one contentDeclaration that is within
+#' the selection made in `selectionSource`.
+#'
+#' @param sourceNoteRmdPath Path to source project note Rmd
+#'
+#' @param selectionSource The selection made within source project note, should
+#' be made on a content declaration.
+#'
+#' @param settings ProjectManagr organisation settings.yml file
+#'
+#' @param orgPath The path to the root of the organisation
+#'
+#' @return List of content declaration containing named parameters: "contentTitle",
+#' "contentDescription", "contentSource", "contentStartLine", "contentEndLine",
+#' "projectNotePath", "projectNoteContentHeader"
+#'
+get_content_declaration <- function(sourceNoteRmdPath, selectionSource, settings, orgPath) {
+
+  content <- list()
+  contents <- get_content_declarations(sourceNoteRmdPath, settings, orgPath)
+
+  # filter contents to desired content declaration based on selectionSource originalLineNumber
+  for( i in 1:length(contents)) {
+
+    if( dplyr::between(selectionSource$originalLineNumber,
+                       contents[[i]][['contentStartLine']],
+                       contents[[i]][['contentEndLine']]) ) {
+      content <- contents[[i]]
+      break
+    }
+  }
+
+  content
+}
+
+
+#' Extract metadata from each declaration of content in source note
+#'
+#' Declarations of content identified as existing between `settings[["ContentSep"]]`
+#' delimiters.  This function gets all declared content from `sourceNoteRmdPath`,
+#' and returns a named list of all content identified.
+#'
+#' @param sourceNoteRmdPath Path to source project note Rmd
+#'
+#' @param settings ProjectManagr organisation settings.yml file
+#'
+#' @param orgPath The path to the root of the organisation
+#'
+#' @return List of content declaration containing named parameters: "contentTitle",
+#' "contentDescription", "contentSource", "contentStartLine", "contentEndLine",
+#' "projectNotePath", "projectNoteContentHeader"
+#'
+get_content_declarations <- function(sourceNoteRmdPath, settings, orgPath) {
+
+  # get sourceNote contents from path
+  sourceNoteRmdContents <- read_file(sourceNoteRmdPath)
+
+  # blank list - filled with metadata of each identified declaration of contents
+  contents <- list()
+
+  # open content sep delimiter
+  contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
+
+  ps <- match_vector(contentSepContents, sourceNoteRmdContents)
+
+  # content seps should be in PAIRS
+  if( length(ps) %% 2 != 0 ) {
+    # DEAL WITH ERROR
+    stop( cat("  file contains uneven number of content separators: ", sourceNoteRmdPath))
+  }
+
+  # if the length is 0 just return blank list
+  if(length(ps) == 0 ) {
+    return( contents )
+  }
+
+  # extract metadata from each content:
+   # CONTENT_TITLE, CONTENT_DESCRIPTION, COUNTENT_SOURCE
+  # START_LINE_NUM, END_LINE_NUM, PROJECT_NOTE_PATH
+  for( i in 1:(length(ps)/2) ) {
+    j <- (i*2)-1
+    startSep <- ps[j]
+    endSep <- ps[(j+1)] + length(contentSepContents) - 1
+    contentDeclContents <- sourceNoteRmdContents[startSep:endSep]
+    #contentDeclContents <- get_content_declaration_contents(sourceNoteRmdContents, startSep, settings, orgPath)
+
+    contentTitle <- get_content_title(contentDeclContents, settings, orgPath)
+    contentDescription <- get_content_description(contentDeclContents, settings, orgPath)
+    contentSource <- get_absolute_path( dirname(sourceNoteRmdPath), # project note dir included in content path
+                      get_path_from_link(get_content_source(contentDeclContents, settings, orgPath)))
+
+    contentHeaders <- get_file_contents_headers(sourceNoteRmdContents[1:startSep])
+    contentHeaderCurrent <- contentHeaders[length(contentHeaders)] # get last header
+    #contentHeaderCurrent <- tolower(contentHeaderCurrent) # format: make lower case
+    #contentHeaderCurrent <- trimws(gsub('#', '', contentHeaderCurrent, fixed=TRUE)) # remove leading #s & trim whitespace
+    #contentHeaderCurrent <- paste0('#', gsub(' ', '-', contentHeaderCurrent, fixed=TRUE)) # replace spaces with '-' and add leading #
+
+    attrs <- list(contentTitle, contentDescription, contentSource, startSep, endSep,
+                  sourceNoteRmdPath, contentHeaderCurrent )
+    names(attrs) <- c("contentTitle", "contentDescription", "contentSource",
+                      "contentStartLine", "contentEndLine", "projectNotePath",
+                      "projectNoteContentHeader")
+    id <- paste0(sourceNoteRmdPath, ':::', startSep)
+    contents[[id]] <- attrs
+
+  }
+
+  contents
+
+}
+
+
+
+get_content_declaration_contents <- function(sourceNoteRmdContents, startSep,
+                                             settings, orgPath) {
+
+  # open content sep delimiter
+  contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
+
+  ps <- match_vector(contentSepContents, sourceNoteRmdContents)
+
+  for(p in 1:length(ps) ) {
+    if( startSep <= ps[p] ) {
+      endSep <- ps[(p+1)] + length(contentSepContents) - 1
+      break
+    }
+  }
+
+  contentDeclContents <- sourceNoteRmdContents[startSep:endSep]
+
+  contentDeclContents
+
+}
+
+
+#' Get Content Title
+#'
+#' Extract content title from the content Contents, using the ContentTitleField
+#' parameter declared in settings.
+#'
+#' @param contentDeclContents The Content Declaration Contents - character vector that
+#' includes all lines between content separators.
+#'
+#' @param settings ProjectManagr organisation settings.yml file
+#'
+#' @param orgPath The path to the root of the organisation
+#'
+#' @return the Content Title value as string
+get_content_title <- function(contentDeclContents, settings, orgPath) {
+
+  # get titleLine in contentDeclContents: will contain ContentTitleField
+  titleLine <- grep_line_index(load_param_vector(settings[["ContentTitleField"]], orgPath),
+                               contentDeclContents)
+
+  # get the content title from titleLine & ContentTitleField param
+  contentTitle <- substring(contentDeclContents[titleLine],
+                            regexpr(settings[["ContentTitleField"]], contentDeclContents[titleLine], fixed=TRUE) +
+                              nchar(load_param_vector(settings[["ContentTitleField"]], orgPath)),
+                            nchar(contentDeclContents[titleLine]))
+
+  # return with leading & trailing whitespace removed
+  trimws(contentTitle)
+
+}
+
+
+#' Get Content Description
+#'
+#' Extract content description from the content Contents, using the ContentDescriptionField
+#' parameter declared in settings.
+#'
+#' @param contentDeclContents The Content Declaration Contents - character vector that
+#' includes all lines between content separators.
+#'
+#' @param settings ProjectManagr organisation settings.yml file
+#'
+#' @param orgPath The path to the root of the organisation
+#'
+#' @return the Content Description value as string
+get_content_description <- function(contentDeclContents, settings, orgPath) {
+
+  # get descriptionLine in contentDeclContents: will contain ContentDescriptionField
+  descriptionLine <- grep_line_index(load_param_vector(settings[["ContentDescriptionField"]], orgPath),
+                               contentDeclContents)
+
+  # get descriptionLine in contentDeclContents: will contain ContentDescriptionField
+  sourceLine <- grep_line_index(load_param_vector(settings[["ContentSourceField"]], orgPath),
+                                contentDeclContents)
+
+  # get the content Description : content between descriptionLine && sourceLine
+  contentDescription <- contentDeclContents[(descriptionLine+1):(sourceLine-1)]
+
+  # return with leading & trailing whitespace removed
+  trimws(contentDescription)
+
+}
+
+
+#' Get Content Source
+#'
+#' Extract content Source from the content Contents, using the ContentSourceField
+#' parameter declared in settings.
+#'
+#' @param contentDeclContents The Content Declaration Contents - character vector that
+#' includes all lines between content separators.
+#'
+#' @param settings ProjectManagr organisation settings.yml file
+#'
+#' @param orgPath The path to the root of the organisation
+#'
+#' @return the Content Source value as string
+get_content_source <- function(contentDeclContents, settings, orgPath) {
+
+  # get SourceLine in contentDeclContents: will contain ContentSourceField
+  SourceLine <- grep_line_index(load_param_vector(settings[["ContentSourceField"]], orgPath),
+                               contentDeclContents)
+
+  # get the content Source from SourceLine & ContentSourceField param
+  contentSource <- substring(contentDeclContents[SourceLine],
+                            regexpr(settings[["ContentSourceField"]], contentDeclContents[SourceLine], fixed=TRUE) +
+                              nchar(load_param_vector(settings[["ContentSourceField"]], orgPath)),
+                            nchar(contentDeclContents[SourceLine]))
+
+  # return with leading & trailing whitespace removed
+  trimws(contentSource)
+
+}
 
 #' Find Insertable Contents in Project Notes from Dir Tree
 #'
 #' Searches through dirTree recursively for Project Notes, and then looks
 #' for Insertable Contents in these based on the content sep delimiter - defined
-#' in `CONTENT_SEP.txt`: by default the delimiter is a series of `====`.
+#' in `CONTENT_SEP.txt`.
 #'
-#' Returns a structured lists that describe each contents in the project notes:
+#' Returns structured lists that describe each contents in the project notes:
 #'
 #' Each Structured List contains: is a character vector comprised
 #' name() : ProjectNotePath && Project Note Line Number where Insertable
 #' Contents BEGINS (start of first delimiter), separated with `:::`
+#'
 #' [["contentTitle"]] : Title of Insertable Contents in the Project Note
+#'
+#' [["contentDescription"]] : Description of Insertable Contents in the Project Note
+#'
+#' [["contentSource"]] : Absolute Path to Contents declared in the Project Note
+#'
+#' [["contentStartLine"]] : Start line of the contents declaration in Project Note
+#'
+#' [["contentEndLine"]] : End line of the contents declaration in Project Note
+#'
+#' [["projectNotePath"]] : Path to Project Note
+#'
+#' [["projectNoteContentHeader"]] : Identified markdwon header section that the
+#' Contents Declaration is in.
+#'
+#' @param dirTree Directory tree to search for content declarations in within
+#' project notes.
+#'
+#' @param orgPath Organisation path.
+#'
+#' @param settings settings.yml in org config.
+#'
+#' @return List of content declaration containing named parameters: "contentTitle",
+#' "contentDescription", "contentSource", "contentStartLine", "contentEndLine",
+#' "projectNotePath", "projectNoteContentHeader"
 #'
 find_contents_in_dir_tree <- function(dirTree, orgPath, settings) {
 
@@ -1864,17 +2254,13 @@ find_contents_in_dir_tree <- function(dirTree, orgPath, settings) {
 
   contents <- list() # to store all retrieved contents metadata in
 
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
-  # load settings file for user defined settings
-  settingsFile <- paste0(confPath, .Platform$file.sep, "settings.yml")
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-
-  # load status file for projectmanagr org status
-  # contains information on contents DIRs && index of contents in those files with retrieval datetime
-  statusFile <- paste0(confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  # get status yml
+  status <- get_status_yml(orgPath, settings)
 
   # read status information for CONTENTS if it exists
   contentsStatus <- status[['CONTENTS']]
@@ -1893,7 +2279,8 @@ find_contents_in_dir_tree <- function(dirTree, orgPath, settings) {
 
   # for all identified project notes identify all insertable contents
   for( f in filePaths) {
-    pr <- get_contents(f, contentSepContents, settings, orgPath)
+    pr <- get_content_declarations(f, settings, orgPath)
+    #pr <- get_contents(f, contentSepContents, settings, orgPath)
     contents[names(pr)] <- pr
   }
 
@@ -1902,110 +2289,6 @@ find_contents_in_dir_tree <- function(dirTree, orgPath, settings) {
 
 }
 
-
-#' Get Insertable Contents from file path
-#'
-#' Get insertable contents from file path (`f`)
-#'
-#' Returns named list of `contentTitle` with elements: `projectNotePath`,
-#' `startLineNum`
-#'
-get_contents <- function(f, contentSepContents, settings, orgPath) {
-
-  contents <- list()
-
-  # check the filePath is a project note
-  ft <- get_file_type(f, settings)
-
-  if( ft == "SUB" | ft == "NOTE" ) {
-    # check file contents for contents
-    fc <- read_file(f)
-
-    ps <- match_vector(contentSepContents, fc)
-
-    # content seps should be in PAIRS
-    if( length(ps) %% 2 != 0 ) {
-      # DEAL WITH ERROR
-      stop( cat("  file contains uneven number of content separators: ", f))
-    }
-
-    # if the length is 0 just return blank list
-    if(length(ps) == 0 ) {
-      return( contents )
-    }
-
-    # extract metadata from each content - CONTENT_TITLE, START_LINE_NUM, PROJECT_NOTE_PATH
-    for( i in 1:(length(ps)/2) ) {
-      j <- (i*2)-1
-      startSep <- ps[j]
-      endSep <- ps[(j+1)]
-
-      # get the content title
-      contentTitle <- get_content_title(fc, startSep, settings, orgPath)
-
-      attrs <- list(contentTitle )
-      names(attrs) <- c("contentTitle")
-      id <- paste0(f,':::',startSep)
-      contents[[id]] <- attrs
-
-    }
-  }
-
-  contents
-
-}
-
-
-#' Get Insertable Content Description
-#'
-#' From the note rmdContents, the insertable content with startSep at startSepLineIndex.
-#'
-get_content_description <- function(rmdContents, startSepLineIndex, settings, orgPath) {
-
-  contentDescriptionLine <- grep_line_index_from_rev(
-                               load_param_vector(settings[["ContentDescriptionField"]], orgPath),
-                               rmdContents, startSepLineIndex)
-
-  # return
-  rmdContents[(contentDescriptionLine+1):(startSepLineIndex-1)]
-
-}
-
-
-#' Get Insertable Content Header
-#'
-#' From the note rmdContents, the insertable content with startSep at startSepLineIndex.
-#'
-get_content_header <- function(rmdContents, startSepLineIndex, settings, orgPath) {
-
-  headerLine <- grep_line_index_from_rev(load_param_vector(settings[["ContentHeader"]], orgPath),
-                                         rmdContents, startSepLineIndex)
-
-  contentHeader <- rmdContents[headerLine]
-
-  # return
-  contentHeader
-
-}
-
-
-#' Get Content Title
-#'
-#' From the note rmdContents, the content with startSep at startSepLineIndex.
-#'
-get_content_title <- function(rmdContents, startSepLineIndex, settings, orgPath) {
-
-  contentHeader <- get_content_header(rmdContents, startSepLineIndex, settings, orgPath)
-
-  # get the content title from headerLine
-  contentTitle <- substring(contentHeader,
-                            nchar(load_param_vector(settings[["ContentHeader"]], orgPath))+1,
-                            nchar(contentHeader))
-
-  # return
-  contentTitle
-
-}
 
 
 #' Update Insertable Contents in List
@@ -2031,12 +2314,10 @@ update_contents_in_list <- function(contentsStatus, dirPath, orgPath, settings) 
   prdt <- lubridate::ymd_hm(contentRetrievalDateTime) # get as datetime
   contents <- contentsStatus[[dirPath]]$contents
 
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste0(confPath, .Platform$file.sep, "settings.yml")
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
   contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
   # in case needed to check new files
@@ -2057,7 +2338,7 @@ update_contents_in_list <- function(contentsStatus, dirPath, orgPath, settings) 
       # potentially new contents may have been added to this content
 
       # so retrieve contents information from the project note - this handles blank lists!
-      pr <- get_contents(f, contentSepContents, settings, orgPath)
+      pr <- get_content_declarations(f, settings, orgPath)
       contents[names(pr)] <- pr # update the contents of contents
 
     }
@@ -2109,15 +2390,14 @@ update <- function(dirTree="") {
     }
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
-  # load settings file for user defined settings
-  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  statusFile <- paste0(confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  # get status yml
+  statusFile <- get_status_yml_file(orgPath, settings)
+  status <- get_status_yml(orgPath, settings)
 
 
   #### find all projectManagr files in dirTree for updating ####
