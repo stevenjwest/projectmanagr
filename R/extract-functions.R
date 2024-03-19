@@ -43,13 +43,10 @@ extract_todos <- function(location, date=get_date(split='-'),
   }
   # now, orgPath should be the root dir of the organisation
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
   # define todoCollectionFileName with fileNamingConvention
   #fileNamingConvention <- sub("YYYYMMDD", get_date(split=""), fileNamingConvention )
@@ -150,14 +147,11 @@ extract_todos <- function(location, date=get_date(split='-'),
           # form GDT summary & incompleted TODOs vector
           gdt_summ <- paste0(#basename(dGDT[["projectDocFilePath"]]),
                              #" :  ",
-                             "G", get_goal_number(dGDT[["goal"]], settings),
-                             " ", get_goal_title(dGDT[["goal"]], settings),
-                             " :  ",
-                             "D", get_deliverable_number(dGDT[["deliverable"]], settings),
-                             " ", get_deliverable_title(dGDT[["deliverable"]], settings),
-                             " :  ",
-                             "T", get_task_number(dGDT[["task"]], settings),
-                             " ", get_task_title(dGDT[["task"]], settings))
+                             "G: ", get_goal_title(dGDT[["goal"]], settings),
+                             " -  ",
+                             "D: ", get_deliverable_title(dGDT[["deliverable"]], settings),
+                             " -  ",
+                             "T: ", get_task_title(dGDT[["task"]], settings))
 
           todoGDTExtract <- sub_template_param(todoGDTExtractionContents, "{{GDT_SUMMARY}}",
                                                gdt_summ, orgPath)
@@ -271,7 +265,7 @@ check_location_project_notes <- function(location, settings) {
 #' vector is number of project notes in that programme -1.
 split_project_notes_by_programme <- function(projectNotePaths, settings) {
 
-  progs <- unique(find_prog_dir(projectNotePaths, settings))
+  progs <- unique(find_prog_dir(projectNotePaths))
 
   # extract each projectNote into vector starting with prog path
   prog_proj_notes <- list()

@@ -25,14 +25,12 @@ addin_insert_date <- function() {
 
   } else {
 
-    # set confPath + tempPath - these names are FIXED:
-    confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-    tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+    # get config templates settings yml
+    confPath <- get_config_dir(orgPath)
+    tempPath <- get_template_dir(orgPath)
+    settings <- get_settings_yml(orgPath)
 
-    # load settings file for user defined settings
-    settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-    settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-
+    # get timezone and split char
     timezone <- settings[['DateTimeZone']]
     split <- settings[['DateSplit']]
 
@@ -82,14 +80,12 @@ addin_insert_datetime <- function() {
 
   } else {
 
-    # set confPath + tempPath - these names are FIXED:
-    confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-    tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+    # get config templates settings yml
+    confPath <- get_config_dir(orgPath)
+    tempPath <- get_template_dir(orgPath)
+    settings <- get_settings_yml(orgPath)
 
-    # load settings file for user defined settings
-    settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-    settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-
+    # get timezone and split chars
     timezone <- settings[['DateTimeZone']]
     split <- settings[['DateSplit']]
     splitTime <- settings[['DateTimeSplit']]
@@ -214,13 +210,12 @@ addin_insert_hyperlink <- function() {
   if( orgPath == "" ) { # do nothing
 
   } else { # get the settings file
-    # set confPath + tempPath - these names are FIXED:
-    confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-    tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
 
-    # load settings file for user defined settings
-    settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml")
-    settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+    # get config templates settings yml
+    confPath <- get_config_dir(orgPath)
+    tempPath <- get_template_dir(orgPath)
+    settings <- get_settings_yml(orgPath)
+
   }
 
   # get all open RStudio Doc PATHS:
@@ -414,24 +409,20 @@ addin_insert_content <- function() {
 
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
-  # load settings file for user defined settings
-  settingsFile <- paste0(confPath, .Platform$file.sep, "settings.yml")
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-
-  # load status file for projectmanagr org status
-   # contains information on contents DIRs && index of contents in those files with retrieval datetime
-  statusFile <- paste0(confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  # get status yml & file - to write to
+  status <- get_status_yml(orgPath, settings)
+  statusFile <- get_status_yml_file(orgPath, settings)
 
   # read status information for CONTENTS if it exists
   contentsStatus <- status[['CONTENTS']]
 
   # get progPath
-  progPath <- find_prog_dir(projNoteRmdPath, settings)
+  progPath <- find_prog_dir(projNoteRmdPath)
 
   cat( paste0("  progPath: ", progPath) )
 
@@ -761,13 +752,10 @@ addin_insert_section_sep <- function(index) {
 
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
   # get SEP file from tempPath
   sepFile <- list.files(tempPath)[ startsWith(list.files(tempPath), "SEP") &

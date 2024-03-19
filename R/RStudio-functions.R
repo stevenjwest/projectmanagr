@@ -2,10 +2,10 @@
 #' Get RStudio Open Document IDs
 #'
 #' Returns an ordered list of all open RStudio Documents.  The list contains a set
-#' of VECTORS that contain the RStudio Document ID [1] and the RStudio Document absolute
+#' of vectors that contain the RStudio Document ID [1] and the RStudio Document absolute
 #' path [2].
 #'
-#' The order of the open RStudio documents in the list matches the order they are open
+#' The order of the open RStudio documents in the list generally matches the order they are presented
 #' in RStudio.
 #'
 #' fileList[[i]][1] - RStudio i'th Document ID.
@@ -24,7 +24,7 @@ get_rstudio_open_doc_IDs <- function() {
   # first, check if ~/.local/share/rstudio/sources exists
   if( file.exists( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources") ) ) {
 
-    # check if a DIR exists which STARTS WITH "s-" (remainder is unique RStudio session ID)
+    # check if a DIR exists which STARTS WITH "session-" (remainder is unique RStudio session ID)
     # first handle NEW rstudio session directory layout
     if( !identical(character(0),
                   Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  ) )) {
@@ -344,12 +344,11 @@ getRStudioInternalStateDir2 <- function(path) {
     }
   } else {
 
-    confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-
-    # get the rstudio internal state parameters directory from settings
-    settingsFile = paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-    settingsContents <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-    rstudioInternalStateDir <- settingsContents$rstudioInternalStateDir
+    # get config templates settings yml
+    confPath <- get_config_dir(orgPath)
+    tempPath <- get_template_dir(orgPath)
+    settings <- get_settings_yml(orgPath)
+    rstudioInternalStateDir <- settings$rstudioInternalStateDir
   }
 
   # return

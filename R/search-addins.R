@@ -30,15 +30,13 @@ addin_search_project_org <- function() {
     stop( paste0("  No Organisation identified - ensure active document is in an Organisation: \n    ", selection$filePath))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
-  # load settings + status - settings.yml is FIXED:
-  settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  statusFile <- paste0( confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  # get status yml
+  status <- get_status_yml(orgPath, settings)
 
   # define roots for dir selection - to orgPath
   roots <- c(orgPath)
