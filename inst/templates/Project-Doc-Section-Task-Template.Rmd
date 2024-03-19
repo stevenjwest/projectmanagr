@@ -2,7 +2,7 @@
 
 
 
-{{TASK_HEADER}} {{TASK_NUMBER}}: _TASK_TITLE_
+{{TASK_HEADER}} __TASK_TITLE__
 
 
 
