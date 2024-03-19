@@ -18,7 +18,7 @@ set_wd_active_doc <- function( ) {
   setwd( dirPath )
 
 
-  cat( "  Set work dir: ", dirPath, "\n" )
+  cat( "  Set work dir: \n    ", dirPath, "\n" )
 
 }
 
@@ -118,18 +118,7 @@ navigate_markdown_link <- function() {
     header <- substring(relPath, (headerPointer+1))
     headerWords <- strsplit(header, '-')[[1]]
 
-    # trim contents to remove all code sections - lines starting with ```
-    contentCodeIndices <- which(startsWith(contents, '```'))
-    if( length(contentCodeIndices) > 1 ) {
-      for(i in (floor((length(contentCodeIndices)-1)/2)):0 ) {
-        i1 <- (i*2+1)
-        i2 <- (i*2+2)
-        contents <- c(contents[1:contentCodeIndices[i1]], contents[contentCodeIndices[i2]:length(contents)])
-      }
-    }
-
-    # trim contents to all header lines - that start with #
-    contentHeaders <- contents[startsWith(contents, '#')]
+    contentHeaders <- get_file_contents_headers(contents)
 
     # grep for each word
     wordIndices <- list()
