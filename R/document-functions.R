@@ -71,13 +71,8 @@ compute_goal_link <- function(goal, DocLink, settings) {
   goalLinkLineStart <- unlist(strsplit(settings[["NoteGoalLinkLine"]],
                                        split=paste0("[",settings[["ProjectGoalTitle"]]), fixed=TRUE))
 
-  # identify the length of goal header - default '# GOAL' minus GoalTitle - default 'GOAL'
-  # +1 for substring
-  glen <- nchar(unlist(strsplit(settings[["ProjectGoalHeader"]],
-                                split=settings[["ProjectGoalTitle"]], fixed=TRUE)))+1
-
   # get goal without the header portion
-  goal_trim <- substring(goal, first=glen)
+  goal_trim <- trim_goal_hash(goal, settings)
 
   # create html tag to section - START #, replace space & _ with -, remove :, all lower case
   goalTag <- paste0("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(goal_trim) ) ), ")" )
@@ -99,40 +94,75 @@ get_goal_title <- function(goal, settings) {
 
 }
 
-#' get goal number
-#'
-#' `goal` as collected from selection[["goal"]] - fitting the format specified
-#' in settings[["ProjectGoalHeader"]].
-#'
-get_goal_number <- function(goal, settings) {
 
-  # return the goal's Number : everything after ProjectGoalHeader & before ProjectGoalDivider - with whitespace removed
-  as.integer( trimws(  substring(goal,
-               first=(regexpr(settings[["ProjectGoalHeader"]],goal) + nchar(settings[["ProjectGoalHeader"]])),
-               last=(regexpr(settings[["ProjectGoalDivider"]],goal)-1) )  )   )
+
+get_goal_title_from_link <- function(goalLink, settings) {
+
+  paste0(
+
+    # goal title header '#' in proj doc - [1]:get FIRST VALUE for the PREFIX - omit any suffix
+    unlist(
+      strsplit(settings[["ProjectGoalHeader"]],
+               split=paste0(settings[["ProjectGoalTitle"]]),
+               fixed=TRUE))[1],
+
+    # get goals title from link
+    substr(goalLink,
+           regexpr(settings[["ProjectGoalTitle"]], goalLink, fixed=TRUE),
+           regexpr("](", goalLink, fixed=TRUE)-1)
+    )
 
 }
 
 
+
+
+#' Trim Goal Hash
+#'
+#' Trim default hash from GOAL, as specified in settings yml:
+#' `ProjectGoalHeader` & `ProjectGoalTitle`
+#'
+#' @param goal Goal Header String - including markdown header hashes.
+#'
+#' @param settings projectmanagr settings list.
+#'
+#' @return Task String - without header hashes
+#'
+trim_goal_hash <- function(goal, settings) {
+
+  # identify the length of goal header - default '# GOAL' minus GoalTitle - default 'GOAL'
+  # +1 for substring - get FIRST VALUE for the PREFIX - omit and suffix
+  glen <- nchar(unlist(strsplit(settings[["ProjectGoalHeader"]],
+                                split=settings[["ProjectGoalTitle"]], fixed=TRUE))[1])+1
+
+  # get goal without the header portion
+  goal_trim <- substring(goal, first=glen)
+
+  goal_trim
+
+}
+
 #' compute deliverable link
 #'
 #' generate new link from project doc with html # tag for deliverable section.
+#'
+#' @param del Deliverable Header String
+#'
+#' @param DocLink Link to Project Doc.
+#'
+#' @param settings projectmanagr settings list.
+#'
 compute_deliverable_link <- function(del, DocLink, settings) {
 
 
   #### deliverable link ####
 
-  # get start of del link line WITHOUT [+DelTitle - will use del_trim to fill link title
+  # get start of Del LINK line WITHOUT [+DelTitle - will use del_trim to fill link title
   delLinkLineStart <- unlist(strsplit(settings[["NoteDeliverableLinkLine"]],
                                       split=paste0("[",settings[["ProjectDeliverableTitle"]]), fixed=TRUE))
 
-  # identify the length of del header - default '# DELIVERABLE' minus DelTitle - default 'DELIVERABLE'
-  # +1 for substring
-  dlen <- nchar(unlist(strsplit(settings[["ProjectDeliverableHeader"]],
-                                split=settings[["ProjectDeliverableTitle"]], fixed=TRUE)))+1
-
-  # get del without the header portion
-  del_trim <- substring(del, first=dlen)
+  # get del without the header hash
+  del_trim <- trim_deliverable_hash(del, settings)
 
   # create html tag to section
   delTag <- paste0("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(del_trim) ) ), ")" )
@@ -154,17 +184,48 @@ get_deliverable_title <- function(deliverable, settings) {
 
 }
 
-#' get deliverable number
-#'
-#' `deliverable` as collected from selection[["deliverable"]] - fitting the format specified
-#' in settings[["ProjectDeliverableHeader"]].
-#'
-get_deliverable_number <- function(deliverable, settings) {
 
-  # return the del's Number : everything after ProjectDelHeader & before ProjectDelDivider - with whitespace removed
-  as.integer( trimws(  substring(deliverable,
-                                 first=(regexpr(settings[["ProjectDeliverableHeader"]],deliverable) + nchar(settings[["ProjectDeliverableHeader"]])),
-                                 last=(regexpr(settings[["ProjectDeliverableDivider"]],deliverable)-1) )  )   )
+get_deliverable_title_from_link <- function(delLink, settings) {
+
+  paste0(
+
+    # del title header '##' in proj doc - [1]:get FIRST VALUE for the PREFIX - omit any suffix
+    unlist(
+      strsplit(settings[["ProjectDeliverableHeader"]],
+               split=paste0(settings[["ProjectDeliverableTitle"]]),
+               fixed=TRUE))[1],
+
+    # get dels title from link
+    substr(delLink,
+           regexpr(settings[["ProjectDeliverableTitle"]], delLink, fixed=TRUE),
+           regexpr("](", delLink, fixed=TRUE)-1)
+  )
+
+}
+
+
+#' Trim Deliverable Hash
+#'
+#' Trim default hash from DELIVERABLE, as specified in settings yml:
+#' `ProjectDeliverableHeader` & `ProjectDeliverableTitle`
+#'
+#' @param del Deliverable Header String - including markdown header hashes.
+#'
+#' @param settings projectmanagr settings list.
+#'
+#' @return Deliverable String - without header hashes
+#'
+trim_deliverable_hash <- function(del, settings) {
+
+  # identify the length of del header - default '## DELIVERABLE' minus DelTitle - default 'DELIVERABLE'
+  # +1 for substring
+  dlen <- nchar(unlist(strsplit(settings[["ProjectDeliverableHeader"]],
+                                split=settings[["ProjectDeliverableTitle"]], fixed=TRUE))[1])+1
+
+  # get del without the header portion
+  del_trim <- substring(del, first=dlen)
+
+  del_trim
 
 }
 
@@ -182,13 +243,8 @@ compute_task_link <- function(task, DocLink, settings) {
   taskLinkLineStart <- unlist(strsplit(settings[["NoteTaskLinkLine"]],
                                        split=paste0("[",settings[["ProjectTaskTitle"]]), fixed=TRUE))
 
-  # identify the length of task header - default '### TASK' minus TaskTitle - default 'TASK'
-  # +1 for substring
-  tlen <- nchar(unlist(strsplit(settings[["ProjectTaskHeader"]],
-                                split=settings[["ProjectTaskTitle"]], fixed=TRUE)))+1
-
   # get task without the header portion
-  task_trim <- substring(task, first=tlen)
+  task_trim <- trim_task_hash(task, settings)
 
   # create html tag to section - START #, replace space & _ with -, remove :, all lower case
   taskTag <- paste0("#", gsub("[ ]|[_]", "-", gsub("[:]", "", tolower(task_trim) ) ), ")" )
@@ -210,20 +266,48 @@ get_task_title <- function(task, settings) {
 
 }
 
-#' get task number
-#'
-#' `task` as collected from selection[["task"]] - fitting the format specified
-#' in settings[["ProjectTaskHeader"]].
-#'
-get_task_number <- function(task, settings) {
 
-  # return the task's Number : everything after ProjectTaskHeader & before ProjectTaskDivider - with whitespace removed
-  as.integer( trimws(  substring(task,
-                                 first=(regexpr(settings[["ProjectTaskHeader"]],task) + nchar(settings[["ProjectTaskHeader"]])),
-                                 last=(regexpr(settings[["ProjectTaskDivider"]],task)-1) )  )   )
+get_task_title_from_link <- function(taskLink, settings) {
+
+  paste0(
+
+    # task title header '###' in proj doc - [1]:get FIRST VALUE for the PREFIX - omit any suffix
+    unlist(
+      strsplit(settings[["ProjectTaskHeader"]],
+               split=paste0(settings[["ProjectTaskTitle"]]),
+               fixed=TRUE))[1],
+
+    # get tasks title from link
+    substr(taskLink, regexpr(settings[["ProjectTaskTitle"]], taskLink, fixed=TRUE),
+           regexpr("](", taskLink, fixed=TRUE)-1)
+  )
 
 }
 
+#' Trim Task Hash
+#'
+#' Trim default hash from TASK, as specified in settings yml:
+#' `ProjectTaskHeader` & `ProjectTaskTitle`
+#'
+#' @param task Task Header String - including markdown header hashes.
+#'
+#' @param settings projectmanagr settings list.
+#'
+#' @return Task String - without header hashes
+#'
+trim_task_hash <- function(task, settings) {
+
+  # identify the length of task header - default '### TASK' minus TaskTitle - default 'TASK'
+  # +1 for substring - get FIRST VALUE for the PREFIX - omit and suffix
+  tlen <- nchar(unlist(strsplit(settings[["ProjectTaskHeader"]],
+                                split=settings[["ProjectTaskTitle"]], fixed=TRUE))[1])+1
+
+  # get task without the header portion
+  task_trim <- substring(task, first=tlen)
+
+  task_trim
+
+}
 
 
 #' Get Project Note Paths from Doc GDT links
@@ -322,6 +406,7 @@ extract_note_obj_doc_link_GDT_summ <- function(linkNoteRmdContents, linkNoteRmdP
     return(list())
   }
 
+  # separate linkObjectives into separate GDTs
   objSplitMax <- c(objSplit, length(linkObjectives)+1)
   for( o in 1:length(objSplit) ) {
     objList[[o]] <- linkObjectives[(objSplitMax[o]):(objSplitMax[o+1]-1)]
@@ -357,27 +442,10 @@ extract_note_obj_doc_link_GDT_summ <- function(linkNoteRmdContents, linkNoteRmdP
 
     #### Extract Goal Del Task Headers ####
 
-    #compute goal, del, task titles from links
-    goal <- paste0(
-      unlist(strsplit(settings[["ProjectGoalHeader"]],
-                      split=paste0(settings[["ProjectGoalTitle"]]), fixed=TRUE)),
-      substr(o[gli], regexpr(settings[["ProjectGoalTitle"]], o[gli], fixed=TRUE),
-                   regexpr("](", o[gli], fixed=TRUE)-1)
-    )
-
-    del <- paste0(
-      unlist(strsplit(settings[["ProjectDeliverableHeader"]],
-                      split=paste0(settings[["ProjectDeliverableTitle"]]), fixed=TRUE)),
-      substr(o[dli], regexpr(settings[["ProjectDeliverableTitle"]], o[dli], fixed=TRUE),
-             regexpr("](", o[dli], fixed=TRUE)-1)
-    )
-
-    task <- paste0(
-      unlist(strsplit(settings[["ProjectTaskHeader"]],
-                      split=paste0(settings[["ProjectTaskTitle"]]), fixed=TRUE)),
-      substr(o[tli], regexpr(settings[["ProjectTaskTitle"]], o[tli], fixed=TRUE),
-             regexpr("](", o[tli], fixed=TRUE)-1)
-    )
+    # compute goal, del, task titles from links
+    goal <- get_goal_title_from_link(o[gli], settings)
+    del <- get_deliverable_title_from_link(o[dli], settings)
+    task <- get_task_title_from_link(o[tli], settings)
 
 
     #### Extract Goal Del Task Summary & TODO Sections ####
@@ -582,6 +650,79 @@ grep_line_index_from_rev <- function(line, contents, initialIndex) {
 
 }
 
+
+
+#' Get Header Title
+#'
+#' Removes leading #s in a markdown header.  Ensures any subsequent #s in the title
+#' are RETAINED.
+#'
+#' eg. '### Header : Title # after hash ## after double-hash'
+#'
+#' is returned as " Header : string # after hash ## after double-hash"
+#'
+#' @param header The header string
+#'
+get_header_title <- function(header) {
+
+  # split by '#'
+  hV <- strsplit(header, '#', fixed=TRUE)[[1]]
+
+  # count leading #s
+  leadHashNum <- 0
+  for( h in 1:length(hV) ) {
+    if(hV[h] == "") {
+      leadHashNum <- leadHashNum+1
+    } else {
+      break
+    }
+  }
+
+  # increment one further
+  leadHashNum <- leadHashNum+1
+
+  # remove the leading #s
+  hVr <- hV[leadHashNum:length(hV)]
+
+  # re-add subsequent #s
+  hVfinal <- paste0(hVr, collapse ='',sep='#')
+
+  hVfinal
+
+}
+
+#' Get Header Hash
+#'
+#' Returns leading #s in a markdown header.
+#'
+#' eg. '### Header : Title # after hash ## after double-hash'
+#'
+#' is returned as "###"
+#'
+#' @param header The header string
+#'
+get_header_hash <- function(header) {
+
+  # split by '#'
+  hV <- strsplit(header, '#', fixed=TRUE)[[1]]
+
+  # count leading #s
+  leadHashNum <- 0
+  for( h in 1:length(hV) ) {
+    if(hV[h] == "") {
+      leadHashNum <- leadHashNum + 1
+    } else {
+      break
+    }
+  }
+
+  # create new # string with leadHashNum
+  hh <- paste0(rep('#', leadHashNum), collapse='')
+
+  hh # return
+
+}
+
 #' return index of line that matches line in contents
 #'
 match_line_index <- function(line, contents) {
@@ -622,11 +763,44 @@ match_vector <- function(vector, parent, nomatch = 0L) {
 #'
 #' First identifies if the current Cursor position is on a GROUP (HEADER NOTE or SUBNOTE).
 #' It then searches back through the Active Document to find the first line starting with
-#' "##" - if this is a "#### TASK" line, then the first previous "### DELIVERABLE" line and
-#' the first previous "### GOAL" line is also identified.
+#' "##" - if this is a `TASK` line, then the first previous `DELIVERABLE` line and
+#' the first previous `GOAL` line are also identified.
 #'
 #' If TASK, DELIVERABLE and GOAL lines are all successfully found, this method returns
 #' a LIST:
+#'
+#' [[1]] or [["rmdType"]] - type of file selected: DOC, HEAD, SUB, NOTE, or UNKNOWN
+#'
+#' [[2]] or [["task"]]
+#'
+#' [[3]] or [["taskLine"]]
+#'
+#' [[4]] or [["deliverable"]]
+#'
+#' [[5]] or [["delLine"]]
+#'
+#' [[6]] or [["goal"]]
+#'
+#' [[7]] or [["goalLine"]]
+#'
+#' [[8]] or [["originalLine"]]
+#'
+#' [[9]] or [["originalLineNumber"]]
+#'
+#' [[10]] or [["addingSubNote"]]
+#'
+#' [[11]] or [["headerNoteLink"]]
+#'
+#' [[12]] or [["headerNoteRmdPath"]]
+#'
+#' [[13]] or [["headerNoteName"]]
+#'
+#' [[14]] or [["headerNoteLineNumber"]]
+#'
+#' [[15]] or [["filePath"]]
+#'
+#' [[16]] or [["defaultPath"]]
+#'
 #'
 #' [[1]] or [["task"]] - contains the line that starts "#### TASK" in the Active Document.
 #'
@@ -688,13 +862,11 @@ cursor_selection <- function() {
   if(orgPath == "" ) { # only if orgPath not identified
     stop( paste0("  filePath is not in a projectmanagr ORGANISATION: ", filePath) )
   }
-  # set confPath + tempPath:
-  confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
-  tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
 
-  # load settings file for user defined settings
-  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
   create_selection(filePath, contents, line, settings) # return selection
 
@@ -759,13 +931,11 @@ user_selection <- function(filePath, line) {
   if(orgPath == "" ) { # only if orgPath not identified
     stop( paste0("  filePath is not in a projectmanagr ORGANISATION: ", filePath) )
   }
-  # set confPath + tempPath:
-  confPath <- paste(orgPath, .Platform$file.sep, "config" , sep="")
-  tempPath <- paste(confPath, .Platform$file.sep, "templates", sep="")
 
-  # load settings file for user defined settings
-  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
 
   #### read file ####
@@ -830,23 +1000,53 @@ create_selection <- function(filePath, contents, line, settings) {
     headerNoteName <- ""
     headerNoteLineNumber <- 0
 
+    defaultPath <- get_project_doc_dir_path(filePath, settings) # set default path to DOC dir
 
-    ##### Identify HEADER or SUBNOTE ####
 
-    # identify if the selected line is selecting a HEADER OR SUB NOTE
-    # if a HEADER NOTE is selected, the line will contain the string "-00~" by default
-    headerString <- paste0(settings[["HeaderNotePrefix"]], settings[["ProjectPrefixSep"]])
-    # if a SUBNOTE is selected, the line will contain the string "*[" by default (subnotelinkformat plus start of link)
-    subNoteString <- paste0(settings[["SubNoteLinkFormat"]], "[")
-    if( grepl(headerString, lineContent, fixed = TRUE) || grepl(subNoteString, lineContent, fixed = TRUE) ) {
+    ##### Identify Selected Line: NOTE Link ####
 
-      addingSubNote <- TRUE
+    # check if selected line is a link - links contain string `](`
+    if( grepl("](", lineContent, fixed=TRUE) ) {
 
-      # find the headerNote:
-      if( grepl(headerString, lineContent, fixed = TRUE) ) {
+      # extract path & make absolute (combining with filePath if relative)
+      linkPath <- get_path_from_link(lineContent)
+
+      if( R.utils::isAbsolutePath(linkPath) == FALSE ) {
+        # combine with the parent dir of DOC filePath
+        linkPath <- get_absolute_path( dirname(filePath), linkPath)
+      }
+
+      # check if the link points to a NOTE HEAD or SUB
+      linkType <- get_file_type(linkPath, settings)
+
+      if( linkType == "NOTE" ) {
+
+        # selected link is a simple note - want to use its parent as default location for new note
+        defaultPath <- dirname(linkPath)
+
+
+      } else if( linkType == "HEAD" ) {
+
+        # selected link is a group note - set further params
+
+        # selected link is a group note - so set further params
+        addingSubNote <- TRUE
+
+        # headerNote line is original selected line!
         headerNoteLink <- lineContent
         headerNoteLineNumber <- line
-      } else {
+
+        headerNoteRmdPath <- linkPath
+        headerNoteFileName <- basename(headerNoteRmdPath)
+        headerNoteName <- get_name_from_file_name(headerNoteFileName, settings)
+
+
+      } else if( linkType == "SUB" ) {
+
+        # selected link is a group note - so set further params
+        addingSubNote <- TRUE
+
+        # find headerNote line
         for(l in line:1) {
           lineContent <- contents[ l ]
           if( grepl(headerString, lineContent, fixed = TRUE) ) {
@@ -855,26 +1055,19 @@ create_selection <- function(filePath, contents, line, settings) {
             break
           }
         }
-      }
-      if(headerNoteLink == "" ) { # if headerNoteLink not found, set errorMessage:
-        headerRetrieved <- FALSE
-        errorMessage <- "Could Not Identify HEADER NOTE"
-      }
 
-      # get headerNoteName
-      hnrp <- substr(headerNoteLink,
-                     regexpr("](", headerNoteLink, fixed=TRUE)+2,
-                     nchar(headerNoteLink) )
-      hnrp <- substr(hnrp, 1, regexpr(")", hnrp, fixed=TRUE)-1)
-      # combine with filePath to get the full path
-      headerNoteRmdPath <- R.utils::getAbsolutePath(
-        paste0(dirname(filePath), .Platform$file.sep, hnrp) )
-      headerNoteFileName <- basename(headerNoteRmdPath)
-      # now extract the headerNoteName from filename
-      headerNoteName <- substring(headerNoteFileName,
-                                  first=regexpr(settings[["ProjectPrefixSep"]], headerNoteFileName, fixed=TRUE) + nchar(settings[["ProjectPrefixSep"]]),
-                                  last=regexpr( paste0(".", settings[["FileTypeSuffix"]]), headerNoteFileName, fixed=TRUE)-1  )
+        # extract path & make absolute (combining with filePath if relative)
+        headerNoteRmdPath <- get_path_from_link(lineContent)
 
+        if( R.utils::isAbsolutePath(headerNoteRmdPath) == FALSE ) {
+          # combine with the parent dir of DOC filePath
+          headerNoteRmdPath <- get_absolute_path( dirname(filePath), headerNoteRmdPath)
+        }
+
+        headerNoteFileName <- basename(headerNoteRmdPath)
+        headerNoteName <- get_name_from_file_name(headerNoteFileName, settings)
+
+      }
     }
 
 
@@ -918,15 +1111,14 @@ create_selection <- function(filePath, contents, line, settings) {
                       addingSubNote, headerNoteLink,
                       headerNoteRmdPath, headerNoteName,
                       headerNoteLineNumber,
-                      filePath )
+                      filePath, defaultPath )
 
       names(output) <- c( "rmdType", "task", "taskLine", "deliverable", "delLine",
                           "goal", "goalLine",
                           "originalLine", "originalLineNumber",
                           "addingSubNote", "headerNoteLink",
                           "headerNoteRmdPath", "headerNoteName",
-                          "headerNoteLineNumber",
-                          "filePath")
+                          "headerNoteLineNumber", "filePath", "defaultPath")
 
     }
     else {
