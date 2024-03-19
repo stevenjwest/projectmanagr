@@ -31,13 +31,10 @@ addin_datatable_create <- function() {
     stop( paste0("  No Organisation identified - ensure working directory is in an Organisation: \n    ", WD))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml")
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
 
   # identify the lines that begin with "+==="
@@ -171,13 +168,11 @@ addin_datatable_create <- function() {
                             rmd_path = path,
                             rmd_startline = startrow,
                             rmd_endline = endrow,
+                            settings = settings,
                             IDs = ids,
                             datatable_name = input$name,
-                            dt_length = 120
+                            dt_length = 100
                           )
-
-          # navigate to file - to reload:
-          #rstudioapi::navigateToFile( path )
 
           # Close Gadget after 'done' is clicked.
           stopApp()
@@ -192,6 +187,7 @@ addin_datatable_create <- function() {
                              width = settings[["GadgetWidth"]],
                              height = settings[["GadgetHeight"]])
       runGadget(ui, server, viewer = viewer)
+
 
     } else { # else no datatable output name provided
 
@@ -260,10 +256,15 @@ addin_datatable_create <- function() {
             #### datatable create template rmd ####
 
             # create datatable from params and put into path at row
-            projectmanagr::datatable_create_template_rmd(path, startrow, endrow, ids, input$name)
-
-            # navigate to file - to reload:
-            #rstudioapi::navigateToFile( path )
+            projectmanagr::datatable_create_template_rmd(
+                                      rmd_path = path,
+                                      rmd_startline = startrow,
+                                      rmd_endline = endrow,
+                                      settings = settings,
+                                      IDs = ids,
+                                      datatable_name = input$name,
+                                      dt_length = 100
+                                  )
 
             # Close Gadget after 'done' is clicked.
             stopApp()
@@ -352,10 +353,15 @@ addin_datatable_create <- function() {
           #### datatable create rmd ####
 
           # create datatable from params and put into path at row
-          projectmanagr::datatable_create_rmd(path, row, ids, data_cols, input$name)
-
-          # navigate to file - to reload:
-          #rstudioapi::navigateToFile( path )
+          projectmanagr::datatable_create_rmd(
+                                      rmd_path = path,
+                                      rmd_line = row,
+                                      settings = settings,
+                                      IDs = ids,
+                                      data_cols = data_cols,
+                                      datatable_name = input$name,
+                                      dt_length = 100
+                                    )
 
           # Close Gadget after 'done' is clicked.
           stopApp()
@@ -513,13 +519,10 @@ addin_datatable_add_data <- function() {
     stop( paste0("  No Organisation identified - ensure working directory is in an Organisation: \n    ", WD))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml")
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
   # identify the lines that begin with "+==="
   indices <- which( startsWith( context$contents, "+===") )
@@ -643,24 +646,15 @@ addin_datatable_add_data <- function() {
 
         # create datatable from params and put into path at row
         projectmanagr::datatable_add_data_samples_template_rmd(
-          rmd_path = path,
-          rmd_startline = startrow,
-          rmd_endline = endrow,
-          IDs = ids,
-          datatable_name = dt_name,
-          dt_length = 120,
-          summarise_reps = input$summarise_reps
-        )
-        #cat("rmd_path = ", path, '\n')
-        #cat("rmd_startline = ",startrow, '\n')
-        #cat("rmd_endline = ",endrow, '\n')
-        #cat("IDs = ",ids, '\n')
-        #cat("datatable_name = ",dt_name, '\n')
-        #cat("dt_length = ",120, '\n')
-        #cat("summarise_reps = ",input$summarise_reps, '\n')
-
-        # navigate to file - to reload:
-        #rstudioapi::navigateToFile( path )
+                                rmd_path = path,
+                                rmd_startline = startrow,
+                                rmd_endline = endrow,
+                                IDs = ids,
+                                datatable_name = dt_name,
+                                settings = settings,
+                                dt_length = 100,
+                                summarise_reps = input$summarise_reps
+                              )
 
         # Close Gadget after 'done' is clicked.
         stopApp()
@@ -926,8 +920,9 @@ addin_datatable_add_data <- function() {
               rmd_line = row,
               data_cols = data_cols,
               datatable_name =  names(dts)[ as.numeric(input$dt) ],
+              settings = settings,
               ids_vector = ids_vector,
-              dt_length = 120,
+              dt_length = 100,
               summarise_reps = input$summarise_reps
             )
 
@@ -947,7 +942,9 @@ addin_datatable_add_data <- function() {
               rmd_line = row,
               var_names = data_cols,
               datatable_name =  names(dts)[ as.numeric(input$dt) ],
-              group_names = group_vector
+              group_names = group_vector,
+              settings = settings,
+              dt_length = 100
             )
 
           } else if( as.numeric(input$type) == 3 ) {
@@ -958,7 +955,9 @@ addin_datatable_add_data <- function() {
               rmd_line = row,
               step_names = data_cols,
               datatable_name =  names(dts)[ as.numeric(input$dt) ],
-              group_names = group_vector
+              group_names = group_vector,
+              settings = settings,
+              dt_length = 100
             )
 
           }
@@ -985,334 +984,6 @@ addin_datatable_add_data <- function() {
 }
 
 
-
-
-
-
-#' Add Datatable to existing samples
-#'
-#' Generates a Shiny Gadget for adding data to existing samples in a new
-#' datatable.
-#'
-#' User selects a datatable name : list of existing datatables
-#' in the current Rmd.
-#'
-#' User selects datatable layout : samples, variables, timetable.
-#'
-#' User selects the ID format to add : ALL, all-IDs, or a group set.
-#'
-#' User defines the data table column names : using the suffix `_dt` denotes
-#' that the column is a DATETIME and it appropriately spaced to hold a datetime.
-#' Otherwise columns are spaced according to the width of the column title.
-#'
-#' The datatable with function ADD_DATA is added with appropriate layout.
-#'
-#' If the cursor is already INSIDE a TEMPLATE ADD_DATA, which has a valid
-#' ADD_DATA layout (and is already sample, variable or timetable), then
-#' user just needs to select the existing samples datatable to insert data from,
-#' and the IDs to add : ALL, all-IDs, or a group set.
-#'
-#' The generic ADD_DATA table will be updated to contain the correct IDs
-#' from the selected existing samples.
-#'
-#' @export
-OLD_addin_datatable_add_data_no_template <- function() {
-
-  # get data from current file
-  context <- rstudioapi::getSourceEditorContext()
-  row <- context$selection[[1]]$range$start[1]
-  path <- normalizePath( context$path )
-
-  # SAVE the document before processing!
-  rstudioapi::documentSave(id = context$id)
-
-  # create named list of types
-  type <- list("sample-first"=1, "variable-first"=2, "timetable"=3)
-
-  # collect all sample data from the current Rmd
-  #dts <- projectmanagr::datatable_read_rmd(path)
-  # collect all sample data from the current Rmd up to SELECTED LINE
-  dts <- projectmanagr::datatable_read_vector(context$contents[1:row]) # TEST THIS!
-  dt_names <- names(dts)
-
-  lt <- as.list( 1:length(dt_names) )
-  names(lt) <- dt_names
-
-  # select group cols from first datatable INITIALLY
-  gdt <- dplyr::select( dts[[1]], dplyr::starts_with("group-") )
-  ltid <- as.list(1:(length(gdt)+2) )
-  names(ltid) <- c("ALL", "all-IDs", names(gdt))
-
-  ui <- miniPage(
-
-    gadgetTitleBar("Add Data Datatable"),
-
-    miniContentPanel(
-
-      fillCol(
-
-        fillRow( p("Add Data to a datatable in the active Rmd at the cursor from input params.") ),
-
-        fillRow(
-          helpText( p('Rmd: ', context$path, align="center") ) ),
-
-        fillRow(
-          helpText( p('line: ', row, align="center") ) ),
-
-        fillRow( h4("Choose datatable:") ),
-
-        fillRow( selectInput("dt", "Select Datatable",
-                             choices = lt, selected = 1, width="100%")  ),
-
-        fillRow( h4("Choose datatable type: ") ),
-
-        fillRow( p("sample-first: First col. is filled with all sample or group IDs, subsequent columns are data cols. specified below.") ),
-
-        fillRow( p("variable-first: First col. is filled with all data cols. specified below, subsequent columns are sample or group IDs") ),
-
-        fillRow( p("timetable: special table for planning and recording datetimes of a procedure's steps executed with different timing across sample or group IDs.") ),
-
-        fillRow( selectInput("type", "Select Datatable Type",
-                             choices = type, selected = 1, width="100%")  ),
-
-        fillRow( h4("Choose sample/group IDs: ") ),
-
-        fillRow( p("    ALL : A single ID, ALL, is used - will add all data to all sample IDs.") ),
-
-        fillRow( p("    all-IDs : all sample IDs from selected datatable are used.") ),
-
-        fillRow( p("    <group> : All IDs from the selected group are used.") ),
-
-        fillRow( selectInput("id", "Select IDs or Groups",
-                             choices = ltid, selected = 1, width="100%")  ),
-
-        fillRow( p("Define data column names - these MUST be unique to this new datatable.") ),
-
-        fillRow(  textInput("data_cols", "Data Cols. to add (space-separated):", width="100%")  ),
-
-        fillRow(  span( textOutput("warningName"), style="color:red")  ),
-
-        fillRow( checkboxInput("summarise_reps", "Summarise Sample Reps"))
-
-      )
-    )
-  )
-
-  server <- function(input, output, session) {
-
-    # modify group IDs if new dt is selected
-    observe({
-
-      x <- input$dt # returns CHARACTER - cast to numeric to use as index!!
-
-      print( paste0("x: ", x) )
-
-      if( is.null(x) ) {
-        # do nothing
-      } else {
-        print( paste0("x: ", x) )
-        print( paste0( "x type: ", typeof(x)))
-        print(dts)
-        # must convert x to numeric as its returned as a character!
-        gdt <- dplyr::select( dts[[ as.numeric(x) ]], dplyr::starts_with("group-") )
-        ltid <- as.list(1:(length(gdt)+2) )
-        names(ltid) <- c("ALL", "all-IDs", names(gdt))
-        # update select input with new ltid:
-        updateSelectInput(session, "id",
-                          label = "Select IDs or Groups",
-                          choices = ltid,
-                          selected = 1
-        )
-      }
-    })
-
-    # modify group IDs if different dt type is selected
-    # variable-first does NOT support all-IDs anymore!
-    observe({
-
-      x <- input$type # returns CHARACTER - cast to numeric to use as index!!
-
-      #print( paste0("x: ", x) )
-
-      if( is.null(x) ) {
-        # do nothing
-      } else {
-        xn <- as.numeric(x)
-        if( xn == 2 || xn == 3 ) {
-          # must convert input$dt to numeric as its returned as a character!
-          gdt <- dplyr::select( dts[[ as.numeric(input$dt) ]], dplyr::starts_with("group-") )
-          ltid <- as.list(1:(length(gdt)+1) )
-          names(ltid) <- c("ALL", names(gdt))
-          # update select input with new ltid:
-          updateSelectInput(session, "id",
-                            label = "Select IDs or Groups",
-                            choices = ltid,
-                            selected = 1
-          )
-        } else {
-          # must convert input$dt to numeric as its returned as a character!
-          gdt <- dplyr::select( dts[[ as.numeric(input$dt) ]], dplyr::starts_with("group-") )
-          ltid <- as.list(1:(length(gdt)+2) )
-          names(ltid) <- c("ALL", "all-IDs", names(gdt))
-          # update select input with new ltid:
-          updateSelectInput(session, "id",
-                            label = "Select IDs or Groups",
-                            choices = ltid,
-                            selected = 1
-          )
-        }
-      }
-    })
-
-    observeEvent(input$done, {
-
-      col_name_warning <- ""
-
-      # check the selected dt does not contain the newly defined data cols:
-      dt_col_names <- names(dts[[input$dt]])
-
-      # split data_cols at spaces
-      data_cols <- unlist( strsplit(as.character(input$data_cols), ' ') )
-      if( identical(data_cols, character(0) ) ) {
-        data_cols <- ""
-      }
-
-      for(i in 1:length(data_cols) ) {
-        # check dt doesnt already contain col of same name?
-        if( any( dt_col_names == data_cols[i] ) ) {
-          col_name_warning <- paste0("  Data col already exists in datatable: ", data_cols[i] )
-        }
-      }
-
-      if(col_name_warning != "") {
-        # set the warningName TextOutput:
-        output$warningName <- renderText({
-          col_name_warning
-        })
-
-      } else {
-
-        if( identical(data_cols, character(0) ) ) {
-          data_cols <- ""
-        }
-
-        # FIRST PARSE input$id :
-        # generate a vector containing sample IDs, group IDs or ALL as selected
-        if( as.numeric(input$id) == 1 ) { # ALL
-          cat( "\n  group_vector : ALL" )
-          ids_vector <- "ALL"
-          group_vector <- ids_vector
-
-        } else if( as.numeric(input$id) == 2 ) { # names(ltid)[as.numeric(input$id)] == "all-IDs" ) { # sample IDs
-
-          if( as.numeric(input$type) == 1 ) { # all IDs can only be selected for sample-first
-
-            cat( "\n  group_vector : ID" )
-            ids_vector <- dts[[ as.numeric(input$dt) ]]$ID
-            group_vector <- ids_vector
-            cat( "\n  group_vector : ", group_vector )
-
-          } else { # grab the group col for variable-first or timetable
-
-            # retrieve the group names AGAIN - as its not updated globally from previous observation function!
-            gdt <- dplyr::select( dts[[ as.numeric(input$dt) ]], dplyr::starts_with("group-") )
-            ltid <- as.list(1:(length(gdt)+1) )
-            names(ltid) <- c("ALL", names(gdt))
-            # now get ids vector:
-            ids_vector <- unique( dts[[ as.numeric(input$dt) ]][[ names(ltid)[ as.numeric(input$id) ] ]] )
-            group_vector <- ids_vector
-            cat( "\n  group_vector : ", group_vector )
-            cat( "\n  ids_vector - COL : ", names(ltid)[ as.numeric(input$id) ] )
-            cat( "\n  ids_vector : ", ids_vector, "  \n\n" )
-
-          }
-
-        } else { # a group col has been selected
-
-          cat( "\n  group_vector : COL" )
-          # retrieve the group names AGAIN - as its not updated globally from previous observation function!
-          gdt <- dplyr::select( dts[[ as.numeric(input$dt) ]], dplyr::starts_with("group-") )
-          ltid <- as.list(1:(length(gdt)+2) )
-          names(ltid) <- c("ALL", "all-IDs", names(gdt))
-          # now get ids vector:
-          ids_vector <- unique( dts[[ as.numeric(input$dt) ]][[ names(ltid)[ as.numeric(input$id) ] ]] )
-          group_vector <- ids_vector
-          cat( "\n  group_vector : ", group_vector )
-          cat( "\n  ids_vector - COL : ", names(ltid)[ as.numeric(input$id) ] )
-          cat( "\n  ids_vector : ", ids_vector, "  \n\n" )
-
-        }
-
-
-        if( as.numeric(input$type) == 1 ) {
-
-          # sample-first
-          # currently automatically uses all sample IDs
-          # cannot choose any group IDs or special group ALL
-
-          cat( "\nSAMPLE-FIRST LAYOUT")
-          cat( "\npath: ", path)
-          cat( "\nline: ", row)
-          cat( "\ndata_cols: ", data_cols)
-          cat( "\ndatatable_name: ", names(dts)[ as.numeric(input$dt) ])
-
-          projectmanagr::datatable_add_data_samples_rmd(
-            rmd_path = path,
-            rmd_line = row,
-            data_cols = data_cols,
-            datatable_name =  names(dts)[ as.numeric(input$dt) ],
-            ids_vector = ids_vector,
-            dt_length = 120,
-            summarise_reps = input$summarise_reps
-          )
-
-        } else if( as.numeric(input$type) == 2 ) {
-
-          cat( "\nVARIABLE-FIRST LAYOUT")
-          cat( "\npath: ", path)
-          cat( "\nline: ", row)
-          cat( "\ndata_cols: ", data_cols)
-          cat( "\ndatatable_name: ", names(dts)[ as.numeric(input$dt) ])
-          cat( "\ngroup_names: ", group_vector)
-
-          # variable-first
-          projectmanagr::datatable_add_data_variables_rmd(
-            rmd_path = path,
-            rmd_line = row,
-            var_names = data_cols,
-            datatable_name =  names(dts)[ as.numeric(input$dt) ],
-            group_names = group_vector
-          )
-
-        } else if( as.numeric(input$type) == 3 ) {
-
-          # timetable
-          projectmanagr::datatable_add_data_timetable_rmd(
-            rmd_path = path,
-            rmd_line = row,
-            step_names = data_cols,
-            datatable_name =  names(dts)[ as.numeric(input$dt) ],
-            group_names = group_vector
-          )
-
-        }
-
-        # navigate to file - to reload:
-        rstudioapi::navigateToFile( path )
-
-        # Close Gadget after 'done' is clicked.
-        stopApp()
-
-      }
-    })
-  }
-
-
-  viewer <- dialogViewer("Add Data to Datatable", width = 1000, height = 800)
-
-  runGadget(ui, server, viewer = viewer)
-
-}
 
 
 #' Add Datatable containing groups to existing samples
@@ -1363,13 +1034,10 @@ addin_datatable_add_groups <- function() {
     stop( paste0("  No Organisation identified - ensure working directory is in an Organisation: \n    ", WD))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml")
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
   # identify the lines that begin with "+==="
   indices <- which( startsWith( context$contents, "+===") )
@@ -1497,7 +1165,10 @@ addin_datatable_add_groups <- function() {
             rmd_endline = rowEnd,
             group_names = group_names,
             datatable_name =  names(dts)[ as.numeric(input$dt) ],
-            groups = group_values
+            groups = group_values,
+            settings = settings,
+            dt_length = 100,
+            summarise_reps = FALSE
           )
 
           # navigate to file - to reload:
@@ -1527,6 +1198,8 @@ addin_datatable_add_groups <- function() {
 #'
 #' Convert the bulleted list of GROUP TITLEs and GROUP IDs to space-separated
 #' string, for use in the addin_datatable_add_groups ADDIN.
+#'
+#' @param content_selection Selection of GROUP TITLEs and GOUP IDs in bullets
 #'
 format_group_declaration_bullets <- function(content_selection) {
 
@@ -1606,13 +1279,10 @@ addin_datatable_resample <- function() {
     stop( paste0("  No Organisation identified - ensure working directory is in an Organisation: \n    ", WD))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml")
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
   # identify the lines that begin with "+==="
   indices <- which( startsWith( context$contents, "+===") )
@@ -1749,17 +1419,13 @@ addin_datatable_resample <- function() {
           #### datatable resample template rmd ####
 
           projectmanagr::datatable_resample_template_rmd(
-            rmd_path = path,
-            rmd_startline = startrow,
-            rmd_endline = endrow,
-            datatable_name = names(dts)[ as.numeric(input$dt) ],
-            dt_length = 120 )
-          #cat("rmd_path: ", path, "\n")
-          #cat("rmd_startline: ", startrow, "\n")
-          #cat("rmd_endline: ", endrow, "\n")
-          #cat("datatable_name: ", names(dts)[ as.numeric(input$dt) ], "\n")
-          #scat("dt_length: ", 120, "\n")
-
+                            rmd_path = path,
+                            rmd_startline = startrow,
+                            rmd_endline = endrow,
+                            datatable_name = names(dts)[ as.numeric(input$dt) ],
+                            settings = settings,
+                            dt_length = 100
+                          )
 
           # navigate to file - to reload:
           rstudioapi::navigateToFile( path )
@@ -1862,19 +1528,21 @@ addin_datatable_resample <- function() {
             data_cols <- ""
           }
 
-          #projectmanagr::datatable_resample_rmd(
-          #  rmd_path = path,
-          #  rmd_line = row,
-          #  datatable_name = names(dts)[ as.numeric(input$dt) ],
-          #  resample_vector = data_cols,
-          #  dt_length = 120 )
-          cat("rmd_path: ", path, "\n")
-          cat("rmd_startline: ", startrow, "\n")
-          cat("rmd_endline: ", endrow, "\n")
-          cat("datatable_name: ", names(dts)[ as.numeric(input$dt) ], "\n")
-          cat("resample_vector: ", data_cols, "\n")
-          cat("length resample_vector: ", length(data_cols), "\n")
-          cat("dt_length: ", 120, "\n")
+          projectmanagr::datatable_resample_rmd(
+                             rmd_path = path,
+                             rmd_line = row,
+                             datatable_name = names(dts)[ as.numeric(input$dt) ],
+                             settings = settings,
+                             resample_vector = data_cols,
+                             dt_length = 100
+                           )
+          #cat("rmd_path: ", path, "\n")
+          #cat("rmd_startline: ", startrow, "\n")
+          #cat("rmd_endline: ", endrow, "\n")
+          #cat("datatable_name: ", names(dts)[ as.numeric(input$dt) ], "\n")
+          #cat("resample_vector: ", data_cols, "\n")
+          #cat("length resample_vector: ", length(data_cols), "\n")
+          #cat("dt_length: ", 120, "\n")
 
 
           # navigate to file - to reload:
@@ -1901,18 +1569,18 @@ addin_datatable_resample <- function() {
 
 
 
-#' Import EXISTING samples and reps from Datatable in source Project Note
+#' Import EXISTING samples and reps from Datatables in source Project Note(s)
 #'
 #' Generates a Shiny Gadget for importing existing samples and reps derived from
-#' datatables that exist in a source Project Note into the currently active
+#' datatables that exist in source Project Note(s), into the currently active
 #' destination Project Note.
 #'
 #' * User selects the line in the current Project Note where the IMPORT will
 #' be written.
 #'
-#' * User selects a source Project Note, from the current ORGANISATION: This
-#' note is read for all EXISTING samples/reps in all datatables, which are
-#' presented in SUMMARY FORMAT
+#' * User selects a dirTree, from the current ORGANISATION: All project notes
+#' identified recursively are is read for all EXISTING samples/reps in datatables,
+#' which are presented in SUMMARY FORMAT
 #'
 #' * User filters the datatable for desired characteristics of samples/reps for
 #' import.
@@ -1935,6 +1603,8 @@ addin_datatable_resample <- function() {
 #' @export
 addin_datatable_import <- function() {
 
+  #### instance variables ####
+
   # get data from current file - DESTINATION FILES
   context <- rstudioapi::getSourceEditorContext()
   row <- context$selection[[1]]$range$start[1]
@@ -1946,19 +1616,35 @@ addin_datatable_import <- function() {
   # collect the organisation path from current path
   orgPath <- find_org_directory(path)
 
+  # if orgPath not identified present error interface and then stop this function
+  if(orgPath=="") {
+    addin_error_path("Import Datatable",
+                     "No Organisation identified - ensure working directory is in an Organisation.",
+                     orgPath)
+    stop( paste0("  No Organisation identified - ensure working directory is in an Organisation: \n    ", WD))
+  }
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
+
   # generate a blank table to initialise addin with
   ID <- ""      # ID: Each Sample ID
   SAMPLE <- ""  # SAMPLE: COMPOSITE of all subsampling columns: CNS-RT-MB etc.
-  COUNT <- integer()  # COUNT: How many REPS are there of this sample?
   PREFIX <- ""     # EXP: Fill with the Experiment Prefix ID
   TITLE <- ""   # TITLE: Fill with Experiment Title - will contain the LAB_TREATMENT
   #PATH <- ""    # PATH: Put the absolute PATH to the Project Note Rmd to Navigate to
-  LOCATION <- "" # LOCATION of the sample, if in storage
-  CONDITION <- "" # CONDITIONS of sample - what is it in?
+  LOCATION <- "" # LOCATION of the sample - where is it?
+  CONDITION <- "" # CONDITION of sample - what is it in?
+  DATETIME <- "" # DATETIME sample was moved to current CONDITION/LOCATION
+  COUNT <- integer()  # COUNT: How many REPS are there of this sample?
   IMPORT <- integer()  # IMPORT: How many REPS to import from this sample?
 
   #samples_summary <- tibble::tibble(ID, SAMPLE, COUNT, PREFIX, TITLE, LOCATION, CONDITION)
-  samples_summary <- tibble::tibble(PREFIX, TITLE, ID, SAMPLE, COUNT, CONDITION, LOCATION, IMPORT)
+  samples_summary <- tibble::tibble(PREFIX, TITLE, ID, SAMPLE,
+                                    CONDITION, LOCATION, DATETIME,
+                                    COUNT, IMPORT)
 
   ui <- miniPage(
 
@@ -1968,7 +1654,7 @@ addin_datatable_import <- function() {
 
       fillCol( flex = c(1,1,1,20),
                # , verbatimTextOutput("rows", placeholder = TRUE)
-               fillRow( p("Import samples/reps from datatables in a Source Project Note"), actionButton("click_action", "Click") ),
+               fillRow( p("Import samples/reps from datatables in Source Project Notes"), actionButton("click_action", "Click") ),
 
                #fillRow(
                #  helpText( p('Rmd: ', context$path, align="center") ) ),
@@ -2109,14 +1795,14 @@ addin_datatable_import <- function() {
       export_dts <- projectmanagr::datatable_export(samples_summary = samp_summ,
                                                     destination_note_path = path,
                                                     datetime=cur_datetime,
-                                                    summarise_reps = TRUE, dt_length = 120)
+                                                    summarise_reps = TRUE, dt_length = 100)
 
       # AND import samples from SOURCE Rmds to DESTINATION Rmd
       projectmanagr::datatable_import(export_datatables = export_dts,
                                       destination_note_path = path,
                                       destination_note_line = row,
                                       datetime=cur_datetime,
-                                      summarise_reps = FALSE, dt_length = 120)
+                                      summarise_reps = FALSE, dt_length = 100)
 
       # Close Gadget after computations are complete:
       stopApp()
@@ -2129,7 +1815,12 @@ addin_datatable_import <- function() {
 
   }
 
-  runGadget(ui, server, viewer = dialogViewer("Import Samples", width = 2000, height = 2000))
+  #### view gadget ####
+
+  viewer <- dialogViewer("Import Samples",
+                         width = settings[["GadgetWidth"]],
+                         height = settings[["GadgetHeight"]])
+  runGadget(ui, server, viewer = viewer)
 
 }
 

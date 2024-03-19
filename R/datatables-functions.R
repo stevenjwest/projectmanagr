@@ -20,14 +20,14 @@
 #' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
-datatable_create_rmd <- function( rmd_path, rmd_line,
+datatable_create_rmd <- function( rmd_path, rmd_line, settings,
                               IDs="", data_cols="",
                               datatable_name = "samples", dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_create_rmd():\n" )
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -67,14 +67,14 @@ datatable_create_rmd <- function( rmd_path, rmd_line,
 #' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
-datatable_create_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
+datatable_create_template_rmd <- function( rmd_path, rmd_startline, rmd_endline, settings,
                                            IDs, datatable_name = "samples", dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_create_template_rmd():\n" )
 
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -207,7 +207,20 @@ datatable_create <- function( IDs="", data_cols="", datatable_name = "samples",
   }
 
   # use data_col_wds to calc correct length of default_data_vals:
-  if( length(default_data_vals) == 0 ) { # default_data_vals is a BLANK LIST - so fill with default_data_vals
+  if( length(default_data_vals) == 0 ) {
+    # default_data_vals is a BLANK LIST - so fill with default_data_vals
+
+    # determine widths of data cols
+    data_col_wds <- c()
+    for(i in 1:length(data_cols) ) {
+      # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
+      if( endsWith(data_cols[i], "_dt") ) {
+        data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 18)
+      } else {
+        data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 5) #pmax ensures min col width is 5!
+      }
+    }
+
     for( i in 1:length(data_cols) ) {
       # add default data vals to the data col for each ID
        # first compute the most appropriate default data val to add - based on width of column
@@ -222,16 +235,6 @@ datatable_create <- function( IDs="", data_cols="", datatable_name = "samples",
       }
     }
 
-    # determine widths of data cols
-    data_col_wds <- c()
-    for(i in 1:length(data_cols) ) {
-      # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
-      if( endsWith(data_cols[i], "_dt") ) {
-        data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 18)
-      } else {
-        data_col_wds[i] <- pmax(nchar(data_cols[i])+4, 5) #pmax ensures min col width is 5!
-      }
-    }
 
   } else { # default_data_vals has been supplied with values
 
@@ -240,10 +243,23 @@ datatable_create <- function( IDs="", data_cols="", datatable_name = "samples",
       stop( paste0("  number of default data vals does not match data_cols length: ", default_data_vals, " ", data_cols) )
     }
 
+    # FIRST get list with single string of max length per col
+    ddv <- list(1)
+    for( i in 1:length(data_cols) ) {
+      d <- unlist(strsplit(default_data_vals[[i]], ' '))
+      ddv[[i]] <- d[ which.max( nchar(d) ) ]
+    }
+
     # and identify data_col_wds based on data_cols && default_data_vals
     data_col_wds <- c()
     for(i in 1:length(data_cols) ) {
-      data_col_wds[i] <- max(nchar(c(data_cols[[i]], default_data_vals[[i]]) ))+2
+      data_col_wds[i] <- max(nchar(c(data_cols[[i]], ddv[[i]]) ))+2
+    }
+
+    # finally to handle multi-obs data - split at any SPACE in default_data_vals
+    # build_data : supports adding multi-obs data
+    for( i in 1:length(data_cols) ) {
+      default_data_vals[[i]] <- unlist(strsplit(default_data_vals[[i]], ' '))
     }
 
   }
@@ -905,13 +921,13 @@ OLD_datatable_build <- function() {
 #' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.
 #'
 #' @export
-datatable_add_data_samples_rmd <- function( rmd_path, rmd_line, data_cols, datatable_name,
+datatable_add_data_samples_rmd <- function( rmd_path, rmd_line, data_cols, datatable_name, settings,
                                             ids_vector="", dt_length = 100, summarise_reps = FALSE  ) {
 
   cat( "\nprojectmanagr::datatable_add_data_samples_rmd():\n" )
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -954,12 +970,13 @@ datatable_add_data_samples_rmd <- function( rmd_path, rmd_line, data_cols, datat
 #'
 #' @export
 datatable_add_data_samples_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
-                                                     IDs, datatable_name, dt_length = 100, summarise_reps = FALSE ) {
+                                                     IDs, datatable_name, settings,
+                                                     dt_length = 100, summarise_reps = FALSE ) {
 
   cat( "\nprojectmanagr::datatable_add_data_samples_template_rmd():\n" )
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -1451,13 +1468,14 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
 #' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
-datatable_add_data_variables_rmd <- function( rmd_path, rmd_line, var_names, datatable_name, group_names,
+datatable_add_data_variables_rmd <- function( rmd_path, rmd_line, var_names,
+                                              datatable_name, group_names, settings,
                                               dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_add_data_variables_rmd():\n" )
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -1659,13 +1677,14 @@ datatable_add_data_variables <- function(contents, var_names, datatable_name, gr
 #' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
-datatable_add_data_timetable_rmd <- function( rmd_path, rmd_line, step_names, datatable_name, group_names,
+datatable_add_data_timetable_rmd <- function( rmd_path, rmd_line, step_names,
+                                              datatable_name, group_names, settings,
                                               dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_add_data_timetable_rmd():\n" )
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -2054,13 +2073,14 @@ summarise_id_rep <- function(IDs, REPs) {
 #' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.
 #'
 #' @export
-datatable_add_group_rmd <- function(rmd_path, rmd_startline, rmd_endline, group_names, datatable_name,
-                                    groups, dt_length = 100, summarise_reps = FALSE  ) {
+datatable_add_group_rmd <- function(rmd_path, rmd_startline, rmd_endline, group_names,
+                                    datatable_name, groups, settings,
+                                    dt_length = 100, summarise_reps = FALSE  ) {
 
   cat( "\nprojectmanagr::datatable_group_rmd():\n" )
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -2378,7 +2398,7 @@ datatable_add_group_template_rmd <- function( rmd_path, rmd_startline, rmd_endli
   cat( "\nprojectmanagr::datatable_add_group_template_rmd():\n" )
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -2494,194 +2514,6 @@ datatable_add_group_template <- function( IDs, template_table, datatable_name,
 }
 
 
-
-
-datatable_Add_Groups2 <- function () {
-
-  IDs <- datatables[[ datatable_name ]]$ID
-
-  ### CREATE INITIAL DATATABLE LAYOUT WITH IDS IN PLACE ###
-
-  # calc width of ID col
-  # if IDs is blank string - convert to 8 SPACE default val:
-  if( IDs[1] == "" ) {
-    IDs <- obs_default_val_8
-  }
-  ID_col_wd <- max(nchar(IDs)) + 2
-
-  # Create initial datatable for ids
-
-  # add HEADER - header info plus datatable column heads
-  data_table_id <- c(
-    "+===============================================================================",
-    "",
-    "",
-    paste0("    ",datatable_name,"  :  GROUP"),
-    "",
-    "",
-    paste0("    ",
-           strrep(" ", ceiling( (ID_col_wd - nchar("ID"))/2) ),
-           "ID",
-           strrep(" ", floor( (ID_col_wd - nchar("ID"))/2) ),
-           "  " ), # Col Title : ID - with correct spacing
-    paste0("    ",
-           strrep(DATATABLE_SPACER_CHAR, ID_col_wd),
-           "  " ), # Spacers under ID - '=' by default
-    ""
-  )
-
-  # add IDs
-  cat( "\n  add IDs" )
-  data_table_ids <- character( (length(IDs)*2) ) # start with an EMPTY POPULATED vector
-  # x2 as enter the ID THEN a blank line to separate IDs in the table
-  for(i in 1:length(IDs) ) {
-
-    data_table_ids[(i*2)-1] <- paste0(
-      "    ",
-      strrep(" ", ceiling( (ID_col_wd - nchar(IDs[i]))/2) ),
-      IDs[i],
-      strrep(" ", floor( (ID_col_wd - nchar(IDs[i]))/2) ),
-      "  " ) # an ID - with correct spacing
-
-  }
-
-  # concat data_table and add FOOTER
-  data_table_id <- c(
-    data_table_id,
-    data_table_ids,
-    "",
-    "+===============================================================================",
-    "",
-    "",
-    ""    )
-
-  # now copy data_table_id into data_table_list in first index and build the data table:
-  data_table_list[[1]] <- data_table_id
-
-  # determine widths of data cols
-  data_col_wds <- c()
-  for(i in 1:length(data_cols) ) {
-    # if _dt col - must be 18 long to fit datetime: 2021/02/26:17:42
-    if( endsWith(data_cols[i], "_dt") ) {
-      data_col_wds[length(data_col_wds)+1] <- pmax(nchar(data_cols[i])+4, 18)
-    } else {
-      data_col_wds[length(data_col_wds)+1] <- pmax(nchar(data_cols[i])+4, 5) #pmax ensures min col width is 5!
-    }
-  }
-
-  # setup some params
-  col_spacers_len <- nchar(paste0("    ",
-                                  strrep(DATATABLE_SPACER_CHAR, ID_col_wd),
-                                  "  ") ) # set initially to current length of datatable - increment as cols are added
-  col_spacers_len_id <- col_spacers_len # also cache the original length in case further datatables are added
-  dt_index <- 1 # increment as more datatables are added
-
-  #cat( "\n    data_col_wds:", data_col_wds )
-
-  # only add cols if there are any to add!
-  if( data_cols[1] != "" ) {
-
-    cat( "\n  add data columns:" )
-
-    for( i in 1:length(data_cols) ) {
-
-      cat( "\n    ", data_cols[i] )
-
-      # first calc the number of chars to add to datatable
-      col_spacers_len <- col_spacers_len + (data_col_wds[i]+2) #+2 for 2 spaces at end
-
-      #cat( "\n  data col::", data_cols[1], " index: ", i )
-      #cat( "\n    data_col_wds:", data_col_wds[i] )
-      #cat( "\n    col_spacers_len:", col_spacers_len )
-
-      # check this doesnt exceed the max:
-      if( col_spacers_len > MAX_DATATABLE_LENGTH ) {
-        # if it does, create a new datatable in the list, and set params to use this new DT
-        dt_index <- (dt_index +1)
-        data_table_list[[dt_index]] <- data_table_id
-        data_table_list[[dt_index]][4] <- paste0("    ",datatable_name,"  :  ADD_DATA") # set datatable header to ADD_DATA
-        # prevents syntax error during the reading of data tables!  datatable_read_rmd()
-        col_spacers_len <- col_spacers_len_id
-      }
-
-      # add the data col and the default data vals for each ID
-
-      # col title is index 7 in char vector
-      data_table_list[[dt_index]][7] <- paste0(
-
-        data_table_list[[dt_index]][7], # keep what is already in this String!
-
-        strrep(" ", ceiling( (data_col_wds[i] - nchar(data_cols[i]))/2) ),
-
-        data_cols[i],
-
-        strrep(" ", floor( (data_col_wds[i] - nchar(data_cols[i]))/2) ),
-
-        "  " ) # Col Title : - with correct spacing
-
-      # col title is index 8
-      data_table_list[[dt_index]][8] <- paste0(
-
-        data_table_list[[dt_index]][8], # keep what is already in this String!
-
-        strrep(DATATABLE_SPACER_CHAR, data_col_wds[i]),
-
-        "  ") # Spacers under data col - '=' by default
-
-
-      # add default data vals to the data col for each ID
-
-      # first compute the most appropriate default data val to add - based on width of column
-      if( data_col_wds[i] > 9 ) {
-        default_data_val <- obs_default_val_8
-      } else if( data_col_wds[i] > 6 ) {
-        default_data_val <- obs_default_val_5
-      } else {
-        default_data_val <- obs_default_val_3
-      }
-
-      # then add the data vals
-
-      # add group vals across IDs by default
-      if(groups[[i]][1] != "") {
-          group <- groups[[i]]
-      } else {
-        group <- default_data_val # set to default data val if not groups vals available
-      }
-      for( j in 1:length(IDs) ) {
-
-        dv <- group[(j-1)%%length(group) +1] # this alternates through vals in group through the for j loop
-
-        data_table_list[[dt_index]][9+(j*2)-1] <- paste0(
-
-          data_table_list[[dt_index]][9+(j*2)-1], # keep what is already in this String!
-
-          strrep(" ", ceiling( (data_col_wds[i] - nchar(dv))/2) ),
-
-          dv,
-
-          strrep(" ", floor( (data_col_wds[i] - nchar(dv))/2) ),
-
-          "  " ) # a data entry at ID [9+(j*2)-1] - this gives ID line index : add correct spacing to line entry
-
-      }
-
-    }
-  }
-
-  # data_table_list has one or more data_tables with correct spacing, and width does not exceed MAX_DATATABLE_LENGTH
-
-  # generate single vector containing all data tables:
-  data_tables <- unlist(data_table_list)
-
-  # return
-  data_tables
-}
-
-
-
-
-
 #' Dispose of a set of Samples from Rmd
 #'
 #' This generates a new datatable that disposes samples - indicates they no
@@ -2707,13 +2539,13 @@ datatable_Add_Groups2 <- function () {
 #' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to TRUE
 #'
 #' @export
-datatable_dispose_rmd <- function( rmd_path, rmd_line, datatable_name,
+datatable_dispose_rmd <- function( rmd_path, rmd_line, datatable_name, settings,
                                    dt_length = 100, summarise_reps = TRUE ) {
 
   cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -2917,13 +2749,13 @@ get_current_datetime_string <- function() {
 #' @param dt_length Int of data table max length in characters - default 100.
 #'
 #' @export
-datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name,
+datatable_resample_rmd <- function( rmd_path, rmd_line, datatable_name, settings,
                                     resample_vector, dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -3108,12 +2940,13 @@ datatable_resample <- function( contents, datatable_name, resample_vector, rep_v
 #'
 #' @export
 datatable_resample_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
-                                             datatable_name, dt_length = 100 ) {
+                                             datatable_name, settings,
+                                             dt_length = 100 ) {
 
   cat( "\nprojectmanagr::datatable_resample_template_rmd():\n" )
 
   # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
+  rmd_path <- confirm_rmd_path(rmd_path, settings)
 
   cat( "  Reading Rmd...\n" )
   rmd_contents <- read_file(rmd_path)
@@ -3150,277 +2983,6 @@ datatable_resample_template_rmd <- function( rmd_path, rmd_startline, rmd_endlin
 
 }
 
-
-
-#' Split Samples into separate datatables
-#'
-#' This is NOW DEPRECATED - not using SPLIT as this interferes with the FIND function:
-#' find will summarise sample IDs and REPs from each Rmd into each sub-sample, which
-#' is dictated by the resampling vector chain - which indicates WHAT TISSUES ARE
-#' AVAILABLE!  By corrupting this with SPLIT codes, this becomes harder to use?
-#'
-#' Further, the get_history function will ELIMINATE any blank columns when reading
-#' back to collect data on samples/reps so this is not really a problem?
-#'
-#' JUST USE GROUP - no need to split!
-#'
-datatable_split_rmd <- function(rmd_path, rmd_line, datatable_name,
-                                split_vector, dt_length = 100 ) {
-
-  cat( "\nprojectmanagr::datatable_resample_rmd():\n" )
-
-  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
-
-  cat( "  Reading Rmd...\n" )
-  rmd_contents <- read_file(rmd_path)
-
-  data_tables <- datatable_split( rmd_contents[1:rmd_line], datatable_name, split_vector, dt_length )
-
-  # write these to the file:
-  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
-  rmd_contents <- c( rmd_contents[1:(rmd_line-1)], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
-
-  rmd_file_conn <- file( rmd_path )
-  writeLines(rmd_contents, rmd_file_conn)
-  close(rmd_file_conn)
-
-
-}
-
-
-
-
-#' Split Samples into separate datatables
-#'
-#' This is NOW DEPRECATED - not using SPLIT as this interferes with the FIND function:
-#' find will summarise sample IDs and REPs from each Rmd into each sub-sample, which
-#' is dictated by the resampling vector chain - which indicates WHAT TISSUES ARE
-#' AVAILABLE!  By corrupting this with SPLIT codes, this becomes harder to use?
-#'
-#' Further, the get_history function will ELIMINATE any blank columns when reading
-#' back to collect data on samples/reps so this is not really a problem?
-#'
-#' JUST USE GROUP - no need to split!
-#'
-datatable_split <- function(contents, datatable_name, split_vector,
-                            dt_length = 100 ) {
-
-  cat( "\nprojectmanagr::datatable_resample():\n" )
-
-  # parse all lines in contents to extract all datatables:
-  datatables <- datatable_read_vector(contents)
-
-  # define data cols : resample and reps
-  data_cols <- c("resample", "reps")
-
-  ### NAMED CONSTANTS For this function ###
-  DATATABLE_SPACER_CHAR <- "="
-
-  # Check datatable_name EXISTS in rmd_contents!
-  if( any(names(datatables) == datatable_name) == FALSE ) {
-    # no datatable of name datatable_name to add data to - STOP
-    stop( paste0("  No datatable of this name exists in vector: ", datatable_name ) )
-  }
-
-  # ?? THEN check col ID exists ??:
-  if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
-    stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
-  }
-
-  # CHECK split_vector
-  # all entries must NOT contain an UNDERSCORE
-  # UNDERSCORE is used to separate the RESAMPLINGS in the new datatable name
-  # May use this to define the resamplings
-  if( any( grepl("_", split_vector) ) ) {
-    stop( paste0("  split_vector cannot contain any UNDERSCORES - use `-`: ", split_vector[grepl("_", split_vector)] ) )
-  }
-
-
-  # DEFINE IDs (& REPs if necessary):
-
-  # determine if the samples have any REPS:
-  reps_exist <- (any( names( datatables[[ datatable_name ]] ) == "rep" ) == TRUE)
-
-  if( reps_exist == TRUE ) {
-
-    # CHECK DIVISIONS of IDs and REPs:
-    # check and remove all samples/reps that no longer exist in datatable
-    # resample, dispose, export, split
-    div_list <- check_divisions_ids_reps( datatables[[ datatable_name ]] )
-    # get IDs and REPs
-    IDs <- div_list[[1]]
-    REPs <- div_list[[2]]
-
-    # add rep col to start of data_cols to add to new datatable
-    data_cols <- c("rep", data_cols)
-
-    # set all default_data_vals for cols
-    # 1 rep
-    # 2 resample
-    # 3 reps
-    default_data_vals <- list()
-    default_data_vals[[1]] <- REPs # first col is rep - fill with REPs
-    default_data_vals[[2]] <- rep(split_vector, length(IDs) ) # resample col - fill each ID with resample vector
-    default_data_vals[[3]] <- rep("1", (length(IDs)*length(split_vector)) ) # reps - fill be default with "1"
-
-
-  } else if( reps_exist == FALSE ) {
-
-    # CHECK DIVISIONS of IDs ONLY:
-    # check and remove all samples/reps that no longer exist in datatable
-    # resample, dispose, export, split
-    IDs <- check_divisions_ids( datatables[[ datatable_name ]] )
-
-    # set all default_data_vals for cols
-    # 1 resample
-    # 2 reps
-    default_data_vals <- list()
-    default_data_vals[[1]] <- rep(split_vector, length(IDs) ) # resample col - fill each ID with resample vector
-    default_data_vals[[2]] <- rep("1", (length(IDs)*length(split_vector)) ) # reps - fill be default with "1"
-
-  }
-
-  # build datatable to insert into Rmd:
-  # using the OLD datatable_name - declaration of RESAMPLE table will END this datatable for IDs/reps in it
-  data_tables <- build_datatable("ID", IDs, data_cols, default_data_vals,
-                                 "SPLIT", datatable_name, dt_length,
-                                 DATATABLE_SPACER_CHAR)
-
-  # return
-  data_tables
-
-
-}
-
-
-
-#'
-#' old code - not used!
-old_resample <- function() {
-
-  # SHOULD CHECK INDIVIDUAL ENTRIES HERE
-  # selected datatable may already have DIVISIONS :
-    # resample and reps cols
-    # dispose col
-    # export col
-    # split col
-  # if so dont just fail - check if they have been filled for the selected IDs!
-    # THEN only generate a new resample datatable with remaining (EXISTING) sample IDs!
-
-  # Its more convenient to add separate resamplings of tissue blocks in separate tables for set of samples
-    # For example, may resample one SUBSET of samples as a PILOT : possibly in different ways!
-      # THEN later may resample the REMAINING SAMPLES for full experiment
-    # Resample function must support this - therefore must handle the resampling of samples from the same datatable
-      # in different resample tables
-    # also need method for returning all EXISTING SAMPLES/ROWS in all DATATABLES for doing this check
-
-  # CHECK if the selected samples/datatable already contains a resampling col:
-
-  dtIDs <- datatables[[ datatable_name ]]$ID
-  IDs <- c()
-  reps_existing <- c()
-
-  if( all(IDs == "ALL") ) {
-
-    # CHECK if datatable IDs have been RESAMPLED or EXPORTED
-    dc <- c("resample", names(datatables[[datatable_name]]) )
-
-    if( anyDuplicated(dc) != 0 ) {
-      dtReps <- datatables[[ datatable_name ]]$rep
-      # if any cols are duplicated means SOME/ALL(?) samples from this datatable have been resampled before!
-      # so now check each sample ID - if it has NOT been resampled, add it to IDs
-      for( i in 1:length(dtIDs) ) {
-        if( is.na( datatables[[datatable_name]][["resample"]][i] ) == TRUE  ) {
-          IDs <- c(IDs, dtIDs[i])
-          reps_existing <- c(reps_existing, dtReps[i])
-        }
-      }
-    } else {
-      # all IDs in datatable are VALID - so copy them to IDs
-      IDs <- datatables[[ datatable_name ]]$ID
-    }
-
-  } else { # else check IDs is valid
-     # this is a cursory check - need to check IDs are NOT RESAMPLED - performed later
-    for( i in 1:length(IDs) ) {
-      if( any( dtIDs == IDs[i]) == FALSE ) {
-        # no datatable of name datatable_name to add data to - STOP
-        stop( paste0("  No ID of this name exists in datatable: ", IDs[i] ) )
-      }
-    }
-
-    # check if any have been resampled:
-    dc <- c("resample", names(datatables[[datatable_name]]) )
-    if( anyDuplicated(dc) != 0 ) {
-      # if any cols are duplicated means samples from this datatable have been resampled before!
-      # so now check each sample ID - if it has been resampled, compare this to the IDs col
-      for( i in 1:length(dtIDs) ) {
-        if( is.na( datatables[[datatable_name]][["resample"]][i] ) == FALSE  ) {
-          if( any( IDs == dtIDs[i]) == TRUE ) {
-            # if dtIDs[i] is NOT blank in resample col AND is in the IDs vector, STOP:
-            stop( paste0("  Sample ID has been previous resampled: ", dtIDs[i] ) )
-          }
-        }
-      }
-    }
-
-  }
-
-  # CHECK resample_vector
-   # all entries must NOT contain an UNDERSCORE
-   # uNDERSCORE is used to separate the RESAMPLINGS in the new datatable name
-   # May use this to define the resamplings
-  if( any( grepl("_", resample_vector) ) ) {
-    stop( paste0("  resample_vector cannot contain any UNDERSCORES - use `-`: ", resample_vector[grepl("_", resample_vector)] ) )
-  }
-
-  # CHECK if rep_vector is length 1 or length of IDs
-  if( (length(rep_vector) == 1 || length(rep_vector) == length(IDs)) == FALSE ) {
-    stop( paste0("  rep_vector must be length 1 or length of IDs to be resampled: ", rep_vector) )
-  }
-
-  # make sure rep_vector is actually the length of resample_vector!
-  if( length(rep_vector) == 1) {
-    rep_vector <- rep(rep_vector, length(resample_vector))
-  }
-
-  # THEN check if col rep exists - if so must copy the REPS to the new datatable
-   # col rep is what is defined when a resampling generates many SECTIONS or REPS
-    # its NOT the same as reps!
-   # THIS ENSURES REPS ARE SUPPORTED IN ADD DATA TO SAMPLES!
-  if( any( names( datatables[[ datatable_name ]] ) == "rep" ) == TRUE ) {
-
-    # add rep col to data_cols to add!
-    data_cols <- c("rep", data_cols)
-
-    # set all default_data_vals for rep resample and reps
-    default_data_vals <- list()
-    #default_data_vals[[1]] <- rep(reps_existing, each = length(resample_vector) ) # reps_existing is ALREADY LENGTH OF IDs!
-     # lengthen EACH - 1111 2222 etc
-    default_data_vals[[1]] <- reps_existing # set rep number for each ID val
-    default_data_vals[[2]] <- rep(resample_vector, length(IDs) )
-    default_data_vals[[3]] <- rep(rep_vector, length(IDs) )
-
-  } else {
-
-    # set default_data_vals for resample and reps
-    default_data_vals <- list()
-    default_data_vals[[1]] <- rep(resample_vector, length(IDs) )
-    default_data_vals[[2]] <- rep(rep_vector, length(IDs) )
-
-  }
-
-  # build datatable to insert into Rmd:
-   # using the OLD datatable_name - declaration of RESAMPLE table will END this datatable for IDs/reps in it
-  data_tables <- build_datatable("ID", IDs, data_cols, default_data_vals,
-                                 "RESAMPLE", datatable_name, dt_length,
-                                 DATATABLE_SPACER_CHAR)
-
-  # return
-  data_tables
-
-}
 
 
 
@@ -3481,13 +3043,10 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
   }
   # now, orgPath should be the root dir of the organisation
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
-
-  # load settings file for user defined settings
-  settingsFile <- paste( confPath, .Platform$file.sep, "settings.yml", sep="" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
   # normalize path - remove HOME REF ~
   path <- normalizePath(path)
@@ -3508,16 +3067,19 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
   # From this summary information, should be possible to select samples, or further explore them
   ID <- ""      # ID: Each Sample ID
   SAMPLE <- ""  # SAMPLE: COMPOSITE of all subsampling columns: CNS-RT-MB etc.
-  COUNT <- integer()  # COUNT: How many REPS are there of this sample?
   PREFIX <- ""     # EXP: Fill with the Experiment Prefix ID
   TITLE <- ""   # TITLE: Fill with Experiment Title - will contain the LAB_TREATMENT
   #PATH <- ""    # PATH: Put the absolute PATH to the Project Note Rmd to Navigate to
-  LOCATION <- "" # LOCATION of the sample, if in storage
-  CONDITION <- "" # CONDITIONS of sample - what is it in?
+  LOCATION <- "" # LOCATION of the sample - where is it?
+  CONDITION <- "" # CONDITION of sample - what is it in?
+  DATETIME <- "" # DATETIME sample was moved to current CONDITION/LOCATION
+  COUNT <- integer()  # COUNT: How many REPS are there of this sample?
   IMPORT <- integer()  # IMPORT: How many REPS to import from this sample?
 
   #samples_summary <- tibble::tibble(ID, SAMPLE, COUNT, PREFIX, TITLE, LOCATION, CONDITION)
-  samples_summary <- tibble::tibble(PREFIX, TITLE, ID, SAMPLE, COUNT, CONDITION, LOCATION, IMPORT)
+  samples_summary <- tibble::tibble(PREFIX, TITLE, ID, SAMPLE,
+                                    CONDITION, LOCATION, DATETIME,
+                                    COUNT, IMPORT)
 
 
   # define new LIST for holding COL_NAMES from each note (PREFIX) plus sample DATATABLE
@@ -3541,8 +3103,8 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
     # read datatables
     dts <- datatable_read_vector(rmd_contents)
 
-    if( is.null(dts) ) {
-      # skip this loop
+    if( is.null(dts) | length(dts) == 0 ) {
+      # if dts is a blank list or null - skip this loop
       next
     }
 
@@ -3579,67 +3141,58 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
         #colsnorep <- col_names[!"rep" == col_names] # want to group by all EXCEPT rep
         #dg <- dplyr::group_by_at(d, colsnorep )
         dg <- dplyr::group_by_at(d, "ID" ) # group by the ID - this is ALWAYS THE FIRST COL!
-        dc <- dplyr::summarise(dg, count=dplyr::n() )
-        dc <- dplyr::ungroup(dc)
+        dc <- dplyr::summarise(dg, count=dplyr::n() ) # summarise the reps - count ID entries
+        dc <- dplyr::ungroup(dc) # remove group_by
 
-        # GET LAST KNOWN LOCATION
+
+        #### GET LAST KNOWN LOCATION ####
+
         #if( endsWith(col_names[length(col_names)], "_location") ){ # only retrieve location if LAST ENTRY
-        if( length(grep("_location", col_names) ) > 0 ){ # retrieve last location IF PRESENT
+        if( length(grep("_location", col_names) ) > 0 ) { # retrieve last location IF PRESENT
 
           # copy last location vector to LOC
-          # get the last location col index
-          loc_indices <- grep("_location", col_names)
-          loc_index <- loc_indices[ length(loc_indices)]
-          # rename this col to a known string - to summarise it by group
-          dggg <- dg
-          names(dggg)[loc_index] <- "location"
-          # summarise the table
-          dl <- dplyr::summarise(dggg, location=paste( unique(location), collapse=' '))
-          #names(dl) <- c("ID", "location") # convert col names to ID and location
-          # retrieve location vector
-          LOC <- dl$location
-
-          # rename col
-          #LOC <- dl$location # now just set LOC as the location col
-          #dl <- dplyr::summarise(dg, location=paste( unique(dg[[loc_indices[ length(loc_indices)]]]), collapse=' ' ) )
-           # here location is set to SPACE SEPARATE values for all possible locations of all reps
-          #LOC <- dl$location # now just set LOC as the location col
+          LOC <- get_last_unique_col_suffix(dg, "_location")
 
         } else {
-          LOC <- "-" # else just fill LOC with BLANK VAL: -
+          LOC <- "-" # else just fill with BLANK VAL: -
         }
 
-        # GET LAST KNOWN CONDITION
-        if( length(grep("_condition", col_names) ) > 0 ){ # retrieve last location IF PRESENT
 
-          # copy last location vector to LOC
-          con_indices <- grep("_condition", col_names)
-          con_index <- con_indices[ length(con_indices)]
-          # rename this col to a known string - to summarise it by group
-          dggg <- dg
-          names(dggg)[con_index] <- "condition"
-          # summarise the table
-          dcon <- dplyr::summarise(dggg, condition=paste( unique(condition), collapse=' '))
-          #CON <- d[[con_indices[ length(con_indices)]]] # retrieved as a vector
-          #dcon <- dplyr::summarise(dg, condition=paste( unique(d[[con_indices[ length(con_indices)]]]), collapse=' ' ) )
-          # here location is set to SPACE SEPARATE values for all possible locations of all reps
-          CON <- dcon$condition # now just set LOC as the location col
+        #### GET LAST KNOWN CONDITION ####
+
+        if( length(grep("_condition", col_names) ) > 0 ){ # retrieve last condition IF PRESENT
+
+          # copy last condition vector to CON
+          CON <- get_last_unique_col_suffix(dg, "_condition")
 
         } else {
-          CON <- "-" # else just fill CON with BLANK VAL: -
+          CON <- "-" # else just fill with BLANK VAL: -
+        }
+
+
+        #### GET LAST KNOWN DATETIME ####
+
+        if( length(grep("_dt", col_names) ) > 0 ){ # retrieve last dt IF PRESENT
+
+          # copy last condition vector to DT
+          DT <- get_last_unique_col_suffix(dg, "_dt")
+
+        } else {
+          DT <- "-" # else just fill with BLANK VAL: -
         }
 
         # edit t - mutate to form ID, SAMPLE, COUNT, EXP
          # ID, SAMPLE, COUNT, PREFIX, TITLE, LOCATION, CONDITION
         dc <- dplyr::transmute(
           dc,
-          PREFIX=get_project_prefix_from_path( s ),
-          TITLE=getNameFromFileName(basename(s) ),
+          PREFIX=get_project_prefix_from_path( s,settings ),
+          TITLE=get_name_from_file_name(basename(s), settings ),
           ID=ID,
           SAMPLE=d_name,
-          COUNT=count,
           CONDITION=CON,
           LOCATION=LOC,
+          DATETIME=DT,
+          COUNT=count,
           IMPORT=rep(0,length(count)))
 
         # bind dc to samples_summary
@@ -3650,19 +3203,16 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
           # append FIRST col_names vector
           COL_NAMES[[1]] <- col_names
           # and set the name of this first entry to PREFIX plus SAMPLE
-          names(COL_NAMES) <- paste0(getProjectPrefixFromPath( s ), "~_", d_name)
+          names(COL_NAMES) <- paste0(get_prefix( s, settings ), "~_", d_name)
 
         } else {
           # append col_names vector to END of COL_NAMES list
           COL_NAMES[[length(COL_NAMES)+1]] <- col_names
           # and set the name of this last entry to PREFIX plus SAMPLE (no +1 as COL_NAMES is now longer!)
-          names(COL_NAMES)[length(COL_NAMES)] <- paste0(getProjectPrefixFromPath( s ), "~_", d_name)
+          names(COL_NAMES)[length(COL_NAMES)] <- paste0(get_prefix( s, settings ), "~_", d_name)
         }
-
       }
-
     } # for d
-
   } # for s
 
   # add attribute to samples_summary - path, and col_names
@@ -3676,73 +3226,73 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
 
 
 
-datatable_find_old_code <- function() {
-  context <- rstudioapi::getSourceEditorContext()
-  context$path <- path.expand(context$path) # expand "~" HOME
+#' Get last unique data col value based on suffix
+#'
+#' @param dg datatable grouped by ID desired to summarise by.
+#'
+#' @param col_suffix The suffix to filter col names by.
+#'
+#' @return vector of unique values for each group-by ID from last data col
+#' with specified suffixs
+get_last_unique_col_suffix <- function(dg, col_suffix = "_location") {
 
-  subProgDir <- dirname(context$path)
+  col_names <- names(dg)
 
-  # get all Project Notes inside subProgDir
-  # they all contain "~_" in filename
-  samplesList <- list.files(subProgDir, full.names = TRUE, recursive=TRUE)
-  samplesList <- samplesList[ regexpr("~_", samplesList) > 0  ]
+  # get the last location col index
+  loc_indices <- grep(col_suffix, col_names)
+  loc_index <- loc_indices[ length(loc_indices)]
 
-  if( length(samplesList) == 0 ) {
-    # check if the subProgDir is defined from the orgDir:
-    subProgDir <- paste0(find_org_directory(context$path), .Platform$file.sep, subProgDir )
-
-    # get all Project Notes inside subProgDir
-    # they all contain "~_" in filename
-    samplesList <- list.files(subProgDir, full.names = TRUE, recursive=TRUE)
-    samplesList <- samplesList[ regexpr("~_", samplesList) > 0  ]
-  }
-
-  # check subProgDir - make sure its in a org DIR
-  subProgDir <- check_prog_sub_dir(subProgDir)
+  # rename this col to a known string - to summarise it by group
+  dggg <- dg
+  names(dggg)[loc_index] <- "KNOWNCOLNAME"
 
 
-  if( endsWith(col_names[length(col_names)], "_location") ){ # only retrieve location if LAST ENTRY
+  # summarise the table - space-separate col values for each ID
+  dl <- dplyr::summarise(dggg, NEWCOLNAME=paste( unique(KNOWNCOLNAME), collapse=' '))
 
-    dg <- dplyr::group_by_at(d, "ID" ) # group by the ID - this is ALWAYS THE FIRST COL!
-    #dc <- dplyr::summarise(dg, count=dplyr::n(), location=dplyr::distinct() )
-    dc <- dplyr::summarise(dg,
-                           count=dplyr::n(),
-                           location=as.character(dplyr::distinct(dg[col_names[length(col_names)]])) )
-    dc <- dplyr::ungroup(dc)
-    # get the LAST location column
+  # retrieve KNOWNCOLNAME vector
+  LOC <- dl$NEWCOLNAME
 
+  # col may contain multiple values - space-separated
+  # only want last value - so extract last space-separated value from each element in vector
+  LOC <- unlist(lapply(strsplit(LOC, ' '), function(x) {x[length(x)]} ) )
 
-  }
+  LOC # return
 
 }
+
 
 #' Export a set of samples from summary datatable
 #'
 #' This function will write an EXPORT table to the end of each project note Rmd
 #' in samples_summary table, exporting the samples and reps declared in the
 #' samples_summary table.  Only samples which have IMPORT col set to above 1
-#' are exported - the number in this col declares the number of reps to be exported.
+#' are exported - the number in this col declares the number of reps to be
+#' exported.
 #'
-#' @param samples_summary A summary tibble from datatable_find, with the final IMPORT column
-#' curated to include the number of reps to export from each sample/rep.
+#' @param samples_summary A summary tibble from `datatable_find()`, with the
+#' final IMPORT column curated to include the number of reps to export from
+#' each sample/rep.
 #'
-#' @param destination_note_path Path within a projectmanagr organisation where the exported samples/reps
-#' will be moved to.
+#' @param destination_note_path Path within a projectmanagr organisation where
+#' the exported samples/reps will be moved to.
 #'
-#' @param datetime The datetime of export - if blank, current datetime is generated automatically.
+#' @param datetime The datetime of export - if blank, current datetime is
+#' generated automatically.
 #'
-#' @param summarise_reps If true all export datatables generated with summarise the exported reps, so
-#' each sample ID appears once in export datatable, and reps are abbreviated as 1:3, 4:5, etc (depending
-#' on which reps are exported). True by default.
+#' @param summarise_reps If true all export datatables generated with summarise
+#' the exported reps, so each sample ID appears once in export datatable, and
+#' reps are abbreviated as 1:3, 4:5, etc (depending on which reps are exported).
+#' True by default.
 #'
 #' @param dt_length Int of data table max length in characters - default 100.
 #'
-#' @return List of all character vectors of EXPORT datatables inserted into notes, with attr "path" that
-#' contains the absolute path of the source note.
+#' @return List of all character vectors of EXPORT datatables inserted into
+#' notes, with attr "path" that contains the absolute path of the source note.
 #'
 #' @export
-datatable_export <- function(samples_summary, destination_note_path, datetime="", summarise_reps = TRUE,
-                             dt_length = 100) {
+datatable_export <- function(samples_summary, destination_note_path,
+                             datetime="", summarise_reps = TRUE, dt_length = 100) {
 
   cat( "\nprojectmanagr::datatable_export():\n" )
 
@@ -4002,26 +3552,30 @@ datatable_export <- function(samples_summary, destination_note_path, datetime=""
 #'
 #' This function will write an IMPORT table to the end of each project note Rmd
 #' in samples_summary table, exporting the samples and reps declared in the
-#' samples_summary table.  Only samples which have IMPORT col set to above 1
-#' are exported - the number in this col declares the number of reps to be exported.
+#' samples_summary table.  Only samples which have IMPORT col set to 1 or above
+#' are exported - the number in this col declares the number of reps to be
+#' exported.
 #'
-#' @param samples_summary A summary tibble from datatable_find, with the final IMPORT column
-#' curated to include the number of reps to export from each sample/rep.
+#' @param samples_summary A summary tibble from datatable_find, with the final
+#' IMPORT column curated to include the number of reps to export from each
+#' sample/rep.
 #'
-#' @param export_datatables A list of generated data_tables that were exported - to retrieve any
-#' rep indexes as needed for generating the import datatable(s).
+#' @param export_datatables A list of generated data_tables that were exported -
+#' to retrieve any rep indexes as needed for generating the import datatable(s).
 #'
-#' @param destination_note_path Path within a projectmanagr organisation where the imported samples/reps
-#' will be moved to.
+#' @param destination_note_path Path within a projectmanagr organisation where
+#' the imported samples/reps will be moved to.
 #'
-#' @param destination_note_line Line within `destination_note_path` where the imported samples/reps
-#' will be copied to.
+#' @param destination_note_line Line within `destination_note_path` where the
+#' imported samples/reps will be copied to.
 #'
-#' @param datetime The datetime of import - if blank, current datetime is generated automatically.
+#' @param datetime The datetime of import - if blank, current datetime is
+#' generated automatically.
 #'
-#' @param summarise_reps If true all import datatables generated with summarise the imported reps, so
-#' each sample ID appears once in import datatable, and reps are abbreviated as 1:3, 4:5, etc (depending
-#' on which reps are imported). FALSE by default - so each rep is on its own line.
+#' @param summarise_reps If true all import datatables generated with summarise
+#' the imported reps, so each sample ID appears once in import datatable, and
+#' reps are abbreviated as 1:3, 4:5, etc (depending on which reps are imported).
+#' FALSE by default - so each rep is on its own line.
 #'
 #' @param dt_length Int of data table max length in characters - default 100.
 #'
