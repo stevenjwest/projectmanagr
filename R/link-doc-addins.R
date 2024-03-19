@@ -55,38 +55,23 @@ addin_link_doc_to_note <- function() {
     stop( paste0("  No Organisation identified - ensure active document is in an Organisation: \n    ", selection$filePath))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
-  # load settings + status - settings.yml is FIXED:
-  settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  statusFile <- paste0( confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  # get status yml
+  status <- get_status_yml(orgPath, settings)
 
   # get progPath
-  progPath <- find_prog_dir(selection$filePath, settings)
+  progPath <- find_prog_dir(selection$filePath)
 
 
   # compute the goal/del/task NUM and TITLE:
-  glen <- nchar(unlist(strsplit(settings[["ProjectGoalHeader"]],
-                                split=settings[["ProjectGoalTitle"]], fixed=TRUE)))+1
-  goal <- substring(selection[["goal"]], first=glen)
-  goalTitle <- substring(goal,  first=(regexpr(":", goal)+2 ) )
-  goalNum <- as.integer(  substring(goal,  first=5, last=(regexpr(":", goal)-1) )  )
-
-  dlen <- nchar(unlist(strsplit(settings[["ProjectDeliverableHeader"]],
-                                split=settings[["ProjectDeliverableTitle"]], fixed=TRUE)))+1
-  del <- substring(selection[["deliverable"]], first=dlen)
-  delTitle <- substring(del,  first=(regexpr(":", del)+2 ) )
-  delNum <- as.integer(  substring(del,  first=12, last=(regexpr(":", del)-1) )  )
-
-  tlen <- nchar(unlist(strsplit(settings[["ProjectTaskHeader"]],
-                                split=settings[["ProjectTaskTitle"]], fixed=TRUE)))+1
-  task <- substring(selection[["task"]], first=tlen)
-  taskTitle <- substring(task,  first=(regexpr(":", task)+2 ) )
-  taskNum <- as.integer(  substring(task,  first=5, last=(regexpr(":", task)-1) )  )
+  # extract GDT titles from selection
+  goalTitle <- get_goal_title(selection[["goal"]], settings)
+  delTitle <- get_deliverable_title(selection[["deliverable"]], settings)
+  taskTitle <- get_deliverable_title(selection[["task"]], settings)
 
 
   # get open rstudio file paths filtered & ordered from active doc
@@ -120,9 +105,9 @@ addin_link_doc_to_note <- function() {
         fillRow( h5("Link Project Document GDT to Project Note.") ),
 
         fillRow(
-          helpText(  h3(  paste("GOAL", goalNum), align="center" )   ),
-          helpText(  h3(  paste("DELIVERABLE", delNum), align="center" )   ),
-          helpText(  h3(  paste("TASK", taskNum) ), align="center"   )
+          helpText(  h3("GOAL", align="center")   ),
+          helpText(  h3("DELIVERABLE", align="center")   ),
+          helpText(  h3("TASK", align="center")   )
         ),
 
         fillRow(

@@ -115,10 +115,8 @@ link_project_note_doc <- function(selection, settings, projNoteRmdPath, projNote
                          settings[["NoteLinkFormat"]])
 
   # compute location in projDocContents to insert the projNoteLink & summary - END OF LOG section
-  overviewLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskOverviewHeader"]], orgPath),
-                                    projDocContents, selection[["taskLine"]])
   logLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
-                               projDocContents, overviewLine)
+                               projDocContents, selection[["taskLine"]])
   taskFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
                                       projDocContents, logLine) # end of log section
 
@@ -417,10 +415,8 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
   }
 
   # compute location in projDocContents to insert groupNoteSummaryContents - END OF LOG section
-  overviewLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskOverviewHeader"]], orgPath),
-                                    projDocContents, selection[["taskLine"]])
   logLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
-                               projDocContents, overviewLine)
+                               projDocContents, selection[["taskLine"]])
   taskFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
                                       projDocContents, logLine) # end of log section
 
@@ -714,10 +710,8 @@ link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteConten
     goalLine <- grep_line_index(dGDT[["goal"]], projDocContents)
     delLine <- grep_line_index_from(dGDT[["deliverable"]], projDocContents, goalLine)
     taskLine <- grep_line_index_from(dGDT[["task"]], projDocContents, delLine)
-    overviewLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskOverviewHeader"]], orgPath),
-                                      projDocContents, taskLine)
     logLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
-                                 projDocContents, overviewLine)
+                                 projDocContents, taskLine)
     taskFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
                                         projDocContents, logLine) # end of log section
 
