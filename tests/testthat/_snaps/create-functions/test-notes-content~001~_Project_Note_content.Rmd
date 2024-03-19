@@ -1,0 +1,120 @@
+---
+title: 'test-notes-content~001~ Project Note content'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PrDocCon : EXAMPLE TASK TITLE
+
+
+[PrDocCon~_Project_Doc_content](../../PrDocCon~_Project_Doc_content.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PrDocCon~_Project_Doc_content.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PrDocCon~_Project_Doc_content.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PrDocCon~_Project_Doc_content.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>> CONTENT >>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+  CONTENT_TITLE: Example Content
+
+
+  CONTENT_DESCRIPTION: 
+
+  Example Content Description
+
+
+  COUNTENT_SOURCE: [example-content.Rmd](test-notes-content~001/example-content/example-content.Rmd)
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>> CONTENT >>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+
+
+
+
+
+
+
+

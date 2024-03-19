@@ -1,0 +1,227 @@
+---
+title: 'TEST ORG P'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# Overview
+
+
+
+*Welcome to the TEST ORG P ORGANISATION*
+
+
+_one_sentence_summary_statement_of_organisation_scope_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# TEST ORG P : Purpose Statement
+
+
+TEST ORG P organisation aims 
+
+
+* _org_vision_summary_
+
+* _org_mission_summary_
+
+* _org_purpose_summary_
+
+
+----
+
+
+* Useful to define Vision, Mission and/or Statement of Purpose 
+
+    + to guide the overall direction of the Organisation : to develop Programmes & Projects
+    
+    + to help prioritise work
+
+
+https://www.effectivegovernance.com.au/page/knowledge-centre/news-articles/vision-mission-and-purpose-statements-%E2%80%93-what-is-the-difference
+
+* Vision : The organisation's aspiration
+* Mission : What the organisation does
+* Purpose : Why the organisation does it
+
+
+https://en.wikipedia.org/wiki/Strategic_planning
+
+* strategic planning : an organization's process of defining its strategy or direction
+
+
+https://en.wikipedia.org/wiki/Strategy
+
+* strategy : a general plan to achieve goals under conditions of uncertainty & limited resources
+
+
+----
+
+
+
+## Vision
+
+
+*The organisations aspiration : to achieve specific objectives*
+
+
+
+* _breakdown_of_organisation_aspiration_
+
+
+
+----
+
+
+
+## Mission
+
+
+*What the organisations does : to produce protocols datasets knowledge in domain*
+
+
+
+* _breakdown_of_organisation_mission_
+
+
+
+----
+
+
+
+## Statement of Purpose
+
+
+*Why the organisation does it : deeper reason why organisation work is useful important*
+
+
+
+* _statement_of_organisation_purpose_
+
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Dissemination Plan
+
+
+> “An updated notion of genius would have to center around one’s mastery of information and its dissemination.”  
+Kenneth Goldsmith.  
+Uncreative writing : managing language in the digital age, 2011
+
+
+*Impact can only be made on the world through the dissemination of work.*
+
+
+>>> 
+>>> Notes on ideas to disseminate work from this organisation, including resources and how to disseminate work
+>>> 
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# projectmanagr documentation
+
+
+This Organisation is managed using `projectmanagr`
+
+
+* ProjectManagr : R Package for Project Management using R Markdown Documents
+
+    + See [projectmanagr wiki](https://github.com/stevenjwest/projectmanagr/wiki) for usage instructions
+
+
+* ProjectManagr supports external drives and data servers for external data storage:
+
+    + See [volumes](volumes/volumes.Rmd) for introduction
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# PROGRAMMES
+
+
+This Organisation defines the following PROGRAMMES that encompass a DOMAINS OF WORK.
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# 00-PROG
+
+
+[00-PROG](00-PROG/_index_00-PROG.Rmd)
+
+
+
+*Welcome to the 00 PROG Programme*
+
+
+_one_sentence_summary_statement_of_programme_scope__This_Programme_documents__
+
+
+>>> What does this programme aim to achieve?  Complete sentence "This Programme documents..."
+
+
+>>> Summarise Programme Aim with Plans and Progress
+>>> Each AIM should be a broad objective that one or more projects attempt to meet.
+>>> These AIMs will be copied under programme link in Organisation Index page to summarise this programme
+>>> Continue expanding with summary of achievements of progress in this programme as work is completed
+>>> Consider adding a summary GRAPHIC to update & insert.
+
+
+
+## _PROGRAMME_AIM_01__BROAD_OBJECTIVE_
+
+
+
+
+
+
+## _PROGRAMME_AIM_02__BROAD_OBJECTIVE_
+
+
+
+
+
+
+## _PROGRAMME_AIM_03__BROAD_OBJECTIVE_
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+

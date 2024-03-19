@@ -1,0 +1,114 @@
+---
+title: 'test-notes~001-001~ SubNote 01'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PrDocGrp : EXAMPLE TASK TITLE
+
+
+[PrDocGrp~_Project_Doc_group](../../../PrDocGrp~_Project_Doc_group.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../../PrDocGrp~_Project_Doc_group.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../../PrDocGrp~_Project_Doc_group.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../../PrDocGrp~_Project_Doc_group.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# GROUP CONTENTS
+
+
+
+[test-notes~001-00~_Group_Note_Header.Rmd](../test-notes~001-00~_Group_Note_Header.Rmd)
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+# Introduction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

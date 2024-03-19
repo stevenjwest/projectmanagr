@@ -1,0 +1,104 @@
+---
+title: 'test-notes~001-00~ Group Note Header2'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PrDocSub : EXAMPLE TASK TITLE
+
+
+[PrDocSub~_Project_Doc_sub](../../PrDocSub~_Project_Doc_sub.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PrDocSub~_Project_Doc_sub.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PrDocSub~_Project_Doc_sub.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PrDocSub~_Project_Doc_sub.Rmd#task-example-task-title)
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# CONTENTS
+
+
+
+[test-notes~001-001~_SubNote2_01.Rmd](test-notes~001-00/test-notes~001-001~_SubNote2_01.Rmd)
+
+
+
+[test-notes~001-002~_SubNote2_02.Rmd](test-notes~001-00/test-notes~001-002~_SubNote2_02.Rmd)
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+# Overview
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+
+
