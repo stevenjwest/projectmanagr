@@ -40,9 +40,9 @@ addin_rename_projectmanagr_component <- function() {
 #' All links are updated throughout the organisation to the project file.
 #'
 #'@export
-addin_rename_project_file <- function() {
+addin_rename <- function() {
 
-  cat( "\nprojectmanagr::addin_rename_project_file():\n" )
+  cat( "\nprojectmanagr::addin_rename():\n" )
 
 
   #### instance variables ####
@@ -66,15 +66,13 @@ addin_rename_project_file <- function() {
     stop( paste0("  No Organisation identified - ensure active document is in an Organisation: \n    ", selection$filePath))
   }
 
-  # set confPath + tempPath - these names are FIXED:
-  confPath <- paste0( orgPath, .Platform$file.sep, "config" )
-  tempPath <- paste0( confPath, .Platform$file.sep, "templates" )
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
 
-  # load settings + status - settings.yml is FIXED:
-  settingsFile <- paste0( confPath, .Platform$file.sep, "settings.yml" )
-  settings <- yaml::yaml.load( yaml::read_yaml( settingsFile ) )
-  statusFile <- paste0( confPath, .Platform$file.sep, settings[["ConfigStatusYamlFile"]])
-  status <- yaml::yaml.load( yaml::read_yaml( statusFile ) )
+  # get status yml
+  status <- get_status_yml(orgPath, settings)
 
 
   #### Rename Project File Addins ####
@@ -83,25 +81,74 @@ addin_rename_project_file <- function() {
   if( selection$rmdType == "DOC" ) { # project doc active doc
 
 
-    ##### Rename Project DOC #####
+    ##### Rename Project DOC GDT #####
 
-    addin_rename_project_doc(selection, settings, orgPath)
+    # if selection is on a GOAL DLIVERABLE or TASK line: rename the GOAL DLIVERABLE or TASK
+    if( selection[['originalLine']] == selection[['goal']] ) {
+      addin_rename_project_doc_goal(selection, settings, orgPath)
+
+    } else if( selection[['originalLine']] == selection[['deliverable']] ) {
+      addin_rename_project_doc_deliverable(selection, settings, orgPath)
+
+    } else if( selection[['originalLine']] == selection[['task']] ) {
+      addin_rename_project_doc_task(selection, settings, orgPath)
+
+    } else if( startsWith(selection[['originalLine']], '#') ) {
+
+
+      ##### Rename Project Doc HEADER #####
+
+      addin_rename_project_file_header(selection, settings, orgPath)
+    } else {
+
+
+      ##### Rename Project DOC #####
+
+      addin_rename_project_doc(selection, settings, orgPath)
+
+    }
+
 
   } else if( selection$rmdType == "HEAD" ||
              selection$rmdType == "SUB" ||
              selection$rmdType == "NOTE") { # project note active doc
 
 
-    ##### Rename Project NOTE #####
+    if( startsWith(selection[['originalLine']], '#') ) {
 
-    addin_rename_project_note(selection, settings, orgPath)
+
+      ##### Rename Project Note HEADER #####
+
+      addin_rename_project_file_header(selection, settings, orgPath)
+
+    } else {
+
+
+      ##### Rename Project NOTE #####
+
+      addin_rename_project_note(selection, settings, orgPath)
+
+    }
+
 
   } else if( selection$rmdType == "UNKNOWN" ) {
+
+    if( startsWith(selection[['originalLine']], '#') ) {
+
+
+      ##### Rename Project File HEADER #####
+
+      addin_rename_project_file_header(selection, settings, orgPath)
+
+    } else {
+
 
     addin_error_path("Rename Project File",
                      "No Valid Rmd file selected - ensure a Project Doc or Project Note is the active document.",
                      selection$filePath, settings)
     stop( paste0("  No Valid Rmd file selected - ensure a Project Doc or Project Note is the active document: \n    ", selection$filePath))
+
+    }
 
   }
 
@@ -410,10 +457,329 @@ addin_rename_project_note <- function(selection, settings, orgPath) {
 }
 
 
+#' ADDIN to rename Project Doc GOAL
 #'
-#' TODO
+#' @param selection Selection made on Project Doc Goal.
 #'
-addin_rename_project_doc_gdt <- function() {
+#' @param settings ProjectManagr organisation settings.yml file
+#'
+#' @param orgPath The path to the root of the organisation
+#'
+addin_rename_project_doc_goal <- function(selection, settings, orgPath) {
+
+  #### user interface ####
+
+  ui <- miniPage(
+
+    gadgetTitleBar("Rename Project Doc Goal"),
+
+    miniContentPanel(
+
+      fillCol( #flex=NA, # use the natural size of the elements in col
+
+        fillRow( h5("Rename Project Doc Goal:") ),
+        fillRow( code( paste0("  ", selection[["filePath"]]) ) ),
+        fillRow( code( paste0("  ", selection[["goal"]]) ) ),
+
+        fillRow(  textInput("projectDocGoalName", "New Project Doc Goal Name:", width='100%')  ),
+        fillRow(  span( textOutput("warningName"), style="color:red")  )
+
+      )
+    )
+  )
+
+
+  #### server function ####
+
+  server <- function(input, output, session) {
+
+    # Rename goal:
+    observeEvent(input$done, {
+
+      if(input$projectDocGoalName == "") {
+        # set the warningName TextOutput:
+        output$warningName <- renderText({
+          "*** PROVIDE GOAL NAME ***"
+        })
+      } else {
+
+
+        #### Rename Project Doc GOAL ####
+
+        # rename project doc
+        rename_project_doc_goal(
+          goalSelection = selection,
+          newGoalName = input$projectDocGoalName  )
+
+        # open renamed project doc
+        rstudioapi::navigateToFile(selection$filePath)
+
+        # navigate to containing dir
+        rstudioapi::filesPaneNavigate( dirname(selection$filePath) )
+        # and set working directory
+        setwd( dirname(selection$filePath) )
+
+        # Close Gadget after computations are complete:
+        stopApp()
+
+      }
+    })
+  }
+
+
+  #### view gadget ####
+
+  viewer <- dialogViewer("Rename Project Doc GOAL",
+                         width = settings[["GadgetWidth"]],
+                         height = settings[["GadgetHeight"]])
+
+  runGadget(ui, server, viewer = viewer)
+
+}
+
+
+
+#' ADDIN to rename Project Doc Deliverable
+#'
+#' @param selection Selection made on Project Doc Deliverable.
+#'
+#' @param settings ProjectManagr organisation settings.yml file
+#'
+#' @param orgPath The path to the root of the organisation
+#'
+addin_rename_project_doc_deliverable <- function(selection, settings, orgPath) {
+
+  #### user interface ####
+
+  ui <- miniPage(
+
+    gadgetTitleBar("Rename Project Doc Deliverable"),
+
+    miniContentPanel(
+
+      fillCol( #flex=NA, # use the natural size of the elements in col
+
+        fillRow( h5("Rename Project Doc Deliverable:") ),
+        fillRow( code( paste0("  ", selection[["filePath"]]) ) ),
+        fillRow( code( paste0("  ", selection[["deliverable"]]) ) ),
+
+        fillRow(  textInput("projectDocDeliverableName", "New Project Doc Deliverable Name:", width='100%')  ),
+        fillRow(  span( textOutput("warningName"), style="color:red")  )
+
+      )
+    )
+  )
+
+
+  #### server function ####
+
+  server <- function(input, output, session) {
+
+    # Rename deliverable:
+    observeEvent(input$done, {
+
+      if(input$projectDocDeliverableName == "") {
+        # set the warningName TextOutput:
+        output$warningName <- renderText({
+          "*** PROVIDE DELIVERABLE NAME ***"
+        })
+      } else {
+
+
+        #### Rename Project Doc DELIVERABLE ####
+
+        # rename project doc
+        rename_project_doc_deliverable(
+          deliverableSelection = selection,
+          newDeliverableName = input$projectDocDeliverableName  )
+
+        # open renamed project doc
+        rstudioapi::navigateToFile(selection$filePath)
+
+        # navigate to containing dir
+        rstudioapi::filesPaneNavigate( dirname(selection$filePath) )
+        # and set working directory
+        setwd( dirname(selection$filePath) )
+
+        # Close Gadget after computations are complete:
+        stopApp()
+
+      }
+    })
+  }
+
+
+  #### view gadget ####
+
+  viewer <- dialogViewer("Rename Project Doc DELIVERABLE",
+                         width = settings[["GadgetWidth"]],
+                         height = settings[["GadgetHeight"]])
+
+  runGadget(ui, server, viewer = viewer)
+
+}
+
+
+
+#' ADDIN to rename Project Doc Task
+#'
+#' @param selection Selection made on Project Doc Task.
+#'
+#' @param settings ProjectManagr organisation settings.yml file
+#'
+#' @param orgPath The path to the root of the organisation
+#'
+addin_rename_project_doc_task <- function(selection, settings, orgPath) {
+
+  #### user interface ####
+
+  ui <- miniPage(
+
+    gadgetTitleBar("Rename Project Doc Task"),
+
+    miniContentPanel(
+
+      fillCol( #flex=NA, # use the natural size of the elements in col
+
+        fillRow( h5("Rename Project Doc Task:") ),
+        fillRow( code( paste0("  ", selection[["filePath"]]) ) ),
+        fillRow( code( paste0("  ", selection[["task"]]) ) ),
+
+        fillRow(  textInput("projectDocTaskName", "New Project Doc Task Name:", width='100%')  ),
+        fillRow(  span( textOutput("warningName"), style="color:red")  )
+
+      )
+    )
+  )
+
+
+  #### server function ####
+
+  server <- function(input, output, session) {
+
+    # Rename Task:
+    observeEvent(input$done, {
+
+      if(input$projectDocTaskName == "") {
+        # set the warningName TextOutput:
+        output$warningName <- renderText({
+          "*** PROVIDE TASK NAME ***"
+        })
+      } else {
+
+
+        #### Rename Project Doc TASK ####
+
+        # rename project doc
+        rename_project_doc_task(
+          taskSelection = selection,
+          newTaskName = input$projectDocTaskName  )
+
+        # open renamed project doc
+        rstudioapi::navigateToFile(selection$filePath)
+
+        # navigate to containing dir
+        rstudioapi::filesPaneNavigate( dirname(selection$filePath) )
+        # and set working directory
+        setwd( dirname(selection$filePath) )
+
+        # Close Gadget after computations are complete:
+        stopApp()
+
+      }
+    })
+  }
+
+
+  #### view gadget ####
+
+  viewer <- dialogViewer("Rename Project Doc TASK",
+                         width = settings[["GadgetWidth"]],
+                         height = settings[["GadgetHeight"]])
+
+  runGadget(ui, server, viewer = viewer)
+
+}
+
+
+
+#' ADDIN to rename Project File Header
+#'
+#' @param selection Selection made on Project Doc Task.
+#'
+#' @param settings ProjectManagr organisation settings.yml file
+#'
+#' @param orgPath The path to the root of the organisation
+#'
+addin_rename_project_file_header <- function(selection, settings, orgPath) {
+
+  #### user interface ####
+
+  ui <- miniPage(
+
+    gadgetTitleBar("Rename Project File Header"),
+
+    miniContentPanel(
+
+      fillCol( #flex=NA, # use the natural size of the elements in col
+
+        fillRow( h5("Rename Project File Header:") ),
+        fillRow( code( paste0("  ", selection[["filePath"]]) ) ),
+        fillRow( code( paste0("  ", selection[["task"]]) ) ),
+
+        fillRow(  textInput("projectFileHeaderName", "New Project File Header Name:", width='100%')  ),
+        fillRow(  span( textOutput("warningName"), style="color:red")  )
+
+      )
+    )
+  )
+
+
+  #### server function ####
+
+  server <- function(input, output, session) {
+
+    # Rename Task:
+    observeEvent(input$done, {
+
+      if(input$projectFileHeaderName == "") {
+        # set the warningName TextOutput:
+        output$warningName <- renderText({
+          "*** PROVIDE TASK NAME ***"
+        })
+      } else {
+
+
+        #### Rename Project File Header ####
+
+        # rename project doc
+        rename_project_file_header(
+          selection = selection,
+          headerName = input$projectFileHeaderName  )
+
+        # open renamed project doc
+        rstudioapi::navigateToFile(selection$filePath)
+
+        # navigate to containing dir
+        rstudioapi::filesPaneNavigate( dirname(selection$filePath) )
+        # and set working directory
+        setwd( dirname(selection$filePath) )
+
+        # Close Gadget after computations are complete:
+        stopApp()
+
+      }
+    })
+  }
+
+
+  #### view gadget ####
+
+  viewer <- dialogViewer("Rename Project File Header",
+                         width = settings[["GadgetWidth"]],
+                         height = settings[["GadgetHeight"]])
+
+  runGadget(ui, server, viewer = viewer)
 
 }
 

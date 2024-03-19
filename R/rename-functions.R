@@ -128,7 +128,7 @@ rename_project_note <- function( projectNotePath, newProjectNoteName,
   #### update links ####
 
   # replace in links oldProjectNoteFileName with newProjectNoteName THROUGHOUT the Organisation:
-  update_links(oldProjectNoteFileName, newProjectNoteName,
+  update_links_filenames(oldProjectNoteFileName, newProjectNoteName,
                orgPath, settings, replaceLinksFileExtensions)
 
 }
@@ -243,9 +243,7 @@ rename_project_doc <- function( projectDocPath, newProjectDocName,
 
   #### Rename project Doc Title ####
 
-  fileConn <- file( newProjectDocPath )
-  contents <- readLines( fileConn )
-  close(fileConn)
+  contents <- read_file(newProjectDocPath)
 
   # find title line - via getProjDocTitle()
   line <- grep( paste0("title: '", projectPrefixTitle), contents)[1] # get first instance of line beginning with title:
@@ -254,9 +252,7 @@ rename_project_doc <- function( projectDocPath, newProjectDocName,
   contents[line] <- sub(oldTitle, newProjectDocTitle, contents[line]) # replace old with new title
 
   # write subDoc file to disk:
-  fileConn <- file(newProjectDocPath)
-  writeLines(contents, fileConn)
-  close(fileConn)
+  write_file(contents, newProjectDocPath)
 
   cat( "  Written new title to Rmd: ", newProjectDocTitle, "\n" )
 
@@ -264,18 +260,371 @@ rename_project_doc <- function( projectDocPath, newProjectDocName,
   #### update links ####
 
   # replace in links oldProjectDocFileName with newProjectDocName THROUGHOUT the Organisation:
-  update_links(oldProjectDocFileName, newProjectDocName,
+  update_links_filenames(oldProjectDocFileName, newProjectDocName,
                orgPath, settings, replaceLinksFileExtensions)
 
 }
 
 
-#' Rename a Project Doc Goal/Deliverable/Task
+#' Rename a Project Doc Goal
 #'
-#' TODO
+#' @param goalSelection Selection from projectmanagr Project Doc file, made on
+#' the Goal to be renamed.
+#'
+#' @param newgoalName The new name to use for the selected Goal.
 #'
 #'@export
-rename_project_doc_gdt <- function() {
+rename_project_doc_goal <- function(goalSelection, newgoalName) {
 
+  cat( "\nprojectmanagr::rename_project_doc_goal():\n" )
+
+
+  #### get org and settings ####
+
+  projectDocPath <- normalizePath(goalSelection$filePath)
+
+  orgPath <- find_org_directory(projectDocPath)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  projectDocPath is not in a sub-dir of a PROGRAMME Directory: ", projectDocPath) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
+
+
+  #### CHECK FOR ERRORS IN INPUT ####
+
+  # confirm the selected file is a project doc
+  fileType <- get_file_type(projectDocPath, settings)
+  if( fileType == "UNKNOWN" | fileType == "NOTE" | fileType == "SUB" | fileType == "HEAD" ) {
+    stop( paste0("  file path is not a project doc: ",projectDocPath) )
+  }
+
+  # check the selected line is a goal
+  if( (is.null(goalSelection[["goal"]])) ||
+      (goalSelection[["goal"]] != goalSelection[["originalLine"]]) ) {
+    stop( paste0("  selected project doc line is not a goal: ",projectDocPath) )
+  }
+
+
+  #### Set Instance Variables ####
+
+  # get old project Doc name:
+
+  oldgoalHeader <- goalSelection[["goal"]]
+  oldgoalName <- get_goal_title(goalSelection[["goal"]], settings)
+  oldgoalString <- trim_goal_hash(oldgoalHeader, settings)
+
+  newgoalHeader <- paste(settings[["ProjectGoalHeader"]], newgoalName)
+  newgoalString <- trim_goal_hash(newgoalHeader, settings)
+
+  # to check for lines that link to the goal line:
+  projectDocName <- basename(projectDocPath)
+  oldgoalLinkSuffix <- paste0(projectDocName, '#',
+                              gsub(' ', '-', tolower(paste(
+                                settings[["ProjectGoalTitle"]],
+                                oldgoalName)), fixed=TRUE),
+                              ')')
+
+  newgoalLinkSuffix <- paste0(projectDocName, '#',
+                              gsub(' ', '-', tolower(paste(
+                                settings[["ProjectGoalTitle"]],
+                                newgoalName)), fixed=TRUE),
+                              ')')
+
+
+  #### Rename goal in Project Doc ####
+
+  contents <- read_file(projectDocPath)
+
+  # find title line - via getProjDocTitle()
+  contents[goalSelection[["originalLineNumber"]]] <- newgoalHeader
+
+  # write subDoc file to disk:
+  write_file(contents, projectDocPath)
+
+  cat( "  Written new goal to Project Doc: ", projectDocPath, "\n" )
+
+
+  #### Update all links to goal ####
+
+  update_links(oldgoalLinkSuffix, newgoalLinkSuffix, orgPath,
+               settings, oldgoalString, newgoalString)
+
+
+}
+
+
+
+#' Rename a Project Doc Deliverable
+#'
+#' @param deliverableSelection Selection from projectmanagr Project Doc file,
+#' made on the Deliverable to be renamed.
+#'
+#' @param newDeliverableName The new name to use for the selected Deliverable.
+#'
+#'@export
+rename_project_doc_deliverable <- function(deliverableSelection, newDeliverableName) {
+
+
+  cat( "\nprojectmanagr::rename_project_doc_deliverable():\n" )
+
+
+  #### get org and settings ####
+
+  projectDocPath <- normalizePath(deliverableSelection$filePath)
+
+  orgPath <- find_org_directory(projectDocPath)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  projectDocPath is not in a sub-dir of a PROGRAMME Directory: ", projectDocPath) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
+
+
+  #### CHECK FOR ERRORS IN INPUT ####
+
+  # confirm the selected file is a project doc
+  fileType <- get_file_type(projectDocPath, settings)
+  if( fileType == "UNKNOWN" | fileType == "NOTE" | fileType == "SUB" | fileType == "HEAD" ) {
+    stop( paste0("  file path is not a project doc: ",projectDocPath) )
+  }
+
+  # check the selected line is a deliverable
+  if( (is.null(deliverableSelection[["deliverable"]])) ||
+      (deliverableSelection[["deliverable"]] != deliverableSelection[["originalLine"]]) ) {
+    stop( paste0("  selected project doc line is not a deliverable: ",projectDocPath) )
+  }
+
+
+  #### Set Instance Variables ####
+
+  # get old project Doc name:
+
+  oldDeliverableHeader <- deliverableSelection[["deliverable"]]
+  oldDeliverableName <- get_deliverable_title(deliverableSelection[["deliverable"]], settings)
+  oldDeliverableString <- trim_deliverable_hash(oldDeliverableHeader, settings)
+
+  newDeliverableHeader <- paste(settings[["ProjectDeliverableHeader"]], newDeliverableName)
+  newDeliverableString <- trim_deliverable_hash(newDeliverableHeader, settings)
+
+  # to check for lines that link to the deliverable line:
+  projectDocName <- basename(projectDocPath)
+  oldDeliverableLinkSuffix <- paste0(projectDocName, '#',
+                                 gsub(' ', '-', tolower(paste(
+                                   settings[["ProjectDeliverableTitle"]],
+                                   oldDeliverableName)), fixed=TRUE),
+                                 ')')
+
+  newDeliverableLinkSuffix <- paste0(projectDocName, '#',
+                                     gsub(' ', '-', tolower(paste(
+                                       settings[["ProjectDeliverableTitle"]],
+                                       newDeliverableName)), fixed=TRUE),
+                                     ')')
+
+
+  #### Rename Deliverable in Project Doc ####
+
+  contents <- read_file(projectDocPath)
+
+  # find title line - via getProjDocTitle()
+  contents[deliverableSelection[["originalLineNumber"]]] <- newDeliverableHeader
+
+  # write subDoc file to disk:
+  write_file(contents, projectDocPath)
+
+  cat( "  Written new Deliverable to Project Doc: ", projectDocPath, "\n" )
+
+
+  #### Update all links to Deliverable ####
+
+  update_links(oldDeliverableLinkSuffix, newDeliverableLinkSuffix, orgPath,
+               settings, oldDeliverableString, newDeliverableString)
+
+}
+
+
+
+#' Rename a Project Doc Task
+#'
+#' @param taskSelection Selection from projectmanagr Project Doc file, made on
+#' the Task to be renamed.
+#'
+#' @param newtaskName The new name to use for the selected Task
+#'
+#'@export
+rename_project_doc_task <- function(taskSelection, newtaskName) {
+
+
+  cat( "\nprojectmanagr::rename_project_doc_task():\n" )
+
+
+  #### get org and settings ####
+
+  projectDocPath <- normalizePath(taskSelection$filePath)
+
+  orgPath <- find_org_directory(projectDocPath)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  projectDocPath is not in a sub-dir of a PROGRAMME Directory: ", projectDocPath) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
+
+
+  #### CHECK FOR ERRORS IN INPUT ####
+
+  # confirm the selected file is a project doc
+  fileType <- get_file_type(projectDocPath, settings)
+  if( fileType == "UNKNOWN" | fileType == "NOTE" | fileType == "SUB" | fileType == "HEAD" ) {
+    stop( paste0("  file path is not a project doc: ",projectDocPath) )
+  }
+
+  # check the selected line is a task
+  if( (is.null(taskSelection[["task"]])) ||
+      (taskSelection[["task"]] != taskSelection[["originalLine"]]) ) {
+    stop( paste0("  selected project doc line is not a task: ",projectDocPath) )
+  }
+
+
+  #### Set Instance Variables ####
+
+  # get old project Doc name:
+
+  oldtaskHeader <- taskSelection[["task"]]
+  oldtaskName <- get_task_title(taskSelection[["task"]], settings)
+  oldtaskString <- trim_task_hash(oldtaskHeader, settings)
+
+  newtaskHeader <- paste(settings[["ProjectTaskHeader"]], newtaskName)
+  newtaskString <- trim_task_hash(newtaskHeader, settings)
+
+  # to check for lines that link to the task line:
+  projectDocName <- basename(projectDocPath)
+  oldtaskLinkSuffix <- paste0(projectDocName, '#',
+                                     gsub(' ', '-', tolower(paste(
+                                       settings[["ProjectTaskTitle"]],
+                                       oldtaskName)), fixed=TRUE),
+                                     ')')
+
+  newtaskLinkSuffix <- paste0(projectDocName, '#',
+                                     gsub(' ', '-', tolower(paste(
+                                       settings[["ProjectTaskTitle"]],
+                                       newtaskName)), fixed=TRUE),
+                                     ')')
+
+
+  #### Rename task in Project Doc ####
+
+  contents <- read_file(projectDocPath)
+
+  # find title line - via getProjDocTitle()
+  contents[taskSelection[["originalLineNumber"]]] <- newtaskHeader
+
+  # write subDoc file to disk:
+  write_file(contents, projectDocPath)
+
+  cat( "  Written new task to Project Doc: ", projectDocPath, "\n" )
+
+
+  #### Update all links to task ####
+
+  update_links(oldtaskLinkSuffix, newtaskLinkSuffix, orgPath,
+               settings, oldtaskString, newtaskString)
+
+}
+
+
+
+
+#' Rename a Project File Header
+#'
+#' @param selection Selection from projectmanagr Project file, made on the
+#' Header (starts with `#`) to be renamed.
+#'
+#' @param headerName The new name to use for the selected Header
+#'
+#'@export
+rename_project_file_header <- function(selection, headerName) {
+
+
+  cat( "\nprojectmanagr::rename_project_file_header():\n" )
+
+
+  #### get org and settings ####
+
+  orgPath <- find_org_directory(selection$filePath)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  Could not identify projectmanagr Organisation: ", selection$filePath) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
+
+
+  #### CHECK FOR ERRORS IN INPUT ####
+
+
+  # check the selected line is a header
+
+  if( !(startsWith(selection[['originalLine']], '#')) ) {
+    stop( paste0("  selected line is not a header: ",selection[['originalLine']]) )
+  }
+
+
+  #### Set Instance Variables ####
+
+  # get old project Doc name:
+
+  oldHeader <- selection[["originalLine"]]
+  oldHeaderHash <- get_header_hash(selection[["originalLine"]])
+  oldHeaderTitle <- get_header_title(selection[["originalLine"]])
+
+  # assumes headerName does not have leading ' '
+  newHeader <- paste(oldHeaderHash, headerName)
+
+  # to check for lines that link to the header line:
+  projectFileName <- basename(selection$filePath)
+  oldLinkSuffix <- paste0(projectFileName, '#',
+                           gsub(' ', '-', tolower(paste(
+                             settings[["ProjectDeliverableTitle"]],
+                             oldDeliverableName)), fixed=TRUE),
+                           ')')
+
+  newLinkSuffix <- paste0(projectFileName, '#',
+                           gsub(' ', '-', tolower(paste(
+                             settings[["ProjectDeliverableTitle"]],
+                             newDeliverableName)), fixed=TRUE),
+                           ')')
+
+
+  #### Rename Header in Project File ####
+
+  contents <- read_file(selection$filePath)
+
+  # find title line - via getProjDocTitle()
+  contents[selection[["originalLineNumber"]]] <- newHeader
+
+  # write subDoc file to disk:
+  write_file(contents, selection$filePath)
+
+  cat( "  Written new Header to Project File: ", selection$filePath, "\n" )
+
+
+  #### Update all links to Header ####
+
+  update_links(oldLinkSuffix, newLinkSuffix, orgPath, settings)
 
 }
