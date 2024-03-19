@@ -165,8 +165,8 @@ Binding: set_wd_active_doc
 Interactive: false
 
 Name: ProjectManagr: Rename Project File
-Description: Rename a Project Doc or Note in the Project Organisation, and update all links.
-Binding: addin_rename_project_file
+Description: Rename a Project Doc or Note components in the Project Organisation, and update all links.
+Binding: addin_rename
 Interactive: true
 
 Name: ProjectManagr: Update
