@@ -681,7 +681,7 @@ volume_mkdir <- function(dirName, projectNoteDir, volName) {
   }
 
   # Find programme DIR from projectDocPath:
-  progPath <- find_prog_dir(projectNoteDir, settings)
+  progPath <- find_prog_dir(projectNoteDir)
 
   # Check projectNoteDir is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
   # run dirname TWICE as want to ensure projectNoteDir is a sub-dir in a Programme!

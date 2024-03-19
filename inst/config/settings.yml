@@ -3,14 +3,13 @@
   FileType: 'Rmd'
   VolumesDir: volumes
   VolumesFile: volumes.Rmd
-  DocsDir: docs
   ConfigStatusYamlFile: status.yml
-  OrgIndexFileNamePrefix: index_
+  OrgIndexFileNamePrefix: _index_
   OrgProgrammeHeader: '# PROGRAMMES'
   OrgProgrammeFooter: 'template:SEP01.txt'
   OrgProgrammeSummarySep: 'template:SEP02.txt'
   ProgrammeProjectsDir: PROJECTS
-  ProgIndexFileNamePrefix: index_
+  ProgIndexFileNamePrefix: _index_
   ProgSummaryHeader: '# PROGRAMME OVERVIEW'
   ProgSummaryTitle: '# '
   ProgSummaryFooter: 'template:SEP01.txt'
@@ -23,22 +22,21 @@
   ProjectSummaryHeader: '# PROJECT SUMMARY'
   ProjectSummaryTitle: '# '
   ProjectSummaryFooter: 'template:SEP01.txt'
-  ProjectGoalHeader: '# GOAL'
+  ProjectGoalHeader: '# GOAL:'
   ProjectGoalTitle: 'GOAL'
   ProjectGoalDivider: ':'
   ProjectGoalSep: 'template:SEP01.txt'
-  ProjectDeliverableHeader: '## DELIVERABLE'
+  ProjectDeliverableHeader: '## DELIVERABLE:'
   ProjectDeliverableTitle: 'DELIVERABLE'
   ProjectDeliverableDivider: ':'
   ProjectDeliverableSep: 'template:SEP02.txt'
-  ProjectTaskHeader: '### TASK'
+  ProjectTaskHeader: '### TASK:'
   ProjectTaskTitle: 'TASK'
   ProjectTaskDivider: ':'
   ProjectTaskSep: 'template:SEP03.txt'
   ProjectTaskFooter: 'template:SEP04.txt'
   ProjectLinkFormat: ''
-  ProjectTaskOverviewHeader: '#### OVERVIEW'
-  ProjectTaskLogHeader: '#### LOG'
+  ProjectTaskLogHeader: '#### log'
   ProjectTaskLogSep: '------------'
   NoteObjectivesSummarySectionHeader: '**SUMMARY**'
   NoteObjectivesTodoSectionHeader: '**TODO**'
@@ -61,9 +59,10 @@
   NoteGoalLinkLine: '* [GOAL'
   NoteDeliverableLinkLine: '    + [DELIVERABLE'
   NoteTaskLinkLine: '        - [TASK'
-  ContentHeader: '# CONTENT : '
-  ContentSep: 'template:CONTENT_SEP.txt'
+  ContentTitleField: 'CONTENT_TITLE:'
   ContentDescriptionField: 'CONTENT_DESCRIPTION:'
+  ContentSourceField: 'COUNTENT_SOURCE:'
+  ContentSep: 'template:CONTENT_SEP.txt'
   ContentInsertionTitle: '# '
   ContentInsertionSep: 'template:SEP01.txt'
   ContentLinkFormat: '**'
