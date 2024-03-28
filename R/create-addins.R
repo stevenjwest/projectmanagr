@@ -334,10 +334,17 @@ addin_create_project_doc <- function() {
 
   # if orgPath not identified present error interface and then stop this function
   if(orgPath=="") {
-    addin_error_path("Create Project Document",
+
+    # try to find orgPath from active document path
+    WD <- rstudioapi::getSourceEditorContext()$path
+    orgPath <- find_org_directory( WD )
+
+    if(orgPath=="") {
+      addin_error_path("Create Project Document",
                      "No Organisation identified - ensure working directory is in an Organisation.",
                      orgPath)
-    stop( paste0("  No Organisation identified - ensure working directory is in an Organisation: \n    ", WD))
+      stop( paste0("  No Organisation identified - ensure working directory is in an Organisation: \n    ", WD))
+    }
   }
 
   # get config templates settings yml
