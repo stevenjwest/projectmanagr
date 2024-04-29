@@ -930,6 +930,7 @@ get_config_dir <- function(orgPath) {
   return(confPath)
 }
 
+
 #' Get template dir
 #'
 #' This is set as `.config/templates` GLOBALLY - used to identify
@@ -981,6 +982,39 @@ get_status_yml <- function(orgPath, settings) {
   status <- yaml::yaml.load( yaml::read_yaml( statusYml ) )
   return(status)
 }
+
+
+#' Get volumes dir
+#'
+#' Stores volume mounts. This is set as `volumes/` by default, stored in
+#' settings.
+#'
+get_volumes_dir <- function(orgPath, settings) {
+  volPath <- fs::path(orgPath, settings[["VolumesDir"]])
+  return(volPath)
+}
+
+#' Get site dir
+#'
+#' Stores html site of org.  This is set as `site/` by default, stored in
+#' settings.
+#'
+get_site_dir <- function(orgPath, settings) {
+  sitePath <- fs::path(orgPath, settings[["SiteDir"]])
+  return(sitePath)
+}
+
+
+#' Get weekly journal dir
+#'
+#' Stores weekly journal Rmd files.  This is set as `weekly-journal/` by default,
+#' stored in settings.
+#'
+get_weekly_journal_dir <- function(orgPath, settings) {
+  weeklyjournalPath <- fs::path(orgPath, settings[["WeeklyJournalDir"]])
+  return(weeklyjournalPath)
+}
+
 
 #' Get Project Doc Dir Path
 #'
