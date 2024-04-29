@@ -389,8 +389,10 @@ insert_content <- function(selectionSource, selectionDestination) {
                                         get_prefix(destNoteRmdPath, settings), orgPath)
 
   # every knitr::include_graphics link, replace the path!
-  contentSourceContents <- replace_knitr_include_graphics_link(contentSourceContents, sourceNoteRmdPath,
-                                                         destNoteRmdPath, settings, orgPath)
+  contentSourceContents <- replace_knitr_include_graphics_link(
+                                        contentSourceContents,
+                                        contentDeclaration$contentSource,
+                                        destNoteRmdPath)
 
   #### Add Protocol Insertion Template to Destination Project Note
 
