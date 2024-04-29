@@ -419,45 +419,72 @@ addin_insert_content <- function() {
   statusFile <- get_status_yml_file(orgPath, settings)
 
   # read status information for CONTENTS if it exists
-  contentsStatus <- status[['CONTENTS']]
+  contentsCache <- status[['CONTENTS']]
 
   # get progPath
   progPath <- find_prog_dir(projNoteRmdPath)
 
-  cat( paste0("  progPath: ", progPath) )
+  cat( paste0("  progPath: ", progPath, "\n\n") )
 
-  # if CONTENTS data exists use last dir tree where a content was inserted from?
-   # otherwise set the dirtree to the PROGRAMME of the current document's path
-  if( is.null(contentsStatus) ) {
-    cat("  no previous contents found - searching programme directory of current file for contents..\n")
-    #dirPath <- dirname(projNoteRmdPath)
-    dirPath <- progPath
-    contents <- find_contents_in_dir_tree(progPath, orgPath, settings)
+  # ensure contents cache is up to date
+  if( is.null(contentsCache) ) {
+
+    cat("  no insertable contents cache found - searching org directory of current file for contents..\n")
+    contents <- find_contents_org_tree(orgPath, settings)
     contentRetrievalDateTime <- get_datetime() # set to current datetime
+
+    cat("    writing org insertable contents cache..\n")
+    write_insertable_contents_cache(contentRetrievalDateTime,
+                                    contents, orgPath, status, statusFile)
 
   } else {
 
-    cat("  found previous contents - identifying most recently used...\n\n")
-    # identify the latest used dirPath from metadata stored in contentsStatus
-    contentDirPaths <- names(contentsStatus)
-    dts <- lapply(X = contentsStatus, FUN = `[[`, "contentRetrievalDateTime")
-    dts <- lubridate::ymd_hm(dts)
-    dtsl <- max(dts) # get maximum value - or LATEST DATETIME
-    dtsli <- which(dts == dtsl) # get the index
-    dirPath <- contentDirPaths[[dtsli]]
+    cat("  insertable contents cache found - ensuring cache is up-to-date...\n\n")
 
-    # validate the contents! Check if any project Notes are updated since the contentRetrievalDateTime
-    contentsStatus[[dirPath]] <- update_contents_in_list(contentsStatus, dirPath, orgPath, settings)
+    # update contents list: Check if any project Notes are updated since the contentRetrievalDateTime
+    contents <- update_contents_org_tree(contentsCache, orgPath, settings) # faster as only search since laste retrieval dt
 
     # latest retrieval datetime
-    contentRetrievalDateTime <- contentsStatus[[dirPath]]$contentRetrievalDateTime
+    contentRetrievalDateTime <- get_datetime()
 
-    # latest contents
-    contents <- contentsStatus[[dirPath]]$contents
-
-    cat( paste0("    displaying most recent contents from path: ", dirPath, "\n") )
+    cat("    writing org insertable contents cache..\n")
+    write_insertable_contents_cache(contentRetrievalDateTime, contents, orgPath, status, statusFile)
 
   }
+
+
+  # if CONTENTS data exists use last dir tree where a content was inserted from?
+   # otherwise set the dirtree to the ORG ROOT of the current document's path
+  #if( is.null(contentsStatus) ) {
+  #  cat("  no insertable contents cache found - searching org directory of current file for contents..\n")
+    #dirPath <- dirname(projNoteRmdPath)
+  #  dirPath <- orgPath
+  #  contents <- find_contents_in_dir_tree(progPath, orgPath, settings)
+  #  contentRetrievalDateTime <- get_datetime() # set to current datetime
+
+  #} else {
+
+  #  cat("  insertable contents cache found - updating cache...\n\n")
+    # identify the latest used dirPath from metadata stored in contentsStatus
+  #  contentDirPaths <- names(contentsStatus)
+  #  dts <- lapply(X = contentsStatus, FUN = `[[`, "contentRetrievalDateTime")
+  #  dts <- lubridate::ymd_hm(dts)
+  #  dtsl <- max(dts) # get maximum value - or LATEST DATETIME
+  #  dtsli <- which(dts == dtsl) # get the index
+  #  dirPath <- contentDirPaths[[dtsli]]
+
+    # validate the contents! Check if any project Notes are updated since the contentRetrievalDateTime
+  #  contentsStatus[[dirPath]] <- update_contents_in_list(contentsStatus, dirPath, orgPath, settings)
+
+    # latest retrieval datetime
+  #  contentRetrievalDateTime <- contentsStatus[[dirPath]]$contentRetrievalDateTime
+
+    # latest contents
+  #  contents <- contentsStatus[[dirPath]]$contents
+
+  #  cat( paste0("    displaying most recent contents from path: ", dirPath, "\n") )
+
+  #}
 
   # open content sep delimiter
   contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
@@ -654,17 +681,6 @@ addin_insert_content <- function() {
 
         selectionDestination = user_selection(projNoteRmdPath, noteInsertionIndex)
       )
-
-      # add found contents cache to status
-      # cache consists of contentRetrievalDateTime (ie. current datetime!) & contents list
-       # contents list : each content name, plus source project note PATH && LINE in file where this begins
-      contentRetrievalDateTime <- get_datetime()
-      attrs <- list(contentRetrievalDateTime, gt$contents ) # gt contents stores reactive contents value
-      names(attrs) <- c("contentRetrievalDateTime", "contents")
-      status[["CONTENTS"]][[global$datapath]] <- attrs # global datapath store reactive dirPath value
-
-      # Write status list to the statusFile:
-      yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
       # Close Gadget after computations are complete:
       stopApp()

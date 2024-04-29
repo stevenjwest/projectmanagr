@@ -1856,8 +1856,15 @@ update_links <- function( oldLinkSuffix, newLinkSuffix, dirTree, settings,
 #' @param dl DirsList - a list of directory paths.
 #' @param settings projectmanagr settings list.
 #' @param fileExtensions File extensions of files to list.
+#' @param pathExclusions Directory Paths which should be EXCLUDED from file search.
+#' @param retrievalDateTimeCutoff Any project notes last modified BEFORE the
+#' cutoff time will not be returned. If NULL ignored. This is a lubridate datetime
+#' object, made by parsing a datetime string through `lubridate::ymd_hm()`
 #'
-get_file_list_to_project_notes <- function(fileList, dl, settings, fileExtensions = list("Rmd") ) {
+get_file_list_to_project_notes <- function(fileList, dl, settings,
+                                           fileExtensions = list("Rmd"),
+                                           pathExclusions = c(),
+                                           retrievalDateTimeCutoff = NULL ) {
 
 
   #### Set Instance Variables ####
@@ -1871,20 +1878,43 @@ get_file_list_to_project_notes <- function(fileList, dl, settings, fileExtension
 
   #### get all files from dl ####
 
-  # get each file with extension from all dirs in dl
-  for(fe in fileExtensions) {
-    # get local copy of fl to check for project notes
-    fl <- paste0( dl, .Platform$file.sep,
-                  list.files(path = dl, pattern = paste0("*.",fe),
-                             all.files = TRUE) )
-    fl <- fl[fl!=paste0(dl, .Platform$file.sep)] # remove any instances of just dl/ - if no files found!
-    fileList <- c(fileList, fl )
+  if( is.null(retrievalDateTimeCutoff) ) { # no cutoff filter
+
+    # get each file with extension from all dirs in dl
+    for(fe in fileExtensions) {
+      # get local copy of fl to check for project notes
+      fl <- paste0( dl, .Platform$file.sep,
+                    list.files(path = dl, pattern = paste0("*.",fe),
+                               all.files = TRUE) )
+      fl <- fl[fl!=paste0(dl, .Platform$file.sep)] # remove any instances of just dl/ - if no files found!
+      fileList <- c(fileList, fl )
+    }
+
+  } else { # filter for cutoff datetime
+
+    # get each file with extension from all dirs in dl
+    for(fe in fileExtensions) {
+      # get local copy of fl to check for project notes
+      fl <- paste0( dl, .Platform$file.sep,
+                    list.files(path = dl, pattern = paste0("*.",fe),
+                               all.files = TRUE) )
+      fl <- fl[fl!=paste0(dl, .Platform$file.sep)] # remove any instances of just dl/ - if no files found!
+
+      # filter for datetime - only keep files
+      flf <- fl[lubridate::as_datetime(file.info(fl)$ctime, tz='UTC') > retrievalDateTimeCutoff]
+
+      fileList <- c(fileList, flf )
+    }
+
   }
 
 
   #### get next level of sub-dirs from dl ####
 
   dls <- list.dirs(path = dl, recursive=FALSE)
+
+  # remove any directories that match pathExclusions
+  dls <- dls[ !dls %in% pathExclusions ]
 
 
   #### filter next level of sub-dirs to remove SIMPLE & SUB NOTE DIRS ####
@@ -1903,7 +1933,9 @@ get_file_list_to_project_notes <- function(fileList, dl, settings, fileExtension
 
   # recurses with each set of dls retrieved!
   for(d in dls) {
-    fileList <- get_file_list_to_project_notes(fileList, d, settings, fileExtensions )
+    fileList <- get_file_list_to_project_notes(
+                    fileList, d, settings,
+                    fileExtensions, pathExclusions, retrievalDateTimeCutoff)
   }
 
   #### return list of files down to project note dirs ####
@@ -2232,6 +2264,225 @@ get_content_source <- function(contentDeclContents, settings, orgPath) {
   trimws(contentSource)
 
 }
+
+
+#' Find Insertable Contents in Project Notes in ORG Tree
+#'
+#' Searches through Organisation recursively for Project Notes, and then looks
+#' for Insertable Contents in these based on the content sep delimiter - defined
+#' in `CONTENT_SEP.txt`.
+#'
+#' Eliminates directories in ORG ROOT which should note be searched: volumes/ &
+#' .config/ & site/ & weekly-journal
+#'
+#' Returns structured lists that describe each contents in the project notes:
+#'
+#' Each Structured List contains: is a character vector comprised
+#' name() : ProjectNotePath && Project Note Line Number where Insertable
+#' Contents BEGINS (start of first delimiter), separated with `:::`
+#'
+#' [["contentTitle"]] : Title of Insertable Contents in the Project Note
+#'
+#' [["contentDescription"]] : Description of Insertable Contents in the Project Note
+#'
+#' [["contentSource"]] : Absolute Path to Contents declared in the Project Note
+#'
+#' [["contentStartLine"]] : Start line of the contents declaration in Project Note
+#'
+#' [["contentEndLine"]] : End line of the contents declaration in Project Note
+#'
+#' [["projectNotePath"]] : Path to Project Note
+#'
+#' [["projectNoteContentHeader"]] : Identified markdwon header section that the
+#' Contents Declaration is in.
+#'
+#' @param orgPath Organisation path - also used to search for content declatations
+#' within project notes.
+#'
+#' @param settings settings.yml in org config.
+#'
+#' @return List of content declaration containing named parameters: "contentTitle",
+#' "contentDescription", "contentSource", "contentStartLine", "contentEndLine",
+#' "projectNotePath", "projectNoteContentHeader"
+#'
+find_contents_org_tree <- function(orgPath, settings) {
+
+  #### instance variables ####
+
+  contents <- list() # to store all retrieved contents metadata in
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
+
+  # get dirs in root to EXCLUDE from search
+  volPath <- get_volumes_dir(orgPath, settings)
+  sitePath <- get_site_dir(orgPath, settings)
+  weeklyjournalPath <- get_weekly_journal_dir(orgPath, settings)
+
+  # get status yml
+  status <- get_status_yml(orgPath, settings)
+
+  # read status information for CONTENTS if it exists
+  contentsStatus <- status[['CONTENTS']]
+
+  contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
+  # as this is called in a for loop, better to open this file external to that loop and pass as param
+
+
+  #### loop through filePaths ####
+
+  # get all project notes in orgPath RECURSIVELY
+  fileList <- list()
+  filePaths <- get_file_list_to_project_notes(
+                  fileList, orgPath, settings,
+                  pathExclusions = c(confPath, volPath, sitePath, weeklyjournalPath) )
+   # EXCLUDING confPath volPath and sitePath from search!!
+  # get all project notes in orgPath
+  #filePaths <- get_project_note_paths(orgPath, settings)
+
+  # for all identified project notes identify all insertable contents
+  for( f in filePaths) {
+    pr <- get_content_declarations(f, settings, orgPath)
+    #pr <- get_contents(f, contentSepContents, settings, orgPath)
+    contents[names(pr)] <- pr
+  }
+
+  # return structured list
+  contents
+
+}
+
+
+
+#' Update Insertable Contents in Project Notes in ORG Tree
+#'
+#' Updates existing cache of insertable contents from Project Notes in ORG.
+#'
+#' This is faster than running `find_contents_org_tree` as will only read project
+#' notes that have been modified since the last `contentRetrievalDateTime`.
+#'
+#' Looks through Organisation recursively for Project Notes, and then looks
+#' for Insertable Contents in these based on the content sep delimiter - defined
+#' in `CONTENT_SEP.txt`.
+#'
+#' Eliminates directories in ORG ROOT which should note be searched: volumes/ &
+#' .config/ & site/ & weekly-journal
+#'
+#' Returns structured lists that describe each contents in the project notes:
+#'
+#' Each Structured List contains: is a character vector comprised
+#' name() : ProjectNotePath && Project Note Line Number where Insertable
+#' Contents BEGINS (start of first delimiter), separated with `:::`
+#'
+#' [["contentTitle"]] : Title of Insertable Contents in the Project Note
+#'
+#' [["contentDescription"]] : Description of Insertable Contents in the Project Note
+#'
+#' [["contentSource"]] : Absolute Path to Contents declared in the Project Note
+#'
+#' [["contentStartLine"]] : Start line of the contents declaration in Project Note
+#'
+#' [["contentEndLine"]] : End line of the contents declaration in Project Note
+#'
+#' [["projectNotePath"]] : Path to Project Note
+#'
+#' [["projectNoteContentHeader"]] : Identified markdwon header section that the
+#' Contents Declaration is in.
+#'
+#' @param contentsCache Named List of contents previous cached - comprising the
+#' contentRetrievalDateTime, and then contents - list of paths to insertable
+#' contents files.
+#' @param orgPath Organisation path - also used to search for content declatations
+#' within project notes.
+#'
+#' @param settings settings.yml in org config.
+#'
+#' @return List of content declaration containing named parameters: "contentTitle",
+#' "contentDescription", "contentSource", "contentStartLine", "contentEndLine",
+#' "projectNotePath", "projectNoteContentHeader"
+#'
+update_contents_org_tree <- function(contentsCache, orgPath, settings) {
+
+  #### instance variables ####
+
+  # get the retrieval datetime as string
+  dtStr <- lapply(X = contentsCache, FUN = `[[`, "contentRetrievalDateTime")
+  dt <- lubridate::ymd_hm(dtStr) # convert to datetime
+
+  contents <- list() # to store all retrieved contents metadata in
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
+
+  # get dirs in root to EXCLUDE from search
+  volPath <- get_volumes_dir(orgPath, settings)
+  sitePath <- get_site_dir(orgPath, settings)
+  weeklyjournalPath <- get_weekly_journal_dir(orgPath, settings)
+
+  # get status yml
+  status <- get_status_yml(orgPath, settings)
+
+  # read status information for CONTENTS if it exists
+  contentsStatus <- status[['CONTENTS']]
+
+  contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
+  # as this is called in a for loop, better to open this file external to that loop and pass as param
+
+
+  #### loop through filePaths ####
+
+  # get all project notes in orgPath RECURSIVELY
+  fileList <- list()
+  filePaths <- get_file_list_to_project_notes(
+    fileList, orgPath, settings,
+    pathExclusions = c(confPath, volPath, sitePath, weeklyjournalPath),
+    retrievalDateTimeCutoff = dt )
+  # EXCLUDING confPath volPath and sitePath from search!!
+  # AND applying the cutoff datetime from cache!
+
+  # get all project notes in orgPath
+  #filePaths <- get_project_note_paths(orgPath, settings)
+
+  # for all identified project notes identify all insertable contents
+  for( f in filePaths) {
+    pr <- get_content_declarations(f, settings, orgPath)
+    #pr <- get_contents(f, contentSepContents, settings, orgPath)
+    contents[names(pr)] <- pr
+  }
+
+  # return structured list
+  contents
+
+}
+
+
+#' Write Insertable Contents Cache
+#'
+#' Once retrieved write to status yml file.
+#'
+#' @param contentRetrievalDateTime Datetime of retrieval
+#'
+#' @param contents A list indicating the source project note, location, description,
+#' start and end lines of each insertable content file.
+#'
+#' @param orgPath Organisation path.
+#'
+#' @param status The current status file content as list.
+#'
+#' @param statusFile Path to current status file.
+#'
+write_insertable_contents_cache <- function(contentRetrievalDateTime, contents,
+                                            orgPath, status, statusFile) {
+  attrs <- list(contentRetrievalDateTime, contents )
+  names(attrs) <- c("contentRetrievalDateTime", "contents")
+  status[["CONTENTS"]][[orgPath]] <- attrs
+  yaml::write_yaml( yaml::as.yaml(status), statusFile )
+}
+
 
 #' Find Insertable Contents in Project Notes from Dir Tree
 #'
