@@ -1524,41 +1524,64 @@ replace_markdown_header  <- function(templateContents, orgPath,
 }
 
 
-
-replace_knitr_include_graphics_link <- function(contentContents, sourceNoteRmdPath,
-                                                destNoteRmdPath, settings, orgPath,
+#' Replace Knitr include_graphics link
+#'
+#' Replace the path inside knitr::include_graphics() functions with a relative
+#' path to sourceFilePath from destinationFilePath.  Deals with different quotes
+#' and whitespace in function call.
+#'
+#' @param contentContents String vector of contents that may contain calls to
+#' Knitr::include_graphics()
+#'
+#' @param sourceFilePath The path to the source file - where contentContents was
+#' read from
+#'
+#' @param destinationFilePath The path where the content will be moved to, used
+#' to compute the relative path of all files.
+#'
+#' @param knitrGraphics The function call to knitr grpahics to search for, set
+#' to `knitr::include_graphics(` by default.
+#'
+#' @param knitrGraphicsEnd The end of the function call, set to `)` by default.
+#'
+replace_knitr_include_graphics_link <- function(contentContents, sourceFilePath,
+                                                destinationFilePath,
                                                 knitrGraphics='knitr::include_graphics(',
                                                 knitrGraphicsEnd=')') {
-
-  sourceNoteDirPath <- get_project_note_dir_path(sourceNoteRmdPath, settings)
-  destNoteDirPath <- get_project_note_dir_path(destNoteRmdPath, settings)
 
   knitrGraphicsIndex <- grep(knitrGraphics, contentContents, fixed=TRUE)
 
   for( kgi in knitrGraphicsIndex) {
-    # get knitr line then path
+
+    # get knitr line
     kLine <- contentContents[kgi]
-    kPathStartIndex <- (regexpr(knitrGraphics, kLine, fixed=TRUE) + nchar(knitrGraphics) + 1)
+
+    # compute indices based on knitrGraphics content
+    kPathStartIndex <- (regexpr(knitrGraphics, kLine, fixed=TRUE) + nchar(knitrGraphics))
+    sqS <- regexpr("'", substring(kLine, kPathStartIndex), fixed=TRUE) # get start quote index
+    dqS <- regexpr('"', substring(kLine, kPathStartIndex), fixed=TRUE)
+    qS <- max(sqS, dqS)
+
     kPathEndIndex <- (regexpr(knitrGraphicsEnd, kLine, fixed=TRUE) - nchar(knitrGraphicsEnd) - 1)
+    sqE <- regexpr("'", substring(kLine, (kPathStartIndex+qS)), fixed=TRUE) -1 # get end quote index
+    dqE <- regexpr('"', substring(kLine, (kPathStartIndex+qS)), fixed=TRUE) -1 # get end quote index
+    qE <- max(sqE, dqE)
 
-    kPath <- substring(kLine, kPathStartIndex, kPathEndIndex)
+    # extract path from `knitr::include_graphics()` string
+     # from WITHIN the quotes && trim all whitespace - will remove
+    kPath <- trimws( substring(kLine, (kPathStartIndex+qS), (kPathStartIndex+qS+qE-1)) )
 
-    # assuming kPath is a path inside the Project Note Dir - this collapses the Project Note Dir Name
-    kPathFull <- R.utils::getAbsolutePath( paste0(sourceNoteDirPath,
-                                                  .Platform$file.sep, "..",
-                                                  .Platform$file.sep, kPath))
+    # kPath is relative to sourceFilePath - collapse from dirname of sourceFilePath
+    kPathFull <- fs::path_abs(fs::path( dirname(sourceFilePath), kPath))
 
-    # get relative link
-    RelLink <- R.utils::getRelativePath(sourceNoteDirPath, relativeTo=destNoteDirPath)
-    RelLink <- substring(RelLink, first=4, last=nchar(RelLink)) # remove first `../`
-    relPathFull <- R.utils::getRelativePath( paste0(RelLink,.Platform$file.sep, "..",
-                                                    .Platform$file.sep, kPath))
+    # get relative link to dirname of destinationFilePath
+    relPathFull <- fs::path_rel(kPathFull, dirname(destinationFilePath) )
 
     # replace path in kLine with relPathFull
     contentContents[kgi] <- paste0(
-      substring(kLine, 1, (kPathStartIndex-1) ),
+      substring(kLine, 1, (kPathStartIndex+qS-1) ),
       relPathFull,
-      substring(kLine, (kPathEndIndex+1), nchar(kLine)) )
+      substring(kLine, (kPathStartIndex+qS+qE), nchar(kLine)) )
 
   }
 
