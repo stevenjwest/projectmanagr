@@ -44,7 +44,7 @@ _one_sentence_summary_statement_of_organisation_scope_
     + to help prioritise work
 
 
-https://www.effectivegovernance.com.au/page/knowledge-centre/news-articles/vision-mission-and-purpose-statements-%E2%80%93-what-is-the-difference
+[vision-mission-and-purpose-statements](https://www.effectivegovernance.com.au/page/knowledge-centre/news-articles/vision-mission-and-purpose-statements-%E2%80%93-what-is-the-difference)
 
 * Vision : The organisation's aspiration
 * Mission : What the organisation does
