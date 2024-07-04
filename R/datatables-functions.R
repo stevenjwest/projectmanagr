@@ -3,7 +3,7 @@
 #' Creates a new Sample DataTable in specified Rmd file at specified line.
 #' The Sample DataTable will contain an initial ID column containing the
 #' IDs vector, and an optional set of extra data columns as specified in the
-#' data_cols vector.  If the table exceeds dt_length characters (default 120),
+#' data_cols vector.  If the table exceeds dt_length characters (default 100),
 #' then the table is split into multiple tables, with IDs as first col, and
 #' subsequent data_cols given in subsequent tables.
 #'
@@ -171,7 +171,7 @@ datatable_create_template_rmd <- function( rmd_path, rmd_startline, rmd_endline,
 #' Creates a new Sample DataTable vector. The Sample DataTable will contain an
 #' initial ID column containing the IDs vector, and an optional set of extra
 #' data columns as specified in the data_cols vector.  If the table exceeds
-#' `dt_length` characters (default 120), then the table is split into multiple
+#' `dt_length` characters (default 100), then the table is split into multiple
 #' tables, with IDs as first col, and subsequent data_cols given in subsequent
 #' tables.
 #'
@@ -283,7 +283,7 @@ datatable_create <- function( IDs="", data_cols="", datatable_name = "samples",
 #' Creates a new Sample DataTable vector. The Sample DataTable will contain an
 #' initial ID column containing the IDs vector, and an optional set of extra
 #' data columns as specified in the data_cols vector.  If the table exceeds
-#' `dt_length` characters (default 120), then the table is split into multiple
+#' `dt_length` characters (default 100), then the table is split into multiple
 #' tables, with IDs as first col, and subsequent data_cols given in subsequent
 #' tables.
 #'
@@ -361,7 +361,7 @@ datatable_create_template <- function( IDs, template_table, datatable_name,
 #' Creates a new Sample DataTable vector. The Sample DataTable will contain an
 #' initial ID column containing the IDs vector, and an optional set of extra
 #' data columns as specified in the data_cols vector.  If the table exceeds
-#' `dt_length` characters (default 120), then the table is split into multiple
+#' `dt_length` characters (default 100), then the table is split into multiple
 #' tables, with IDs as first col, and subsequent data_cols given in subsequent
 #' tables.
 #'
@@ -389,7 +389,7 @@ datatable_create_template <- function( IDs, template_table, datatable_name,
 #' @param datatable_name String of data table name - default "samples".
 #'
 #' @param MAX_DATATABLE_LENGTH Int of data table max length in characters.
-#' Typically 120.
+#' Typically 100.
 #'
 #' @param DATATABLE_SPACER_CHAR Character used to underline column headers.
 #' Typically '='.
@@ -896,7 +896,7 @@ OLD_datatable_build <- function() {
 #' Creates a new Sample DataTable in specified Rmd file at specified line.
 #' The Sample DataTable will contain an initial ID column containing the
 #' IDs vector, and an optional set of extra data columns as specified in the
-#' data_cols vector.  If the table exceeds dt_length characters (default 120),
+#' data_cols vector.  If the table exceeds dt_length characters (default 100),
 #' then the table is split into multiple tables, with IDs as first col, and
 #' subsequent data_cols given in subsequent tables.
 #'
@@ -1028,7 +1028,7 @@ datatable_add_data_samples_template_rmd <- function( rmd_path, rmd_startline, rm
 #' containing all the EXISTING IDs (IDs that have been resampled or exported
 #' will automatically be EXCLUDED), and an optional set of extra data columns as
 #' specified in the data_cols vector.  If the table exceeds dt_length characters
-#' (default 120), then the table is split into multiple tables, with IDs as
+#' (default 100), then the table is split into multiple tables, with IDs as
 #' first col, and subsequent data_cols given in subsequent tables.
 #'
 #' The function assumes all EXISTING REPS of the current samples are going to
@@ -1449,7 +1449,7 @@ datatable_add_data_samples <- function( contents, data_cols, datatable_name,
 #' Creates a new Sample DataTable in specified Rmd file at specified line.
 #' The Sample DataTable will contain an initial ID column containing the
 #' IDs vector, and an optional set of extra data columns as specified in the
-#' data_cols vector.  If the table exceeds dt_length characters (default 120),
+#' data_cols vector.  If the table exceeds dt_length characters (default 100),
 #' then the table is split into multiple tables, with IDs as first col, and
 #' subsequent data_cols given in subsequent tables.
 #'
@@ -1657,7 +1657,7 @@ datatable_add_data_variables <- function(contents, var_names, datatable_name, gr
 #' Creates a new Sample DataTable in specified Rmd file at specified line.
 #' The Sample DataTable will contain an initial ID column containing the
 #' IDs vector, and an optional set of extra data columns as specified in the
-#' data_cols vector.  If the table exceeds dt_length characters (default 120),
+#' data_cols vector.  If the table exceeds dt_length characters (default 100),
 #' then the table is split into multiple tables, with IDs as first col, and
 #' subsequent data_cols given in subsequent tables.
 #'
@@ -1868,7 +1868,7 @@ datatable_add_data_timetable <- function(contents, step_names, datatable_name, g
 #' Creates add dataSample DataTable vector. The Sample DataTable will contain an
 #' initial ID column containing the IDs vector, and set of extra
 #' data columns as specified in the data_cols vector.  If the table exceeds
-#' `dt_length` characters (default 120), then the table is split into multiple
+#' `dt_length` characters (default 100), then the table is split into multiple
 #' tables, with IDs as first col, and subsequent data_cols given in subsequent
 #' tables.
 #'
@@ -2048,7 +2048,7 @@ summarise_id_rep <- function(IDs, REPs) {
 #' group_names vector.
 #'
 #' If the table exceeds dt_length characters
-#' (default 120), then the table is split into multiple tables, with IDs as
+#' (default 100), then the table is split into multiple tables, with IDs as
 #' first col, and subsequent group_names given in subsequent tables.
 #'
 #' @param rmd_path path to Rmd file
@@ -2125,7 +2125,7 @@ datatable_add_group_rmd <- function(rmd_path, rmd_startline, rmd_endline, group_
 #' group_names vector.
 #'
 #' If the table exceeds dt_length characters
-#' (default 120), then the table is split into multiple tables, with IDs as
+#' (default 100), then the table is split into multiple tables, with IDs as
 #' first col, and subsequent group_names given in subsequent tables.
 #'
 #' @param contents character vector containing current document with
@@ -2441,7 +2441,7 @@ datatable_add_group_template_rmd <- function( rmd_path, rmd_startline, rmd_endli
 #' Creates add dataSample DataTable vector. The Sample DataTable will contain an
 #' initial ID column containing the IDs vector, and set of extra group
 #' data columns as specified in the data_cols vector.  If the table exceeds
-#' `dt_length` characters (default 120), then the table is split into multiple
+#' `dt_length` characters (default 100), then the table is split into multiple
 #' tables, with IDs as first col, and subsequent group data_cols given in
 #' subsequent tables.
 #'
@@ -2988,9 +2988,9 @@ datatable_resample_template_rmd <- function( rmd_path, rmd_startline, rmd_endlin
 
 #' Find EXISTING Samples in Datatables
 #'
-#' Search through path recursively to find all Rmd files that contain datatables.
-#' Summarise all EXISTING samples that are declared in them (not resampled,
-#' exported, disposed).
+#' Search through path recursively to find all Project Note Rmd files that
+#' contain datatables. Summarise all EXISTING samples that are declared in them
+#' (not resampled, exported, disposed).
 #'
 #' SUMMARY tibble includes following columns:
 #'
@@ -3007,10 +3007,10 @@ datatable_resample_template_rmd <- function( rmd_path, rmd_startline, rmd_endlin
 #'
 #' * PATH: The absolute path to the Experiment DIR ??
 #'
-#' * LOCATION : values of last `_location` col - where was the samples last known
+#' * LOCATION : values of last `_loc` col - where was the samples last known
 #'   location?  Only defined last if currently in storage!
 #'
-#' * CONDITION : value of last `_condition` col - what was the samples last
+#' * CONDITION : value of last `_con` col - what was the samples last
 #'   known condition?
 #'
 #' If further metadata is needed - can use `datatable_get_sample_data_history()`
@@ -3095,12 +3095,7 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
       updateProgress(value = progressFraction, detail = text)
     }
 
-    # get all datatables from Rmd
-    rmd_file_conn <- file( s )
-    rmd_contents <- readLines( rmd_file_conn )
-    close(rmd_file_conn)
-
-    # read datatables
+    rmd_contents <- read_file(s)
     dts <- datatable_read_vector(rmd_contents)
 
     if( is.null(dts) | length(dts) == 0 ) {
@@ -3141,17 +3136,20 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
         #colsnorep <- col_names[!"rep" == col_names] # want to group by all EXCEPT rep
         #dg <- dplyr::group_by_at(d, colsnorep )
         dg <- dplyr::group_by_at(d, "ID" ) # group by the ID - this is ALWAYS THE FIRST COL!
-        dc <- dplyr::summarise(dg, count=dplyr::n() ) # summarise the reps - count ID entries
+        dc <- dplyr::summarise(dg, count=dplyr::n() ) # summarise the reps - count ID entries to retrieve number of reps
         dc <- dplyr::ungroup(dc) # remove group_by
+
+
+        #### for each sample ID ####
 
 
         #### GET LAST KNOWN LOCATION ####
 
-        #if( endsWith(col_names[length(col_names)], "_location") ){ # only retrieve location if LAST ENTRY
-        if( length(grep("_location", col_names) ) > 0 ) { # retrieve last location IF PRESENT
+        #if( endsWith(col_names[length(col_names)], "_loc") ){ # only retrieve location if LAST ENTRY
+        if( length(grep("_loc", col_names) ) > 0 ) { # retrieve last location IF PRESENT
 
           # copy last location vector to LOC
-          LOC <- get_last_unique_col_suffix(dg, "_location")
+          LOC <- get_last_unique_col_suffix(dg, "_loc")
 
         } else {
           LOC <- "-" # else just fill with BLANK VAL: -
@@ -3160,10 +3158,10 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
 
         #### GET LAST KNOWN CONDITION ####
 
-        if( length(grep("_condition", col_names) ) > 0 ){ # retrieve last condition IF PRESENT
+        if( length(grep("_con", col_names) ) > 0 ){ # retrieve last condition IF PRESENT
 
           # copy last condition vector to CON
-          CON <- get_last_unique_col_suffix(dg, "_condition")
+          CON <- get_last_unique_col_suffix(dg, "_con")
 
         } else {
           CON <- "-" # else just fill with BLANK VAL: -
@@ -3234,7 +3232,7 @@ datatable_find <- function( path, datatable_name_prefix = 'samples', updateProgr
 #'
 #' @return vector of unique values for each group-by ID from last data col
 #' with specified suffixs
-get_last_unique_col_suffix <- function(dg, col_suffix = "_location") {
+get_last_unique_col_suffix <- function(dg, col_suffix = "_loc") {
 
   col_names <- names(dg)
 
@@ -3250,7 +3248,7 @@ get_last_unique_col_suffix <- function(dg, col_suffix = "_location") {
   # summarise the table - space-separate col values for each ID
   dl <- dplyr::summarise(dggg, NEWCOLNAME=paste( unique(KNOWNCOLNAME), collapse=' '))
 
-  # retrieve KNOWNCOLNAME vector
+  # retrieve NEWCOLNAME vector
   LOC <- dl$NEWCOLNAME
 
   # col may contain multiple values - space-separated
@@ -6685,7 +6683,7 @@ get_delim_indices <- function(delim) {
 #' Creates a new Sample DataTable vector. The Sample DataTable will contain an
 #' initial ID column containing the IDs vector, and an optional set of extra
 #' data columns as specified in the data_cols vector.  If the table exceeds
-#' `dt_length` characters (default 120), then the table is split into multiple
+#' `dt_length` characters (default 100), then the table is split into multiple
 #' tables, with IDs as first col, and subsequent data_cols given in subsequent
 #' tables.
 #'
@@ -6713,7 +6711,7 @@ get_delim_indices <- function(delim) {
 #' @param datatable_name String of data table name - default "samples".
 #'
 #' @param MAX_DATATABLE_LENGTH Int of data table max length in characters.
-#' Typically 120.
+#' Typically 100.
 #'
 #' @param DATATABLE_SPACER_CHAR Character used to underline column headers.
 #' Typically '='.
