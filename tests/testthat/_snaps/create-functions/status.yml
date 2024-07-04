@@ -1,11 +1,11 @@
 |
   orgPaths: []
-  orgPath: /tmp/Rsess/_TEST_ORG_P
-  orgName: _TEST_ORG_P
-  orgTitle: TEST ORG P
+  orgPath: /tmp/Rsess/_T_O_P
+  orgName: _T_O_P
+  orgTitle: T O P
   updateTime: 2024-02-22 09:56:00
-  sitePath: /tmp/Rsess/_TEST_ORG_P/site
+  sitePath: /tmp/Rsess/_T_O_P/site
   PROGRAMMES:
-    00-PROG:
-      programmeTitle: 00 PROG
+    0-PR:
+      programmeTitle: 0 PR
       creationTime: 2024-02-22 09:58:00

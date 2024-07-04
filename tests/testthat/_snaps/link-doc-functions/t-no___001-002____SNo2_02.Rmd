@@ -1,0 +1,154 @@
+---
+title: 't-no___001-002~ SNo2 02'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PrDoSu : EXAMPLE TASK TITLE
+
+
+[PrDoSu____Proj_Do_su](../../../PrDoSu____Proj_Do_su.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../../PrDoSu____Proj_Do_su.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../../PrDoSu____Proj_Do_su.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../../PrDoSu____Proj_Do_su.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PS2 : EXAMPLE TASK TITLE
+
+
+[PS2____Proj_Do_2](../../../PS2____Proj_Do_2.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../../PS2____Proj_Do_2.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../../PS2____Proj_Do_2.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../../PS2____Proj_Do_2.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# GROUP CONTENTS
+
+
+
+[t-no___001-00____Gr_No_Head2.Rmd](../t-no___001-00____Gr_No_Head2.Rmd)
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+# Introduction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

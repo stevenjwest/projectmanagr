@@ -1,0 +1,88 @@
+---
+title: '0 PR'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# PROGRAMME OVERVIEW
+
+
+[_index__T_O_P](../_index__T_O_P.Rmd)
+
+
+
+*Welcome to the 0 PR Programme*
+
+
+_one_sentence_summary_statement_of_programme_scope__This_Programme_documents__
+
+
+>>> What does this programme aim to achieve?  Complete sentence "This Programme documents..."
+
+
+>>> Summarise Programme Aim with Plans and Progress
+>>> Each AIM should be a broad objective that one or more projects attempt to meet.
+>>> These AIMs will be copied under programme link in Organisation Index page to summarise this programme
+>>> Continue expanding with summary of achievements of progress in this programme as work is completed
+>>> Consider adding a summary GRAPHIC to update & insert.
+
+
+
+## _PROGRAMME_AIM_01__BROAD_OBJECTIVE_
+
+
+
+
+
+
+## _PROGRAMME_AIM_02__BROAD_OBJECTIVE_
+
+
+
+
+
+
+## _PROGRAMME_AIM_03__BROAD_OBJECTIVE_
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# Programme Background Information
+
+
+
+>>> Provide background and context to reader
+>>> Keep notes on programme research which do not have a project to go into yet
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# PROJECTS
+
+
+Programme work is organised into the following PROJECTS - bodies of work defined by set of goals
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+

@@ -1,5 +1,5 @@
 ---
-title: 'PrDoc~ Project Doc'
+title: 'PDCon~ Proj Do con'
 author: 'sjwest'
 output:
   html_document:
@@ -14,11 +14,11 @@ output:
 # PROJECT SUMMARY
 
 
-[00-PROG-PDN](_index_00-PROG-PDN.Rmd)
+[0-PR-PDN](_index_0-PR-PDN.Rmd)
 
 
 
-*Welcome to the Project Doc Project!*
+*Welcome to the Proj Do con Project!*
 
 
 >>>> succinct description of project scope in one sentence - what does this project hope to achieve?
@@ -326,7 +326,7 @@ __TASK_OVERVIEW__
 
 
 
-# GOAL: __GOAL_TITLE__
+# GOAL: EXAMPLE GOAL TITLE
 
 
 
@@ -390,7 +390,7 @@ __TASK_OVERVIEW__
 
 
 
-## DELIVERABLE: __DELIVERABLE_TITLE__
+## DELIVERABLE: EXAMPLE DEL TITLE
 
 
 
@@ -422,7 +422,7 @@ __TASK_OVERVIEW__
 
 
 
-### TASK: __TASK_TITLE__
+### TASK: EXAMPLE TASK TITLE
 
 
 
@@ -433,6 +433,25 @@ __TASK_OVERVIEW__
 
 
 #### log
+
+
+
+------------
+
+
+
+**[tn-c___001____PN_con](PDCon/tn-c/tn-c___001____PN_con.Rmd)**
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
 
 
 

@@ -1,5 +1,5 @@
 ---
-title: 'TEST ORG P'
+title: 'T O'
 author: 'sjwest'
 output:
   html_document:
@@ -15,7 +15,7 @@ output:
 
 
 
-*Welcome to the TEST ORG P ORGANISATION*
+*Welcome to the T O ORGANISATION*
 
 
 _one_sentence_summary_statement_of_organisation_scope_
@@ -27,10 +27,10 @@ _one_sentence_summary_statement_of_organisation_scope_
 
 
 
-# TEST ORG P : Purpose Statement
+# T O : Purpose Statement
 
 
-TEST ORG P organisation aims 
+T O organisation aims 
 
 
 * _org_vision_summary_
@@ -50,7 +50,7 @@ TEST ORG P organisation aims
     + to help prioritise work
 
 
-https://www.effectivegovernance.com.au/page/knowledge-centre/news-articles/vision-mission-and-purpose-statements-%E2%80%93-what-is-the-difference
+[vision-mission-and-purpose-statements](https://www.effectivegovernance.com.au/page/knowledge-centre/news-articles/vision-mission-and-purpose-statements-%E2%80%93-what-is-the-difference)
 
 * Vision : The organisation's aspiration
 * Mission : What the organisation does
@@ -166,56 +166,6 @@ This Organisation is managed using `projectmanagr`
 
 
 This Organisation defines the following PROGRAMMES that encompass a DOMAINS OF WORK.
-
-
-
-----------------------------------------------------------------
-----------------------------------------------------------------
-
-
-
-# 00-PROG
-
-
-[00-PROG](00-PROG/_index_00-PROG.Rmd)
-
-
-
-*Welcome to the 00 PROG Programme*
-
-
-_one_sentence_summary_statement_of_programme_scope__This_Programme_documents__
-
-
->>> What does this programme aim to achieve?  Complete sentence "This Programme documents..."
-
-
->>> Summarise Programme Aim with Plans and Progress
->>> Each AIM should be a broad objective that one or more projects attempt to meet.
->>> These AIMs will be copied under programme link in Organisation Index page to summarise this programme
->>> Continue expanding with summary of achievements of progress in this programme as work is completed
->>> Consider adding a summary GRAPHIC to update & insert.
-
-
-
-## _PROGRAMME_AIM_01__BROAD_OBJECTIVE_
-
-
-
-
-
-
-## _PROGRAMME_AIM_02__BROAD_OBJECTIVE_
-
-
-
-
-
-
-## _PROGRAMME_AIM_03__BROAD_OBJECTIVE_
-
-
-
 
 
 

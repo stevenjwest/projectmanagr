@@ -1,5 +1,5 @@
 ---
-title: 'PrDocSub~ Project Doc sub'
+title: 'PrDoSu~ Proj Do su'
 author: 'sjwest'
 output:
   html_document:
@@ -14,11 +14,11 @@ output:
 # PROJECT SUMMARY
 
 
-[00-PROG-PDN](_index_00-PROG-PDN.Rmd)
+[0-PR-PDN](_index_0-PR-PDN.Rmd)
 
 
 
-*Welcome to the Project Doc sub Project!*
+*Welcome to the Proj Do su Project!*
 
 
 >>>> succinct description of project scope in one sentence - what does this project hope to achieve?
@@ -440,11 +440,11 @@ __TASK_OVERVIEW__
 
 
 
-**[test-notes~001-00~_Group_Note_Header2](PrDocSub/test-notes/test-notes~001-00~_Group_Note_Header2.Rmd)**
+**[t-no___001-00____Gr_No_Head2](PrDoSu/t-no/t-no___001-00____Gr_No_Head2.Rmd)**
 
 
 
-*[test-notes~001-001~_SubNote2_01](PrDocSub/test-notes/test-notes~001-00/test-notes~001-001~_SubNote2_01.Rmd)*
+*[t-no___001-001____SNo2_01](PrDoSu/t-no/t-no___001-00/t-no___001-001____SNo2_01.Rmd)*
 
 
 **SUMMARY**
@@ -459,7 +459,7 @@ __TASK_OVERVIEW__
 
 
 
-*[test-notes~001-002~_SubNote2_02](PrDocSub/test-notes/test-notes~001-00/test-notes~001-002~_SubNote2_02.Rmd)*
+*[t-no___001-002____SNo2_02](PrDoSu/t-no/t-no___001-00/t-no___001-002____SNo2_02.Rmd)*
 
 
 **SUMMARY**

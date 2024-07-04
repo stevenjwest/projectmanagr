@@ -1,5 +1,5 @@
 ---
-title: 'PrDocCon~ Project Doc content'
+title: 'PrDoG~ Proj Do gr'
 author: 'sjwest'
 output:
   html_document:
@@ -14,11 +14,11 @@ output:
 # PROJECT SUMMARY
 
 
-[00-PROG-PDN](_index_00-PROG-PDN.Rmd)
+[0-PR-PDN](_index_0-PR-PDN.Rmd)
 
 
 
-*Welcome to the Project Doc content Project!*
+*Welcome to the Proj Do gr Project!*
 
 
 >>>> succinct description of project scope in one sentence - what does this project hope to achieve?
@@ -440,7 +440,11 @@ __TASK_OVERVIEW__
 
 
 
-**[test-notes-content~001~_Project_Note_content](PrDocCon/test-notes-content/test-notes-content~001~_Project_Note_content.Rmd)**
+**[t-no___001-00____Gr_No_Head](PrDoG/t-no/t-no___001-00____Gr_No_Head.Rmd)**
+
+
+
+*[t-no___001-001____SNo_01](PrDoG/t-no/t-no___001-00/t-no___001-001____SNo_01.Rmd)*
 
 
 **SUMMARY**

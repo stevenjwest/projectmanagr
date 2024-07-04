@@ -1,5 +1,5 @@
 ---
-title: 'test-notes~001~ Project Note'
+title: 't-no___001-002~ SNo2 02'
 author: 'sjwest'
 output:
   html_document:
@@ -20,17 +20,17 @@ output:
 
 
 
-## PrDocSim : EXAMPLE TASK TITLE
+## PrDoSu : EXAMPLE TASK TITLE
 
 
-[PrDocSim~_Project_Doc_simple](../../PrDocSim~_Project_Doc_simple.Rmd)
+[PrDoSu____Proj_Do_su](../../../PrDoSu____Proj_Do_su.Rmd)
 
 
-* [GOAL: EXAMPLE GOAL TITLE](../../PrDocSim~_Project_Doc_simple.Rmd#goal-example-goal-title)
+* [GOAL: EXAMPLE GOAL TITLE](../../../PrDoSu____Proj_Do_su.Rmd#goal-example-goal-title)
 
-    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PrDocSim~_Project_Doc_simple.Rmd#deliverable-example-del-title)
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../../PrDoSu____Proj_Do_su.Rmd#deliverable-example-del-title)
 
-        - [TASK: EXAMPLE TASK TITLE](../../PrDocSim~_Project_Doc_simple.Rmd#task-example-task-title)
+        - [TASK: EXAMPLE TASK TITLE](../../../PrDoSu____Proj_Do_su.Rmd#task-example-task-title)
 
 
 
@@ -65,6 +65,19 @@ output:
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
+
+
+
+# GROUP CONTENTS
+
+
+
+[t-no___001-00____Gr_No_Head2.Rmd](../t-no___001-00____Gr_No_Head2.Rmd)
+
+
+
+--------------------------------------------------
+--------------------------------------------------
 
 
 

@@ -1,5 +1,5 @@
 ---
-title: 'PrDocGrp~ Project Doc group'
+title: 'PD2~ Proj Do 2'
 author: 'sjwest'
 output:
   html_document:
@@ -14,11 +14,11 @@ output:
 # PROJECT SUMMARY
 
 
-[00-PROG-PDN](_index_00-PROG-PDN.Rmd)
+[0-PR-PDN](_index_0-PR-PDN.Rmd)
 
 
 
-*Welcome to the Project Doc group Project!*
+*Welcome to the Proj Do 2 Project!*
 
 
 >>>> succinct description of project scope in one sentence - what does this project hope to achieve?
@@ -440,11 +440,7 @@ __TASK_OVERVIEW__
 
 
 
-**[test-notes~001-00~_Group_Note_Header](PrDocGrp/test-notes/test-notes~001-00~_Group_Note_Header.Rmd)**
-
-
-
-*[test-notes~001-001~_SubNote_01](PrDocGrp/test-notes/test-notes~001-00/test-notes~001-001~_SubNote_01.Rmd)*
+**[tn-j___001____PN_jou](PD/tn-j/tn-j___001____PN_jou.Rmd)**
 
 
 **SUMMARY**

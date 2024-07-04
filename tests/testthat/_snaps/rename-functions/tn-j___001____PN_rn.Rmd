@@ -1,5 +1,5 @@
 ---
-title: 'test-notes~001-002~ SubNote2 02'
+title: 'tn-j___001~ PN jou'
 author: 'sjwest'
 output:
   html_document:
@@ -20,17 +20,17 @@ output:
 
 
 
-## PrDocSub : EXAMPLE TASK TITLE
+## PD : EXAMPLE TASK TITLE
 
 
-[PrDocSub~_Project_Doc_sub](../../../PrDocSub~_Project_Doc_sub.Rmd)
+[PD____Proj_Do](../../PD____Proj_Do.Rmd)
 
 
-* [GOAL: EXAMPLE GOAL TITLE](../../../PrDocSub~_Project_Doc_sub.Rmd#goal-example-goal-title)
+* [GOAL: EXAMPLE GOAL TITLE](../../PD____Proj_Do.Rmd#goal-example-goal-title)
 
-    + [DELIVERABLE: EXAMPLE DEL TITLE](../../../PrDocSub~_Project_Doc_sub.Rmd#deliverable-example-del-title)
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD____Proj_Do.Rmd#deliverable-example-del-title)
 
-        - [TASK: EXAMPLE TASK TITLE](../../../PrDocSub~_Project_Doc_sub.Rmd#task-example-task-title)
+        - [TASK: EXAMPLE TASK TITLE](../../PD____Proj_Do.Rmd#task-example-task-title)
 
 
 
@@ -65,19 +65,6 @@ output:
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
-
-
-
-# GROUP CONTENTS
-
-
-
-[test-notes~001-00~_Group_Note_Header2.Rmd](../test-notes~001-00~_Group_Note_Header2.Rmd)
-
-
-
---------------------------------------------------
---------------------------------------------------
 
 
 

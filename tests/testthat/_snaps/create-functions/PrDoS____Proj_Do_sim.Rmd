@@ -1,5 +1,5 @@
 ---
-title: 'PrDocSim~ Project Doc simple'
+title: 'PrDoS~ Proj Do sim'
 author: 'sjwest'
 output:
   html_document:
@@ -14,11 +14,11 @@ output:
 # PROJECT SUMMARY
 
 
-[00-PROG-PDN](_index_00-PROG-PDN.Rmd)
+[0-PR-PDN](_index_0-PR-PDN.Rmd)
 
 
 
-*Welcome to the Project Doc simple Project!*
+*Welcome to the Proj Do sim Project!*
 
 
 >>>> succinct description of project scope in one sentence - what does this project hope to achieve?
@@ -440,7 +440,7 @@ __TASK_OVERVIEW__
 
 
 
-**[test-notes~001~_Project_Note](PrDocSim/test-notes/test-notes~001~_Project_Note.Rmd)**
+**[t-no___001____Proj_No](PrDoS/t-no/t-no___001____Proj_No.Rmd)**
 
 
 **SUMMARY**

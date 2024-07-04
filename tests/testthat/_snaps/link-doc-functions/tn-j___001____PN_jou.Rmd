@@ -1,0 +1,141 @@
+---
+title: 'tn-j___001~ PN jou'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PD : EXAMPLE TASK TITLE
+
+
+[PD____Proj_Do](../../PD____Proj_Do.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PD____Proj_Do.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD____Proj_Do.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PD____Proj_Do.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PD2 : EXAMPLE TASK TITLE
+
+
+[PD2____Proj_Do_2](../../PD2____Proj_Do_2.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PD2____Proj_Do_2.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD2____Proj_Do_2.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PD2____Proj_Do_2.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

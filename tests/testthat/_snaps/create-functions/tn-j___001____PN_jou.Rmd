@@ -1,5 +1,5 @@
 ---
-title: 'test-notes-content~001~ Project Note content'
+title: 'tn-j___001~ PN jou'
 author: 'sjwest'
 output:
   html_document:
@@ -20,17 +20,17 @@ output:
 
 
 
-## PrDocCon : EXAMPLE TASK TITLE
+## PDJou : EXAMPLE TASK TITLE
 
 
-[PrDocCon~_Project_Doc_content](../../PrDocCon~_Project_Doc_content.Rmd)
+[PDJou____Proj_Do_jou](../../PDJou____Proj_Do_jou.Rmd)
 
 
-* [GOAL: EXAMPLE GOAL TITLE](../../PrDocCon~_Project_Doc_content.Rmd#goal-example-goal-title)
+* [GOAL: EXAMPLE GOAL TITLE](../../PDJou____Proj_Do_jou.Rmd#goal-example-goal-title)
 
-    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PrDocCon~_Project_Doc_content.Rmd#deliverable-example-del-title)
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PDJou____Proj_Do_jou.Rmd#deliverable-example-del-title)
 
-        - [TASK: EXAMPLE TASK TITLE](../../PrDocCon~_Project_Doc_content.Rmd#task-example-task-title)
+        - [TASK: EXAMPLE TASK TITLE](../../PDJou____Proj_Do_jou.Rmd#task-example-task-title)
 
 
 
@@ -87,25 +87,6 @@ output:
 
 
 
->>>>>>>>>>>>>>>>>>>>>>>>>
->>>>>>>> CONTENT >>>>>>>>
->>>>>>>>>>>>>>>>>>>>>>>>>
-
-
-  CONTENT_TITLE: Example Content
-
-
-  CONTENT_DESCRIPTION: 
-
-  Example Content Description
-
-
-  COUNTENT_SOURCE: [example-content.Rmd](test-notes-content~001/example-content/example-content.Rmd)
-
-
->>>>>>>>>>>>>>>>>>>>>>>>>
->>>>>>>> CONTENT >>>>>>>>
->>>>>>>>>>>>>>>>>>>>>>>>>
 
 
 
