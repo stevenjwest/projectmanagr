@@ -372,11 +372,16 @@ insert_content <- function(selectionSource, selectionDestination) {
   contentSourceContents <- read_file(contentDeclaration$contentSource)
 
 
+  #### Form Links ####
 
   # form a link to the Content in the Source Note from destination note
   contentLink <- create_hyperlink_section(basename(sourceNoteRmdPath), contentDeclaration$projectNoteContentHeader,
                                           sourceNoteRmdPath, destNoteRmdPath)
 
+  # form relative link to Source Note from Content Declaration
+  # if this appears in concent declaration need to update it when copying to destination note
+  contentDeclToSourceLink <- create_hyperlink(basename(sourceNoteRmdPath),
+                                              sourceNoteRmdPath, contentDeclaration$contentSource)
 
   #### Replace Template Params ####
 
@@ -407,7 +412,6 @@ insert_content <- function(selectionSource, selectionDestination) {
   cat( "  Inserted Content into Project Note: ", destNoteRmdPath, "\n" )
 
 }
-
 
 
 #' Insert lines into a Project Note
