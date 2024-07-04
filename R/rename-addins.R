@@ -703,7 +703,9 @@ addin_rename_project_doc_task <- function(selection, settings, orgPath) {
 
 
 
-#' ADDIN to rename Project File Header
+#' ADDIN to rename Project File Section Header
+#'
+#' Section Headers defined in Markdown plasintext files, beginning wiht `#`.
 #'
 #' @param selection Selection made on Project Doc Task.
 #'
