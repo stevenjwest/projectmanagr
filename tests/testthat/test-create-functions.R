@@ -2,25 +2,31 @@
 
 #### generate test organisation temp directory ####
 
-# define temporary directory with defined name - for reproducible testing
-# extract tempdir parts [1] + [2] to avoid issue with check() - that places tempdir() in a randomly named dir
+# define temporary directory with reproducible name - for reproducible testing
+# extract tempdir parts [1] + [2] to avoid issue with check()
+# tempdir() defines a RANDOMLY NAMED dir in the tmp directory! Avoid using this & use "Rsess" instead
 tmpdir <- fs::path( unlist(fs::path_split(tempdir()))[1], unlist(fs::path_split(tempdir()))[2], "Rsess")
 fs::dir_create(tmpdir)
 withr::defer(fs::dir_delete(tmpdir), envir = parent.frame()) # delete once tests finish
 
 
-test_that("Project Org is created correctly on filesystem", {
+test_that("create_project_org creates Org correctly", {
 
-  # create test Organisation
-  orgName <- "_TEST_ORG"
+  # define args
+  orgName <- "_T_O"
   orgutime <- "2024-02-22:09:56" # for consistent datetime added to status.yml snapshot
+
+  # create test Organisation - using local helper function and withr package
   orgDir <- local_create_org(orgName, orgutime, orgParentPath=tmpdir)
+
+  # define outputs to check
   orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
   settingsYml <- fs::path(orgDir, ".config", "settings.yml")
   statusYml <- fs::path(orgDir, ".config", "status.yml")
   addinsJson <- fs::path(orgDir, ".config", "addins.json")
   volumesRmd <- fs::path(orgDir, "volumes", "volumes.Rmd")
 
+  # check outputs
   # check org name correctly generates index Rmd
   expect_true( fs::file_exists(orgIndex) )
 
@@ -39,10 +45,10 @@ test_that("Project Org is created correctly on filesystem", {
 
 
 
-test_that("Programme is created correctly on filesystem", {
+test_that("create_programme creates programme correctly", {
 
-  # create test Organisation
-  orgName <- "_TEST_ORG_P"
+  # setup test Organisation
+  orgName <- "_T_O_P"
   orgutime <- "2024-02-22:09:56" # for consistent datetime added to status.yml snapshot
   orgDir <- local_create_org(orgName, orgutime, orgParentPath=tmpdir)
   orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
@@ -51,10 +57,14 @@ test_that("Programme is created correctly on filesystem", {
   addinsJson <- fs::path(orgDir, ".config", "addins.json")
   volumesRmd <- fs::path(orgDir, "volumes", "volumes.Rmd")
 
-  # create test Programme
-  progName <- "00-PROG"
+  # define args
+  progName <- "0-PR"
   progctime <- "2024-02-22:09:58" # for consistent datetime added to status.yml snapshot
+
+  # create test programme - using local helper function and withr package
   progDir <- local_create_prog(progName, orgDir, progctime)
+
+  # define outputs to check
   progIndex <- fs::path(progDir, paste0("_index_", progName, ".Rmd"))
 
   # check programme name correctly generates index Rmd
@@ -91,7 +101,7 @@ test_that("Programme is created correctly on filesystem", {
 tmpdir <- fs::path(dirname(tempdir()), "Rsess")
 fs::dir_create(tmpdir)
 
-orgName <- "_TEST_ORG_PDN"
+orgName <- "_T_O_PDN"
 orgutime <- "2024-02-22:09:56" # for consistent datetime added to status.yml snapshot
 orgDir <- local_create_org(orgName, orgutime, orgParentPath=tmpdir)
 orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
@@ -103,7 +113,7 @@ volumesRmd <- fs::path(orgDir, "volumes", "volumes.Rmd")
 settings <- yaml::yaml.load( yaml::read_yaml( settingsYml ) )
 
 # create test Programme
-progName <- "00-PROG-PDN"
+progName <- "0-PR-PDN"
 progctime <- "2024-02-22:09:58" # for consistent datetime added to status.yml snapshot
 progDir <- local_create_prog(progName, orgDir, progctime)
 progIndex <- fs::path(progDir, paste0("_index_", progName, ".Rmd"))
@@ -111,11 +121,11 @@ progIndex <- fs::path(progDir, paste0("_index_", progName, ".Rmd"))
 
 
 
-test_that("Project Doc is created correctly on filesystem", {
+test_that("create_project_doc creates project doc correctly", {
 
   # create test Project Doc
-  projectDocPrefix <- "PrDoc"
-  projectDocName <- "Project_Doc"
+  projectDocPrefix <- "PDo"
+  projectDocName <- "Proj_Do"
   projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
@@ -141,11 +151,11 @@ test_that("Project Doc is created correctly on filesystem", {
 
 
 
-test_that("Project Notes (simple) created & linked correctly", {
+test_that("create_project_note creates & links simple Project Notes correctly", {
 
   # create test Project Doc
-  projectDocPrefix <- "PrDocSim"
-  projectDocName <- "Project_Doc_simple"
+  projectDocPrefix <- "PrDoS"
+  projectDocName <- "Proj_Do_sim"
   projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
@@ -153,8 +163,8 @@ test_that("Project Notes (simple) created & linked correctly", {
   taskLine <- local_modify_project_doc_gdt_titles(settingsYml, projectDocRmd)
 
   # create test Project Note : simple
-  projectNoteName <- "Project_Note"
-  projectNotePath <- fs::path(projectDocDir, 'test-notes')
+  projectNoteName <- "Proj_No"
+  projectNotePath <- fs::path(projectDocDir, 't-no')
   fs::dir_create(projectNotePath)
   projectNoteRmd <- local_create_project_note_simple(projectNoteName, projectNotePath,
                                                      projectDocRmd, taskLine)
@@ -182,11 +192,11 @@ test_that("Project Notes (simple) created & linked correctly", {
 
 
 
-test_that("Project Notes (group) created & linked correctly", {
+test_that("create_group_note creates & links group Project Notes correctly", {
 
   # create test Project Doc
-  projectDocPrefix <- "PrDocGrp"
-  projectDocName <- "Project_Doc_group"
+  projectDocPrefix <- "PrDoG"
+  projectDocName <- "Proj_Do_gr"
   projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
@@ -194,16 +204,16 @@ test_that("Project Notes (group) created & linked correctly", {
   taskLine <- local_modify_project_doc_gdt_titles(settingsYml, projectDocRmd)
 
   # create test Project Note : group
-  groupNoteName <- "Group_Note_Header"
-  groupNotePath <- fs::path(projectDocDir, 'test-notes')
+  groupNoteName <- "Gr_No_Head"
+  groupNotePath <- fs::path(projectDocDir, 't-no')
   fs::dir_create(groupNotePath)
-  subNoteName <- "SubNote_01"
+  subNoteName <- "SNo_01"
   groupNoteRmd <- local_create_project_note_group(groupNoteName, groupNotePath,
                                                      projectDocRmd, taskLine, subNoteName)
 
   groupNoteDir <- get_project_note_dir_path(groupNoteRmd, settings)
 
-  subNoteRmd <- fs::path(groupNoteDir, paste0(basename(groupNotePath), "~001-001", "~_", subNoteName, ".Rmd") )
+  subNoteRmd <- fs::path(groupNoteDir, paste0(basename(groupNotePath), "___001-001", "____", subNoteName, ".Rmd") )
   subNoteDir <- get_project_note_dir_path(subNoteRmd, settings)
 
 
@@ -237,11 +247,11 @@ test_that("Project Notes (group) created & linked correctly", {
 
 
 
-test_that("Project Notes (sub) created & linked correctly", {
+test_that("create_sub_note creates & links sub Project Notes correctly", {
 
   # create test Project Doc
-  projectDocPrefix <- "PrDocSub"
-  projectDocName <- "Project_Doc_sub"
+  projectDocPrefix <- "PrDoSu"
+  projectDocName <- "Proj_Do_su"
   projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
@@ -249,22 +259,22 @@ test_that("Project Notes (sub) created & linked correctly", {
   taskLine <- local_modify_project_doc_gdt_titles(settingsYml, projectDocRmd)
 
   # create test Project Note : group
-  groupNoteName <- "Group_Note_Header2"
-  groupNotePath <- fs::path(projectDocDir, 'test-notes')
+  groupNoteName <- "Gr_No_Head2"
+  groupNotePath <- fs::path(projectDocDir, 't-no')
   fs::dir_create(groupNotePath)
-  subNoteName <- "SubNote2_01"
+  subNoteName <- "SNo2_01"
   groupNoteRmd <- local_create_project_note_group(groupNoteName, groupNotePath,
                                                   projectDocRmd, taskLine, subNoteName)
 
   groupNoteDir <- get_project_note_dir_path(groupNoteRmd, settings)
 
-  subNoteRmd <- fs::path(groupNoteDir, paste0(basename(groupNotePath), "~001-001", "~_", subNoteName, ".Rmd") )
+  subNoteRmd <- fs::path(groupNoteDir, paste0(basename(groupNotePath), "___001-001", "____", subNoteName, ".Rmd") )
   subNoteDir <- get_project_note_dir_path(subNoteRmd, settings)
 
   # get link to group header note from project doc
   headerLinkLine <- local_get_project_doc_file_link_line(projectDocRmd, groupNoteRmd, settings)
 
-  subNoteName2 <- "SubNote2_02"
+  subNoteName2 <- "SNo2_02"
   subNotePath <- groupNoteDir
 
   subNoteRmd2 <- local_create_project_note_sub(subNoteName2, subNotePath,
@@ -317,11 +327,11 @@ test_that("Project Notes (sub) created & linked correctly", {
 
 
 
-test_that("Content created correctly in Project Note", {
+test_that("create_content creates insertable content correctly in Project Note", {
 
   # create test Project Doc for content
-  projectDocPrefix <- "PrDocCon"
-  projectDocName <- "Project_Doc_content"
+  projectDocPrefix <- "PDCon"
+  projectDocName <- "Proj_Do_con"
   projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
@@ -329,15 +339,15 @@ test_that("Content created correctly in Project Note", {
   taskLine <- local_modify_project_doc_gdt_titles(settingsYml, projectDocRmd)
 
   # create test Project Note for content insert : simple
-  projectNoteName <- "Project_Note_content"
-  projectNotePath <- fs::path(projectDocDir, 'test-notes-content')
+  projectNoteName <- "PN_con"
+  projectNotePath <- fs::path(projectDocDir, 'tn-c')
   fs::dir_create(projectNotePath)
   projectNoteRmd <- local_create_project_note_simple(projectNoteName, projectNotePath,
                                                      projectDocRmd, taskLine)
   projectNoteDir <- get_project_note_dir_path(projectNoteRmd, settings)
 
   # create content in Project Note
-  contentName <- "example-content"
+  contentName <- "ex-con"
   contentDescription <- "Example Content Description"
   contentSourcePath <- projectNoteDir
   noteLine <- 90 # set to a line below the Introduction default header but within Rmd lines
@@ -367,6 +377,57 @@ test_that("Content created correctly in Project Note", {
 
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file( contentRmd )
+
+})
+
+
+
+test_that("create_weekly_journal creates a journal Rmd", {
+
+  # create test Project Doc for content
+  projectDocPrefix <- "PDJou"
+  projectDocName <- "Proj_Do_jou"
+  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
+  projectDocDir <- fs::path(progDir, projectDocPrefix)
+
+  # modify gdt titles for unique headers - so can test links!
+  taskLine <- local_modify_project_doc_gdt_titles(settingsYml, projectDocRmd)
+
+  # create test Project Note for content insert : simple
+  projectNoteName <- "PN_jou"
+  projectNotePath <- fs::path(projectDocDir, 'tn-j')
+  fs::dir_create(projectNotePath)
+  projectNoteRmd <- local_create_project_note_simple(projectNoteName, projectNotePath,
+                                                     projectDocRmd, taskLine)
+  projectNoteDir <- get_project_note_dir_path(projectNoteRmd, settings)
+
+  # create journal in Org
+  date=lubridate::ymd("2024-05-10")
+  organisationPath=orgDir
+
+  journalRmd <- local_create_journal(date, organisationPath)
+
+  ## TESTS ##
+
+  # check project Doc Rmd & Dir generated
+  expect_true(  fs::file_exists( projectDocRmd )  )
+  expect_true(  fs::dir_exists( projectDocDir )  )
+
+  # check Project Doc Rmd file contents are correctly filled
+  expect_snapshot_file( projectDocRmd )
+
+  # check project Note Rmd & Dir generated
+  expect_true(  fs::file_exists( projectNoteRmd )  )
+  expect_true(  fs::dir_exists( projectNoteDir )  )
+
+  # check Project Note Rmd file contents are correctly filled
+  expect_snapshot_file( projectNoteRmd )
+
+  # check content Rmd generated (Rmd is inside Dir, so do not need to separately check contentDir)
+  expect_true(  fs::file_exists( journalRmd )  )
+
+  # check Project Note Rmd file contents are correctly filled
+  expect_snapshot_file( journalRmd )
 
 })
 
