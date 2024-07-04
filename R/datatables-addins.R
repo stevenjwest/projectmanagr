@@ -380,7 +380,7 @@ addin_datatable_create <- function() {
 
   }
 
-}
+} #### _______________________________________________ ####
 
 
 
@@ -459,10 +459,11 @@ addin_datatable_create_from_file <- function() {
 
   }
 
+  #### view gadget ####
   viewer <- dialogViewer("Create Datatable from File", width = 1000, height = 800)
   runGadget(ui, server, viewer = viewer)
 
-}
+} #### _______________________________________________ ####
 
 
 
@@ -981,7 +982,7 @@ addin_datatable_add_data <- function() {
     runGadget(ui, server, viewer = viewer)
 
   }
-}
+} #### _______________________________________________ ####
 
 
 
@@ -1191,7 +1192,7 @@ addin_datatable_add_groups <- function() {
 
   }
 
-}
+} #### _______________________________________________ ####
 
 
 #' Format group declaration
@@ -1565,7 +1566,7 @@ addin_datatable_resample <- function() {
 
   }
 
-}
+} #### _______________________________________________ ####
 
 
 
