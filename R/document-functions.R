@@ -2222,7 +2222,7 @@ get_content_description <- function(contentDeclContents, settings, orgPath) {
   descriptionLine <- grep_line_index(load_param_vector(settings[["ContentDescriptionField"]], orgPath),
                                contentDeclContents)
 
-  # get descriptionLine in contentDeclContents: will contain ContentDescriptionField
+  # get sourceLine in contentDeclContents: will contain ContentSourceField
   sourceLine <- grep_line_index(load_param_vector(settings[["ContentSourceField"]], orgPath),
                                 contentDeclContents)
 
@@ -2322,10 +2322,10 @@ find_contents_org_tree <- function(orgPath, settings) {
   weeklyjournalPath <- get_weekly_journal_dir(orgPath, settings)
 
   # get status yml
-  status <- get_status_yml(orgPath, settings)
+  #status <- get_status_yml(orgPath, settings)
 
   # read status information for CONTENTS if it exists
-  contentsStatus <- status[['CONTENTS']]
+  #contentsStatus <- status[['CONTENTS']]
 
   contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
   # as this is called in a for loop, better to open this file external to that loop and pass as param
@@ -2393,7 +2393,12 @@ find_contents_org_tree <- function(orgPath, settings) {
 #'
 #' @param contentsCache Named List of contents previous cached - comprising the
 #' contentRetrievalDateTime, and then contents - list of paths to insertable
-#' contents files.
+#' contents files.  First level in list is the SOURCE DIR - Org Path - shown with
+#' function call `names(contentsCache)`.  Second level is
+#' "contentRetrievalDateTime" & "contents" in Org Path - shown with call to
+#' `names(contentsCahce[[1]])`, and the actual contents declaration titles are accessed
+#' with a call to `names(contentsCache[[1]][['contents']])`
+#'
 #' @param orgPath Organisation path - also used to search for content declatations
 #' within project notes.
 #'
@@ -2411,7 +2416,7 @@ update_contents_org_tree <- function(contentsCache, orgPath, settings) {
   dtStr <- lapply(X = contentsCache, FUN = `[[`, "contentRetrievalDateTime")
   dt <- lubridate::ymd_hm(dtStr) # convert to datetime
 
-  contents <- list() # to store all retrieved contents metadata in
+  #contents <- list() # to store all retrieved contents metadata in
 
   # get config templates settings yml
   confPath <- get_config_dir(orgPath)
@@ -2424,10 +2429,10 @@ update_contents_org_tree <- function(contentsCache, orgPath, settings) {
   weeklyjournalPath <- get_weekly_journal_dir(orgPath, settings)
 
   # get status yml
-  status <- get_status_yml(orgPath, settings)
+  #status <- get_status_yml(orgPath, settings)
 
   # read status information for CONTENTS if it exists
-  contentsStatus <- status[['CONTENTS']]
+  #contentsStatus <- status[['CONTENTS']]
 
   contentSepContents <- load_param_vector(settings[["ContentSep"]], orgPath)
   # as this is called in a for loop, better to open this file external to that loop and pass as param
@@ -2451,11 +2456,21 @@ update_contents_org_tree <- function(contentsCache, orgPath, settings) {
   for( f in filePaths) {
     pr <- get_content_declarations(f, settings, orgPath)
     #pr <- get_contents(f, contentSepContents, settings, orgPath)
-    contents[names(pr)] <- pr
+
+    # first REMOVE all references in contentsCache to content declarations of filePath f
+    contentsCache[[1]][['contents']] <-
+          contentsCache[[1]][['contents']][ ! startsWith(names(contentsCache[[1]][['contents']]), f) ]
+
+    if( length(pr) > 0 ) {
+      # if contents have been found - add these to contentsCache
+      contentsCache[[1]][['contents']]  <- c(contentsCache[[1]][['contents']] , pr)
+    }
+    # over-write the contents declarations in contentsCache directly
+    #contents[names(pr)] <- pr
   }
 
-  # return structured list
-  contents
+  # return structured lists : contentsCache 'contents'
+  contentsCache[[1]][['contents']]
 
 }
 
