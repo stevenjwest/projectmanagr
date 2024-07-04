@@ -25,7 +25,7 @@ in the Rmd file.}
 Creates add dataSample DataTable vector. The Sample DataTable will contain an
 initial ID column containing the IDs vector, and set of extra group
 data columns as specified in the data_cols vector.  If the table exceeds
-\code{dt_length} characters (default 120), then the table is split into multiple
+\code{dt_length} characters (default 100), then the table is split into multiple
 tables, with IDs as first col, and subsequent group data_cols given in
 subsequent tables.
 }

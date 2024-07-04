@@ -9,7 +9,11 @@ update_contents_org_tree(contentsCache, orgPath, settings)
 \arguments{
 \item{contentsCache}{Named List of contents previous cached - comprising the
 contentRetrievalDateTime, and then contents - list of paths to insertable
-contents files.}
+contents files.  First level in list is the SOURCE DIR - Org Path - shown with
+function call \code{names(contentsCache)}.  Second level is
+"contentRetrievalDateTime" & "contents" in Org Path - shown with call to
+\code{names(contentsCahce[[1]])}, and the actual contents declaration titles are accessed
+with a call to \code{names(contentsCache[[1]][['contents']])}}
 
 \item{orgPath}{Organisation path - also used to search for content declatations
 within project notes.}

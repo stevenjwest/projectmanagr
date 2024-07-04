@@ -2,7 +2,7 @@
 % Please edit documentation in R/rename-addins.R
 \name{addin_rename_project_file_header}
 \alias{addin_rename_project_file_header}
-\title{ADDIN to rename Project File Header}
+\title{ADDIN to rename Project File Section Header}
 \usage{
 addin_rename_project_file_header(selection, settings, orgPath)
 }
@@ -14,5 +14,5 @@ addin_rename_project_file_header(selection, settings, orgPath)
 \item{orgPath}{The path to the root of the organisation}
 }
 \description{
-ADDIN to rename Project File Header
+Section Headers defined in Markdown plasintext files, beginning wiht \verb{#}.
 }

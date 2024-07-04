@@ -42,6 +42,6 @@ group_names vector.
 }
 \details{
 If the table exceeds dt_length characters
-(default 120), then the table is split into multiple tables, with IDs as
+(default 100), then the table is split into multiple tables, with IDs as
 first col, and subsequent group_names given in subsequent tables.
 }

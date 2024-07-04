@@ -18,9 +18,9 @@ a tibble containing summary of all EXISTING samples, with attr "path" - the pare
 from which the samples were acquired.
 }
 \description{
-Search through path recursively to find all Rmd files that contain datatables.
-Summarise all EXISTING samples that are declared in them (not resampled,
-exported, disposed).
+Search through path recursively to find all Project Note Rmd files that
+contain datatables. Summarise all EXISTING samples that are declared in them
+(not resampled, exported, disposed).
 }
 \details{
 SUMMARY tibble includes following columns:
@@ -33,9 +33,9 @@ where the tissue comes from/its properties - as using functional names for
 experiments eg. \verb{NRF~005-001~_SLEIGH_CNS_GARS_01_SC-LUM} know tissue is from
 James Sleigh, and its GARS mutant or WT control.
 \item PATH: The absolute path to the Experiment DIR ??
-\item LOCATION : values of last \verb{_location} col - where was the samples last known
+\item LOCATION : values of last \verb{_loc} col - where was the samples last known
 location?  Only defined last if currently in storage!
-\item CONDITION : value of last \verb{_condition} col - what was the samples last
+\item CONDITION : value of last \verb{_con} col - what was the samples last
 known condition?
 }
 

@@ -44,7 +44,7 @@ specified line.  The Sample DataTable will contain an initial ID column
 containing all the EXISTING IDs (IDs that have been resampled or exported
 will automatically be EXCLUDED), and an optional set of extra data columns as
 specified in the data_cols vector.  If the table exceeds dt_length characters
-(default 120), then the table is split into multiple tables, with IDs as
+(default 100), then the table is split into multiple tables, with IDs as
 first col, and subsequent data_cols given in subsequent tables.
 }
 \details{

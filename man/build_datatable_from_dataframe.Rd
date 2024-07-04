@@ -34,7 +34,7 @@ order - so ID\link{1} gets data\link{1}, data\link{2}; ID\link{2} gets data\link
 \item{datatable_name}{String of data table name - default "samples".}
 
 \item{MAX_DATATABLE_LENGTH}{Int of data table max length in characters.
-Typically 120.}
+Typically 100.}
 
 \item{DATATABLE_SPACER_CHAR}{Character used to underline column headers.
 Typically '='.}
@@ -50,7 +50,7 @@ Handles dataframes with differnet numbers of multi-rows across different IDs.
 Creates a new Sample DataTable vector. The Sample DataTable will contain an
 initial ID column containing the IDs vector, and an optional set of extra
 data columns as specified in the data_cols vector.  If the table exceeds
-\code{dt_length} characters (default 120), then the table is split into multiple
+\code{dt_length} characters (default 100), then the table is split into multiple
 tables, with IDs as first col, and subsequent data_cols given in subsequent
 tables.
 

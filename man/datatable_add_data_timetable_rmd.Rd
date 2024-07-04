@@ -34,7 +34,7 @@ names. Must EXIST in contents and be declared from datatable_name IDs!}
 Creates a new Sample DataTable in specified Rmd file at specified line.
 The Sample DataTable will contain an initial ID column containing the
 IDs vector, and an optional set of extra data columns as specified in the
-data_cols vector.  If the table exceeds dt_length characters (default 120),
+data_cols vector.  If the table exceeds dt_length characters (default 100),
 then the table is split into multiple tables, with IDs as first col, and
 subsequent data_cols given in subsequent tables.
 }

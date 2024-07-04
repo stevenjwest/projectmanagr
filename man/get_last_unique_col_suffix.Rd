@@ -4,7 +4,7 @@
 \alias{get_last_unique_col_suffix}
 \title{Get last unique data col value based on suffix}
 \usage{
-get_last_unique_col_suffix(dg, col_suffix = "_location")
+get_last_unique_col_suffix(dg, col_suffix = "_loc")
 }
 \arguments{
 \item{dg}{datatable grouped by ID desired to summarise by.}
