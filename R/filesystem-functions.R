@@ -35,6 +35,14 @@ find_org_directory <- function( path ) {
     tempPath <- get_template_dir(path)
   }
 
+  if( path == "" ) {
+    if( rstudioapi::isAvailable() ) {
+      # try to find orgPath from active document path
+      WD <- rstudioapi::getSourceEditorContext()$path
+      path <- find_org_directory( WD )
+    }
+  }
+
   path
 }
 
@@ -163,8 +171,13 @@ get_file_type <- function( filePath, settings ) {
     TYPE <- "UNKNOWN"
 
   } else if( basename(dirname(filePath)) != prefixStr ) {
+
     # project docs can be defined by a mismatch of parent directory name and prefix STRING name
-    TYPE <- "DOC"
+    if( startsWith(basename(dirname(filePath)), prefixStr) == TRUE ) {
+      TYPE <- "SUB" # subtle bug: sub note parent only STARTS WITH prefixStr, so deal with this exception
+    } else {
+      TYPE <- "DOC"
+    }
 
   } else if( grepl(headerTypeStr, prefixSep, fixed = TRUE) ) {
     # headerNote will contain the full headerTypeStr in prefixSep
@@ -823,7 +836,7 @@ find_prog_dirs <- function( orgPath, settings ) {
 
   progPaths <- fs::path(orgPath, progNames$PROGRAMMES)
 
-  return(progPaths)
+  progPaths
 
 }
 
@@ -1026,8 +1039,7 @@ get_weekly_journal_dir <- function(orgPath, settings) {
 get_project_doc_dir_path <- function( projectDocPath, settings ) {
 
   substring(projectDocPath, first=1,
-            last=regexpr(settings[["ProjectPrefixSep"]], projectDocPath, fixed=TRUE)
-                  -(nchar(settings[["ProjectPrefixSep"]])-1) )
+            last=regexpr(settings[["ProjectPrefixSep"]], projectDocPath, fixed=TRUE)-1 )
 
 }
 
@@ -1039,8 +1051,7 @@ get_project_doc_dir_path <- function( projectDocPath, settings ) {
 get_project_note_dir_path <- function( projectNoteFilePath, settings ) {
 
   substring(projectNoteFilePath, first=1,
-            last=regexpr(settings[["ProjectPrefixSep"]], projectNoteFilePath, fixed=TRUE)
-                  -(nchar(settings[["ProjectPrefixSep"]])-1) )
+            last=regexpr(settings[["ProjectPrefixSep"]], projectNoteFilePath, fixed=TRUE)-1 )
 
 }
 
