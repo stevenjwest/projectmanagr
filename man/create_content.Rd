@@ -53,8 +53,8 @@ This contains key parameters to declare Insertable Content:
 content to be inserted by the \code{insert_content()} function.
 \item \code{CONTENT_DESCRIPTION} gives a succinct description of the insertable content
 what it contains & how it can be used.
-\item \code{CONTENT_SOURCE_LINK} relative path to project note DIR for the content
-source Rmd file.
+\item \code{CONTENT_SOURCE_LINK} relative path to insertable content Rmd from the content
+source Project Note Rmd file.
 }
 
 The actual insertable content is located in a separate Rmd, pointed to by the
@@ -67,8 +67,10 @@ ordering, etc).
 
 Content is any templated insertable text.  Typically in ProjectManager it is
 used to define a set of Standard Operating Procedures (SOPs) and/or LOG
-Sections that record Protocol execution.  The Content Declaration is defined
-between specific delimiters, defined in \code{CONTENT_SEP.txt}.
+Sections that record Protocol execution.
+
+The Content Declaration in a source Project Note is defined
+between specific delimiters; these delimiters are defined in \code{CONTENT_SEP.txt}.
 
 Content defined in a source Project Note can be inserted into new Project
 Notes, using the \code{insert_content()} function.

@@ -31,10 +31,6 @@ values.}
 Default is "Org-Template.Rmd".}
 
 \item{utime}{Add update time to write to status.yml - for automated testing.}
-
-\item{organisationSiteDirectory}{an absolute path that defines where the compiled
-HTML from the organisation is written. If left blank, the default site directory
-will be the organisation directory path, with directory name suffixed with \verb{_site}.}
 }
 \value{
 orgIndexPath The path to the organisation index Rmd file.

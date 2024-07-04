@@ -24,11 +24,6 @@
 #'
 #' @param orgTitle defines the title of the Organisation, in its document.
 #'
-#' @param organisationSiteDirectory an absolute path that defines where the compiled
-#' HTML from the organisation is written. If left blank, the default site directory
-#' will be the organisation directory path, with directory name suffixed with `_site`.
-#'
-#'
 #' @param settingsYamlPath A VALID YAML file for establishing the projectmanagr
 #' organisation layout.  For this function the SitePath VolumesDir DocsDir ConfigDir
 #' & OrgIndexFileName params MUST be set.  Optionally all other params for the
@@ -43,9 +38,9 @@
 #' @return orgIndexPath The path to the organisation index Rmd file.
 #'
 #' @export
-create_project_org <- function( orgParentPath, orgName, orgTitle = "",
-                              settingsYamlPath = "", orgTemplate="Org-Template.Rmd",
-                              utime = "") {
+create_project_org <- function( orgParentPath, orgName, orgTitle="",
+                              settingsYamlPath="", orgTemplate="Org-Template.Rmd",
+                              utime="") {
 
 
   cat( "\nprojectmanagr::create_project_org():\n" )
@@ -93,23 +88,120 @@ create_project_org <- function( orgParentPath, orgName, orgTitle = "",
                                 .Platform$file.sep, "config",
                                 .Platform$file.sep, "settings.yml")
 
-    settings <- yaml::yaml.load( yaml::read_yaml( settingsYamlFile ) )
+    settings <- yaml::read_yaml( settingsYamlFile ) # assumes encoding is UTF-8
+    # to load other files - run yaml::yaml.load( yaml::read_yaml(path))
 
   } else {
 
     # settingsYamlFile supplied - load this and CHECK its valid
     settingsYamlFile <- settingsYamlPath
 
-    settings <- yaml::yaml.load( yaml::read_yaml( settingsYamlFile ) )
+    settings <- yaml::read_yaml( settingsYamlFile )# assumes encoding is UTF-8
 
     # CHECK YAML is valid - must contain all named elements
     #VolumesDir DocsDir ConfigDir OrgIndexFileName
+    # form list with: cat(paste0('"', names(settings), '" %in% names(settings) &&'), sep='\n')
     valid <- { "SiteDir" %in% names(settings) &&
-               "VolumesDir" %in% names(settings) &&
-               "VolumesFile" %in% names(settings) &&
-               "DocsDir" %in% names(settings) &&
-               "ConfigStatusYamlFile" %in% names(settings) &&
-               "OrgIndexFileNamePrefix" %in% names(settings) }
+        "FileType" %in% names(settings) &&
+        "VolumesDir" %in% names(settings) &&
+        "VolumesFile" %in% names(settings) &&
+        "ConfigStatusYamlFile" %in% names(settings) &&
+        "OrgIndexFileNamePrefix" %in% names(settings) &&
+        "OrgProgrammeHeader" %in% names(settings) &&
+        "OrgProgrammeFooter" %in% names(settings) &&
+        "OrgProgrammeSummarySep" %in% names(settings) &&
+        "ProgrammeProjectsDir" %in% names(settings) &&
+        "ProgIndexFileNamePrefix" %in% names(settings) &&
+        "ProgSummaryHeader" %in% names(settings) &&
+        "ProgSummaryTitle" %in% names(settings) &&
+        "ProgSummaryFooter" %in% names(settings) &&
+        "ProgProjectsHeader" %in% names(settings) &&
+        "ProgProjectsFooter" %in% names(settings) &&
+        "ProgProjectSummarySep" %in% names(settings) &&
+        "ProjectPrefixSep" %in% names(settings) &&
+        "ProjectIdentifierSep" %in% names(settings) &&
+        "ProjectIndexSep" %in% names(settings) &&
+        "ProjectSummaryHeader" %in% names(settings) &&
+        "ProjectSummaryTitle" %in% names(settings) &&
+        "ProjectSummaryFooter" %in% names(settings) &&
+        "ProjectGoalHeader" %in% names(settings) &&
+        "ProjectGoalTitle" %in% names(settings) &&
+        "ProjectGoalDivider" %in% names(settings) &&
+        "ProjectGoalSep" %in% names(settings) &&
+        "ProjectDeliverableHeader" %in% names(settings) &&
+        "ProjectDeliverableTitle" %in% names(settings) &&
+        "ProjectDeliverableDivider" %in% names(settings) &&
+        "ProjectDeliverableSep" %in% names(settings) &&
+        "ProjectTaskHeader" %in% names(settings) &&
+        "ProjectTaskTitle" %in% names(settings) &&
+        "ProjectTaskDivider" %in% names(settings) &&
+        "ProjectTaskSep" %in% names(settings) &&
+        "ProjectTaskFooter" %in% names(settings) &&
+        "ProjectLinkFormat" %in% names(settings) &&
+        "ProjectTaskLogHeader" %in% names(settings) &&
+        "ProjectTaskLogSep" %in% names(settings) &&
+        "NoteObjectivesSummarySectionHeader" %in% names(settings) &&
+        "NoteObjectivesTodoSectionHeader" %in% names(settings) &&
+        "NoteObjectivesHeader" %in% names(settings) &&
+        "NoteObjectivesSep" %in% names(settings) &&
+        "NoteObjectivesFooter" %in% names(settings) &&
+        "NoteStorageHeader" %in% names(settings) &&
+        "NoteStorageFooter" %in% names(settings) &&
+        "NoteLinkFormat" %in% names(settings) &&
+        "GroupNotePrefixSep" %in% names(settings) &&
+        "HeaderNotePrefix" %in% names(settings) &&
+        "HeaderNoteContentsHeader" %in% names(settings) &&
+        "HeaderNoteContentsFooter" %in% names(settings) &&
+        "HeaderLinkFormat" %in% names(settings) &&
+        "SubNotePrefixSep" %in% names(settings) &&
+        "SubNoteContentsHeader" %in% names(settings) &&
+        "SubNoteContentsFooter" %in% names(settings) &&
+        "SubNoteLinkFormat" %in% names(settings) &&
+        "NoteSummaryTitle" %in% names(settings) &&
+        "NoteGoalLinkLine" %in% names(settings) &&
+        "NoteDeliverableLinkLine" %in% names(settings) &&
+        "NoteTaskLinkLine" %in% names(settings) &&
+        "ContentTitleField" %in% names(settings) &&
+        "ContentDescriptionField" %in% names(settings) &&
+        "ContentSourceField" %in% names(settings) &&
+        "ContentSep" %in% names(settings) &&
+        "ContentInsertionTitle" %in% names(settings) &&
+        "ContentInsertionSep" %in% names(settings) &&
+        "ContentLinkFormat" %in% names(settings) &&
+        "ContentSummaryHeader" %in% names(settings) &&
+        "ContentSummaryFooter" %in% names(settings) &&
+        "ContentGraphicalAbstractHeader" %in% names(settings) &&
+        "ContentGraphicalAbstractSvg" %in% names(settings) &&
+        "ContentGraphicalAbstractFooter" %in% names(settings) &&
+        "ContentBackgroundHeader" %in% names(settings) &&
+        "ContentBackgroundFooter" %in% names(settings) &&
+        "ContentMaterialsHeader" %in% names(settings) &&
+        "ContentMaterialsFooter" %in% names(settings) &&
+        "ContentEquipmentSvg" %in% names(settings) &&
+        "ContentProcedureTemplateSvg" %in% names(settings) &&
+        "ContentResultsLogHeader" %in% names(settings) &&
+        "ContentResultsLogFooter" %in% names(settings) &&
+        "ContentTroubleshootingHeader" %in% names(settings) &&
+        "ContentTroubleshootingFooter" %in% names(settings) &&
+        "ContentSopHeader" %in% names(settings) &&
+        "ContentLogHeader" %in% names(settings) &&
+        "ContentLogSep" %in% names(settings) &&
+        "ContentFooter" %in% names(settings) &&
+        "TodoItemHeaderTemplate" %in% names(settings) &&
+        "TodoItemHeaderComplete" %in% names(settings) &&
+        "TodoItemHeader" %in% names(settings) &&
+        "TodoCollectionDir" %in% names(settings) &&
+        "TodoProgrammeSep" %in% names(settings) &&
+        "DateTimeZone" %in% names(settings) &&
+        "DateSplit" %in% names(settings) &&
+        "DateTimeSplit" %in% names(settings) &&
+        "RunUpdateOnStartup" %in% names(settings) &&
+        "RunCompileWithUpdate" %in% names(settings) &&
+        "FileTypeSuffix" %in% names(settings) &&
+        "WeeklyJournalDir" %in% names(settings) &&
+        "GadgetWidth" %in% names(settings) &&
+        "GadgetHeight" %in% names(settings) &&
+        "rstudioInternalStateDir" %in% names(settings) }
 
     if( valid == FALSE ) {
       stop( paste0("  settingsYamlPath is not a valid projectmanagr YAML file : ", settingsYamlPath))
@@ -1607,8 +1699,8 @@ create_sub_note <- function( subNoteName, subNotePath,
 #' * `CONTENT_DESCRIPTION` gives a succinct description of the insertable content
 #'  what it contains & how it can be used.
 #'
-#' * `CONTENT_SOURCE_LINK` relative path to project note DIR for the content
-#' source Rmd file.
+#' * `CONTENT_SOURCE_LINK` relative path to insertable content Rmd from the content
+#' source Project Note Rmd file.
 #'
 #' The actual insertable content is located in a separate Rmd, pointed to by the
 #' CONTENT_SOURCE_LINK parameter.  This is initially a blank Rmd document by
@@ -1620,8 +1712,10 @@ create_sub_note <- function( subNoteName, subNotePath,
 #'
 #' Content is any templated insertable text.  Typically in ProjectManager it is
 #' used to define a set of Standard Operating Procedures (SOPs) and/or LOG
-#' Sections that record Protocol execution.  The Content Declaration is defined
-#' between specific delimiters, defined in `CONTENT_SEP.txt`.
+#' Sections that record Protocol execution.
+#'
+#' The Content Declaration in a source Project Note is defined
+#' between specific delimiters; these delimiters are defined in `CONTENT_SEP.txt`.
 #'
 #' Content defined in a source Project Note can be inserted into new Project
 #' Notes, using the `insert_content()` function.
@@ -1693,14 +1787,14 @@ create_content <- function(selection, contentName, contentDescription,
     stop( paste0("  selection is not a suitable Project Note: ", selection[["filePath"]]) )
   }
 
-  # Check projectNoteName contains NO SPACES:
+  # Check contentName contains NO SPACES:
   if( grepl("\\s+", contentName) ) {
     stop( paste0("  contentName contains a SPACE: ", contentName) )
   }
 
-  # Check contentTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
+  # Check contentTitle, and if blank, fill with contentName, replacing all "_" and "-" with spaces
   if( nchar(contentTitle)==0 ) {
-    contentTitle <- gsub("-", " ", gsub("_", " ", projectName) )
+    contentTitle <- gsub("-", " ", gsub("_", " ", contentName) )
   }
 
 
@@ -1871,6 +1965,29 @@ create_weekly_journal <- function(date=lubridate::today(),
   journalFileNameTemplate <- gsub('{{ORGNAME}}', orgName, journalFileNameTemplate, fixed = TRUE)
 
   journalRmdPath <- paste0(journalPath, .Platform$file.sep, journalFileNameTemplate, ".Rmd")
+
+  if( fs::file_exists(journalRmdPath) ) {
+
+    cat( "  Journal .Rmd file Exists: ",journalRmdPath, "\n" )
+
+    # open the newly created journal
+    if( openJournal == TRUE ) {
+
+      # navigate to journalk file:
+      rstudioapi::navigateToFile(journalRmdPath)
+
+      journalDirPath <- dirname(journalRmdPath)
+      # navigate to containing dir
+      rstudioapi::filesPaneNavigate(journalDirPath)
+      # and set working directory
+      setwd(journalDirPath)
+
+    }
+
+    return()
+
+  }
+
   done <- file.create(journalRmdPath)
 
   if(!done) {
