@@ -271,10 +271,10 @@ rename_project_doc <- function( projectDocPath, newProjectDocName,
 #' @param goalSelection Selection from projectmanagr Project Doc file, made on
 #' the Goal to be renamed.
 #'
-#' @param newgoalName The new name to use for the selected Goal.
+#' @param newGoalName The new name to use for the selected Goal.
 #'
 #'@export
-rename_project_doc_goal <- function(goalSelection, newgoalName) {
+rename_project_doc_goal <- function(goalSelection, newGoalName) {
 
   cat( "\nprojectmanagr::rename_project_doc_goal():\n" )
 
@@ -318,7 +318,7 @@ rename_project_doc_goal <- function(goalSelection, newgoalName) {
   oldgoalName <- get_goal_title(goalSelection[["goal"]], settings)
   oldgoalString <- trim_goal_hash(oldgoalHeader, settings)
 
-  newgoalHeader <- paste(settings[["ProjectGoalHeader"]], newgoalName)
+  newgoalHeader <- paste(settings[["ProjectGoalHeader"]], newGoalName)
   newgoalString <- trim_goal_hash(newgoalHeader, settings)
 
   # to check for lines that link to the goal line:
@@ -332,7 +332,7 @@ rename_project_doc_goal <- function(goalSelection, newgoalName) {
   newgoalLinkSuffix <- paste0(projectDocName, '#',
                               gsub(' ', '-', tolower(paste(
                                 settings[["ProjectGoalTitle"]],
-                                newgoalName)), fixed=TRUE),
+                                newGoalName)), fixed=TRUE),
                               ')')
 
 
@@ -457,10 +457,10 @@ rename_project_doc_deliverable <- function(deliverableSelection, newDeliverableN
 #' @param taskSelection Selection from projectmanagr Project Doc file, made on
 #' the Task to be renamed.
 #'
-#' @param newtaskName The new name to use for the selected Task
+#' @param newTaskName The new name to use for the selected Task
 #'
 #'@export
-rename_project_doc_task <- function(taskSelection, newtaskName) {
+rename_project_doc_task <- function(taskSelection, newTaskName) {
 
 
   cat( "\nprojectmanagr::rename_project_doc_task():\n" )
@@ -505,7 +505,7 @@ rename_project_doc_task <- function(taskSelection, newtaskName) {
   oldtaskName <- get_task_title(taskSelection[["task"]], settings)
   oldtaskString <- trim_task_hash(oldtaskHeader, settings)
 
-  newtaskHeader <- paste(settings[["ProjectTaskHeader"]], newtaskName)
+  newtaskHeader <- paste(settings[["ProjectTaskHeader"]], newTaskName)
   newtaskString <- trim_task_hash(newtaskHeader, settings)
 
   # to check for lines that link to the task line:
@@ -519,7 +519,7 @@ rename_project_doc_task <- function(taskSelection, newtaskName) {
   newtaskLinkSuffix <- paste0(projectDocName, '#',
                                      gsub(' ', '-', tolower(paste(
                                        settings[["ProjectTaskTitle"]],
-                                       newtaskName)), fixed=TRUE),
+                                       newTaskName)), fixed=TRUE),
                                      ')')
 
 
@@ -546,7 +546,9 @@ rename_project_doc_task <- function(taskSelection, newtaskName) {
 
 
 
-#' Rename a Project File Header
+#' Rename a Project File Section Header
+#'
+#' Section Headers defined in Markdown plasintext files, beginning wiht `#`.
 #'
 #' @param selection Selection from projectmanagr Project file, made on the
 #' Header (starts with `#`) to be renamed.
