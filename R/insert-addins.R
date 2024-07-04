@@ -506,7 +506,6 @@ addin_insert_content <- function() {
     CONTENT_LINE_NUM[pl] <- as.character(plc[2]) #second index
     CONTENT_NOTE_PATH[pl] <- as.character(plc[1]) #first index
     CONTENT_NOTE_NAME[pl] <- basename( as.character(plc[1])) #first index
-
   }
 
   contentsTable <- tibble::tibble(CONTENT_NAME, CONTENT_LINE_NUM, CONTENT_NOTE_NAME)
@@ -520,13 +519,13 @@ addin_insert_content <- function() {
 
     miniContentPanel(
 
-      fillCol( flex = c(1,1,1,20,1,1,1,4),
+      fillCol( flex = c(1,1,20,1,1,1,4), #flex = c(1,1,1,20,1,1,1,4),
 
                fillRow( p("Insert Content into the current Project Note") ),
 
                #fillRow(   span( textOutput("warningDirectory"), style="color:red")  ),
 
-               fillRow( flex = c(5, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Directory Tree")  ),
+               #fillRow( flex = c(5, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Note Directory Tree")  ),
 
                #fillRow(   textOutput("projectNotePath")  ),
 
@@ -554,31 +553,31 @@ addin_insert_content <- function() {
 
     #### compute Dir selection ####
 
-    global <- reactiveValues(datapath = dirPath )
+    #global <- reactiveValues(datapath = orgPath )
     # this sets initial value of global$datapath
 
 
     # allows selection of Dir, with roots set to project doc DIR or ORG Dir
-    shinyDirChoose(
-      input, 'dir',
-      defaultRoot = names(roots)[1], # set default to first root
+    #shinyDirChoose(
+    #  input, 'dir',
+    #  defaultRoot = names(roots)[1], # set default to first root
       #defaultPath = global$datapath,
-      roots=roots, # can use orgPath only as roots
-      filetypes = c('', 'txt', 'Rmd', "tsv", "csv", "bw")
-    )
+    #  roots=roots, # can use orgPath only as roots
+    #  filetypes = c('', 'txt', 'Rmd', "tsv", "csv", "bw")
+    #)
 
-    dir <- reactive(input$dir) # make input dir REACTIVE to enable update of global datapath when changed
+    #dir <- reactive(input$dir) # make input dir REACTIVE to enable update of global datapath when changed
 
     # show the global$datapath computed from input$dir in output$dir (next to shinyDirButton!)
-    output$dir <- renderText({ global$datapath })
+    #output$dir <- renderText({ global$datapath })
 
     # update global$datapath
-    observeEvent(ignoreNULL = TRUE,
-                 eventExpr = { # if input$dir is changed/set
-                   input$dir
-                 },
-                 handlerExpr = { # update datapath with dir() list
-                   if (!"path" %in% names(dir())) return() # check the path element exists in dir
+    #observeEvent(ignoreNULL = TRUE,
+    #             eventExpr = { # if input$dir is changed/set
+    #               input$dir
+    #             },
+    #             handlerExpr = { # update datapath with dir() list
+    #               if (!"path" %in% names(dir())) return() # check the path element exists in dir
                    #cat("\n dir() names: ", names(dir())) # contains : root, path
                    #cat("\n  dir$root: ", dir()$root) # name of the root selected in shinyDirChoose
                    #cat("\n  dir$path: _", unlist( dir()$path ), "_" ) # list of each dir in dirTree, separated by space?
@@ -587,10 +586,10 @@ addin_insert_content <- function() {
                    #cat("\n  dir$path[-1]: _", unlist( dir()$path[-1] ), "_" ) # list of each dir in dirTree, separated by space?
                    #cat("\n  dir$path[-1] pasted with fileSep: _", paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep ), "_" )
                    # list of each dir in dirTree created into a path
-                   global$datapath <- file.path( # form path with
-                     roots[[dir()$root]], # shinyDirChoose selected ROOT (selected by its NAME found in dir()$root)
-                     paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep )  ) # shinyDirChoose selected PATH with file.sep added
-                 })
+    #               global$datapath <- file.path( # form path with
+    #                 roots[[dir()$root]], # shinyDirChoose selected ROOT (selected by its NAME found in dir()$root)
+    #                 paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep )  ) # shinyDirChoose selected PATH with file.sep added
+    #             })
 
 
     #### render the contentsTable ####
@@ -599,35 +598,35 @@ addin_insert_content <- function() {
     gt <- reactiveValues(table = contentsTable, paths = CONTENT_NOTE_PATH,
                          lines = CONTENT_LINE_NUM, contents = contents)
 
-    cat("\n  compute contents table\n")
+    #cat("\n  compute contents table\n")
     # compute contents table
-    observe({
-      if( global$datapath != "" ) { # only if datapath has been assigned!
+    #observe({
+    #  if( global$datapath != "" ) { # only if datapath has been assigned!
 
-        contents <- find_contents_in_dir_tree(global$datapath, orgPath, settings)
+        #contents <- find_contents_in_dir_tree(global$datapath, orgPath, settings)
+        # not needed now as already retrieve all possible content to insert at start!
+        # TODO modify this code to allow FILTERING of results via datapath assignment
 
-        CONTENT_NAME <- as.character(lapply(X = contents, FUN = `[[`, "contentTitle"))
-        pathLine <- strsplit(names(contents), ':::', fixed=TRUE)
-        CONTENT_LINE_NUM <- c()
-        CONTENT_NOTE_PATH <- c()
-        CONTENT_NOTE_NAME <- c()
-        for(pl in 1:length(pathLine) ) {
-          plc <- pathLine[[pl]]
-          CONTENT_LINE_NUM[pl] <- as.character(plc[2]) #second index
-          CONTENT_NOTE_PATH[pl] <- as.character(plc[1]) #first index
-          CONTENT_NOTE_NAME[pl] <- basename( as.character(plc[1])) #first index
-
-        }
-        contentsTable <- tibble::tibble(CONTENT_NAME, CONTENT_LINE_NUM, CONTENT_NOTE_NAME)
+    #    CONTENT_NAME <- as.character(lapply(X = contents, FUN = `[[`, "contentTitle"))
+    #    pathLine <- strsplit(names(contents), ':::', fixed=TRUE)
+    #    CONTENT_LINE_NUM <- c()
+    #    CONTENT_NOTE_PATH <- c()
+    #    CONTENT_NOTE_NAME <- c()
+    #    for(pl in 1:length(pathLine) ) {
+    #      plc <- pathLine[[pl]]
+    #      CONTENT_LINE_NUM[pl] <- as.character(plc[2]) #second index
+    #      CONTENT_NOTE_PATH[pl] <- as.character(plc[1]) #first index
+    #      CONTENT_NOTE_NAME[pl] <- basename( as.character(plc[1])) #first index
+    #    }
+    #    contentsTable <- tibble::tibble(CONTENT_NAME, CONTENT_LINE_NUM, CONTENT_NOTE_NAME)
 
         #gt$table <- tibble::tibble(CONTENT_NAME, CONTENT_LINE_NUM, CONTENT_NOTE_NAME)
-        gt$table <- contentsTable
-        gt$paths = CONTENT_NOTE_PATH
-        gt$lines = CONTENT_LINE_NUM
-        gt$contents <- contents
-
-      }
-    })
+    #    gt$table <- contentsTable
+    #    gt$paths = CONTENT_NOTE_PATH
+    #    gt$lines = CONTENT_LINE_NUM
+    #    gt$contents <- contents
+    #  }
+    #})
 
 
     cat("\n  render the contentsTable\n")
