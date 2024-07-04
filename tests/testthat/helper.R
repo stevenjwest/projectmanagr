@@ -1,30 +1,65 @@
 
 #' create test org
 #'
+#' Create & remove test fixtures in reproducible temp dir using `withr::defer()`
+#'
 #' @param orgName name of org
 #'
 #' @param orgParentPath Temp dir to generate org
 #'
 #' @param env parent.frame for withr::deferred_run()
 #'
-local_create_org <- function(orgName, orgutime, orgParentPath = tempdir(),
+local_create_org <- function(orgName, orgutime, orgParentPath,
                              env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
 
+  # create local yaml file in orgParentPath to point to
+  settingsYamlPath <- create_settings_yaml(orgParentPath)
+
   # create project org
-  create_project_org(orgParentPath, orgName, utime=orgutime)
+  create_project_org(orgParentPath, orgName,
+                     settingsYamlPath=settingsYamlPath, utime=orgutime)
+
+  # define output variable
   orgDir <- fs::path(orgParentPath, orgName)
 
+  # defer removal of orgDir
   withr::defer(fs::dir_delete(orgDir), envir = env)
+
+  # defer removal of settings
+  withr::defer(fs::file_delete(settingsYamlPath), envir = env)
 
   # return the org directory
   orgDir
 
 }
 
+
+create_settings_yaml <- function(orgParentPath) {
+
+  projectmanagrPath <- find.package("projectmanagr", lib.loc = .libPaths())
+
+  settingsYamlFile <- paste0( projectmanagrPath,
+                              .Platform$file.sep, "config",
+                              .Platform$file.sep, "settings.yml")
+
+  settings <- yaml::read_yaml(settingsYamlFile)
+
+  # modify separators containing '~' character- as not allowed in filenames tested in R packages for CRAN submission
+  settings$ProjectPrefixSep <- "____" # from ~_
+  settings$ProjectIndexSep <- "___" # from ~
+
+  yaml::write_yaml(settings, fs::path(orgParentPath, "settings.yml"))
+
+  fs::path_real(fs::path(orgParentPath, "settings.yml"))
+
+}
+
 #' create test programme
+#'
+#' Create & remove test fixtures in reproducible temp dir using `withr::defer()`
 #'
 #' @param progName name of programme
 #'
@@ -51,6 +86,8 @@ local_create_prog <- function(progName, orgDir, progctime,
 
 #' create test project
 #'
+#' Create & remove test fixtures in reproducible temp dir using `withr::defer()`
+#'
 #' @param projectPrefix prefix of project
 #'
 #' @param projectName name of project
@@ -69,7 +106,7 @@ local_create_project <- function(projectPrefix, projectName, progDir,
   create_project_doc(projectPrefix, projectName, progDir)
 
   # create paths to Rmd & dir
-  projectRmd <- fs::path(progDir, paste0(projectPrefix, "~_", projectName, ".Rmd") )
+  projectRmd <- fs::path(progDir, paste0(projectPrefix, "____", projectName, ".Rmd") )
   projectDir <- fs::path(progDir, projectPrefix)
 
   # ensure Rmd & Dir are deleted when out of context
@@ -143,8 +180,8 @@ local_create_project_note_simple <- function(projectNoteName, projectNotePath,
   create_project_note(projectNoteName, projectNotePath, selection)
 
   # create paths to Rmd & dir
-  projectNoteRmd <- fs::path(projectNotePath, paste0(basename(projectNotePath), "~001~_", projectNoteName, ".Rmd") )
-  projectNoteDir <- fs::path(projectNotePath, paste0(basename(projectNotePath), "~001") )
+  projectNoteRmd <- fs::path(projectNotePath, paste0(basename(projectNotePath), "___001____", projectNoteName, ".Rmd") )
+  projectNoteDir <- fs::path(projectNotePath, paste0(basename(projectNotePath), "___001") )
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::file_delete(projectNoteRmd), envir = env)
@@ -153,6 +190,36 @@ local_create_project_note_simple <- function(projectNoteName, projectNotePath,
   # return the project Rmd
   projectNoteRmd
 
+
+}
+
+
+local_rename_project_note_simple <- function(projectNotePath, newProjectNoteName,
+                                 newProjectNoteTitle,replaceLinksFileExtensions,
+                                 env = parent.frame() ) {
+
+
+  # record current state
+  olddir <- getwd()
+
+  # rename project note
+  rename_project_note(projectNotePath, newProjectNoteName,
+                      newProjectNoteTitle,replaceLinksFileExtensions)
+
+  # create paths to Rmd & dir
+  projectNoteRmdRename <- fs::path(dirname(projectNotePath),
+                                   paste0(basename(dirname(projectNotePath)),
+                                          "___001____", newProjectNoteName, ".Rmd") )
+  projectNoteDirRename <- fs::path(dirname(projectNotePath),
+                                   paste0(basename(dirname(projectNotePath)),
+                                          "___001") )
+
+  # ensure Rmd & Dir are deleted when out of context
+  withr::defer(fs::file_delete(projectNoteRmdRename), envir = env)
+  withr::defer(fs::dir_delete(projectNoteDirRename), envir = env)
+
+  # return the project Rmd
+  projectNoteRmdRename
 
 }
 
@@ -172,8 +239,8 @@ local_create_project_note_group <- function(groupNoteName, groupNotePath,
   create_group_note(groupNoteName, groupNotePath, selection, subNoteName)
 
   # create paths to Rmd & dir
-  groupNoteRmd <- fs::path(groupNotePath, paste0(basename(groupNotePath), "~001-00", "~_", groupNoteName, ".Rmd") )
-  groupNoteDir <- fs::path(groupNotePath, paste0(basename(groupNotePath), "~001-00") )
+  groupNoteRmd <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___001-00", "____", groupNoteName, ".Rmd") )
+  groupNoteDir <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___001-00") )
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::file_delete(groupNoteRmd), envir = env)
@@ -224,8 +291,8 @@ local_create_project_note_sub <- function(subNoteName, subNotePath,
   subNoteSummaryTemplate="Project-Sub-Note-Summary-Template.Rmd"
 
   # create paths to Rmd & dir - 2ND SUBNOTE!
-  subNoteRmd <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "~001-002~_", subNoteName, ".Rmd") )
-  subNoteDir <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "~001-002") )
+  subNoteRmd <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-002____", subNoteName, ".Rmd") )
+  subNoteDir <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-002") )
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::file_delete(subNoteRmd), envir = env)
@@ -263,10 +330,41 @@ local_create_content <- function(contentName, contentDescription, contentSourceP
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::dir_delete(contentDir), envir = env)
-  withr::defer(fs::file_delete(contentRmd), envir = env)
+  #withr::defer(fs::file_delete(contentRmd), envir = env)
 
   # return the content Rmd
   contentRmd
 
 
 }
+
+
+
+local_create_journal <- function(date, organisationPath, env = parent.frame() ) {
+
+  # record current state
+  olddir <- getwd()
+
+  # other ARGS
+  journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}"
+  journalTemplate="Weekly-Work-Journal-Template.Rmd"
+  openJournal = FALSE # do not open when testing!
+
+  # create project note
+  create_weekly_journal(date, organisationPath, journalFileNameTemplate, journalTemplate, openJournal)
+
+  # create paths to Rmd & dir
+  journalDir <- fs::path(organisationPath, "weekly-journal")
+  # journalRmd is in journalDir and basename is also contentName
+  journalRmd <- fs::path(journalDir, paste0(date, "_", basename(organisationPath), ".Rmd"))
+
+  # ensure Rmd & Dir are deleted when out of context
+  withr::defer(fs::dir_delete(journalDir), envir = env)
+  #withr::defer(fs::file_delete(journalRmd), envir = env)
+
+  # return the journal Rmd
+  journalRmd
+
+
+}
+
