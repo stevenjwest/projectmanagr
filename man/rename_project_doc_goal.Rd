@@ -4,13 +4,13 @@
 \alias{rename_project_doc_goal}
 \title{Rename a Project Doc Goal}
 \usage{
-rename_project_doc_goal(goalSelection, newgoalName)
+rename_project_doc_goal(goalSelection, newGoalName)
 }
 \arguments{
 \item{goalSelection}{Selection from projectmanagr Project Doc file, made on
 the Goal to be renamed.}
 
-\item{newgoalName}{The new name to use for the selected Goal.}
+\item{newGoalName}{The new name to use for the selected Goal.}
 }
 \description{
 Rename a Project Doc Goal

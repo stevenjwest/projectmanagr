@@ -4,13 +4,13 @@
 \alias{rename_project_doc_task}
 \title{Rename a Project Doc Task}
 \usage{
-rename_project_doc_task(taskSelection, newtaskName)
+rename_project_doc_task(taskSelection, newTaskName)
 }
 \arguments{
 \item{taskSelection}{Selection from projectmanagr Project Doc file, made on
 the Task to be renamed.}
 
-\item{newtaskName}{The new name to use for the selected Task}
+\item{newTaskName}{The new name to use for the selected Task}
 }
 \description{
 Rename a Project Doc Task

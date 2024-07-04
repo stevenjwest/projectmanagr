@@ -2,7 +2,7 @@
 % Please edit documentation in R/rename-functions.R
 \name{rename_project_file_header}
 \alias{rename_project_file_header}
-\title{Rename a Project File Header}
+\title{Rename a Project File Section Header}
 \usage{
 rename_project_file_header(selection, headerName)
 }
@@ -13,5 +13,5 @@ Header (starts with \verb{#}) to be renamed.}
 \item{headerName}{The new name to use for the selected Header}
 }
 \description{
-Rename a Project File Header
+Section Headers defined in Markdown plasintext files, beginning wiht \verb{#}.
 }
