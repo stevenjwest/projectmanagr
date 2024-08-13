@@ -18,5 +18,12 @@ This Function moves a File (Project Note \link{simple, group} or Project Doc) to
 a new directory in the same organisation.
 }
 \details{
-Updates all GDT links and hyperlinks across organisation.
+\itemize{
+\item Moves the Dir and all contents to new location
+\item Updates all GDT links and hyperlinks
+\itemize{
+\item The moved project note/doc
+\item Any project notes contained in the Dir
+}
+}
 }

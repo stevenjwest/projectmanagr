@@ -17,7 +17,8 @@
 #'
 #'@export
 rename_project_note <- function( projectNotePath, newProjectNoteName,
-                                 newProjectNoteTitle="", replaceLinksFileExtensions = list("Rmd") ) {
+                                 newProjectNoteTitle="",
+                                 replaceLinksFileExtensions = list("Rmd") ) {
 
 
   cat( "\nprojectmanagr::rename_project_note():\n" )
@@ -29,7 +30,8 @@ rename_project_note <- function( projectNotePath, newProjectNoteName,
 
   orgPath <- find_org_directory(projectNotePath)
   if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNotePath) )
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ",
+                   projectNotePath) )
   }
   # now, orgPath should be the root dir of the organisation
 
@@ -69,11 +71,14 @@ rename_project_note <- function( projectNotePath, newProjectNoteName,
 
   # split oldProjectNoteFileName into PREFIX NAME and EXTENSION
   oldPrefix <- substr(oldProjectNoteFileName, 1,
-                      regexpr(settings[["ProjectPrefixSep"]], oldProjectNoteFileName, fixed=TRUE)-1 )
+                      regexpr(settings[["ProjectPrefixSep"]],
+                              oldProjectNoteFileName, fixed=TRUE)-1 )
   oldProjectNoteFileNameExt <- tools::file_ext(oldProjectNoteFileName)
   oldName <- substr(oldProjectNoteFileName,
-                    regexpr(settings[["ProjectPrefixSep"]], oldProjectNoteFileName, fixed=TRUE)+(nchar(settings[["ProjectPrefixSep"]])),
-                    regexpr(oldProjectNoteFileNameExt, oldProjectNoteFileName, fixed=TRUE)-2) # first letter AND extension .
+                    regexpr(settings[["ProjectPrefixSep"]],
+                            oldProjectNoteFileName, fixed=TRUE)+(nchar(settings[["ProjectPrefixSep"]])),
+                    regexpr(oldProjectNoteFileNameExt,
+                            oldProjectNoteFileName, fixed=TRUE)-2) # first letter AND extension .
 
   # define new project Note path:
   newProjectNotePath <- paste0(dirname(projectNotePath), .Platform$file.sep,
@@ -113,11 +118,14 @@ rename_project_note <- function( projectNotePath, newProjectNoteName,
 
   # find title line - via getProjNoteTitle()
   line <- grep( paste0("title: '", projectPrefixTitle), contents)[1] # get first instance of line beginning with title:
-  oldTitle <- substr(contents[line], regexpr(projectPrefixTitle, contents[line], fixed=TRUE)+(nchar(projectPrefixTitle)), nchar(contents[line]))
+  oldTitle <- substr(contents[line],
+                     regexpr(projectPrefixTitle,
+                             contents[line], fixed=TRUE)+(nchar(projectPrefixTitle)),
+                     nchar(contents[line]))
   oldTitle <- substr(oldTitle, 1, regexpr("'", oldTitle, fixed=TRUE)-1)
   contents[line] <- sub(oldTitle, newProjectNoteTitle, contents[line]) # replace old with new title
 
-  # write subNote file to disk:
+  # write project Note file to disk:
   fileConn <- file(newProjectNotePath)
   writeLines(contents, fileConn)
   close(fileConn)
@@ -153,7 +161,8 @@ rename_project_note <- function( projectNotePath, newProjectNoteName,
 #'
 #'@export
 rename_project_doc <- function( projectDocPath, newProjectDocName,
-                                newProjectDocTitle="", replaceLinksFileExtensions = list("Rmd")) {
+                                newProjectDocTitle="",
+                                replaceLinksFileExtensions = list("Rmd")) {
 
 
   cat( "\nprojectmanagr::rename_project_doc():\n" )

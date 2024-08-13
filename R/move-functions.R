@@ -4,7 +4,12 @@
 #' This Function moves a File (Project Note [simple, group] or Project Doc) to
 #' a new directory in the same organisation.
 #'
-#' Updates all GDT links and hyperlinks across organisation.
+#' * Moves the Dir and all contents to new location
+#'
+#' * Updates all GDT links and hyperlinks
+#'
+#'     + The moved project note/doc
+#'     + Any project notes contained in the Dir
 #'
 #' @param filePath Path to file to be moved.  Must be a Project Note
 #' [simple, group] or Project Doc.

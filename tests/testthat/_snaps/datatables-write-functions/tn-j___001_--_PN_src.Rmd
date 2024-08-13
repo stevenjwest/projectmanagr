@@ -1,0 +1,120 @@
+---
+title: 'tn-j___001~ PN src'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PD : EXAMPLE TASK TITLE
+
+
+[PD_--_Proj_Do](../../PD_--_Proj_Do.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PD_--_Proj_Do.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD_--_Proj_Do.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PD_--_Proj_Do.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
+
+
+
+
+
+
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID       sex        wt-g    
+    ======  =========  =========  
+
+     1001     VALUE      VALUE    
+                                  
+     1002     VALUE      VALUE    
+                                  
+     1003     VALUE      VALUE    
+                                  
+     1004     VALUE      VALUE    
+                                  
+
++===============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

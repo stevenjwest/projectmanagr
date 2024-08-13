@@ -1790,7 +1790,7 @@ addin_datatable_import <- function() {
       # filter to remove all rows where IMPORT is 0
       samp_summ <- dplyr::filter(global$summary, IMPORT > 0 )
 
-      cur_datetime <- projectmanagr::get_current_datetime_string()
+      cur_datetime <- projectmanagr::get_datetime()
 
       # export samples from SOURCE Rmds
       export_dts <- projectmanagr::datatable_export(samples_summary = samp_summ,
@@ -1825,6 +1825,291 @@ addin_datatable_import <- function() {
 
 }
 
+
+
+#' Insert a datatable from a dataframe
+#'
+#' Will insert the passed dataframe, using the variable's NAME as the datatable
+#' NAME.  Will CREATE the datatable first, then subsequent cols that dont fit in
+#' the first datatable will be in subsequent ADD_DATA datatables.
+#'
+#' Inserts the datatable where the CURSOR IS in the Active Rmd.
+#'
+#' @param df a dataframe/tibble with data to insert into Rmd
+#'
+#' @param dt_function String to declare type of table: MUST be CREATE ADD_DATA
+#' RESAMPLE GROUP EXPORT or IMPORT. Default is CREATE.
+#'
+#' @param dt_length Int that dictates the maximum length of any one inserted datatable.
+#'
+#' @export
+datatable_insert_from_dataframe <- function( df,
+                                             dt_function = "CREATE", dt_length = 100 ) {
+
+  DATATABLE_SPACER_CHAR <- "="
+
+  if(dt_function == "CREATE" || dt_function == "ADD_DATA" || dt_function == "RESAMPLE") {
+    dt_function_next <- "ADD_DATA"
+  } else if( dt_function == "GROUP" ) {
+    dt_function_next <- "GROUP" # create further group tables
+  } else if( dt_function == "EXPORT" ) {
+    dt_function_next <- "EXPORT" # create further export tables
+  } else if( dt_function == "IMPORT" ) {
+    dt_function_next <- "IMPORT" # create further import tables
+  } else {
+    stop( paste0("  dt_function MUST be CREATE ADD_DATA RESAMPLE GROUP EXPORT or IMPORT : ", dt_function))
+  }
+
+  # returns name of ORIGINAL VARIABLE!
+  name <- rlang::enexpr(df)
+
+  # get the current active doc and metadata
+  context <- rstudioapi::getSourceEditorContext()
+  rmd_line <- context$selection[[1]]$range$start[1]
+  rmd_path <- normalizePath( context$path )
+  rmd_contents <- context$contents
+
+  # SAVE the document before processing!
+  rstudioapi::documentSave(id = context$id)
+
+
+  cat( "\nprojectmanagr::datatable_insert_from_dataframe():\n" )
+
+  # if not an absolute path:
+  if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
+    rmd_path <- R.utils::getAbsolutePath(rmd_path )
+  }
+
+  # CONFIRM rmd_path is a project doc or note:
+  # Check rmd_path is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
+  # run dirname TWICE as want to ensure rmd_path is a sub-dir in a Programme!
+  orgPath <- dirname( dirname(rmd_path) )
+
+  orgPath <- find_org_directory(orgPath)
+
+  if(orgPath == "" ) {
+    # the search reached the root of the filesystem without finding the Organisation files,
+    # therefore, rmd_path is not inside a PROGRAMME sub-dir!
+    stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  # build the datatable text vector
+  col_names <- names(df)[2:length(names(df))]
+
+  # data - create blank list
+  data <- list()
+  for(i in 2:length(df) ) {
+    data[[i-1]] <- df[[i]]  # concat each data vector to list
+  }
+  #data <- lapply(df, function(x) x[x != ""])
+  #data <- data[2:length(data)]
+
+  ID_col <- "ID"
+  IDs <- df$ID
+  data_cols <- col_names
+  data <- data
+  dt_function <- dt_function
+  datatable_name <- name
+  MAX_DATATABLE_LENGTH <- dt_length
+  DATATABLE_SPACER_CHAR <- "="
+
+  data_tables <- build_datatable_from_dataframe(ID_col, IDs, data_cols, data, dt_function,
+                                                datatable_name, MAX_DATATABLE_LENGTH,
+                                                DATATABLE_SPACER_CHAR)
+
+  #ID_col <- "ID"
+  #IDs <- df$ID
+  #data_cols <- col_names
+  #data <- data
+  #dt_function <- "CREATE"
+  #datatable_name <- name
+  #MAX_DATATABLE_LENGTH <- dt_length
+  #DATATABLE_SPACER_CHAR
+
+  # write these to the file:
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
+  rmd_contents <- c( rmd_contents[1:(rmd_line-1)], data_tables, rmd_contents[(rmd_line+1):length(rmd_contents)] )
+  # rmd_line-1 to REMOVE CURRENT LINE
+
+  rmd_file_conn <- file( rmd_path )
+  writeLines(rmd_contents, rmd_file_conn)
+  close(rmd_file_conn)
+
+
+}
+
+#' Read datatables from ACTIVE RMD in RStudio
+#'
+#' Function to read all projectmanagr datatables declared in the active plain
+#' text document (typically an R Markdown doc), and return them as tibbles.
+#' Extracts all datatables between `+===` markers, and checks the validity of
+#' each datatable declared.
+#'
+#' Each datatable is named, and each contains samples which must all possess a
+#' unique ID.  Datatables are created in CREATE, and have data added to them
+#' in ADD_DATA tables.  IDs from a given datatable can be put into new groups
+#' using a GROUP table.
+#'
+#' Adding data can use various layouts:
+#'
+#' * Sample-first layout:  Typically used for measurements made on each sample
+#' individually - sample IDs are in first col, subsequent cols contain the
+#' measurement data.
+#'
+#' * Variable-first layout: Typically used to add datetimes of procedures -
+#' procedure titles are laid out in first col, and subsequent cols are GORUPS
+#' which are processed together.  This allows timing data to be added cleanly
+#' and easily across all samples in a group (including the special group ALL).
+#'
+#' * TIMETABLE: Used for measuring the actual timings used during optimisation
+#' of a protocol.  When time is varied in a protocol it is very difficult to
+#' plan and track this.  The timetable provides a convenient layout for planning
+#' the groups and the timings of changes over the procedure where timing is being
+#' optimised.  It then allows the ACTUAL TIMINGS to be inserted into the table
+#' as the procedures are followed - and these are linked to the original samples,
+#' making this data available in further analyses.
+#'
+#' Samples in datatables can be subsampled - destroying the original sample,
+#' and creating one or more sub-samples.  The parent samples can no longer
+#' have data added to them, only the existing sub-samples.
+#'
+#' Samples in datatables are be exported to destination notes, and imported
+#' from source notes.  If exported from this source note, the samples no longer
+#' exist in the current note - they cannot be manipulated in this note.
+#'
+#' If imported from a previous source note, the samples now exist in this note.
+#' They can have data added to them, grouped, subsampled, and exported.
+#'
+#' @export
+datatable_read <- function() {
+
+  datatable_read_rmd( rstudioapi::getSourceEditorContext()$path )
+
+}
+
+
+
+#' Read datatables upto SELECTION from ACTIVE RMD in RStudio
+#'
+#' Function to read all projectmanagr datatables up to cursor selection declared
+#' in the active plain text document (typically an R Markdown doc), and return
+#' them as tibbles. Extracts all datatables between `+===` markers, and checks
+#' the validity of each datatable declared.
+#'
+#' Each datatable is named, and each contains samples which must all possess a
+#' unique ID.  Datatables are created in CREATE, and have data added to them
+#' in ADD_DATA tables.  IDs from a given datatable can be put into new groups
+#' using a GROUP table.
+#'
+#' Adding data can use various layouts:
+#'
+#' * Sample-first layout:  Typically used for measurements made on each sample
+#' individually - sample IDs are in first col, subsequent cols contain the
+#' measurement data.
+#'
+#' * Variable-first layout: Typically used to add datetimes of procedures -
+#' procedure titles are laid out in first col, and subsequent cols are GORUPS
+#' which are processed together.  This allows timing data to be added cleanly
+#' and easily across all samples in a group (including the special group ALL).
+#'
+#' * TIMETABLE: Used for measuring the actual timings used during optimisation
+#' of a protocol.  When time is varied in a protocol it is very difficult to
+#' plan and track this.  The timetable provides a convenient layout for planning
+#' the groups and the timings of changes over the procedure where timing is being
+#' optimised.  It then allows the ACTUAL TIMINGS to be inserted into the table
+#' as the procedures are followed - and these are linked to the original samples,
+#' making this data available in further analyses.
+#'
+#' Samples in datatables can be subsampled - destroying the original sample,
+#' and creating one or more sub-samples.  The parent samples can no longer
+#' have data added to them, only the existing sub-samples.
+#'
+#' Samples in datatables are be exported to destination notes, and imported
+#' from source notes.  If exported from this source note, the samples no longer
+#' exist in the current note - they cannot be manipulated in this note.
+#'
+#' If imported from a previous source note, the samples now exist in this note.
+#' They can have data added to them, grouped, subsampled, and exported.
+#'
+#' @export
+datatable_read_to_selection <- function() {
+
+  row <- rstudioapi::getSourceEditorContext()$selection[[1]]$range$start[1]
+  rmd_path <- normalizePath( rstudioapi::getSourceEditorContext()$path )
+
+  # read rmd_path file:
+  rmd_file_conn <- file( rmd_path )
+  rmd_contents <- readLines( rmd_file_conn )
+  close(rmd_file_conn)
+
+  # read datatables upto selection
+  datatables <- datatable_read_vector(rmd_contents[1:row] )
+
+  # return
+  datatables
+}
+
+
+
+#' Read datatables upto LINE in ACTIVE RMD in RStudio
+#'
+#' Function to read all projectmanagr datatables up to line number
+#' in the active plain text document (typically an R Markdown doc), and return
+#' them as tibbles. Extracts all datatables between `+===` markers, and checks
+#' the validity of each datatable declared.
+#'
+#' Each datatable is named, and each contains samples which must all possess a
+#' unique ID.  Datatables are created in CREATE, and have data added to them
+#' in ADD_DATA tables.  IDs from a given datatable can be put into new groups
+#' using a GROUP table.
+#'
+#' Adding data can use various layouts:
+#'
+#' * Sample-first layout:  Typically used for measurements made on each sample
+#' individually - sample IDs are in first col, subsequent cols contain the
+#' measurement data.
+#'
+#' * Variable-first layout: Typically used to add datetimes of procedures -
+#' procedure titles are laid out in first col, and subsequent cols are GORUPS
+#' which are processed together.  This allows timing data to be added cleanly
+#' and easily across all samples in a group (including the special group ALL).
+#'
+#' * TIMETABLE: Used for measuring the actual timings used during optimisation
+#' of a protocol.  When time is varied in a protocol it is very difficult to
+#' plan and track this.  The timetable provides a convenient layout for planning
+#' the groups and the timings of changes over the procedure where timing is being
+#' optimised.  It then allows the ACTUAL TIMINGS to be inserted into the table
+#' as the procedures are followed - and these are linked to the original samples,
+#' making this data available in further analyses.
+#'
+#' Samples in datatables can be subsampled - destroying the original sample,
+#' and creating one or more sub-samples.  The parent samples can no longer
+#' have data added to them, only the existing sub-samples.
+#'
+#' Samples in datatables are be exported to destination notes, and imported
+#' from source notes.  If exported from this source note, the samples no longer
+#' exist in the current note - they cannot be manipulated in this note.
+#'
+#' If imported from a previous source note, the samples now exist in this note.
+#' They can have data added to them, grouped, subsampled, and exported.
+#'
+#' @export
+datatable_read_to_line <- function(line) {
+
+  rmd_path <- normalizePath( rstudioapi::getSourceEditorContext()$path )
+
+  # read rmd_path file:
+  rmd_file_conn <- file( rmd_path )
+  rmd_contents <- readLines( rmd_file_conn )
+  close(rmd_file_conn)
+
+  # read datatables upto selection
+  datatables <- datatable_read_vector(rmd_contents[1:line] )
+
+  # return
+  datatables
+}
 
 
 

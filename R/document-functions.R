@@ -1667,7 +1667,8 @@ update_links_filenames <- function( oldFileName, newName, dirTree, settings,
   oldPrefix <- get_prefix(oldFileName, settings)
   oldFileNameExt <- tools::file_ext(oldFileName)
   oldName <- substr(oldFileName,
-                    regexpr(settings[["ProjectPrefixSep"]], oldFileName, fixed=TRUE)+(nchar(settings[["ProjectPrefixSep"]])),
+                    regexpr(settings[["ProjectPrefixSep"]],
+                            oldFileName, fixed=TRUE)+(nchar(settings[["ProjectPrefixSep"]])),
                     regexpr(oldFileNameExt, oldFileName, fixed=TRUE)-2) # first letter AND extension .
 
   # construct oldLink: prefix plus oldName (no extension) for replacing
@@ -1679,7 +1680,8 @@ update_links_filenames <- function( oldFileName, newName, dirTree, settings,
   # get orgPath from dirTree
   orgPath <- find_org_directory(dirTree)
   if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNotePath) )
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ",
+                    projectNotePath) )
   }
 
   # get config path to exclude files from (in case dirTree is orgPath!)
@@ -1732,18 +1734,14 @@ update_links_filenames <- function( oldFileName, newName, dirTree, settings,
   for(fl in fileList) {
 
     # read file:
-    fileConn <- file(fl)
-    contents <- readLines(fileConn)
-    close(fileConn)
+    contents <- read_file(fl)
 
     if( any( grepl(oldLink, contents, fixed=TRUE )) ) {
       # replace oldLink with newLink in contents
       contents <- gsub(oldLink, newLink, contents, fixed=TRUE)
       # and save file
       cat( "    replaced link(s) in file:", fl ,"\n" )
-      fileConn <- file(fl)
-      writeLines(contents, fileConn)
-      close(fileConn)
+      write_file(contents, fl)
     }
   }
 }
@@ -1751,9 +1749,8 @@ update_links_filenames <- function( oldFileName, newName, dirTree, settings,
 
 #' Update links
 #'
-#' Updates every hyperlink in all files within `dirTree`, replacing
-#' `oldFileName` (the basename of the file, including prefix and extension) with
-#' `newName` (the new file name, without prefix or extension).
+#' Updates every hyperlink in all Project Notes within `dirTree`, replacing
+#' `oldLinkSuffix` (the path of the file) with `newLinkSuffix` (the new path).
 #'
 #' @param oldLinkSuffix Old link string to be updated.
 #'
@@ -1777,7 +1774,8 @@ update_links <- function( oldLinkSuffix, newLinkSuffix, dirTree, settings,
   # get orgPath from dirTree
   orgPath <- find_org_directory(dirTree)
   if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNotePath) )
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ",
+                   projectNotePath) )
   }
 
   # get config path to exclude files from (in case dirTree is orgPath!)
@@ -1807,7 +1805,8 @@ update_links <- function( oldLinkSuffix, newLinkSuffix, dirTree, settings,
   # next traverse each directory - but only down to project note level
   for(dl in dirsList) {
     # get fileList recursively but only down to project note parent dir level
-    fileList <- get_file_list_to_project_notes(fileList, dl, settings, fileExtensions)
+    fileList <- get_file_list_to_project_notes(fileList, dl, settings,
+                                               fileExtensions)
   }
 
   # now RECURSIVELY traverse EVERY Rmd file in dirTree
@@ -1849,14 +1848,19 @@ update_links <- function( oldLinkSuffix, newLinkSuffix, dirTree, settings,
 
 #' get file list down to project notes
 #'
-#' Traverses all directory tree in `dl` but only
-#' get fileList recursively but only down to project note parent dir level
+#' Traverses all directory tree in `dl` but only get fileList recursively but
+#' only down to project note parent dir level.
+#'
+#' This method makes parsing all plaintext Project Notes across an Organisation
+#' much more efficient!
 #'
 #' @param fileList List of files recursively retrieved by this function.
 #' @param dl DirsList - a list of directory paths.
 #' @param settings projectmanagr settings list.
 #' @param fileExtensions File extensions of files to list.
-#' @param pathExclusions Directory Paths which should be EXCLUDED from file search.
+#' @param pathExclusions Directory Paths which should be EXCLUDED from file
+#' search. Typically want to exclude the config and volumes directories in the
+#' root of an Organisation.
 #' @param retrievalDateTimeCutoff Any project notes last modified BEFORE the
 #' cutoff time will not be returned. If NULL ignored. This is a lubridate datetime
 #' object, made by parsing a datetime string through `lubridate::ymd_hm()`

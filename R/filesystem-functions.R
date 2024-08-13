@@ -365,14 +365,17 @@ get_next_simple_prefix <- function(projectNotePath, settings) {
         # this is a GROUP HEADER DIR - extract the integer between ~ and -
         subVals[l] <- as.integer(
           substring( subDirNums,
-                     first=regexpr(projIndexSep, subDirNums, fixed=TRUE)+1,
-                     last=regexpr(groupIndexSep, subDirNums, fixed=TRUE)-1 )  )
+                     first=regexpr(projIndexSep, subDirNums, fixed=TRUE)
+                           + nchar(projIndexSep),
+                     last=regexpr(groupIndexSep, subDirNums, fixed=TRUE)
+                          - nchar(groupIndexSep) )  )
       } else {
 
-        # this is a SINGLE DIR - extract the integer AFTER ~
+        # this is a SINGLE DIR - extract the integer AFTER projIndexSep: ~
         subVals[l] <- as.integer(
-          substring( subDirNums,
-                     first=regexpr(projIndexSep, subDirNums, fixed=TRUE)+1 )  )
+                       substring( subDirNums,
+                         first=regexpr(projIndexSep, subDirNums, fixed=TRUE)
+                                         + nchar(projIndexSep) )  )
       }
     }
 

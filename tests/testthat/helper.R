@@ -48,7 +48,7 @@ create_settings_yaml <- function(orgParentPath) {
   settings <- yaml::read_yaml(settingsYamlFile)
 
   # modify separators containing '~' character- as not allowed in filenames tested in R packages for CRAN submission
-  settings$ProjectPrefixSep <- "____" # from ~_
+  settings$ProjectPrefixSep <- "_--_" # from ~_
   settings$ProjectIndexSep <- "___" # from ~
 
   yaml::write_yaml(settings, fs::path(orgParentPath, "settings.yml"))
@@ -106,7 +106,7 @@ local_create_project <- function(projectPrefix, projectName, progDir,
   create_project_doc(projectPrefix, projectName, progDir)
 
   # create paths to Rmd & dir
-  projectRmd <- fs::path(progDir, paste0(projectPrefix, "____", projectName, ".Rmd") )
+  projectRmd <- fs::path(progDir, paste0(projectPrefix, "_--_", projectName, ".Rmd") )
   projectDir <- fs::path(progDir, projectPrefix)
 
   # ensure Rmd & Dir are deleted when out of context
@@ -168,7 +168,7 @@ local_modify_project_doc_gdt_titles <- function(settingsYml, projectRmd,
 
 local_create_project_note_simple <- function(projectNoteName, projectNotePath,
                                              projectDocPath, taskLine,
-                                             env = parent.frame()) {
+                                             noteIndex="___001", env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
@@ -180,8 +180,8 @@ local_create_project_note_simple <- function(projectNoteName, projectNotePath,
   create_project_note(projectNoteName, projectNotePath, selection)
 
   # create paths to Rmd & dir
-  projectNoteRmd <- fs::path(projectNotePath, paste0(basename(projectNotePath), "___001____", projectNoteName, ".Rmd") )
-  projectNoteDir <- fs::path(projectNotePath, paste0(basename(projectNotePath), "___001") )
+  projectNoteRmd <- fs::path(projectNotePath, paste0(basename(projectNotePath), noteIndex,"_--_", projectNoteName, ".Rmd") )
+  projectNoteDir <- fs::path(projectNotePath, paste0(basename(projectNotePath), noteIndex) )
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::file_delete(projectNoteRmd), envir = env)
@@ -193,35 +193,6 @@ local_create_project_note_simple <- function(projectNoteName, projectNotePath,
 
 }
 
-
-local_rename_project_note_simple <- function(projectNotePath, newProjectNoteName,
-                                 newProjectNoteTitle,replaceLinksFileExtensions,
-                                 env = parent.frame() ) {
-
-
-  # record current state
-  olddir <- getwd()
-
-  # rename project note
-  rename_project_note(projectNotePath, newProjectNoteName,
-                      newProjectNoteTitle,replaceLinksFileExtensions)
-
-  # create paths to Rmd & dir
-  projectNoteRmdRename <- fs::path(dirname(projectNotePath),
-                                   paste0(basename(dirname(projectNotePath)),
-                                          "___001____", newProjectNoteName, ".Rmd") )
-  projectNoteDirRename <- fs::path(dirname(projectNotePath),
-                                   paste0(basename(dirname(projectNotePath)),
-                                          "___001") )
-
-  # ensure Rmd & Dir are deleted when out of context
-  withr::defer(fs::file_delete(projectNoteRmdRename), envir = env)
-  withr::defer(fs::dir_delete(projectNoteDirRename), envir = env)
-
-  # return the project Rmd
-  projectNoteRmdRename
-
-}
 
 
 local_create_project_note_group <- function(groupNoteName, groupNotePath,
@@ -239,7 +210,7 @@ local_create_project_note_group <- function(groupNoteName, groupNotePath,
   create_group_note(groupNoteName, groupNotePath, selection, subNoteName)
 
   # create paths to Rmd & dir
-  groupNoteRmd <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___001-00", "____", groupNoteName, ".Rmd") )
+  groupNoteRmd <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___001-00", "_--_", groupNoteName, ".Rmd") )
   groupNoteDir <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___001-00") )
 
   # ensure Rmd & Dir are deleted when out of context
@@ -291,7 +262,7 @@ local_create_project_note_sub <- function(subNoteName, subNotePath,
   subNoteSummaryTemplate="Project-Sub-Note-Summary-Template.Rmd"
 
   # create paths to Rmd & dir - 2ND SUBNOTE!
-  subNoteRmd <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-002____", subNoteName, ".Rmd") )
+  subNoteRmd <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-002_--_", subNoteName, ".Rmd") )
   subNoteDir <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-002") )
 
   # ensure Rmd & Dir are deleted when out of context
@@ -367,4 +338,68 @@ local_create_journal <- function(date, organisationPath, env = parent.frame() ) 
 
 
 }
+
+
+
+local_rename_project_note_simple <- function(projectNotePath, newProjectNoteName,
+                                             newProjectNoteTitle,replaceLinksFileExtensions,
+                                             env = parent.frame() ) {
+
+
+  # record current state
+  olddir <- getwd()
+
+  # rename project note
+  rename_project_note(projectNotePath, newProjectNoteName,
+                      newProjectNoteTitle,replaceLinksFileExtensions)
+
+  # create paths to Rmd & dir
+  projectNoteRmdRename <- fs::path(dirname(projectNotePath),
+                                   paste0(basename(dirname(projectNotePath)),
+                                          "___001_--_", newProjectNoteName, ".Rmd") )
+  projectNoteDirRename <- fs::path(dirname(projectNotePath),
+                                   paste0(basename(dirname(projectNotePath)),
+                                          "___001") )
+
+  # ensure Rmd & Dir are deleted when out of context
+  withr::defer(fs::file_delete(projectNoteRmdRename), envir = env)
+  withr::defer(fs::dir_delete(projectNoteDirRename), envir = env)
+
+  # return the project Rmd
+  projectNoteRmdRename
+
+}
+
+
+
+
+local_rename_project_doc <- function(projectDocPath, projectDocPrefix,
+                                     newProjectDocName, newProjectDocTitle,
+                                     replaceLinksFileExtensions,
+                                     env = parent.frame() ) {
+
+
+  # record current state
+  olddir <- getwd()
+
+  # rename project Doc
+  rename_project_doc(projectDocPath, newProjectDocName,
+                      newProjectDocTitle,replaceLinksFileExtensions)
+
+  # create paths to Rmd & dir
+  projectDocRmdRename <- fs::path(dirname(projectDocPath),
+                                   paste0(projectDocPrefix,
+                                          "_--_", newProjectDocName, ".Rmd") )
+  projectDocDirRename <- fs::path(dirname(projectDocPath), projectDocPrefix )
+
+  # ensure Rmd & Dir are deleted when out of context
+  withr::defer(fs::file_delete(projectDocRmdRename), envir = env)
+  withr::defer(fs::dir_delete(projectDocDirRename), envir = env)
+
+  # return the project Doc Rmd
+  projectDocRmdRename
+
+}
+
+
 

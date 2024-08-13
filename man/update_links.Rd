@@ -28,7 +28,6 @@ should be searched for links and have links replaced.  Must be plaintext file
 type.  Default is Rmd files only.}
 }
 \description{
-Updates every hyperlink in all files within \code{dirTree}, replacing
-\code{oldFileName} (the basename of the file, including prefix and extension) with
-\code{newName} (the new file name, without prefix or extension).
+Updates every hyperlink in all Project Notes within \code{dirTree}, replacing
+\code{oldLinkSuffix} (the path of the file) with \code{newLinkSuffix} (the new path).
 }

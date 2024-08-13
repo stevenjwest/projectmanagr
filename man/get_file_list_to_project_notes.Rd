@@ -22,13 +22,19 @@ get_file_list_to_project_notes(
 
 \item{fileExtensions}{File extensions of files to list.}
 
-\item{pathExclusions}{Directory Paths which should be EXCLUDED from file search.}
+\item{pathExclusions}{Directory Paths which should be EXCLUDED from file
+search. Typically want to exclude the config and volumes directories in the
+root of an Organisation.}
 
 \item{retrievalDateTimeCutoff}{Any project notes last modified BEFORE the
 cutoff time will not be returned. If NULL ignored. This is a lubridate datetime
 object, made by parsing a datetime string through \code{lubridate::ymd_hm()}}
 }
 \description{
-Traverses all directory tree in \code{dl} but only
-get fileList recursively but only down to project note parent dir level
+Traverses all directory tree in \code{dl} but only get fileList recursively but
+only down to project note parent dir level.
+}
+\details{
+This method makes parsing all plaintext Project Notes across an Organisation
+much more efficient!
 }

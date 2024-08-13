@@ -15,7 +15,8 @@ addin_create_project_org <- function() {
 }
 
 
-
+#' Create Project Org UI
+#'
 addin_create_project_org_ui <- function() {
 
   miniPage(
