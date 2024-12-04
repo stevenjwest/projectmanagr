@@ -2,13 +2,14 @@
 % Please edit documentation in R/datatables-gen-functions.R
 \name{datatable_add_data_variables}
 \alias{datatable_add_data_variables}
-\title{Add a variable-first data table}
+\title{Generate ADD_DATA Variables Datatable}
 \usage{
 datatable_add_data_variables(
   contents,
   var_names,
   datatable_name,
   group_names,
+  default_data_vals = list(),
   dt_length = 100
 )
 }
@@ -20,16 +21,24 @@ existing data tables.}
 
 \item{datatable_name}{The EXISTING datatable from which the IDs must be drawn.}
 
-\item{group_names}{Vector of sample IDs or GROUP NAMES from a group set, which will
-constitute the remaining column headers.  These will typically be group
-names.}
+\item{group_names}{String vector containing GROUP NAMES from a group set,
+which will constitute the remaining column headers.  Can be Group Names, or
+special group ALL.}
+
+\item{default_data_vals}{List of default data values to add to data cols.}
 
 \item{dt_length}{Int of data table max length in characters - default 100.}
 }
+\value{
+List of datatables generated.
+}
 \description{
-for procedure data
+Add Data to all \code{group_names} from \code{datatable_name} in \code{contents} with
+\code{var_names} (column names) and \code{default_data_vals} (data for each column).
 }
 \details{
+for procedure data
+
 First column contains a list of variables, subsequent column titles are
 typically group IDs, and data values are in cells.
 }

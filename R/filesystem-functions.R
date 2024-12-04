@@ -11,7 +11,7 @@
 #' Organisation.
 #'
 #' @export
-find_org_directory <- function( path ) {
+find_org_directory <- function( path = getwd() ) {
 
   origPath <- normalizePath(path)
   # Check path is at the root of an ORGANISATION:
@@ -38,12 +38,31 @@ find_org_directory <- function( path ) {
   if( path == "" ) {
     if( rstudioapi::isAvailable() ) {
       # try to find orgPath from active document path
-      WD <- rstudioapi::getSourceEditorContext()$path
-      path <- find_org_directory( WD )
+      path <- rstudioapi::getSourceEditorContext()$path
+      while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
+        path2 <- path # save in placeholder
+        path <- dirname(path)
+        if( path2 == path ) {
+          path <- ""
+          break
+        }
+        confPath <- get_config_dir(path)
+        tempPath <- get_template_dir(path)
+      }
     }
   }
 
   path
+}
+
+#' Check Dirs for Organisations
+#'
+#' Simple wuick check of directories in `dirs` for presence of any ProjectManagr
+#' Organisations.
+check_dirs_org <- function(dirs) {
+
+  return(dirs[fs::file_exists(get_settings_yml_file(dirs))])
+
 }
 
 
@@ -53,15 +72,14 @@ find_org_directory <- function( path ) {
 #' && absolute + normalised
 #'
 #' @param rmd_path Path to Rmd file to check.
-confirm_rmd_path <- function(rmd_path, settings) {
+confirm_rmd_path <- function(rmd_path) {
 
   # if not an absolute path:
   if( R.utils::isAbsolutePath(rmd_path) == FALSE ) {
     rmd_path <- R.utils::getAbsolutePath(rmd_path )
   }
 
-  # CONFIRM rmd_path is a project doc or note:
-  rmd_type <- get_file_type(rmd_path, settings)
+
   orgPath <- find_org_directory(dirname(rmd_path))
 
   if(orgPath == "" ) {
@@ -70,6 +88,11 @@ confirm_rmd_path <- function(rmd_path, settings) {
     stop( paste0("  rmd_path is not a Project Doc or Note - not in a sub-dir of a PROGRAMME Directory: ", rmd_path) )
   }
   # now, orgPath should be the root dir of the organisation
+
+  settings <- get_settings_yml(orgPath)
+
+  # CONFIRM rmd_path is a project doc or note:
+  rmd_type <- get_file_type(rmd_path, settings)
 
   # normalize path - remove HOME REF ~
   rmd_path <- normalizePath(rmd_path)
@@ -124,15 +147,23 @@ get_file_type <- function( filePath, settings ) {
   prefix <- substr(basename(filePath), 1,
                    regexpr(settings[["ProjectPrefixSep"]], basename(filePath), fixed=TRUE)-1 )
 
+  prefixStr <- prefix # set all values initially
   # get just the STRING first part from prefix
   # project notes have a prefix SRING then a NUMBER - so want to remove possible number
   # these are separated by ~ - so return string up to but not including '~' : ProjectIndexSep
-  if( regexpr(settings[["ProjectIndexSep"]], prefix, fixed=TRUE) > -1 ) {
-    prefixStr <- substr(prefix, 1,
-                        regexpr(settings[["ProjectIndexSep"]], prefix, fixed=TRUE)-1 )
-  } else {
-    prefixStr <- prefix
-  }
+
+  # this code works with `prefix` as a vector!
+  projIndexSepExists <- regexpr(settings[["ProjectIndexSep"]], prefix, fixed=TRUE) > -1
+  prefixStr[projIndexSepExists] <- substr(prefix[projIndexSepExists], 1,
+                                          regexpr(settings[["ProjectIndexSep"]], prefix[projIndexSepExists], fixed=TRUE)-1 )
+
+  # old code only works with individual strings..
+  # if( regexpr(settings[["ProjectIndexSep"]], prefix, fixed=TRUE) > -1 ) {
+  #   prefixStr <- substr(prefix, 1,
+  #                       regexpr(settings[["ProjectIndexSep"]], prefix, fixed=TRUE)-1 )
+  # } else {
+  #   prefixStr <- prefix
+  # }
 
 
   # project notes subtypes are defined by FILENAME PREFIX:
@@ -839,6 +870,8 @@ find_prog_dirs <- function( orgPath, settings ) {
 
   progPaths <- fs::path(orgPath, progNames$PROGRAMMES)
 
+  progPaths <- progPaths[fs::dir_exists(progPaths)]
+
   progPaths
 
 }
@@ -953,7 +986,7 @@ get_config_dir <- function(orgPath) {
 #' a Project Organisation root directory.
 #'
 get_template_dir <- function(orgPath) {
-  tempPath <- fs::path(orgPath, ".config", "templates")
+  tempPath <- fs::path(get_config_dir(orgPath), "templates")
   return(tempPath)
 }
 #' Get settings yml file
@@ -962,7 +995,7 @@ get_template_dir <- function(orgPath) {
 #' projectmanagr organisation.
 #'
 get_settings_yml_file <- function(orgPath) {
-  settingsYml <- fs::path(orgPath, ".config", "settings.yml")
+  settingsYml <- fs::path(get_config_dir(orgPath), "settings.yml")
   return(settingsYml)
 }
 
@@ -984,7 +1017,7 @@ get_settings_yml <- function(orgPath) {
 #' in `ConfigStatusYamlFile` parameter
 #'
 get_status_yml_file <- function(orgPath, settings) {
-  statusYml <- fs::path(orgPath, ".config", settings[["ConfigStatusYamlFile"]])
+  statusYml <- fs::path(get_config_dir(orgPath), settings[["ConfigStatusYamlFile"]])
   return(statusYml)
 }
 
@@ -1191,10 +1224,28 @@ get_project_note_paths <- function(parentDirectory, settings) {
   pnv <- c()
   i <- 1
 
-  # get all files matching FileType used in Rmd
-  pd <- normalizePath(parentDirectory)
-  ft <- paste0("*.", settings[["FileType"]])
-  fl <- list.files(pd, pattern = ft, recursive=TRUE, full.names=TRUE)
+  # # get all files matching FileType used in Rmd
+  # pd <- normalizePath(parentDirectory)
+  # ft <- paste0("*.", settings[["FileType"]])
+  # fl <- list.files(pd, pattern = ft, recursive=TRUE, full.names=TRUE)
+  orgPath <- find_org_directory(parentDirectory)
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
+
+  # get dirs in root to EXCLUDE from search
+  volPath <- get_volumes_dir(orgPath, settings)
+  sitePath <- get_site_dir(orgPath, settings)
+  weeklyjournalPath <- get_weekly_journal_dir(orgPath, settings)
+
+  fileList <- list()
+  filePaths <- get_file_list_to_project_notes(
+    fileList, parentDirectory, settings,
+    pathExclusions = c(confPath, volPath, sitePath, weeklyjournalPath) )
+  # get all Project Docs/Notes inside path - they all contain "~_" in filename and end with .Rmd
+  fl <- fs::path(unlist(filePaths))
 
   # check each file path
   for(f in fl) {
@@ -1207,9 +1258,116 @@ get_project_note_paths <- function(parentDirectory, settings) {
     }
   }
 
-  # return
-  pnv
+  # return as fs path object
+  fs::path(pnv)
 }
+
+
+#' get file list down to project notes
+#'
+#' Traverses all directory tree in `dl` but only get fileList recursively but
+#' only down to project note parent dir level.
+#'
+#' This method makes parsing all plaintext Project Notes across an Organisation
+#' much more efficient!
+#'
+#' @param fileList List of files recursively retrieved by this function.
+#' @param dl DirsList - a list of directory paths.
+#' @param settings projectmanagr settings list.
+#' @param fileExtensions File extensions of files to list.
+#' @param pathExclusions Directory Paths which should be EXCLUDED from file
+#' search. Typically want to exclude the config and volumes directories in the
+#' root of an Organisation.
+#' @param retrievalDateTimeCutoff Any project notes last modified BEFORE the
+#' cutoff time will not be returned. If NULL ignored. This is a lubridate datetime
+#' object, made by parsing a datetime string through `lubridate::ymd_hm()`
+#'
+get_file_list_to_project_notes <- function(fileList, dl, settings,
+                                           fileExtensions = list("Rmd"),
+                                           pathExclusions = c(),
+                                           retrievalDateTimeCutoff = NULL ) {
+
+
+  #### Set Instance Variables ####
+
+  # get important delimiters from settings
+  #projIdentifierSep <- load_param_vector(settings[["ProjectIdentifierSep"]]) # "_"
+  #projPrefixSep <- load_param_vector(settings[["ProjectPrefixSep"]]) #  "~_"
+  #projIndexSep <- load_param_vector(settings[["ProjectIndexSep"]]) # "~"
+  #groupIndexSep <- load_param_vector(settings[["GroupNotePrefixSep"]]) # "-"
+
+
+  #### get all files from dl ####
+
+  if( is.null(retrievalDateTimeCutoff) ) { # no cutoff filter
+
+    # get each file with extension from all dirs in dl
+    for(fe in fileExtensions) {
+      # get local copy of fl to check for project notes
+      fl <- paste0( dl, .Platform$file.sep,
+                    list.files(path = dl, pattern = paste0("*.",fe),
+                               all.files = TRUE) )
+      fl <- fl[fl!=paste0(dl, .Platform$file.sep)] # remove any instances of just dl/ - if no files found!
+      fileList <- c(fileList, fl )
+    }
+
+  } else { # filter for cutoff datetime
+
+    # get each file with extension from all dirs in dl
+    for(fe in fileExtensions) {
+      # get local copy of fl to check for project notes
+      fl <- paste0( dl, .Platform$file.sep,
+                    list.files(path = dl, pattern = paste0("*.",fe),
+                               all.files = TRUE) )
+      fl <- fl[fl!=paste0(dl, .Platform$file.sep)] # remove any instances of just dl/ - if no files found!
+
+      # filter for datetime - only keep files
+      flf <- fl[lubridate::as_datetime(file.info(fl)$ctime, tz='UTC') > retrievalDateTimeCutoff]
+
+      fileList <- c(fileList, flf )
+    }
+
+  }
+
+
+  #### get next level of sub-dirs from dl ####
+
+  dls <- list.dirs(path = dl, recursive=FALSE)
+
+  # remove any directories that match pathExclusions
+  dls <- dls[ !dls %in% pathExclusions ]
+
+
+  #### filter next level of sub-dirs to remove SIMPLE & SUB NOTE DIRS ####
+
+  types <- get_file_types(fl, settings)
+  fl_ex <- fl[types=="NOTE" | types=="SUB"] # excluding dirs belonging to simple notes and subnotes
+  fl_ex_dir <- get_project_note_dir_path(fl_ex, settings) # get the note's dirs
+
+  # remove the project note dirs from dls
+  for(fled in fl_ex_dir) {
+    dls <- dls[dls != fled]
+  }
+
+
+  #### recursively get more files from next level of sub-dirs ####
+
+  # recurses with each set of dls retrieved!
+  for(d in dls) {
+    fileList <- get_file_list_to_project_notes(
+      fileList, d, settings,
+      fileExtensions, pathExclusions, retrievalDateTimeCutoff)
+  }
+
+  #### return list of files down to project note dirs ####
+
+  # return fileList
+  fileList
+
+
+}
+
+
 
 
 #' Get Path from Link

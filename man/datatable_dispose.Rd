@@ -2,13 +2,15 @@
 % Please edit documentation in R/datatables-gen-functions.R
 \name{datatable_dispose}
 \alias{datatable_dispose}
-\title{Dispose of a set of Samples}
+\title{Generate DISPOSE Datatable}
 \usage{
 datatable_dispose(
   contents,
   datatable_name,
   dt_length = 100,
-  summarise_reps = TRUE
+  summarise_reps = TRUE,
+  all_reps = FALSE,
+  cdt = get_datetime()
 )
 }
 \arguments{
@@ -26,13 +28,36 @@ the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
 otherwise if TRUE, all reps are summarised using r vector index syntax on
 one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
 indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.}
+
+\item{all_reps}{Boolean to indicate whether all reps should be summarised in
+the datatable.  If TRUE then ALL reps for each ID are summarised with keyword
+ALL - which will apply data cols to all the reps for each sample, without the
+potentially complex summary strings representing a disparate collection of reps.
+This comes at the expense of not being clear from reading this datatable what
+reps actually exist.}
+
+\item{cdt}{Current datetime to insert into dispose col.  Can modify this to
+a custom datetime as desired.}
+}
+\value{
+List of datatables generated.
 }
 \description{
-This generates a new datatable that disposes of samples - indicates they no
-longer exist.
+Disposes all samples IDs from \code{datatable_name} in \code{contents} at \code{cdt} (current
+datetime).
 }
 \details{
-Datatable comprises the dataframe NAME, sample IDs, reps (if applicable), and
-the special column titled \code{dispose}.  In this column the datetime of disposal
-(i.e. time of creation of dispose datatable) is written.
+The generated DISPOSE DataTable will contain an initial ID column containing
+all EXISTING IDs (IDs that have been resampled or exported will automatically
+be EXCLUDED), and a \code{dispose} column that contains the \code{cdt} (current
+datetime).
+
+The function assumes all EXISTING SAMPLE (& REPS) will be disposed: if
+more than one rep exists for any of the samples, this table will add the rep
+column and fill it with all the EXISTING rep numbers in the format indicated
+by \code{summarise_reps} & \code{all_reps}.
+
+If the table exceeds \code{dt_length} characters (default 100), then the table is
+split into multiple tables, with IDs as first col, and subsequent data_cols
+given in subsequent tables.
 }

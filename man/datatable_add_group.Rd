@@ -2,7 +2,7 @@
 % Please edit documentation in R/datatables-gen-functions.R
 \name{datatable_add_group}
 \alias{datatable_add_group}
-\title{Add Groups to Data Table}
+\title{Generate Dedicated GROUP Datatable}
 \usage{
 datatable_add_group(
   contents,
@@ -10,7 +10,8 @@ datatable_add_group(
   datatable_name,
   groups,
   dt_length = 100,
-  summarise_reps = FALSE
+  summarise_reps = FALSE,
+  all_reps = FALSE
 )
 }
 \arguments{
@@ -18,13 +19,13 @@ datatable_add_group(
 existing data tables.}
 
 \item{group_names}{Character vector of data table column titles to add.
-CANNOT BE BLANK!  MUST start all group names with \verb{group-}.}
+CANNOT BE BLANK!  MUST start all group names with \code{group}.}
 
 \item{datatable_name}{String of data table name: This data table MUST ALREADY
 EXIST/BE DECLARED BEFORE rmd_line in rmd_path.}
 
-\item{groups}{A list of vectors containing the group labels for each group
-defined in group_names}
+\item{groups}{A LIST OF VECTORS containing the group labels for each group
+defined in group_names. Must be the same length as \code{group_names}.}
 
 \item{dt_length}{Int of data table max length in characters - default 100.}
 
@@ -33,14 +34,32 @@ the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
 otherwise if TRUE, all reps are summarised using r vector index syntax on
 one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
 indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.}
+
+\item{all_reps}{Boolean to indicate whether all reps should be summarised in
+the datatable.  If TRUE then ALL reps for each ID are summarised with keyword
+ALL - which will apply data cols to all the reps for each sample, without the
+potentially complex summary strings representing a disparate collection of reps.
+This comes at the expense of not being clear from reading this datatable what
+reps actually exist.}
+}
+\value{
+List of datatables generated.
 }
 \description{
-Adds Groups to an EXISTING Data Table in the character vector \code{contents}.
-The Groups DataTable will contain an initial ID column containing all
-sample IDs, and a series of extra data columns named using the
-group_names vector.
+Groups all samples IDs from \code{datatable_name} in \code{contents} with
+\code{group_names} (group column name) and \code{groups} (string codes for groups).
 }
 \details{
+Adds Groups to EXISTING Data Table IDs in the character vector \code{contents}.
+The Groups DataTable will contain an initial ID column containing all existing
+sample IDs, and a series of extra data columns named using the \code{group_names}
+vector.
+
+The function assumes all EXISTING SAMPLE (& REPS) will have groups added: if
+more than one rep exists for any of the samples, this table will add the rep
+column and fill it with all the EXISTING rep numbers in the format indicated
+by \code{summarise_reps} & \code{all_reps}.
+
 If the table exceeds dt_length characters
 (default 100), then the table is split into multiple tables, with IDs as
 first col, and subsequent group_names given in subsequent tables.

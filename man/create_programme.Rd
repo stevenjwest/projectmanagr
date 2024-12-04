@@ -9,8 +9,7 @@ create_programme(
   organisationPath,
   programmeTitle = "",
   progTemplate = "Programme-Template.Rmd",
-  progSummaryTemplate = "Programme-Summary-Template.Rmd",
-  ctime = ""
+  progSummaryTemplate = "Programme-Summary-Template.Rmd"
 )
 }
 \arguments{
@@ -29,8 +28,6 @@ Default is "Programme-Template.Rmd" from projectmanagr templates.}
 \item{progSummaryTemplate}{The Rmd file to use as a template to create the
 Programme Summary. Default is "Programme-Summary-Template.Rmd" from
 projectmanagr templates.}
-
-\item{ctime}{Add creation time to write to status.yml - for automated testing.}
 }
 \value{
 progIndexPath The path to the programme index Rmd file.

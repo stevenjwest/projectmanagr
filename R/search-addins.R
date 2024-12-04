@@ -57,17 +57,18 @@ addin_search_project_org <- function() {
 
     miniContentPanel(
 
-      fillCol( flex = c(1,1,1,1,15),
-
-        fillRow( h5("Select organisation scope for search:") ),
+      fillCol(
+        flex = c(1,9),
 
         # search filesystem scope selected here
-        fillRow( flex = c(7, 1),  verbatimTextOutput("dirtxt", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Organisation Search Scope")  ),
-
-        # search terms entered here
-        fillRow(  textInput("searchTerm", "Search:", value = "", width="100%")  ),
-
-        fillRow(   span( textOutput("warning"), style="color:red")  ),
+        fillRow( flex = c(7, 1, 6, 2, 2),
+                 textInput("searchTerm", "Search:", value = "", width="100%"),
+                 p(),
+                 verbatimTextOutput("dirtxt", placeholder = TRUE),
+                 shinyDirButton("dir", "Select Directory", "Organisation Search Scope"),
+                 checkboxInput("case",
+                               'Case Sensitive',
+                               value = FALSE) ),
 
         # results displayed in this table
         fillRow( DT::dataTableOutput("mytable1", height = "100%") )
@@ -146,7 +147,14 @@ addin_search_project_org <- function() {
           #}
           progress$set(value = value, detail = detail)
         }
-        outputList <- search_dir_tree(global$datapath, input$searchTerm, updateProgress = updateProgress, settings, orgPath)
+        outputList <- search_dir_tree(
+                          path = global$datapath,
+                          searchTerm = input$searchTerm,
+                          updateProgress = updateProgress,
+                          settings = settings,
+                          orgPath = orgPath,
+                          ignoreCase = !(input$case),
+                          fixed = TRUE)
         global$summary <- outputList[[1]]
         global$data <- outputList[[2]]
       }

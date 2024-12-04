@@ -20,8 +20,8 @@
 #'
 #' @param projNoteLinkSummaryTemplate Template with structure to add underneath the
 #' Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-#' and a 'todo' section by default, linked to `NoteObjectivesSummarySectionHeader`
-#' & `NoteObjectivesTodoSectionHeader` in `config/settings.yml`
+#' and a 'todo' section by default, linked to `NoteObjectivesTodoSectionHeader`
+#' in `config/settings.yml`
 #'
 #' @param projNoteSummaryTemplate Template with structure to add Project Note
 #' summary to Project Doc under Goal/Del/Task.
@@ -116,9 +116,9 @@ link_project_note_doc <- function(selection, settings, projNoteRmdPath, projNote
 
   # compute location in projDocContents to insert the projNoteLink & summary - END OF LOG section
   logLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
-                               projDocContents, selection[["taskLine"]])
+                               projDocContents, selection[["taskLine"]], orgPath)
   taskFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
-                                      projDocContents, logLine) # end of log section
+                                      projDocContents, logLine, orgPath) # end of log section
 
 
   #### CHECK FOR ERRORS IN INPUT ####
@@ -162,7 +162,7 @@ link_project_note_doc <- function(selection, settings, projNoteRmdPath, projNote
   noteObjHeadIndex <- match_line_index( load_param_vector(settings[["NoteObjectivesHeader"]], orgPath),
                                       projNoteRmdContents)
   noteObjFootIndex <- grep_line_index_from( load_param_vector(settings[["NoteObjectivesFooter"]], orgPath),
-                                         projNoteRmdContents, noteObjHeadIndex)
+                                         projNoteRmdContents, noteObjHeadIndex, orgPath)
 
   projNoteRmdContents <- insert_at_indices(projNoteRmdContents, noteObjFootIndex, projNoteLinkContents)
 
@@ -178,19 +178,21 @@ link_project_note_doc <- function(selection, settings, projNoteRmdPath, projNote
                                                 settings[["ProjectTaskLogSep"]], orgPath)
 
   # replace proj note link
-  projNoteSummaryContents <- sub_template_param(projNoteSummaryContents,
-                                                "{{PROJECT_NOTE_LINK}}",
+  projNoteSummaryContents <- sub_template_param(projNoteSummaryContents, "{{PROJECT_NOTE_LINK}}",
                                                 projNoteLink, orgPath)
 
-  # replace proj note summary - if NoteObjectivesTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
-  projNoteLinkSummaryContentsTrim <- projNoteLinkSummaryContents[1 : ifelse( any(grepl(settings[["NoteObjectivesTodoSectionHeader"]],
-                                                                                       projNoteLinkSummaryContents, fixed=TRUE)),
-                                                                             grep(settings[["NoteObjectivesTodoSectionHeader"]],
-                                                                                  projNoteLinkSummaryContents, fixed=TRUE)-1,
-                                                                             length(projNoteLinkSummaryContents)) ]
+  # replace proj note summary
+  summaryContents <- extract_summary_from_link_contents(projNoteLinkContents, settings, orgPath)
+
+  #- if NoteObjectivesTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
+  #projNoteLinkSummaryContentsTrim <- projNoteLinkSummaryContents[1 : ifelse( any(grepl(settings[["NoteObjectivesTodoSectionHeader"]],
+  #                                                                                     projNoteLinkSummaryContents, fixed=TRUE)),
+  #                                                                           grep(settings[["NoteObjectivesTodoSectionHeader"]],
+  #                                                                                projNoteLinkSummaryContents, fixed=TRUE)-1,
+  #                                                                           length(projNoteLinkSummaryContents)) ]
 
   projNoteSummaryContents <- sub_template_param(projNoteSummaryContents, "{{PROJECT_NOTE_SUMMARY}}",
-                                                projNoteLinkSummaryContentsTrim, orgPath)
+                                                summaryContents, orgPath)
 
   # insert summary into projDoc at end of task - last log entry
   projDocContents <- insert_at_indices(projDocContents, taskFooterLine, projNoteSummaryContents)
@@ -206,6 +208,71 @@ link_project_note_doc <- function(selection, settings, projNoteRmdPath, projNote
 
 }
 
+
+extract_summary_from_link_contents <- function(projNoteLinkContents, settings, orgPath) {
+
+  # load the params to check their length
+  taskLinkLine <-   load_param_vector(settings[["NoteTaskLinkLine"]], orgPath)
+  todoSectionHeader <- load_param_vector(settings[["NoteObjectivesTodoSectionHeader"]], orgPath)
+
+  # get indices : G D T & Todo
+  pdli <- grep_line_index(paste0(settings[["ProjectLinkFormat"]], "["), projNoteLinkContents, orgPath) # projDoc link index
+  gli <- grep_line_index_from(settings[["NoteGoalLinkLine"]], projNoteLinkContents, pdli, orgPath) # goal index
+  dli <- grep_line_index_from(settings[["NoteDeliverableLinkLine"]], projNoteLinkContents, gli, orgPath) # del index
+  tli <- grep_line_index_from(taskLinkLine, projNoteLinkContents, dli, orgPath) # task index
+  # removed NoteObjectivesSummarySectionHeader - using tli as start of summary
+  #summi <- grep_line_index_from(settings[["NoteObjectivesSummarySectionHeader"]], projNoteLinkContents, tli) # summary index
+  summi <- tli
+  todoi <- grep_line_index_from(todoSectionHeader, projNoteLinkContents, summi, orgPath) # todo index
+
+  # extract summary - between tli and todoi NOT INCLUSIVE
+  summStart <- (tli+length(taskLinkLine)) # get content starting AFTER taskLinkLine
+  summEnd <- (todoi-1) # get content UP TO but not including TodoSectionHeader
+  #cat(projNoteLinkContents[(tli+length(taskLinkLine)):(todoi-1)], sep='\n')
+  summary <- projNoteLinkContents[summStart:summEnd]
+
+  # edit summary headers
+  summary <- note_summary_headers_quote_out(summary)
+
+  summary # return
+
+}
+
+
+#' quote out all Markdown Headers
+#'
+#' Converts every line beginning with `#` in `summary` to `>#`
+#'
+#' This is used to quote-out the markdown headers in Project Note Summary Section,
+#' so when it is inserted into the Project Doc, the Markdown Headers will not show
+#' in the Project Note Outline in RStudio.  This function is used by `update()`
+#' to ensure Project Note summary Markdown Headers are not present in the Doc GDT
+#' summary for each Note.
+#'
+#' When the Project Note Rmd content is converted to html via `render()`, these
+#' headers are treated specially - to ensure they are available as sub-headers
+#' under a task when clicked on in the html outline (TODO!)
+note_summary_headers_quote_out <- function(summary) {
+
+  summary[startsWith(summary, '#')] <- paste0('>', summary[startsWith(summary, '#')])
+  summary # return
+}
+
+#' quote out all Markdown Headers
+#'
+#' Converts every line beginning with `>#` in `summary` to `#`
+#'
+#' This is used to quote-in the markdown headers in Project Note Summary Section,
+#' so it forms html headers when rendered to html.
+#'
+#' When the Project Note Rmd content is converted to html via `render()`, these
+#' headers are treated specially - to ensure they are available as sub-headers
+#' under a task when clicked on in the html outline (TODO!)
+note_summary_headers_quote_in <- function(summary) {
+
+  summary[startsWith(summary, '>#')] <- substring(summary[startsWith(summary, '>#')], 2)
+  summary # return
+}
 
 
 #' Link Project Document GDT to Project Note Group (Header plus all Sub Notes)
@@ -228,8 +295,8 @@ link_project_note_doc <- function(selection, settings, projNoteRmdPath, projNote
 #'
 #' @param projNoteLinkSummaryTemplate Template with structure to add underneath the
 #' Project Doc Goal/Del/Task link in all Sub Note.  Includes a 'summary' section
-#' and a 'todo' section by default, linked to `NoteObjectivesSummarySectionHeader`
-#' & `NoteObjectivesTodoSectionHeader` in `config/settings.yml`
+#' and a 'todo' section by default, linked to `NoteObjectivesTodoSectionHeader`
+#' in `config/settings.yml`
 #'
 #' @param projNoteSummaryTemplate Template with structure to add Sub Note
 #' summaries to Project Doc under Goal/Del/Task.
@@ -372,7 +439,7 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
                                                  "{{PROJECT_NOTE_LOG_SEP}}",
                                                  settings[["ProjectTaskLogSep"]], orgPath)
 
-  # header note summary
+  # header note link - no summary
   headerNoteName <- substr(basename(headerNoteRmdPath), 1, regexpr(".Rmd", basename(headerNoteRmdPath))-1)
   headerNoteLink <- paste0(settings[["HeaderLinkFormat"]],
                            create_hyperlink( headerNoteName, headerNoteRmdPath, projectDocPath),
@@ -387,12 +454,16 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
                                                  "{{PROJECT_NOTE_SUMMARY}}",
                                                  "", orgPath)
 
+  # replace proj note summary
+  summaryContents <- extract_summary_from_link_contents(projNoteLinkContents, settings, orgPath)
+
   # replace proj note summary - if NoteObjectivesTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
-  subNoteLinkSummaryContentsTrim <- projNoteLinkSummaryContents[1 : ifelse( any(grepl(settings[["NoteObjectivesTodoSectionHeader"]],
-                                                                                      projNoteLinkSummaryContents, fixed=TRUE)),
-                                                                            grep(settings[["NoteObjectivesTodoSectionHeader"]],
-                                                                                 projNoteLinkSummaryContents, fixed=TRUE)-1,
-                                                                            length(projNoteLinkSummaryContents)) ]
+  #subNoteLinkSummaryContentsTrim <- projNoteLinkSummaryContents[1 : ifelse( any(grepl(settings[["NoteObjectivesTodoSectionHeader"]],
+  #                                                                                    projNoteLinkSummaryContents, fixed=TRUE)),
+  #                                                                          grep(settings[["NoteObjectivesTodoSectionHeader"]],
+  #                                                                               projNoteLinkSummaryContents, fixed=TRUE)-1,
+  #                                                                          length(projNoteLinkSummaryContents)) ]
+
 
   # subnotes summaries
   for(s in subNoteRmdPaths) {
@@ -402,13 +473,11 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
                           create_hyperlink( subNoteName, s, projectDocPath),
                           settings[["SubNoteLinkFormat"]])
 
-    snSummaryContents <- sub_template_param(subNoteSummaryContents,
-                                            "{{PROJECT_NOTE_LINK}}",
+    snSummaryContents <- sub_template_param(subNoteSummaryContents, "{{PROJECT_NOTE_LINK}}",
                                             subNoteLink, orgPath)
 
-    snSummaryContents <- sub_template_param(snSummaryContents,
-                                            "{{PROJECT_NOTE_SUMMARY}}",
-                                            subNoteLinkSummaryContentsTrim, orgPath)
+    snSummaryContents <- sub_template_param(snSummaryContents, "{{PROJECT_NOTE_SUMMARY}}",
+                                            summaryContents, orgPath)
 
     groupNoteSummaryContents <- c(groupNoteSummaryContents, snSummaryContents)
 
@@ -416,9 +485,9 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
 
   # compute location in projDocContents to insert groupNoteSummaryContents - END OF LOG section
   logLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
-                               projDocContents, selection[["taskLine"]])
+                               projDocContents, selection[["taskLine"]], orgPath)
   taskFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
-                                      projDocContents, logLine) # end of log section
+                                      projDocContents, logLine, orgPath) # end of log section
 
 
   #### CHECK FOR EXISTING LINKS ####
@@ -450,12 +519,12 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
       tlsf <- grep_line_index_from_rev(load_param_vector(settings[["ProjectTaskLogSep"]], orgPath),
                                        projDocContents, snli)
       tlsl <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogSep"]], orgPath),
-                                projDocContents, snli)
+                                projDocContents, snli, orgPath)
       # excise independent link from ProjDocContents
       projDocContents <- c( projDocContents[1:(tlsf-1)], projDocContents[tlsl:length(projDocContents)] )
       # and recompute taskFooterLine
       taskFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
-                                          projDocContents, logLine) # end of log section
+                                          projDocContents, logLine, orgPath) # end of log section
       # & SKIP THIS SUBNOTE when writing projDoc GDT to file below
       subsExistingLinks[[(length(subsExistingLinks)+1)]] <- s
     }
@@ -481,7 +550,7 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
   noteObjHeadIndex <- match_line_index( load_param_vector(settings[["NoteObjectivesHeader"]], orgPath),
                                       headerNoteContents)
   noteObjFootIndex <- grep_line_index_from( load_param_vector(settings[["NoteObjectivesFooter"]], orgPath),
-                                         headerNoteContents, noteObjHeadIndex)
+                                         headerNoteContents, noteObjHeadIndex, orgPath)
 
   headerNoteContents <- insert_at_indices(headerNoteContents, noteObjFootIndex, headerNoteLinkContents)
 
@@ -506,7 +575,7 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
     noteObjHeadIndex <- match_line_index( load_param_vector(settings[["NoteObjectivesHeader"]], orgPath),
                                         subNoteContents)
     noteObjFootIndex <- grep_line_index_from( load_param_vector(settings[["NoteObjectivesFooter"]], orgPath),
-                                           subNoteContents, noteObjHeadIndex)
+                                           subNoteContents, noteObjHeadIndex, orgPath)
 
     subNoteContents <- insert_at_indices(subNoteContents, noteObjFootIndex, projNoteLinkContents)
 
@@ -541,8 +610,8 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
 #'
 #' @param projNoteLinkSummaryTemplate Template with structure to add underneath the
 #' Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-#' and a 'todo' section by default, linked to `NoteObjectivesSummarySectionHeader`
-#' & `NoteObjectivesTodoSectionHeader` in `config/settings.yml`
+#' and a 'todo' section by default, linked to `NoteObjectivesTodoSectionHeader`
+#' in `config/settings.yml`
 #'
 #' @param projNoteSummaryTemplate Template with structure to add Project Note
 #' summary to Project Doc under Goal/Del/Task.
@@ -667,7 +736,7 @@ link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteConten
 
     # compute location in subNoteContents to insert the GDT Link & summary
     noteObjFootIndex <- grep_line_index_from( load_param_vector(settings[["NoteObjectivesFooter"]], orgPath),
-                                           subNoteContents, noteObjHeadIndex)
+                                           subNoteContents, noteObjHeadIndex, orgPath)
 
     subNoteContents <- insert_at_indices(subNoteContents, noteObjFootIndex, subNoteLinkContents)
 
@@ -681,22 +750,25 @@ link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteConten
   projNoteSummaryContents <- sub_template_param(projNoteSummaryContents, "{{PROJECT_NOTE_LOG_SEP}}",
                                                 settings[["ProjectTaskLogSep"]], orgPath)
 
-  # replace proj note summary - if NoteObjectivesTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
-  projNoteLinkSummaryContentsTrim <- projNoteLinkSummaryContents[1 : ifelse( any(grepl(settings[["NoteObjectivesTodoSectionHeader"]],
-                                                                                       projNoteLinkSummaryContents, fixed=TRUE)),
-                                                                             grep(settings[["NoteObjectivesTodoSectionHeader"]],
-                                                                                  projNoteLinkSummaryContents, fixed=TRUE)-1,
-                                                                             length(projNoteLinkSummaryContents)) ]
+  # replace proj note summary
+  summaryContents <- extract_summary_from_link_contents(subNoteLinkContents, settings, orgPath)
+
+  # # replace proj note summary - if NoteObjectivesTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
+  # projNoteLinkSummaryContentsTrim <- projNoteLinkSummaryContents[1 : ifelse( any(grepl(settings[["NoteObjectivesTodoSectionHeader"]],
+  #                                                                                      projNoteLinkSummaryContents, fixed=TRUE)),
+  #                                                                            grep(settings[["NoteObjectivesTodoSectionHeader"]],
+  #                                                                                 projNoteLinkSummaryContents, fixed=TRUE)-1,
+  #                                                                            length(projNoteLinkSummaryContents)) ]
 
   # replace in projNoteSummaryContents - in case any links are INDIVIDUAL (not group note)
    # this will be added at end of GDT section as individual project note link
   projNoteSummaryContents <- sub_template_param(projNoteSummaryContents, "{{PROJECT_NOTE_SUMMARY}}",
-                                                projNoteLinkSummaryContentsTrim, orgPath)
+                                                summaryContents, orgPath)
 
   # replace in subNoteSummaryContents - for links that are GROUP NOTES
    # this will be added at end of the group note link in GDT section as subnote link
   subNoteSummaryContents <- sub_template_param(subNoteSummaryContents, "{{PROJECT_NOTE_SUMMARY}}",
-                                                projNoteLinkSummaryContentsTrim, orgPath)
+                                               summaryContents, orgPath)
 
   for( dGDT in DocGDTsList ) {
 
@@ -707,13 +779,13 @@ link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteConten
     projDocContents <- read_file(projectDocPath)
 
     # find the GDT vector
-    goalLine <- grep_line_index(dGDT[["goal"]], projDocContents)
-    delLine <- grep_line_index_from(dGDT[["deliverable"]], projDocContents, goalLine)
-    taskLine <- grep_line_index_from(dGDT[["task"]], projDocContents, delLine)
+    goalLine <- grep_line_index(dGDT[["goal"]], projDocContents, orgPath)
+    delLine <- grep_line_index_from(dGDT[["deliverable"]], projDocContents, goalLine, orgPath)
+    taskLine <- grep_line_index_from(dGDT[["task"]], projDocContents, delLine, orgPath)
     logLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
-                                 projDocContents, taskLine)
+                                 projDocContents, taskLine, orgPath)
     taskFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
-                                        projDocContents, logLine) # end of log section
+                                        projDocContents, logLine, orgPath) # end of log section
 
     # determine if link exists as a group note link or as a single project note
     # find index of headernote link then the next ProjectTaskLogSep
@@ -726,10 +798,10 @@ link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteConten
     if( length(headLine) > 0) {
       # if headLine identified, the link to this GDT must be as a group note under the header
       # get the headLine in full projDoc vector
-      headLine <- grep_line_index_from(headerNoteLink, projDocContents, logLine)
+      headLine <- grep_line_index_from(headerNoteLink, projDocContents, logLine, orgPath)
       # then the sepLine from this point
       sepLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogSep"]], orgPath),
-                                   projDocContents, headLine)
+                                   projDocContents, headLine, orgPath)
       # insert the new subnote at end of group note link
       insertionLine <- sepLine
 

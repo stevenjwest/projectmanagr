@@ -2,28 +2,35 @@
 % Please edit documentation in R/datatables-write-functions.R
 \name{datatable_add_group_rmd}
 \alias{datatable_add_group_rmd}
-\title{Add Groups to Data Table and insert into Rmd}
+\title{Generate GROUP Data Table and insert into Rmd}
 \usage{
 datatable_add_group_rmd(
   rmd_path,
   rmd_startline,
   rmd_endline,
-  group_names,
   datatable_name,
+  group_names,
   groups,
-  settings,
   dt_length = 100,
-  summarise_reps = FALSE
+  summarise_reps = FALSE,
+  all_reps = FALSE
 )
 }
 \arguments{
 \item{rmd_path}{path to Rmd file}
 
-\item{group_names}{Character vector of data table column titles to add.
-CANNOT BE BLANK!}
+\item{rmd_startline}{start line in Rmd file to insert table}
+
+\item{rmd_endline}{end line in Rmd file to insert table - same as
+\code{rmd_startline} if a single line is selected, otherwise the selected lines
+(between start & end lines) will trim all lines from first COMMENT TEXT
+line - beginning with \verb{>>>>}.  Used to parse default group names.}
 
 \item{datatable_name}{String of data table name: This data table MUST ALREADY
 EXIST/BE DECLARED BEFORE rmd_line in rmd_path.}
+
+\item{group_names}{Character vector of data table column titles to add.
+CANNOT BE BLANK!}
 
 \item{groups}{A list of vectors containing the group labels for each group
 defined in group_names.}
@@ -36,7 +43,12 @@ otherwise if TRUE, all reps are summarised using r vector index syntax on
 one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
 indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.}
 
-\item{rmd_line}{line in Rmd file to insert table}
+\item{all_reps}{Boolean to indicate whether all reps should be summarised in
+the datatable.  If TRUE then ALL reps for each ID are summarised with keyword
+ALL - which will apply data cols to all the reps for each sample, without the
+potentially complex summary strings representing a disparate collection of reps.
+This comes at the expense of not being clear from reading this datatable what
+reps actually exist.}
 }
 \description{
 Adds Groups to an EXISTING Data Table in specified Rmd file at specified line.

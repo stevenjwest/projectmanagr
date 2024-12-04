@@ -4,12 +4,24 @@
 \alias{parse_datatable_create}
 \title{CREATE a tibble from a datatable Rmd vector}
 \usage{
-parse_datatable_create(dt_vector, dt_list, table_name)
+parse_datatable_create(dt_vector, datatables, table_name, table_start_line)
+}
+\arguments{
+\item{dt_vector}{String vector containing the datatable to parse : should be
+of FUNCTION CREATE.}
+
+\item{datatables}{List of existing datatables extracted before the datatable
+in \code{dt_vector}.}
+
+\item{table_name}{Name of datatable in \code{dt_vector}.}
+
+\item{table_start_line}{The line in RMD where the table starts - to locate it
+if any errors are generated.}
 }
 \description{
-This datatable has the FUNCTION : CREATE
+The \code{dt_vector} has the FUNCTION : CREATE
 }
 \details{
-It MUST have IDs in the first column.  It can have subsequent columns with
+MUST have IDs in the first column.  Can have subsequent columns with
 further data.
 }

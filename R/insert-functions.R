@@ -91,7 +91,7 @@ insert_doc_goal_section <- function(selection,
 
   # compute location in projDocContents to insert goalSectionContents
   goalFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectGoalSep"]], orgPath),
-                                         projDocContents, selection[["goalLine"]])
+                                         projDocContents, selection[["goalLine"]], orgPath)
 
   # insert goal section template into projDoc at end of current goal section
   projDocContents <- insert_at_indices(projDocContents, goalFooterLine, goalSectionContents)
@@ -171,7 +171,7 @@ insert_doc_deliverable_section <- function(selection,
 
   # get end of goal section & make new selection here
   goalFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectGoalSep"]], orgPath),
-                                         projDocContents, selection[["goalLine"]])
+                                         projDocContents, selection[["goalLine"]], orgPath)
 
   selection <- user_selection(projDocPath, goalFooterLine) # selection now captures LAST deliverable in this goal section
 
@@ -270,7 +270,7 @@ insert_doc_task_section <- function(selection,
 
   # get end of deliverable section & make new selection here
   deliverableFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectDeliverableSep"]], orgPath),
-                                         projDocContents, selection[["delLine"]])
+                                         projDocContents, selection[["delLine"]], orgPath)
 
   selection <- user_selection(projDocPath, deliverableFooterLine) # selection now captures LAST task in this del section
 
@@ -375,13 +375,31 @@ insert_content <- function(selectionSource, selectionDestination) {
   #### Form Links ####
 
   # form a link to the Content in the Source Note from destination note
-  contentLink <- create_hyperlink_section(basename(sourceNoteRmdPath), contentDeclaration$projectNoteContentHeader,
+  contentLink <- create_hyperlink_section(basename(sourceNoteRmdPath),
+                                          contentDeclaration$projectNoteContentHeader,
                                           sourceNoteRmdPath, destNoteRmdPath)
 
   # form relative link to Source Note from Content Declaration
   # if this appears in concent declaration need to update it when copying to destination note
   contentDeclToSourceLink <- create_hyperlink(basename(sourceNoteRmdPath),
                                               sourceNoteRmdPath, contentDeclaration$contentSource)
+
+
+  #### Replace links in content ####
+
+  # every knitr::include_graphics link, replace the path!
+  contentSourceContents <- replace_knitr_include_graphics_link(
+    contentSourceContents,
+    contentDeclaration$contentSource,
+    destNoteRmdPath)
+
+  # replace all hyper links with relative path to destination note
+  contentSourceContents <- replace_hyper_links(
+    contentSourceContents,
+    contentDeclaration$contentSource,
+    destNoteRmdPath)
+
+
 
   #### Replace Template Params ####
 
@@ -393,13 +411,8 @@ insert_content <- function(selectionSource, selectionDestination) {
   contentSourceContents <- sub_template_param(contentSourceContents, "{{PREFIX}}",
                                         get_prefix(destNoteRmdPath, settings), orgPath)
 
-  # every knitr::include_graphics link, replace the path!
-  contentSourceContents <- replace_knitr_include_graphics_link(
-                                        contentSourceContents,
-                                        contentDeclaration$contentSource,
-                                        destNoteRmdPath)
 
-  #### Add Protocol Insertion Template to Destination Project Note
+  #### Add Content to Project Note ####
 
   destNoteRmdContents <- insert_at_indices(destNoteRmdContents,
                                         noteInsertionIndex, contentSourceContents)
@@ -485,7 +498,7 @@ insert_header_link_subnote <- function(subNoteContents, headerNoteFileName,
   noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["SubNoteContentsHeader"]], orgPath),
                                              subNoteContents)
   noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["SubNoteContentsFooter"]], orgPath),
-                                                 subNoteContents, noteContentsHeadIndex)
+                                                 subNoteContents, noteContentsHeadIndex, orgPath)
 
   subNoteContents <- insert_at_indices(subNoteContents, noteContentsFootIndex, headerNoteContentLinkContents)
 
@@ -509,7 +522,7 @@ insert_subnote_link_header <- function(headerNoteRmdContents, subNoteFileName,
   noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["HeaderNoteContentsHeader"]], orgPath),
                                              headerNoteRmdContents)
   noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["HeaderNoteContentsFooter"]], orgPath),
-                                                 headerNoteRmdContents, noteContentsHeadIndex)
+                                                 headerNoteRmdContents, noteContentsHeadIndex, orgPath)
 
   headerNoteRmdContents <- insert_at_indices(headerNoteRmdContents, noteContentsFootIndex, subNoteContentLinkContents)
 

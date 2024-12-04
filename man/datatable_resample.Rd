@@ -2,14 +2,16 @@
 % Please edit documentation in R/datatables-gen-functions.R
 \name{datatable_resample}
 \alias{datatable_resample}
-\title{Resample a set of samples}
+\title{Generate RESAMPLE Datatable}
 \usage{
 datatable_resample(
   contents,
   datatable_name,
   resample_vector,
   rep_vector = c(1),
-  dt_length = 100
+  dt_length = 100,
+  summarise_reps = TRUE,
+  all_reps = FALSE
 )
 }
 \arguments{
@@ -24,24 +26,52 @@ delete and sample IDs as is appropriate.}
 \item{resample_vector}{A character vector that contains all the resample
 codes to be added to each sample/rep in the resample table.}
 
+\item{rep_vector}{Integer vector of length 1 or \code{resample_vector}, that
+specifies how many reps each \code{resample_vector} code will generate.}
+
 \item{dt_length}{Int of data table max length in characters - default 100.}
+
+\item{summarise_reps}{Boolean to indicate whether reps should be summarised in
+the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
+otherwise if TRUE, all reps are summarised using r vector index syntax on
+one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
+indicated as: 1:3,5,6:10,12,14:25 etc.  Default to TRUE.}
+
+\item{all_reps}{Boolean to indicate whether all reps should be summarised in
+the datatable.  If TRUE then ALL reps for each ID are summarised with keyword
+ALL - which will apply data cols to all the reps for each sample, without the
+potentially complex summary strings representing a disparate collection of reps.
+This comes at the expense of not being clear from reading this datatable what
+reps actually exist.}
+}
+\value{
+List of datatables generated.
 }
 \description{
-Creates a resample datatable consisting of: sample ID column containing all
-EXISTING sample IDs, sample reps column (if applicable) containing all EXISTING
-sample reps, and then the resample and rep columns, which represent the
-resampling.
+Resamples all samples IDs from \code{datatable_name} in \code{contents} with
+\code{resample_vector} (string codes for sub-samples) and \code{rep_vector} (integers
+to indicate number of reps of each sub-sample).
 }
 \details{
-The function assumes all EXISTING samples and reps from selected datatable are
-resampled: ALL are added to the output resample datatable.
+Creates a resample datatable consisting of: sample ID column containing all
+EXISTING sample IDs, sample rep column (if applicable) containing all EXISTING
+sample reps, and then the resample and reps columns, which represent the
+resampling.
 
-The User is free to DELETE sample IDs and reps from the resample table, and
+The function assumes all EXISTING SAMPLE (& REPS) will be resampled: if
+more than one rep exists for any of the samples, this table will add the rep
+column and fill it with all the EXISTING rep numbers in the format indicated
+by \code{summarise_reps} & \code{all_reps}.
+
+All IDs (& REPs) are added to the output resample datatable:
+\itemize{
+\item The User is free to DELETE sample IDs and reps from the resample table, and
 the deleted samples will no longer be resampled when read into tibbles.
+}
 
 This functionality means the user can resample an INITIAL SUBSET of samples
 in an experiment (perhaps as a pilot - for example resampling a block of CNS at
-different thicknesses 100um 200um 400um 500um etc), and then later to resample
+different thicknesses 100um 200um 400um 500um etc), and then later resample
 the remaining samples in the experiment (eg. now the pilot shows 200um is the
 best thickness, all other samples are resampled to 200um thick sections).
 

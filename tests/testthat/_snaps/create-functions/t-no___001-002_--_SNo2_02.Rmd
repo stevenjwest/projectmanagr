@@ -1,0 +1,111 @@
+---
+title: 't-no___001-002~ SNo2 02'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PrDoSu : EXAMPLE TASK TITLE
+
+
+[PrDoSu_--_Proj_Do_su](../../../PrDoSu_--_Proj_Do_su.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../../PrDoSu_--_Proj_Do_su.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../../PrDoSu_--_Proj_Do_su.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../../PrDoSu_--_Proj_Do_su.Rmd#task-example-task-title)
+
+
+
+### _summary_point_01_
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+
+--------------------- todo ---------------------
+------------------------------------------------
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# GROUP CONTENTS
+
+
+
+[t-no___001-00_--_Gr_No_Head2.Rmd](../t-no___001-00_--_Gr_No_Head2.Rmd)
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+# Introduction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

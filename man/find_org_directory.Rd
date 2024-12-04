@@ -4,7 +4,7 @@
 \alias{find_org_directory}
 \title{Find Organisation Dir}
 \usage{
-find_org_directory(path)
+find_org_directory(path = getwd())
 }
 \arguments{
 \item{path}{an absolute path in the filesystem - should be within an

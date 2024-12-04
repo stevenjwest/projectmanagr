@@ -1,12 +1,8 @@
-{{OBJECTIVES_SUMMARY_HEADER}}
-
+### _summary_point_01_
 
 >>>>
 >>>> Summarise key insights from work in this note that fulfil the Task
 >>>>
-
-
-*__SUMMARY_POINT_01__*
 
 
 

@@ -4,9 +4,34 @@
 \alias{search_dir_tree}
 \title{Search Dir Tree}
 \usage{
-search_dir_tree(path, searchTerm, updateProgress = NULL, settings, orgPath)
+search_dir_tree(
+  path,
+  searchTerm,
+  updateProgress = NULL,
+  settings,
+  orgPath,
+  ignoreCase = TRUE,
+  fixed = TRUE
+)
+}
+\arguments{
+\item{path}{Dir Tree Path for searching text files.}
+
+\item{searchTerm}{The sring to search for.}
+
+\item{updateProgress}{Object to show progress in shiny gadget.}
+
+\item{settings}{Settings list from projectmanagr config}
+
+\item{orgPath}{The organisation path where search takes place.}
+
+\item{ignoreCase}{Whether search should ignore case of searchTerm. TRUE by
+default.}
+
+\item{fixed}{When fixed is TRUE, no regular expression patterns are parsed.
+More efficient search is performed with fixed TRUE.}
 }
 \description{
-Searches all project docs/notes in a Dir Tree within an Organisation,
+Searches all Project Docs & Notes in a Dir Tree within an Organisation,
 returning a datatable with FILENAME, CONTEXT, LOCATION LINE columns.
 }

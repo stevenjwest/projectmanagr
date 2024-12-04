@@ -5,54 +5,53 @@ VolumesFile: volumes.Rmd
 ConfigStatusYamlFile: status.yml
 OrgIndexFileNamePrefix: _index_
 OrgProgrammeHeader: '# PROGRAMMES'
-OrgProgrammeFooter: template:SEP01.txt
-OrgProgrammeSummarySep: template:SEP02.txt
+OrgProgrammeFooter: ::template::SEP01.txt
+OrgProgrammeSummarySep: ::template::SEP02.txt
 ProgrammeProjectsDir: PROJECTS
 ProgIndexFileNamePrefix: _index_
 ProgSummaryHeader: '# PROGRAMME OVERVIEW'
 ProgSummaryTitle: '# '
-ProgSummaryFooter: template:SEP01.txt
+ProgSummaryFooter: ::template::SEP01.txt
 ProgProjectsHeader: '# PROJECTS'
-ProgProjectsFooter: template:SEP01.txt
-ProgProjectSummarySep: template:SEP02.txt
+ProgProjectsFooter: ::template::SEP01.txt
+ProgProjectSummarySep: ::template::SEP02.txt
 ProjectPrefixSep: ~_
 ProjectIdentifierSep: _
 ProjectIndexSep: '~'
 ProjectSummaryHeader: '# PROJECT SUMMARY'
 ProjectSummaryTitle: '# '
-ProjectSummaryFooter: template:SEP01.txt
+ProjectSummaryFooter: ::template::SEP01.txt
 ProjectGoalHeader: '# GOAL:'
 ProjectGoalTitle: GOAL
 ProjectGoalDivider: ':'
-ProjectGoalSep: template:SEP01.txt
+ProjectGoalSep: ::template::SEP01.txt
 ProjectDeliverableHeader: '## DELIVERABLE:'
 ProjectDeliverableTitle: DELIVERABLE
 ProjectDeliverableDivider: ':'
-ProjectDeliverableSep: template:SEP02.txt
+ProjectDeliverableSep: ::template::SEP02.txt
 ProjectTaskHeader: '### TASK:'
 ProjectTaskTitle: TASK
 ProjectTaskDivider: ':'
-ProjectTaskSep: template:SEP03.txt
-ProjectTaskFooter: template:SEP04.txt
+ProjectTaskSep: ::template::SEP03.txt
+ProjectTaskFooter: ::template::SEP04.txt
 ProjectLinkFormat: ''
 ProjectTaskLogHeader: '#### log'
 ProjectTaskLogSep: '------------'
-NoteObjectivesSummarySectionHeader: '**SUMMARY**'
-NoteObjectivesTodoSectionHeader: '**TODO**'
+NoteObjectivesTodoSectionHeader: ::template::TODO_HEADER.txt
 NoteObjectivesHeader: '# OBJECTIVES'
-NoteObjectivesSep: template:SEP02.txt
-NoteObjectivesFooter: template:SEP01.txt
+NoteObjectivesSep: ::template::SEP02.txt
+NoteObjectivesFooter: ::template::SEP01.txt
 NoteStorageHeader: '# DATA STORAGE'
-NoteStorageFooter: template:SEP02.txt
+NoteStorageFooter: ::template::SEP02.txt
 NoteLinkFormat: '**'
 GroupNotePrefixSep: '-'
 HeaderNotePrefix: '00'
 HeaderNoteContentsHeader: '# CONTENTS'
-HeaderNoteContentsFooter: template:SEP03.txt
+HeaderNoteContentsFooter: ::template::SEP03.txt
 HeaderLinkFormat: '**'
 SubNotePrefixSep: '-'
 SubNoteContentsHeader: '# GROUP CONTENTS'
-SubNoteContentsFooter: template:SEP03.txt
+SubNoteContentsFooter: ::template::SEP03.txt
 SubNoteLinkFormat: '*'
 NoteSummaryTitle: '## '
 NoteGoalLinkLine: '* [GOAL'
@@ -61,37 +60,38 @@ NoteTaskLinkLine: '        - [TASK'
 ContentTitleField: 'CONTENT_TITLE:'
 ContentDescriptionField: 'CONTENT_DESCRIPTION:'
 ContentSourceField: 'CONTENT_SOURCE:'
-ContentSep: template:CONTENT_SEP.txt
+ContentSep: ::template::CONTENT_SEP.txt
 ContentInsertionTitle: '# '
-ContentInsertionSep: template:SEP01.txt
+ContentInsertionSep: ::template::SEP01.txt
 ContentLinkFormat: '**'
 ContentSummaryHeader: '# SUMMARY'
-ContentSummaryFooter: template:SEP01.txt
+ContentSummaryFooter: ::template::SEP01.txt
 ContentGraphicalAbstractHeader: '# Graphical Abstract'
 ContentGraphicalAbstractSvg: graphical-abstract.svg
-ContentGraphicalAbstractFooter: template:SEP02.txt
+ContentGraphicalAbstractFooter: ::template::SEP02.txt
 ContentBackgroundHeader: '# Background'
-ContentBackgroundFooter: template:SEP02.txt
+ContentBackgroundFooter: ::template::SEP02.txt
 ContentMaterialsHeader: '# EQUIPMENT & MATERIAL'
-ContentMaterialsFooter: template:SEP01.txt
+ContentMaterialsFooter: ::template::SEP01.txt
 ContentEquipmentSvg: 00-equipment-material.svg
 ContentProcedureTemplateSvg: 01-procedure-schematic.svg
 ContentResultsLogHeader: '# RESULTS LOG'
-ContentResultsLogFooter: template:SEP01.txt
+ContentResultsLogFooter: ::template::SEP01.txt
 ContentTroubleshootingHeader: '# TROUBLESHOOTING GUIDE'
-ContentTroubleshootingFooter: template:SEP01.txt
-ContentSopHeader: template:SEP03.txt
-ContentLogHeader: template:SEP02.txt
-ContentLogSep: template:SEP03.txt
-ContentFooter: template:SEP01.txt
+ContentTroubleshootingFooter: ::template::SEP01.txt
+ContentSopHeader: ::template::SEP03.txt
+ContentLogHeader: ::template::SEP02.txt
+ContentLogSep: ::template::SEP03.txt
+ContentFooter: ::template::SEP01.txt
 TodoItemHeaderTemplate: '### [] TODO_DESCRIPTION'
 TodoItemHeaderComplete: '### [x]'
 TodoItemHeader: '### ['
 TodoCollectionDir: todo
-TodoProgrammeSep: template:SEP02.txt
+TodoProgrammeSep: ::template::SEP02.txt
 DateTimeZone: UTC
 DateSplit: '-'
 DateTimeSplit: ':'
+DatatableExportHeader: '# EXPORT : '
 RunUpdateOnStartup: yes
 RunCompileWithUpdate: yes
 FileTypeSuffix: Rmd

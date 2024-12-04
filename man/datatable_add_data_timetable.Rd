@@ -2,13 +2,14 @@
 % Please edit documentation in R/datatables-gen-functions.R
 \name{datatable_add_data_timetable}
 \alias{datatable_add_data_timetable}
-\title{Create a time table - for staggered timings of procedures}
+\title{Generate ADD_DATA Timetable Datatable}
 \usage{
 datatable_add_data_timetable(
   contents,
   step_names,
   datatable_name,
   group_names,
+  col_name,
   dt_length = 100
 )
 }
@@ -21,14 +22,29 @@ timetable. Must NOT contain any spaces - use '-' or '_'.}
 
 \item{datatable_name}{The EXISTING datatable from which the IDs must be drawn.}
 
-\item{group_names}{Vector of sample IDs or GROUP NAMES from a group set, which will
-constitute the remaining column headers.  These will typically be group
+\item{group_names}{Vector of sample IDs or GROUP NAMES from a group set, which
+will constitute the remaining column headers.  These will typically be group
 names. Must EXIST in contents and be declared from datatable_name IDs!}
+
+\item{col_name}{The column name where DATETIMES and CONDITIONS will be placed
+in the read datatable. eg. if \code{col_name} is 'delip', the recorded DATETIMES
+are written to column \code{delip_dt} and the recorded \code{step_names} are written
+to column \code{delip_con}.}
 
 \item{dt_length}{Int of data table max length in characters - default 100.}
 }
+\value{
+List of datatables generated.
+}
 \description{
-First column contains a list of timings, subsequent column titles are
+Add Data to all \code{group_names} from \code{datatable_name} in \code{contents} with
+\code{col_name} (prefix for \verb{_con} & \verb{_dt} column names) and \code{step_names} (\verb{_con}
+& \verb{_dt} data for each column).
+}
+\details{
+for staggered timings of procedures
+
+First column contains a list of PLANNED TIMINGS, subsequent column titles are
 typically group IDs, with a final \code{change_dt} column for actual datetimes,
 and data values are protocol steps, placed in cells under group headers.
 }

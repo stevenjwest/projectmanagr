@@ -4,7 +4,7 @@
 \alias{grep_line_index}
 \title{Grep Line Index}
 \usage{
-grep_line_index(line, contents)
+grep_line_index(line, contents, orgPath, initialIndex = 1)
 }
 \arguments{
 \item{line}{a String to be found}

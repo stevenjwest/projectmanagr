@@ -4,7 +4,12 @@
 \alias{parse_datatable_resample_reps}
 \title{Parse a Resample datatable with reps SOURCE sample IDs}
 \usage{
-parse_datatable_resample_reps(dt_vector, datatables, table_name)
+parse_datatable_resample_reps(
+  dt_vector,
+  datatables,
+  table_name,
+  table_start_line
+)
 }
 \description{
 This will generate the new datatables from a resample dt_vector that contains

@@ -2,37 +2,44 @@
 % Please edit documentation in R/datatables-write-functions.R
 \name{datatable_add_data_timetable_rmd}
 \alias{datatable_add_data_timetable_rmd}
-\title{Create new Sample Data Table and insert into Rmd}
+\title{Generate Timetable ADD_DATA Data Table and insert into Rmd}
 \usage{
 datatable_add_data_timetable_rmd(
   rmd_path,
   rmd_line,
-  step_names,
   datatable_name,
+  step_names,
   group_names,
-  settings,
+  col_name,
   dt_length = 100
 )
 }
 \arguments{
-\item{rmd_path}{path to Rmd file}
+\item{rmd_path}{path to Rmd file.}
 
-\item{rmd_line}{line in Rmd file to insert table}
+\item{rmd_line}{line in Rmd file to insert table.}
+
+\item{datatable_name}{String of data table name - MUST exist in rmd_path!}
 
 \item{step_names}{Character vector of names of procedure steps to add to
 timetable. Must NOT contain any spaces - use '-' or '_'.}
 
-\item{datatable_name}{The EXISTING datatable from which the IDs must be drawn.}
-
-\item{group_names}{Vector of sample IDs or GROUP NAMES from a group set, which will
-constitute the remaining column headers.  These will typically be group
+\item{group_names}{Vector of sample IDs or GROUP NAMES from a group set, which
+will constitute the remaining column headers.  These will typically be group
 names. Must EXIST in contents and be declared from datatable_name IDs!}
+
+\item{col_name}{The column name where DATETIMES and CONDITIONS will be placed
+in the read datatable. eg. if \code{col_name} is 'delip', the recorded DATETIMES
+are written to column \code{delip_dt} and the recorded \code{step_names} are written
+to column \code{delip_con}.}
 
 \item{dt_length}{Int of data table max length in characters - default 100.}
 }
 \description{
-Creates a new Sample DataTable in specified Rmd file at specified line.
-The Sample DataTable will contain an initial ID column containing the
+Creates a new TIMETABLE DataTable in specified Rmd file at specified line.
+}
+\details{
+The Timetable DataTable will contain an initial ID column containing the
 IDs vector, and an optional set of extra data columns as specified in the
 data_cols vector.  If the table exceeds dt_length characters (default 100),
 then the table is split into multiple tables, with IDs as first col, and

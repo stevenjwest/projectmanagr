@@ -7,5 +7,8 @@
 navigate_markdown_link()
 }
 \description{
-Navigate link to markdown file and header
+This deals with links that exist over multiple lines in the Markdown file: if
+the first line of the link is selected, that contains the NAME (in \verb{[]}) and
+the FIRST PART of the PATH (ie. the first \code{(}), then will search subsequent
+lines to identify the remaining path to navigate.
 }

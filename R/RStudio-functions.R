@@ -29,11 +29,14 @@ get_rstudio_open_doc_IDs <- function() {
     if( !identical(character(0),
                   Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  ) )) {
 
+
+      # allow files across sessions to be returned
       if( length(Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )) > 1 ) {
         stop( "cannot determine rstudio files with more than one session open - close inactive session(s).")
       }
 
-      if ( file.exists(  Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )  )  ) {
+      if ( all(file.exists(
+        Sys.glob(paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*"))  ))  ) {
 
         # get file list
         fileIDs <- list.files(  Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )  )
@@ -247,25 +250,6 @@ get_rstudio_doc_list_filtered_reordered <- function(filePath, settings) {
 }
 
 
-
-#' Get RStudio Internal State Dir
-#'
-#' Returns this from the settings or the default depending on OS.type (unix or Windows)
-#'
-#'@export
-get_rstudio_internal_state_dir <- function() {
-
-  # get rstudio_internal_state_dir from config OR use default
-    if( .Platform$OS.type == "unix") {
-      rstudioInternalStateDir <- "~/.local/share/rstudio" # path on LINUX/MAC OS
-    } else {
-      rstudioInternalStateDir <- paste0("%localappdata%", .Platform$file.sep, "RStudio") # path on WINDOWS ???
-    }
-  # return
-  rstudioInternalStateDir
-}
-
-
 #' Get RStudio Config Dir
 #'
 #' Returns config directory depending on OS.type (unix or Windows) & rstudio
@@ -312,19 +296,123 @@ get_rstudio_config_dir <- function() {
 }
 
 
-#' Set RStudio Keybindings to Addings
+get_context_path <- function() {
+  context <- rstudioapi::getSourceEditorContext()
+  context$path
+}
+
+
+get_context_contents <- function() {
+  context <- rstudioapi::getSourceEditorContext()
+  context$contents
+}
+
+get_context_id <- function() {
+  context <- rstudioapi::getSourceEditorContext()
+  context$id
+}
+
+get_context_row <- function() {
+  context <- rstudioapi::getSourceEditorContext()
+  row <- context$selection[[1]]$range$start[1]
+  row
+}
+
+get_context_row_end <- function() {
+  context <- rstudioapi::getSourceEditorContext()
+  context$selection[[1]]$range$end[1]
+}
+
+save_context_doc <- function() {
+  if( rstudioapi::isAvailable() ) {
+    rstudioapi::documentSave(id = get_context_id())
+    }
+}
+
+
+#' Set RStudio Keybindings to Addins
 #'
-#' Sets the default keybindings for projectmanagr in rstudio, via the
-#' keybindings/addins.json file
+#' Sets the default keybindings for projectmanagr functions in rstudio, via the
+#' keybindings/addins.json file.
 #'
-set_rstudio_keybindings_addins <- function() {
+#' The template file can be found in every projectmanagr organisation root:
+#'
+#' `.config/addins.json`
+#'
+#' This file can be modified for a different default set of projectmanagr
+#' functions, and different keyboard shortcuts.
+#'
+#'
+#'
+set_rstudio_keybindings_addins <- function(path=getwd()) {
+
+  # Can edit via rstudio.prefs package : https://www.danieldsjoberg.com/rstudio.prefs/
+  #
+  # UNIX : ~/.R/rstudio/keybindings/addins.json
+  # WINDOWS : C:/Users/sjobergd/AppData/Roaming/RStudio/keybindings/addins.json
+  #
+  # {HOME_DIR} :
+  # * unix : .R/rstudio/keybindings/addins.json
+  # * windows : AppData/Roaming/RStudio/keybindings.addins.json
+
+  # get keybindings path
+  keybindings_path <- fs::path(get_rstudio_config_dir(), "keybindings")
+  if( !fs::dir_exists(keybindings_path) ) {
+    fs::dir_create(keybindings_path)
+  }
 
   # check if addins.json exists
+  keybindings_json_path <- fs::path(keybindings_path, "addins.json")
 
-  # if so add projectmanagr keybindings if they do not already exist in the file
+  # read the current keybindings
+  if( !fs::file_exists(keybindings_json_path)) {
+    keybindings_json <- list() # generate blank list
+  } else {
+    keybindings_json <- jsonlite::read_json(keybindings_json_path)
+  }
 
-  # otherwise copy the addins.json file from projectmanagr to set projectmanagr shortcuts
+  # read the projectmanagr organisation - config - keybindings json template
+  orgPath <- find_org_directory(path)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  path is not in an Organisation: ", path) )
+  }
+  confPath <- get_config_dir(orgPath)
+  keybindings_json_template_path <- fs::path(confPath, "addins.json")
+  keybindings_json_template <- jsonlite::read_json(keybindings_json_template_path)
 
+  # add or replace all named list entries in template into keybindings_json
+  keybindings_json <- rlist::list.merge(keybindings_json, keybindings_json_template)
+
+  # write new keybindings ot rstudio config file
+  jsonlite::write_json(keybindings_json, keybindings_json_path)
+
+}
+
+
+#' Get RStudio Config Dir
+#'
+#' Returns this from the settings or the default depending on OS.type (unix or Windows)
+#'
+#' Returns config directory depending on OS.type (unix or Windows) & rstudio
+#' version (1.2 and prior OR 1.3+)
+#'
+#' * 1.3+ unix : ~/.config/rstudio/keybindings/rstudio_bindings.json
+#'
+#' This is where key configuration files are kept - eg. keybindings
+#'
+#' See :
+#'
+#' https://support.posit.co/hc/en-us/articles/206382178
+#' 'Customizing Keyboard Shortcuts in the RStudio IDE'
+#'
+#'
+get_rstudio_config_dir <- function() {
+  if( .Platform$OS.type == "unix") {
+    path <- rappdirs::user_config_dir("rstudio", os="unix")
+  } else {
+    path <- rappdirs::user_config_dir("RStudio", appauthor=NULL)
+  }
+  fs::path(path) # return
 }
 
 
@@ -332,7 +420,31 @@ set_rstudio_keybindings_addins <- function() {
 #'
 #' Returns this from the settings or the default depending on OS.type (unix or Windows)
 #'
-getRStudioInternalStateDir2 <- function(path) {
+#' https://support.posit.co/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State
+#' 'Resetting RStudio Desktop's State'
+#'
+#' Accessing the RStudio-Desktop Directory (Internal State)
+#'
+#' RStudio Desktop stores its internal state in a hidden directory: includes
+#' information about open documents, log files, and other state information
+#'
+#' @export
+get_rstudio_internal_state_dir <- function() {
+
+  if( .Platform$OS.type == "unix") {
+    rstudioInternalStateDir <- "~/.local/share/rstudio" # path on LINUX/MAC OS
+  } else {
+    rstudioInternalStateDir <- paste0("%localappdata%", .Platform$file.sep, "RStudio") # path on WINDOWS ???
+  }
+  # return
+  rstudioInternalStateDir
+}
+
+#' Get RStudio Internal State Dir
+#'
+#' Returns this from the settings or the default depending on OS.type (unix or Windows)
+#'
+get_rstudio_internal_state_dir2 <- function(path) {
 
   # get rstudioInternalStateDir from config OR use default
   orgPath <- find_org_directory(path)

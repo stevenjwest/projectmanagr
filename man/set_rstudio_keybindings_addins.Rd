@@ -2,11 +2,19 @@
 % Please edit documentation in R/RStudio-functions.R
 \name{set_rstudio_keybindings_addins}
 \alias{set_rstudio_keybindings_addins}
-\title{Set RStudio Keybindings to Addings}
+\title{Set RStudio Keybindings to Addins}
 \usage{
-set_rstudio_keybindings_addins()
+set_rstudio_keybindings_addins(path = getwd())
 }
 \description{
-Sets the default keybindings for projectmanagr in rstudio, via the
-keybindings/addins.json file
+Sets the default keybindings for projectmanagr functions in rstudio, via the
+keybindings/addins.json file.
+}
+\details{
+The template file can be found in every projectmanagr organisation root:
+
+\code{.config/addins.json}
+
+This file can be modified for a different default set of projectmanagr
+functions, and different keyboard shortcuts.
 }

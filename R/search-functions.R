@@ -1,11 +1,30 @@
 #' Search Dir Tree
 #'
-#' Searches all project docs/notes in a Dir Tree within an Organisation,
+#' Searches all Project Docs & Notes in a Dir Tree within an Organisation,
 #' returning a datatable with FILENAME, CONTEXT, LOCATION LINE columns.
 #'
-search_dir_tree <- function(path, searchTerm, updateProgress = NULL, settings, orgPath) {
+#' @param path Dir Tree Path for searching text files.
+#'
+#' @param searchTerm The sring to search for.
+#'
+#' @param updateProgress Object to show progress in shiny gadget.
+#'
+#' @param settings Settings list from projectmanagr config
+#'
+#' @param orgPath The organisation path where search takes place.
+#'
+#' @param ignoreCase Whether search should ignore case of searchTerm. TRUE by
+#' default.
+#'
+#' @param fixed When fixed is TRUE, no regular expression patterns are parsed.
+#' More efficient search is performed with fixed TRUE.
+#'
+search_dir_tree <- function(path, searchTerm, updateProgress = NULL,
+                            settings, orgPath, ignoreCase=TRUE, fixed=TRUE) {
 
   cat( "\nprojectmanagr::search_dir_tree():\n" )
+  cat("  ignoreCase : ", ignoreCase, "\n")
+  cat("  fixed : ", fixed, "\n")
 
 
   #### instance variables ####
@@ -18,11 +37,39 @@ search_dir_tree <- function(path, searchTerm, updateProgress = NULL, settings, o
   # normalize path - remove HOME REF ~
   path <- normalizePath(path)
 
-  # get all Project Docs/Notes inside path - they all contain "~_" in filename and end with .Rmd
-  samplesList <- list.files(path, pattern=paste0("*", settings[["FileTypeSuffix"]]), full.names = TRUE, recursive=TRUE)
-  samplesList <- samplesList[ (regexpr(settings[["ProjectPrefixSep"]], samplesList) > 0) & (regexpr(settings[["FileTypeSuffix"]], samplesList) > 0) ]
 
-  samplesListLength <- length(samplesList) # for updateProgress
+
+  ##############################################################################
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
+
+  # get dirs in root to EXCLUDE from search
+  volPath <- get_volumes_dir(orgPath, settings)
+  sitePath <- get_site_dir(orgPath, settings)
+  weeklyjournalPath <- get_weekly_journal_dir(orgPath, settings)
+
+  # get all project notes in orgPath RECURSIVELY
+  fileList <- list()
+  filePaths <- get_file_list_to_project_notes(
+    fileList, orgPath, settings,
+    pathExclusions = c(confPath, volPath, sitePath, weeklyjournalPath) )
+  # get all Project Docs/Notes inside path - they all contain "~_" in filename and end with .Rmd
+  filePaths <- fs::path(unlist(filePaths))
+  projDocsNotesList <- filePaths[ (regexpr(settings[["ProjectPrefixSep"]], filePaths) > 0) &
+                              (regexpr(settings[["FileTypeSuffix"]], filePaths) > 0) ]
+
+  ##############################################################################
+
+
+
+  # get all Project Docs/Notes inside path - they all contain "~_" in filename and end with .Rmd
+  #projDocsNotesList <- list.files(path, pattern=paste0("*", settings[["FileTypeSuffix"]]), full.names = TRUE, recursive=TRUE)
+  #projDocsNotesList <- projDocsNotesList[ (regexpr(settings[["ProjectPrefixSep"]], projDocsNotesList) > 0) & (regexpr(settings[["FileTypeSuffix"]], projDocsNotesList) > 0) ]
+
+  projDocsNotesListLength <- length(projDocsNotesList) # for updateProgress
 
   # generate a blank table to initialise addin with
   FILENAME <- ""
@@ -30,7 +77,12 @@ search_dir_tree <- function(path, searchTerm, updateProgress = NULL, settings, o
   LOCATION <- "" # storing location but not adding it to the table
   LINE <- "" # storing line byt not adding to table
 
-  for(s in samplesList) {
+  if( ignoreCase == TRUE ) { # use tolower() as ignore.case doesnt work with fixed in grep
+    # convert search term to lower OUTSIDE for loop
+    searchTerm <- tolower(searchTerm)
+  }
+
+  for(s in projDocsNotesList) {
 
     # for each Rmd
     fn <-  basename(s)
@@ -38,7 +90,7 @@ search_dir_tree <- function(path, searchTerm, updateProgress = NULL, settings, o
 
     # update progress of search
     if (is.function(updateProgress)) {
-      progressFraction <- match(s, samplesList) / samplesListLength
+      progressFraction <- match(s, projDocsNotesList) / projDocsNotesListLength
       text <- paste0("Rmd file : ", fn )
       updateProgress(value = progressFraction, detail = text)
     }
@@ -49,7 +101,12 @@ search_dir_tree <- function(path, searchTerm, updateProgress = NULL, settings, o
     close(rmd_file_conn)
 
     # grep for search term
-    grepRes <- grep(searchTerm, rmd_contents)
+    if( ignoreCase == TRUE ) { # use tolower() as ignore.case doesnt work with fixed in grep
+      grepRes <- grep(searchTerm, tolower(rmd_contents), fixed=fixed)
+    } else {
+      grepRes <- grep(searchTerm, rmd_contents, fixed=fixed)
+    }
+    #grepRes <- grep(searchTerm, rmd_contents, ignore.case = ignoreCase, fixed=fixed)
 
     # add results to searchResults table for each grep'd line
     for(g in grepRes) {

@@ -9,8 +9,7 @@ create_project_org(
   orgName,
   orgTitle = "",
   settingsYamlPath = "",
-  orgTemplate = "Org-Template.Rmd",
-  utime = ""
+  orgTemplate = "Org-Template.Rmd"
 )
 }
 \arguments{
@@ -29,8 +28,6 @@ values.}
 
 \item{orgTemplate}{defines the template to use from the projectmanagr package.
 Default is "Org-Template.Rmd".}
-
-\item{utime}{Add update time to write to status.yml - for automated testing.}
 }
 \value{
 orgIndexPath The path to the organisation index Rmd file.

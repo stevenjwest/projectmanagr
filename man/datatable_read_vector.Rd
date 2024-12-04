@@ -2,10 +2,16 @@
 % Please edit documentation in R/datatables-read-functions.R
 \name{datatable_read_vector}
 \alias{datatable_read_vector}
-\title{Read Datatables and check validity from character vector}
+\title{Read all complete Datatables - between to delimiters}
 \usage{
-datatable_read_vector(rmd_contents)
+datatable_read_vector(rmd_contents, notify = TRUE)
+}
+\arguments{
+\item{rmd_contents}{String vector containing datatables between delimiters}
+}
+\value{
+A named list of tibbles.
 }
 \description{
-Read Datatables and check validity from character vector
+Delimiters defined in \code{datatable_get_delimiter()}
 }

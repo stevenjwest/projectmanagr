@@ -64,15 +64,10 @@ Description: Extract all ToDos to the cursor location.
 Binding: addin_extract_todos
 Interactive: false
 
-Name: ProjectManagr: Navigate Markdown Link
-Description: Navigate relative link from current file to markdown destination file & header.
-Binding: navigate_markdown_link
-Interactive: false
-
-Name: ProjectManagr: Insert ToDo
-Description: Insert ToDo at the cursor location.
-Binding: addin_insert_ToDo_string
-Interactive: false
+Name: ProjectManagr: Insert Content Section
+Description: Insert a Content Section into a Project Note.
+Binding: addin_insert_content
+Interactive: true
 
 Name: ProjectManagr: Insert Date
 Description: Insert Date at the cursor location.
@@ -102,11 +97,6 @@ Interactive: false
 Name: ProjectManagr: Insert Hyper Link
 Description: Insert a New Hyper Link between the Active Document and another open document.
 Binding: addin_insert_hyperlink
-Interactive: true
-
-Name: ProjectManagr: Insert Content Section
-Description: Insert a Content Section into a Project Note.
-Binding: addin_insert_content
 Interactive: true
 
 Name: ProjectManagr: Insert Section Sep 1
@@ -139,20 +129,30 @@ Description: Insert a Level 6 Section Separator into the Active Document at curr
 Binding: addin_insert_section_sep_6
 Interactive: false
 
+Name: ProjectManagr: Insert ToDo
+Description: Insert ToDo at the cursor location.
+Binding: addin_insert_ToDo_string
+Interactive: false
+
 Name: ProjectManagr: Link Project Doc GDT To Note
 Description: Create a New Link from a Project Document Goal Del Task to a Project Note.
 Binding: addin_link_doc_to_note
 Interactive: true
 
-Name: ProjectManagr: Navigate Markdown Link
-Description: Navigate to the file and/or section header given in the markdown hyperlink in the Active Document on currently selected line.
-Binding: navigate_markdown_link
-Interactive: false
-
 Name: ProjectManagr: Search Project Organisation
 Description: Search active document project organisation for search string.
 Binding: addin_search_project_org
 Interactive: true
+
+Name: ProjectManagr: Rename Project File
+Description: Rename a Project Doc or Note components in the Project Organisation, and update all links.
+Binding: addin_rename
+Interactive: true
+
+Name: ProjectManagr: Navigate Markdown Link
+Description: Navigate relative link from current file to markdown destination file & header.
+Binding: navigate_markdown_link
+Interactive: false
 
 Name: ProjectManagr: Set Selection Next Horizontal Rule
 Description: Set Selection from current line to next line with same number of dashes as current line.
@@ -163,11 +163,6 @@ Name: ProjectManagr: Set WD Active Doc
 Description: Set the working directory to the active doc's parent directory.
 Binding: set_wd_active_doc
 Interactive: false
-
-Name: ProjectManagr: Rename Project File
-Description: Rename a Project Doc or Note components in the Project Organisation, and update all links.
-Binding: addin_rename
-Interactive: true
 
 Name: ProjectManagr: Update
 Description: Updates all recently edited Project Notes' summary information under linked Project Doc GDTs.

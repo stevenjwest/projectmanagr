@@ -43,16 +43,13 @@ compute_doc_GDT_link <- function(projectDocPath, projNoteRmdPath, settings,
   TaskTitleLink <- compute_task_link(task, DocLink, settings)
 
 
-  #### TITLE ####
+  #### DOC TASK TITLE ####
 
-  # create DocTitle - DocPrefix plus the Gnum Dnum Tnum
-  #DocTitle <- paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
-  # create DocTitle - DocName plus the TaskTitle
-  DocTitle <- paste0( settings[["NoteSummaryTitle"]] ,
-                      DocPrefix, " : ", get_task_title(task, settings) )
+  # create DocTaskTitle - DocName plus the TaskTitle
+  DocTaskTitle <- get_doc_task_title(DocPrefix, task, settings)
 
   # return
-  l <- list(DocTitle, DocTitleLink, GoalTitleLink, DelTitleLink, TaskTitleLink)
+  l <- list(DocTaskTitle, DocTitleLink, GoalTitleLink, DelTitleLink, TaskTitleLink)
   names(l) <- c("title", "link", "goal", "del", "task")
   l
 
@@ -310,6 +307,40 @@ trim_task_hash <- function(task, settings) {
 }
 
 
+#' get doc task title
+#'
+#' `DocPrefix` is prefix to project document that `task` is from.
+#'
+#' `task` as collected from selection[["task"]] - fitting the format specified
+#' in settings[["ProjectTaskHeader"]].
+#'
+#'  Returns DocTaskTitle Header - DocName plus the TaskTitle, spearated with ` : `.
+#'
+get_doc_task_title <- function(DocPrefix, task, settings) {
+  # create DocTitle - DocPrefix plus the Gnum Dnum Tnum
+  #paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  paste0( settings[["NoteSummaryTitle"]] ,
+          DocPrefix, " : ", get_task_title(task, settings) )
+}
+
+#' get doc task title
+#'
+#' Used for forming the GDT link - see `copmute_doc_GDT_link()`
+#'
+#' `DocPrefix` is prefix to project document that `task` is from.
+#'
+#' `taskName` as collected from `get_task_title(selection[["task"]])`, is the
+#' task name string of a task.
+#'
+#'  Returns DocTaskTitle Header - DocName plus the TaskTitle, spearated with ` : `.
+#'
+get_doc_task_title_name <- function(DocPrefix, taskName, settings) {
+  # create DocTitle - DocPrefix plus the Gnum Dnum Tnum
+  #paste( "## ", DocName, " : G", goalNum, " D", delNum, " T", taskNum, sep="")
+  paste0( settings[["NoteSummaryTitle"]] ,
+          DocPrefix, " : ", taskName )
+}
+
 #' Get Project Note Paths from Doc GDT links
 #'
 #' Get project note paths from doc GDT links  Assumes `projDocContents` is a
@@ -331,7 +362,7 @@ get_doc_gdt_project_note_paths <- function(projectDocPath, projDocContents, sett
   fi <- 1
   for(head in taskHeaderIndices) {
     taskLogIndices[fi] <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
-                                                  projDocContents, head)
+                                                  projDocContents, head, orgPath)
     fi <- fi+1
   }
 
@@ -340,7 +371,7 @@ get_doc_gdt_project_note_paths <- function(projectDocPath, projDocContents, sett
   fi <- 1
   for(head in taskHeaderIndices) {
     taskFooterIndices[fi] <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
-                                                  projDocContents, head)
+                                                  projDocContents, head, orgPath)
     fi <- fi+1
   }
 
@@ -379,6 +410,8 @@ get_doc_gdt_project_note_paths <- function(projectDocPath, projDocContents, sett
 extract_note_obj_doc_link_GDT_summ <- function(linkNoteRmdContents, linkNoteRmdPath,
                                                settings, orgPath) {
 
+  #extract_note_obj_doc_link_GDT_summ(linkNoteRmdContents, linkNoteRmdPath,
+  #                                   settings, orgPath)
   # linkNoteRmdContents contains all ProjDoc GDT links to add to new subnote
 
   type <- get_file_type(linkNoteRmdPath, settings)
@@ -387,7 +420,7 @@ extract_note_obj_doc_link_GDT_summ <- function(linkNoteRmdContents, linkNoteRmdP
   linkObjHeadIndex <- match_line_index( load_param_vector(settings[["NoteObjectivesHeader"]], orgPath),
                                       linkNoteRmdContents)+1
   linkObjFootIndex <- grep_line_index_from( load_param_vector(settings[["NoteObjectivesFooter"]], orgPath),
-                                            linkNoteRmdContents, linkObjHeadIndex)-1
+                                            linkNoteRmdContents, linkObjHeadIndex, orgPath)-1
 
   linkObjectives <- linkNoteRmdContents[ linkObjHeadIndex:linkObjFootIndex ]
   # this contains all the links plus summary & todo information inserted in
@@ -424,13 +457,15 @@ extract_note_obj_doc_link_GDT_summ <- function(linkNoteRmdContents, linkNoteRmdP
     ##### Extract ProjDoc Path #####
 
     # projdoc - string to start with ProjectLinkFormat plus '['
-    pdli <- grep_line_index(paste0(settings[["ProjectLinkFormat"]], "["), o) # projDoc link index
-    gli <- grep_line_index_from(settings[["NoteGoalLinkLine"]], o, pdli) # goal index
-    dli <- grep_line_index_from(settings[["NoteDeliverableLinkLine"]], o, gli) # del index
-    tli <- grep_line_index_from(settings[["NoteTaskLinkLine"]], o, dli) # task index
+    pdli <- grep_line_index(paste0(settings[["ProjectLinkFormat"]], "["), o, orgPath) # projDoc link index
+    gli <- grep_line_index_from(settings[["NoteGoalLinkLine"]], o, pdli, orgPath) # goal index
+    dli <- grep_line_index_from(settings[["NoteDeliverableLinkLine"]], o, gli, orgPath) # del index
+    tli <- grep_line_index_from(settings[["NoteTaskLinkLine"]], o, dli, orgPath) # task index
     if(type != "HEAD") { # summary and todo sections only exist for NON HEAD notes
-      summi <- grep_line_index_from(settings[["NoteObjectivesSummarySectionHeader"]], o, tli) # summary index
-      todoi <- grep_line_index_from(settings[["NoteObjectivesTodoSectionHeader"]], o, summi) # todo index
+      # removed NoteObjectivesSummarySectionHeader - using tli as start of summary
+      #summi <- grep_line_index_from(settings[["NoteObjectivesSummarySectionHeader"]], o, tli) # summary index
+      summi <- tli
+      todoi <- grep_line_index_from(settings[["NoteObjectivesTodoSectionHeader"]], o, summi, orgPath) # todo index
     }
 
     # get ProjDoc RelativePath
@@ -451,9 +486,10 @@ extract_note_obj_doc_link_GDT_summ <- function(linkNoteRmdContents, linkNoteRmdP
     #### Extract Goal Del Task Summary & TODO Sections ####
 
     if(type != "HEAD") { # summary and todo sections only exist for NON HEAD notes
-      summLen <- length(settings[["NoteObjectivesSummarySectionHeader"]])
+      # no longer have a summary head - plus 1 from summi as Task Line is length 1
+      #summLen <- length(settings[["NoteObjectivesSummarySectionHeader"]])
       todoLen <- length(settings[["NoteObjectivesTodoSectionHeader"]])
-      summary <- o[(summi+summLen):(todoi-1)]
+      summary <- o[(summi+1):(todoi-1)]
       todo <- o[(todoi+todoLen):length(o)]
     } else {
       summary <- ""
@@ -505,12 +541,14 @@ extract_objectives_note_GDT <- function(linkObjectives, linkRmdPath, subNoteRmdP
     ##### Extract ProjDoc Path #####
 
     # projdoc - string to start with ProjectLinkFormat plus '['
-    pdli <- grep_line_index(paste0(settings[["ProjectLinkFormat"]], "["), o) # projDoc link index
-    gli <- grep_line_index_from(settings[["NoteGoalLinkLine"]], o, pdli) # goal index
-    dli <- grep_line_index_from(settings[["NoteDeliverableLinkLine"]], o, gli) # del index
-    tli <- grep_line_index_from(settings[["NoteTaskLinkLine"]], o, dli) # task index
-    summi <- grep_line_index_from(settings[["NoteObjectivesSummarySectionHeader"]], o, tli) # summary index
-    todoi <- grep_line_index_from(settings[["NoteObjectivesTodoSectionHeader"]], o, summi) # todo index
+    pdli <- grep_line_index(paste0(settings[["ProjectLinkFormat"]], "["), o, orgPath) # projDoc link index
+    gli <- grep_line_index_from(settings[["NoteGoalLinkLine"]], o, pdli, orgPath) # goal index
+    dli <- grep_line_index_from(settings[["NoteDeliverableLinkLine"]], o, gli, orgPath) # del index
+    tli <- grep_line_index_from(settings[["NoteTaskLinkLine"]], o, dli, orgPath) # task index
+    # removed NoteObjectivesSummarySectionHeader - using tli as start of summary
+    #summi <- grep_line_index_from(settings[["NoteObjectivesSummarySectionHeader"]], o, tli) # summary index
+    summi <- tli
+    todoi <- grep_line_index_from(settings[["NoteObjectivesTodoSectionHeader"]], o, summi, orgPath) # todo index
 
     # get ProjDoc RelativePath
     pdrp <- substr(o[pdli], regexpr("](", o[pdli], fixed=TRUE)+2, regexpr(")", o[pdli], fixed=TRUE)-1)
@@ -572,19 +610,58 @@ extract_objectives_note_GDT <- function(linkObjectives, linkRmdPath, subNoteRmdP
 #' this vector is returned.
 #'
 #'
-grep_line_index <- function(line, contents) {
+grep_line_index <- function(line, contents, orgPath, initialIndex=1) {
 
-  #### grep line in contents FIXED ####
-  returnVal <- -1
-  # look through contents to find an index that matches line:
-  for( l in 1:length(contents) ) {
+  if(is.character(line) &&
+     length(line) == 1 &&
+     startsWith(line, "::template::")) {
 
-    if( grepl(line[1], contents[l], , fixed=TRUE) ) {
-      returnVal <- l
-      break
-    }
+    # # check orgPath
+    # orgPath <- find_org_directory(orgPath)
+
+    # get templates
+    tempPath <- get_template_dir(orgPath)
+    # confPath <- get_config_dir(orgPath)
+    # settings <- get_settings_yml(orgPath)
+
+    # line is a POINTER to a multi-line content file in templates dir
+    # so open this and insert the multi-lined vector into templateContents
+    paramPointer <- substr(line, nchar("::template::")+1, nchar(line))
+    line <- read_file( paste0( tempPath, .Platform$file.sep, paramPointer) )
+    matches <- match_vector(line, contents)
+    returnVal <- matches[1] + (initialIndex - 1)
+
+    #templateContents <- replace_params_with_vector(templateContents, templateParam, paramContents)
+
+  } else if( length(line) > 1 ) { # line is a multi-lined vector
+
+    # so want to check for matches of these lines in contents
+    # using match_vector_sub - to ensure the vector found in subsets of content elements are also returned!
+    matches <- match_vector_sub(line, contents)
+    returnVal <- matches[1] + (initialIndex - 1)
+
+  } else {
+
+    # line is a vector of length 1
+    # so grepl and return first value
+    matches <- grep(line, contents, fixed=TRUE)
+    returnVal <- matches[1] + (initialIndex - 1)
+    #insert appropriately with gsub()
+    #templateContents <- gsub(templateParam, paramContents, templateContents, fixed=TRUE)
 
   }
+
+  # #### grep line in contents FIXED ####
+  # returnVal <- -1
+  # # look through contents to find an index that matches line:
+  # for( l in 1:length(contents) ) {
+  #
+  #   if( grepl(line[1], contents[l], , fixed=TRUE) ) {
+  #     returnVal <- l
+  #     break
+  #   }
+  #
+  # }
 
   returnVal
 
@@ -601,22 +678,23 @@ grep_line_index <- function(line, contents) {
 #' this vector is returned.
 #'
 #'
-grep_line_index_from <- function(line, contents, initialIndex) {
+grep_line_index_from <- function(line, contents, initialIndex, orgPath) {
 
-  #### grep line in contents from initialIndex FIXED ####
-
-  returnVal <- -1
-  # look through contents to find an index that matches line:
-  for( l in initialIndex:length(contents) ) {
-
-    if( grepl(line[1], contents[l], fixed=TRUE) ) {
-      returnVal <- l
-      break
-    }
-
-  }
-
-  returnVal
+  grep_line_index(line, contents[initialIndex:length(contents)], orgPath, initialIndex=initialIndex)
+  # #### grep line in contents from initialIndex FIXED ####
+  #
+  # returnVal <- -1
+  # # look through contents to find an index that matches line:
+  # for( l in initialIndex:length(contents) ) {
+  #
+  #   if( grepl(line[1], contents[l], fixed=TRUE) ) {
+  #     returnVal <- l
+  #     break
+  #   }
+  #
+  # }
+  #
+  # returnVal
 
 }
 
@@ -749,11 +827,51 @@ match_line_index <- function(line, contents) {
 match_vector <- function(vector, parent, nomatch = 0L) {
 
   #### match vector in parent ####
+
+  # get each index in parent that contains the first element in vector
   sieved <- which(parent == vector[1L])
+
+  # for each additional element in vector, identify matches in parent at subsequent indices
   for (i in seq.int(1L, length(vector) - 1L)) {
+    # filter the original indices with boolean
+    # whether parent elements continue to equal vector elements in subsequent indices
     sieved <- sieved[parent[sieved + i] == vector[i + 1L]]
   }
-  sieved
+
+  # remove all NA values - these appear when indices from vector exceed indices in parent
+   # e. when the last element in parent matches first element in vector, and further retireval
+   # of elements in parent beyond its length result in NA being returned
+  sieved[!is.na(sieved)]
+}
+
+
+#' Match vector is subset in parent
+#'
+#' Identifies each initial index where each consecutive element of `vector` is
+#' present in a consecutive set of elements in `parent` - where all elements in
+#' `vector` match parts of elements in `parent` in order.
+#'
+match_vector_sub <- function(vector, parent, nomatch = 0L) {
+
+  #### match vector in parent ####
+
+  # get each index in parent that contains the first element in vector
+  #sieved <- which(parent == vector[1L])
+  sieved <- which( grepl(vector[1L], parent, fixed=TRUE))
+
+  # for each additional element in vector, identify matches in parent at subsequent indices
+  for (i in seq.int(1L, length(vector) - 1L)) {
+    #print(i)
+    # filter the original indices with boolean
+    # whether parent elements continue to equal vector elements in subsequent indices
+    #sieved <- sieved[ parent[sieved + i] == vector[i + 1L]]
+    sieved <- sieved[ grepl(vector[i + 1L], parent[sieved + i], fixed = TRUE) ]
+  }
+
+  # remove all NA values - these appear when indices from vector exceed indices in parent
+  # e. when the last element in parent matches first element in vector, and further retireval
+  # of elements in parent beyond its length result in NA being returned
+  sieved[!is.na(sieved)]
 }
 
 
@@ -1073,13 +1191,18 @@ create_selection <- function(filePath, contents, line, settings) {
 
     #### Find TASK DEL GOAL ####
 
+    # get indices of all GOAL DEL TASK strings
+    goalIndices <- which( startsWith(contents, settings[["ProjectGoalHeader"]]) )
+    delIndices <- which( startsWith(contents, settings[["ProjectDeliverableHeader"]]) )
+    taskIndices <- which( startsWith(contents, settings[["ProjectTaskHeader"]]) )
+
     # crop project doc content to include content up to selection line
-    contentsCrop <- contents[1:line]
+    #contentsCrop <- contents[1:line]
 
     # identify line indices that starts with TASK DEL GOAL Strings
-    taskIndices <- which( startsWith(contentsCrop, settings[["ProjectTaskHeader"]]) )
-    delIndices <- which( startsWith(contentsCrop, settings[["ProjectDeliverableHeader"]]) )
-    goalIndices <- which( startsWith(contentsCrop, settings[["ProjectGoalHeader"]]) )
+    #taskIndices <- which( startsWith(contentsCrop, settings[["ProjectTaskHeader"]]) )
+    #delIndices <- which( startsWith(contentsCrop, settings[["ProjectDeliverableHeader"]]) )
+    #goalIndices <- which( startsWith(contentsCrop, settings[["ProjectGoalHeader"]]) )
 
     if(length(taskIndices) == 0 | length(delIndices) == 0 | length(goalIndices) == 0) {
 
@@ -1089,16 +1212,63 @@ create_selection <- function(filePath, contents, line, settings) {
 
     } else {
 
-      # task del goal to retrieve is the LAST in indices
-      taskLine <- taskIndices[length(taskIndices)]
-      delLine <- delIndices[length(delIndices)]
-      goalLine <- goalIndices[length(goalIndices)]
+      # compute the GDT selected
 
-      # get string for task del goal
-      task <- contentsCrop[taskLine]
-      deliverable <- contentsCrop[delLine]
-      goal <- contentsCrop[goalLine]
+      # first determine the GDT indices that is LESS THAN OR EQUAL to line
+      goalIndicesCrop <- goalIndices[goalIndices <= line]
+      delIndicesCrop <- delIndices[delIndices <= line]
+      taskIndicesCrop <- taskIndices[taskIndices <= line]
 
+      # if no goal is found before line, return an error
+       # dealing with del and task below
+      if(length(goalIndicesCrop) == 0) {
+
+        # if task/del/goal not found, set errorMessage:
+        taskRetrieved <- FALSE
+        errorMessage <- "Could Not Locate TASK/DEL/GOAL"
+
+      } else {
+
+        # need to check the values of the last indices to determine what lines to return
+
+        # get initial GDT lines - LAST line numbers in the cropped indices
+        goalLine <- goalIndicesCrop[length(goalIndicesCrop)]
+
+        # deal with edge case where FIRST GOAL selected - so no indices for del or task
+        if( length(delIndicesCrop) == 0 ) {
+          delLine <- 0 # set to int 0
+        } else {
+          delLine <- delIndicesCrop[length(delIndicesCrop)]
+        }
+
+        if( length(taskIndicesCrop) == 0 ) {
+          taskIndicesCropAdj <- 0 # set to int 0
+        } else {
+          taskLine <- taskIndicesCrop[length(taskIndicesCrop)]
+        }
+
+        # if goal < del < task - selected on or below a full GDT
+        if( (goalLine < delLine) & (delLine < taskLine) ) {
+          # so can return these lines plus contents
+          # DO NOTHING HERE
+        } else if( (goalLine < delLine) ) { # then line is above the correct Del
+          # need to correct taskLine only
+          # easiest way to do this is to select the next task after line
+          # can retrieve this by selecting the length(taskIndicesCrop) + 1 value
+          # from taskIndices
+          taskLine <- taskIndices[length(taskIndicesCrop) + 1]
+        } else { # line is above BOTH correct Del and Task
+          # retrieve correct delLine & taskLine
+          delLine <- delIndices[length(delIndicesCrop) + 1]
+          taskLine <- taskIndices[length(taskIndicesCrop) + 1]
+        } # also handles cases where selection made on FIRST GOAL and FIRST GOAL/DEL
+
+        # get string for task del goal
+        task <- contents[taskLine]
+        deliverable <- contents[delLine]
+        goal <- contents[goalLine]
+
+      }
     }
 
     #### return goal del task plus header note info ####
@@ -1279,13 +1449,15 @@ sub_subnote_params <- function(subNoteContents, subNotePrefix,
 #'
 note_link_summ_params <- function(projNoteLinkSummaryContents, todoContents, settings, orgPath) {
 
-  #### sub headers in contents ####
-  noteLinkSummContents <- sub_template_param(projNoteLinkSummaryContents,
-                                             "{{OBJECTIVES_SUMMARY_HEADER}}",
-                                             settings[["NoteObjectivesSummarySectionHeader"]],
-                                             orgPath)
+  # add SUMMARY header
+  #projNoteLinkSummaryContents <- sub_template_param(projNoteLinkSummaryContents,
+  #                                           "{{OBJECTIVES_SUMMARY_HEADER}}",
+  #                                           settings[["NoteObjectivesSummarySectionHeader"]],
+  #                                           orgPath)
+  ### NO LONGER USING SUMMARY HEADER
 
-  noteLinkSummContents <- sub_template_param(noteLinkSummContents,
+  # add TODO header
+  noteLinkSummContents <- sub_template_param(projNoteLinkSummaryContents,
                                              "{{OBJECTIVES_TODO_HEADER}}",
                                              settings[["NoteObjectivesTodoSectionHeader"]],
                                              orgPath)
@@ -1342,19 +1514,19 @@ sub_template_param <- function(templateContents, templateParam, paramContents, o
 
   if(is.character(paramContents) &&
      length(paramContents) == 1 &&
-     startsWith(paramContents, "template:")) {
+     startsWith(paramContents, "::template::")) {
 
-    # check orgPath
-    orgPath <- find_org_directory(orgPath)
+    # # check orgPath
+    # orgPath <- find_org_directory(orgPath)
 
-    # get config templates settings yml
-    confPath <- get_config_dir(orgPath)
+    # get templates
     tempPath <- get_template_dir(orgPath)
-    settings <- get_settings_yml(orgPath)
+    # confPath <- get_config_dir(orgPath)
+    # settings <- get_settings_yml(orgPath)
 
     # paramContents is a POINTER to a multi-line content file in templates dir
     # so open this and insert the multi-lined vector into templateContents
-    paramPointer <- substr(paramContents, nchar("template:")+1, nchar(paramContents))
+    paramPointer <- substr(paramContents, nchar("::template::")+1, nchar(paramContents))
     paramContents <- read_file( paste0( tempPath, .Platform$file.sep, paramPointer) )
 
     templateContents <- replace_params_with_vector(templateContents, templateParam, paramContents)
@@ -1400,7 +1572,7 @@ load_param_vector <- function(paramContents, orgPath) {
   # load the param if it points to a file
   if(is.character(paramContents) &&
      length(paramContents) == 1 &&
-     startsWith(paramContents, "template:")) {
+     startsWith(paramContents, "::template::")) {
 
     # check orgPath
     orgPath <- find_org_directory(orgPath)
@@ -1412,7 +1584,7 @@ load_param_vector <- function(paramContents, orgPath) {
 
     # paramContents is a POINTER to a multi-line content file in templates dir
     # so open this and insert the multi-lined vector into templateContents
-    paramPointer <- substr(paramContents, nchar("template:")+1, nchar(paramContents))
+    paramPointer <- substr(paramContents, nchar("::template::")+1, nchar(paramContents))
     paramContents <- read_file( paste0( tempPath, .Platform$file.sep, paramPointer) )
 
   }
@@ -1562,26 +1734,32 @@ replace_knitr_include_graphics_link <- function(contentContents, sourceFilePath,
     dqS <- regexpr('"', substring(kLine, kPathStartIndex), fixed=TRUE)
     qS <- max(sqS, dqS)
 
-    kPathEndIndex <- (regexpr(knitrGraphicsEnd, kLine, fixed=TRUE) - nchar(knitrGraphicsEnd) - 1)
-    sqE <- regexpr("'", substring(kLine, (kPathStartIndex+qS)), fixed=TRUE) -1 # get end quote index
-    dqE <- regexpr('"', substring(kLine, (kPathStartIndex+qS)), fixed=TRUE) -1 # get end quote index
-    qE <- max(sqE, dqE)
+    if( qS == -1 ) {
+      # do not proceed with loop - no quotes are found indicating a statis path
+    } else {
 
-    # extract path from `knitr::include_graphics()` string
-     # from WITHIN the quotes && trim all whitespace - will remove
-    kPath <- trimws( substring(kLine, (kPathStartIndex+qS), (kPathStartIndex+qS+qE-1)) )
+      kPathEndIndex <- (regexpr(knitrGraphicsEnd, kLine, fixed=TRUE) - nchar(knitrGraphicsEnd) - 1)
+      sqE <- regexpr("'", substring(kLine, (kPathStartIndex+qS)), fixed=TRUE) -1 # get end quote index
+      dqE <- regexpr('"', substring(kLine, (kPathStartIndex+qS)), fixed=TRUE) -1 # get end quote index
+      qE <- max(sqE, dqE)
 
-    # kPath is relative to sourceFilePath - collapse from dirname of sourceFilePath
-    kPathFull <- fs::path_abs(fs::path( dirname(sourceFilePath), kPath))
+      # extract path from `knitr::include_graphics()` string
+       # from WITHIN the quotes && trim all whitespace - will remove
+      kPath <- trimws( substring(kLine, (kPathStartIndex+qS), (kPathStartIndex+qS+qE-1)) )
 
-    # get relative link to dirname of destinationFilePath
-    relPathFull <- fs::path_rel(kPathFull, dirname(destinationFilePath) )
+      # kPath is relative to sourceFilePath - collapse from dirname of sourceFilePath
+      kPathFull <- fs::path_abs(fs::path( dirname(sourceFilePath), kPath))
 
-    # replace path in kLine with relPathFull
-    contentContents[kgi] <- paste0(
-      substring(kLine, 1, (kPathStartIndex+qS-1) ),
-      relPathFull,
-      substring(kLine, (kPathStartIndex+qS+qE), nchar(kLine)) )
+      # get relative link to dirname of destinationFilePath
+      relPathFull <- fs::path_rel(kPathFull, dirname(destinationFilePath) )
+
+      # replace path in kLine with relPathFull
+      contentContents[kgi] <- paste0(
+        substring(kLine, 1, (kPathStartIndex+qS-1) ),
+        relPathFull,
+        substring(kLine, (kPathStartIndex+qS+qE), nchar(kLine)) )
+
+    }
 
   }
 
@@ -1590,6 +1768,92 @@ replace_knitr_include_graphics_link <- function(contentContents, sourceFilePath,
 
 }
 
+
+#' Replace Hyper Links
+#'
+#' Replace the path inside any markdown hyperlinks with a relative
+#' path to `sourceFilePath` from `destinationFilePath`.  A hyperlink is identified
+#' with the `)[` string by default, denoting delimiter between the link title and
+#' path.
+#'
+#' @param contentContents String vector of contents that may contain hyperlinks,
+#' identified by presence of `](` in any line.
+#'
+#' @param sourceFilePath The path to the source file - where contentContents was
+#' read from
+#'
+#' @param destinationFilePath The path where the content will be moved to, used
+#' to compute the relative path of all files.
+#'
+#' @param hyperLinkID The identified to search for, set to `](` by default.
+#'
+#' @param hyperLinkEnd The end of the hyper link, set to `)` by default.
+#'
+replace_hyper_links <- function(contentContents, sourceFilePath, destinationFilePath,
+                                hyperLinkID='](', hyperLinkEnd=')') {
+
+  hyperLinkIDIndex <- grep(hyperLinkID, contentContents, fixed=TRUE)
+
+  for( kgi in hyperLinkIDIndex) {
+
+    # get knitr line
+    kLine <- contentContents[kgi]
+
+    # compute indices based on hyperLinkID content
+    kPathStartIndex <- (regexpr(hyperLinkID, kLine, fixed=TRUE) + nchar(hyperLinkID))
+    kPathEndIndex <- (regexpr(hyperLinkEnd, kLine, fixed=TRUE) - nchar(hyperLinkEnd))
+
+    # extract "path"
+    kPath <- trimws(substring (kLine, kPathStartIndex, kPathEndIndex ))
+     # this may be a link to a header in the current doc, a link to a relative path,
+     # or a link to a relative path && sub-header within that!
+
+    sPH <- split_path_header(kPath) # first split potential path and header
+
+    ## CONFIRM path portion is a relative path - if not, then DO NOT PARSE! (its an internal link to header in Rmd)
+    pathAbs <- fs::path_abs( sPH$path, start = fs::path_dir(sourceFilePath) )
+    if( fs::file_exists(pathAbs) ) {
+
+      # kPath is relative to sourceFilePath - collapse from dirname of sourceFilePath
+      kPathFull <- fs::path_abs(fs::path( dirname(sourceFilePath), kPath))
+
+      # get relative link to dirname of destinationFilePath
+      relPathFull <- fs::path_rel(kPathFull, dirname(destinationFilePath) )
+
+      # replace path in kLine with relPathFull
+      contentContents[kgi] <- paste0(
+        substring(kLine, 1, (kPathStartIndex-1) ),
+        relPathFull,
+        substring(kLine, (kPathEndIndex+nchar(hyperLinkEnd)), nchar(kLine)) )
+    }
+  }
+
+  # return
+  contentContents
+
+}
+
+
+split_path_header <- function(kPath) {
+
+  # does kpath contain the path#header separator - # ??
+  if( length(grep('#', kPath, fixed=TRUE)) == 1 ) {
+    headI <- gregexpr('#', kPath)[[1]]
+    sPath <- substr(kPath, 1, (headI-1))
+    sHeader <- substr(kPath, headI, nchar(kPath))
+  } else {
+    sPath <- kPath
+    sHeader <- ""
+  }
+
+  # return named list
+  list(
+    path = sPath,
+    header = sHeader
+  )
+
+
+}
 
 #' Create Hyperlink
 #'
@@ -1615,12 +1879,25 @@ create_hyperlink_section <- function(toFileName, toFileSection, toFilePath, from
 
   NoteLink <- R.utils::getRelativePath(toFilePath, relativeTo=fromFilePath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  NoteLink <- paste0(NoteLink, '#', gsub("[ ]|[_]", "-", trimws( tolower( gsub("[^[:alnum:] ]", "", toFileSection) ) ) ) )
+  NoteLink <- link_add_section(NoteLink, toFileSection)
   HyperLink <- paste("[", toFileName, " : ", gsub('#', '', toFileSection, fixed=TRUE), "](", NoteLink, ")",  sep="")
   HyperLink # return
 }
 
 
+#' Add Section to Link
+#'
+#' `NoteLink` is just a path to a file to link to.
+#' `toFileSection` is the Markdown Header of a section in NoteLink
+#'
+#' This function adds the Markdown Header to end of NoteLink, using html link
+#' syntax : using a `#` then all words from markdown header separate by `-`
+#'
+#' This link to a section of R markdown file can be navigaed in markdown using the
+#' `navigate_markdown_link()` function in projectmanagr
+link_add_section <- function(NoteLink, toFileSection) {
+  paste0(NoteLink, '#', gsub("[ ]|[_]", "-", trimws( tolower( gsub("[^[:alnum:] ]", "", toFileSection) ) ) ) )
+}
 
 #' Update links
 #'
@@ -1845,110 +2122,90 @@ update_links <- function( oldLinkSuffix, newLinkSuffix, dirTree, settings,
 
 
 
-
-#' get file list down to project notes
+#' Update Headers
 #'
-#' Traverses all directory tree in `dl` but only get fileList recursively but
-#' only down to project note parent dir level.
+#' Updates every header in all Project Notes within `dirTree`, replacing
+#' `oldHeader` with `newHeader`.
 #'
-#' This method makes parsing all plaintext Project Notes across an Organisation
-#' much more efficient!
+#' @param oldHeader Old header string to be updated - must start with `#` to
+#' denote a markdown header.
 #'
-#' @param fileList List of files recursively retrieved by this function.
-#' @param dl DirsList - a list of directory paths.
+#' @param newHeader New header string to replace `oldHeader` - must start with
+#' `#` to denote a markdown header.
+#'
+#' @param dirTree Directory tree to search for files for replacing links in.
+#'
 #' @param settings projectmanagr settings list.
-#' @param fileExtensions File extensions of files to list.
-#' @param pathExclusions Directory Paths which should be EXCLUDED from file
-#' search. Typically want to exclude the config and volumes directories in the
-#' root of an Organisation.
-#' @param retrievalDateTimeCutoff Any project notes last modified BEFORE the
-#' cutoff time will not be returned. If NULL ignored. This is a lubridate datetime
-#' object, made by parsing a datetime string through `lubridate::ymd_hm()`
 #'
-get_file_list_to_project_notes <- function(fileList, dl, settings,
-                                           fileExtensions = list("Rmd"),
-                                           pathExclusions = c(),
-                                           retrievalDateTimeCutoff = NULL ) {
+#' @param fileExtensions List of file extensions indicating what types of files
+#' should be searched for links and have links replaced.  Must be plaintext file
+#' type.  Default is Rmd files only.
+#'
+#' @export
+update_headers <- function( oldHeader, newHeader, dirTree, settings,
+                          oldHeaderString="", newHeaderString="", fileExtensions = list("Rmd") ) {
 
 
-  #### Set Instance Variables ####
+  # make dirTree full path
+  dirTree <- normalizePath(dirTree)
 
-  # get important delimiters from settings
-  #projIdentifierSep <- load_param_vector(settings[["ProjectIdentifierSep"]]) # "_"
-  #projPrefixSep <- load_param_vector(settings[["ProjectPrefixSep"]]) #  "~_"
-  #projIndexSep <- load_param_vector(settings[["ProjectIndexSep"]]) # "~"
-  #groupIndexSep <- load_param_vector(settings[["GroupNotePrefixSep"]]) # "-"
+  # get orgPath from dirTree
+  orgPath <- find_org_directory(dirTree)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ",
+                 projectNotePath) )
+  }
+
+  # get config path to exclude files from (in case dirTree is orgPath!)
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  volPath <- paste0(orgPath, .Platform$file.sep, settings[["VolumesDir"]])
 
 
-  #### get all files from dl ####
+  #### get file list ####
 
-  if( is.null(retrievalDateTimeCutoff) ) { # no cutoff filter
+  # first grab all files WITHOUT RECURSION - all files in dirTree directory
+  fileList <- c()
+  for(fe in fileExtensions) {
+    fileList <- c(fileList,
+                  paste0( dirTree, .Platform$file.sep,
+                          list.files(path = dirTree, pattern = paste0("*.",fe),
+                                     all.files = TRUE, include.dirs = TRUE) ) )
+  }
 
-    # get each file with extension from all dirs in dl
-    for(fe in fileExtensions) {
-      # get local copy of fl to check for project notes
-      fl <- paste0( dl, .Platform$file.sep,
-                    list.files(path = dl, pattern = paste0("*.",fe),
-                               all.files = TRUE) )
-      fl <- fl[fl!=paste0(dl, .Platform$file.sep)] # remove any instances of just dl/ - if no files found!
-      fileList <- c(fileList, fl )
+  # now grab all dirs WITHOUT RECURSION
+  dirsList <- list.dirs(path = dirTree, recursive=FALSE)
+
+  # and exclude confPath and volPath if present
+  dirsList <- dirsList[ dirsList != confPath]
+  dirsList <- dirsList[ dirsList != volPath]
+
+  # next traverse each directory - but only down to project note level
+  for(dl in dirsList) {
+    # get fileList recursively but only down to project note parent dir level
+    fileList <- get_file_list_to_project_notes(fileList, dl, settings,
+                                               fileExtensions)
+  }
+
+  #### replace oldHeader with newHeader ####
+
+  for(fl in fileList) {
+
+    contents <- read_file(fl)
+    cL <- startsWith(contents, oldHeader) # use starts with to remove blank space
+    if( any(cL) ) {
+      # replace oldHeader with newHeader in contents
+      contents[cL] <- gsub(oldHeader, newHeader, contents[cL], fixed=TRUE)
+      if(oldHeaderString!="" && newHeaderString!="") {
+        contents[cL] <- gsub(oldHeaderString, newHeaderString, contents[cL], fixed=TRUE)
+      }
+      # and save file
+      cat( "    replaced link(s) in file:", fl ,"\n" )
+      write_file(contents, fl)
     }
-
-  } else { # filter for cutoff datetime
-
-    # get each file with extension from all dirs in dl
-    for(fe in fileExtensions) {
-      # get local copy of fl to check for project notes
-      fl <- paste0( dl, .Platform$file.sep,
-                    list.files(path = dl, pattern = paste0("*.",fe),
-                               all.files = TRUE) )
-      fl <- fl[fl!=paste0(dl, .Platform$file.sep)] # remove any instances of just dl/ - if no files found!
-
-      # filter for datetime - only keep files
-      flf <- fl[lubridate::as_datetime(file.info(fl)$ctime, tz='UTC') > retrievalDateTimeCutoff]
-
-      fileList <- c(fileList, flf )
-    }
-
   }
-
-
-  #### get next level of sub-dirs from dl ####
-
-  dls <- list.dirs(path = dl, recursive=FALSE)
-
-  # remove any directories that match pathExclusions
-  dls <- dls[ !dls %in% pathExclusions ]
-
-
-  #### filter next level of sub-dirs to remove SIMPLE & SUB NOTE DIRS ####
-
-  types <- get_file_types(fl, settings)
-  fl_ex <- fl[types=="NOTE" | types=="SUB"] # excluding dirs belonging to simple notes and subnotes
-  fl_ex_dir <- get_project_note_dir_path(fl_ex, settings) # get the note's dirs
-
-  # remove the project note dirs from dls
-  for(fled in fl_ex_dir) {
-    dls <- dls[dls != fled]
-  }
-
-
-  #### recursively get more files from next level of sub-dirs ####
-
-  # recurses with each set of dls retrieved!
-  for(d in dls) {
-    fileList <- get_file_list_to_project_notes(
-                    fileList, d, settings,
-                    fileExtensions, pathExclusions, retrievalDateTimeCutoff)
-  }
-
-  #### return list of files down to project note dirs ####
-
-  # return fileList
-  fileList
-
-
 }
+
 
 
 
@@ -1986,11 +2243,11 @@ get_project_prefix_from_path <- function(projectPath, settings) {
 
 #' Get Project Prefix From Name
 #'
-#' Extracts the Project Prefix from the projectName - all characters before "~_"
-#'
+#' Extracts the Project Prefix from the projectName - all characters before
+#' `settings[["ProjectPrefixSep"]]`
 #'
 get_project_prefix_from_name <- function(projectFileName, settings) {
-  substr(projectFileName, 1, regexpr(settings[["ProjectPrefixSep"]], projectFileName)-(nchar(settings[["ProjectPrefixSep"]])-1 ) )
+  substr(projectFileName, 1, regexpr(settings[["ProjectPrefixSep"]], projectFileName)-(1) )
 }
 
 
@@ -2004,6 +2261,19 @@ get_name_from_file_name <- function(projectFileName, settings) {
   substring(projectFileName,
             first=regexpr(settings[["ProjectPrefixSep"]], projectFileName, fixed=TRUE) + nchar(settings[["ProjectPrefixSep"]]),
             last=regexpr( paste0(".", settings[["FileTypeSuffix"]]), projectFileName, fixed=TRUE)-1  )
+}
+
+
+#' Get Name from File Name
+#'
+#' fileName is PREFIX~_COMP_TITLE.Rmd - returned is COMP_TITLE
+#'
+#'
+get_name_from_file_path <- function(projectFilePath, settings) {
+
+  substring( basename(projectFilePath),
+            first=regexpr(settings[["ProjectPrefixSep"]], projectFilePath, fixed=TRUE) + nchar(settings[["ProjectPrefixSep"]]),
+            last=regexpr( paste0(".", settings[["FileTypeSuffix"]]), projectFilePath, fixed=TRUE)-1  )
 }
 
 
@@ -2859,7 +3129,7 @@ compute_previous_line_index <- function(lineIndex, contents) {
   # start at the END of contents:
   for( l in lineIndex:1 ) {
 
-    if( grepl("[A-z,0-9]", contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
+    if( grepl("[A-z,0-9,=,+,-,_]", contents[l]) ) { # returns TRUE if line CONTAINS any letter or number
 
       returnVal <- (l+1) # return the NEXT LINE after the line which contains content
       break

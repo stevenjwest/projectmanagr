@@ -1,0 +1,228 @@
+---
+title: 'tn-t___002~ PN ADS'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PD : EXAMPLE TASK TITLE
+
+
+[PD_--_Proj_Do](../../PD_--_Proj_Do.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PD_--_Proj_Do.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD_--_Proj_Do.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PD_--_Proj_Do.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
+
+
+
+
++===============================================================================
+
+
+    samples_CNS  :  CREATE
+
+
+      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    
+    ======  =====  ========  ====================  =================  =============  
+
+     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     
+                                                                                     
+     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     
+                                                                                     
+
++===============================================================================
+
+
+
+
++===============================================================================
+
+
+    samples_CNS  :  ADD_DATA
+
+
+      ID       y        yt_g         yerfuse_dt         yerfusion_con       group_yix     
+    ======  =======  =========  ====================  =================  ===============  
+
+     1001     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     1002     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     1003     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     1004     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+
++===============================================================================
+
+
+
++===============================================================================
+
+
+    samples_CNS  :  ADD_DATA
+
+
+       variables            fix_RT                fix_4C         
+    ===============  ====================  ====================  
+
+           z                  VAL                   VAL          
+                                                                 
+          zt_g               VALUE                 VALUE         
+                                                                 
+       zerfuse_dt      INSERT__DATETIME      INSERT__DATETIME    
+                                                                 
+     zerfusion_con        DATA__VALUE           DATA__VALUE      
+                                                                 
+       group_zix          DATA__VALUE           DATA__VALUE      
+                                                                 
+
++===============================================================================
+
+
++===============================================================================
+
+
+    samples_CNS  :  ADD_DATA
+
+
+     timetable     fix_RT      fix_4C          delip_dt        
+    ===========  ==========  ==========  ====================  
+
+        0:00        HT_RT       HT_RT      INSERT__DATETIME    
+                                                               
+        0:10        MT_RT       MT_RT      INSERT__DATETIME    
+                                                               
+        0:20       MDT_RT      MDT_RT      INSERT__DATETIME    
+                                                               
+        0:30       MDT_RT      MDT_RT      INSERT__DATETIME    
+                                                               
+        0:40        MT_RT       MT_RT      INSERT__DATETIME    
+                                                               
+        0:50        HT_RT       HT_RT      INSERT__DATETIME    
+                                                               
+
++===============================================================================
+
+
+
+
++===============================================================================
+
+
+    samples_CNS  :  ADD_DATA
+
+
+      ID      wt_g_formulation    
+    ======  ====================  
+
+     1001          24.4818        
+                                  
+     1002          24.4818        
+                                  
+     1003          24.4818        
+                                  
+     1004          24.4818        
+                                  
+
++===============================================================================
+
+
++===============================================================================
+
+
+    samples_CNS  :  ADD_DATA
+
+
+      ID      wt_g_form    
+    ======  =============  
+
+     1001      22.2222     
+                           
+     1002      22.2222     
+                           
+     1003      22.2222     
+                           
+     1004      22.2222     
+                           
+
++===============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

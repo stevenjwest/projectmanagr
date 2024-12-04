@@ -5,10 +5,14 @@
 \title{Get RStudio Config Dir}
 \usage{
 get_rstudio_config_dir()
+
+get_rstudio_config_dir()
 }
 \description{
 Returns config directory depending on OS.type (unix or Windows) & rstudio
 version (1.2 and prior OR 1.3+)
+
+Returns this from the settings or the default depending on OS.type (unix or Windows)
 }
 \details{
 See :
@@ -18,4 +22,17 @@ https://support.posit.co/hc/en-us/articles/206382178
 
 https://support.posit.co/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State
 'Resetting RStudio Desktop's State'
+
+Returns config directory depending on OS.type (unix or Windows) & rstudio
+version (1.2 and prior OR 1.3+)
+\itemize{
+\item 1.3+ unix : ~/.config/rstudio/keybindings/rstudio_bindings.json
+}
+
+This is where key configuration files are kept - eg. keybindings
+
+See :
+
+https://support.posit.co/hc/en-us/articles/206382178
+'Customizing Keyboard Shortcuts in the RStudio IDE'
 }

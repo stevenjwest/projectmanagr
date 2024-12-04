@@ -1,0 +1,485 @@
+---
+title: 'tn-j___005~ PN ADG'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PD : EXAMPLE TASK TITLE
+
+
+[PD_--_Proj_Do](../../PD_--_Proj_Do.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PD_--_Proj_Do.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD_--_Proj_Do.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PD_--_Proj_Do.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
+
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID       c        cage      genotype      strain_breed_type           dob_dt         
+    ======  =======  =========  ============  =====================  ====================  
+
+     1001     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+     1002     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+     1003     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+     1004     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID      c       cage       genotype      strain_breed_type           dob_dt         
+    ======  =====  ==========  ============  =====================  ====================  
+
+     2001     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     2002     F      CID102       vgat:wt            c57bl2           2024-08-21:12:12    
+                                                                                          
+     2003     M      CID103       vgat:wt            c57bl3           2024-08-21:12:13    
+                                                                                          
+     2004     M      CID104       vgat:wt            c57bl4           2024-08-21:12:14    
+                                                                                          
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID      c       cage       genotype      strain_breed_type           dob_dt         
+    ======  =====  ==========  ============  =====================  ====================  
+
+     3001     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     3002     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     3003     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     3004     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+
++===============================================================================
+
++===============================================================================
+
+
+    samples2  :  CREATE
+
+
+      ID       x        wt-g         perfuse_dt         perfusion_con       group-fix     
+    ======  =======  =========  ====================  =================  ===============  
+
+     4001     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     4002     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     4003     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     4004     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+
++===============================================================================
+
++===============================================================================
+
+
+    samples2  :  ADD_DATA
+
+
+      ID         postfix_dt         postfix_con      group-postfix    
+    ======  ====================  ===============  =================  
+
+     4001     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+     4002     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+     4003     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+     4004     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  GROUP
+
+
+      ID      group-solvent-inc      group-ab-conc    
+    ======  =====================  =================  
+
+     1001            1Hr                 1mg/mL       
+                                                      
+     1002            2Hr                0.5mg/mL      
+                                                      
+     1003            4Hr                 1mg/mL       
+                                                      
+     1004            1Hr                0.5mg/mL      
+                                                      
+     2001            2Hr                 1mg/mL       
+                                                      
+     2002            4Hr                0.5mg/mL      
+                                                      
+     2003            1Hr                 1mg/mL       
+                                                      
+     2004            2Hr                0.5mg/mL      
+                                                      
+     3001            4Hr                 1mg/mL       
+                                                      
+     3002            1Hr                0.5mg/mL      
+                                                      
+     3003            2Hr                 1mg/mL       
+                                                      
+     3004            4Hr                0.5mg/mL      
+                                                      
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  DISPOSE
+
+
+      ID           dispose        
+    ======  ====================  
+
+     3001     2024-09-10:1330B    
+                                  
+     3002     2024-09-10:1330B    
+                                  
+     3003     2024-09-10:1330B    
+                                  
+     3004     2024-09-10:1330B    
+                                  
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  GROUP
+
+
+      ID      group-solvent      group-ab    
+    ======  =================  ============  
+
+     1001          1Hr             1mg/mL    
+                                             
+     1002          2Hr           0.5mg/mL    
+                                             
+     1003          4Hr             1mg/mL    
+                                             
+     1004          1Hr           0.5mg/mL    
+                                             
+     2001          2Hr             1mg/mL    
+                                             
+     2002          4Hr           0.5mg/mL    
+                                             
+     2003          1Hr             1mg/mL    
+                                             
+     2004          2Hr           0.5mg/mL    
+                                             
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  RESAMPLE
+
+
+      ID       resample      reps    
+    ======  =============  ========  
+
+     1001        CNS           4     
+                SC-LUM         3     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+     1002        CNS           4     
+                SC-LUM         3     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+     1003        CNS           4     
+                SC-LUM         3     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+     1004        CNS           4     
+                SC-LUM         3     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+     2001        CNS           4     
+                SC-LUM         3     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+     2002        CNS           4     
+                SC-LUM         3     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+     2003        CNS           4     
+                SC-LUM         3     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+     2004        CNS           4     
+                SC-LUM         3     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+
++===============================================================================
+
++===============================================================================
+
+
+    samples_SC-LUM  :  GROUP
+
+
+      ID      rep      group-solvent      group-ab    
+    ======  =======  =================  ============  
+
+     1001      1            1Hr             1mg/mL    
+                                                      
+     1001      2            2Hr           0.5mg/mL    
+                                                      
+     1001      3            4Hr             1mg/mL    
+                                                      
+     1002      1            1Hr           0.5mg/mL    
+                                                      
+     1002      2            2Hr             1mg/mL    
+                                                      
+     1002      3            4Hr           0.5mg/mL    
+                                                      
+     1003      1            1Hr             1mg/mL    
+                                                      
+     1003      2            2Hr           0.5mg/mL    
+                                                      
+     1003      3            4Hr             1mg/mL    
+                                                      
+     1004      1            1Hr           0.5mg/mL    
+                                                      
+     1004      2            2Hr             1mg/mL    
+                                                      
+     1004      3            4Hr           0.5mg/mL    
+                                                      
+     2001      1            1Hr             1mg/mL    
+                                                      
+     2001      2            2Hr           0.5mg/mL    
+                                                      
+     2001      3            4Hr             1mg/mL    
+                                                      
+     2002      1            1Hr           0.5mg/mL    
+                                                      
+     2002      2            2Hr             1mg/mL    
+                                                      
+     2002      3            4Hr           0.5mg/mL    
+                                                      
+     2003      1            1Hr             1mg/mL    
+                                                      
+     2003      2            2Hr           0.5mg/mL    
+                                                      
+     2003      3            4Hr             1mg/mL    
+                                                      
+     2004      1            1Hr           0.5mg/mL    
+                                                      
+     2004      2            2Hr             1mg/mL    
+                                                      
+     2004      3            4Hr           0.5mg/mL    
+                                                      
+
++===============================================================================
+
++===============================================================================
+
+
+    samples_CNS  :  GROUP
+
+
+      ID      rep      group-solvent      group-ab    
+    ======  =======  =================  ============  
+
+     1001     1:4           1Hr             1mg/mL    
+                                                      
+     1002     1:4           2Hr           0.5mg/mL    
+                                                      
+     1003     1:4           4Hr             1mg/mL    
+                                                      
+     1004     1:4           1Hr           0.5mg/mL    
+                                                      
+     2001     1:4           2Hr             1mg/mL    
+                                                      
+     2002     1:4           4Hr           0.5mg/mL    
+                                                      
+     2003     1:4           1Hr             1mg/mL    
+                                                      
+     2004     1:4           2Hr           0.5mg/mL    
+                                                      
+
++===============================================================================
+
++===============================================================================
+
+
+    samples_CNS  :  GROUP
+
+
+      ID      rep      group-solvent-inc      group-ab-conc    
+    ======  =======  =====================  =================  
+
+     1001     ALL             1Hr                 1mg/mL       
+                                                               
+     1002     ALL             2Hr                0.5mg/mL      
+                                                               
+     1003     ALL             4Hr                 1mg/mL       
+                                                               
+     1004     ALL             1Hr                0.5mg/mL      
+                                                               
+     2001     ALL             2Hr                 1mg/mL       
+                                                               
+     2002     ALL             4Hr                0.5mg/mL      
+                                                               
+     2003     ALL             1Hr                 1mg/mL       
+                                                               
+     2004     ALL             2Hr                0.5mg/mL      
+                                                               
+
++===============================================================================
+
+
+* `group-postfix-time`
+
+    + `1day` : 1 day in postfix F4M1PB
+
+    + `3day` : 3 days in postfix F4M1PB
+
+    + `7day`  : 7 days in postfix F4M1PB
+
+* `group-postfix-temp`
+
+    + `RT` : in postfix F4M1PB at room temperature
+
+    + `4C` : in postfix F4M1PB at 4C
+
+
++===============================================================================
+
+
+    samples_DRG-L4-LT  :  GROUP
+
+
+      ID      group-postfix-time      group-postfix-temp    
+    ======  ======================  ======================  
+
+     1001            1day                     RT            
+                                                            
+     1002            3day                     4C            
+                                                            
+     1003            7day                     RT            
+                                                            
+     1004            1day                     4C            
+                                                            
+     2001            3day                     RT            
+                                                            
+     2002            7day                     4C            
+                                                            
+     2003            1day                     RT            
+                                                            
+     2004            3day                     4C            
+                                                            
+
++===============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

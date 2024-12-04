@@ -7,5 +7,6 @@
 get_project_prefix_from_name(projectFileName, settings)
 }
 \description{
-Extracts the Project Prefix from the projectName - all characters before "~_"
+Extracts the Project Prefix from the projectName - all characters before
+\code{settings[["ProjectPrefixSep"]]}
 }

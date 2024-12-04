@@ -2,7 +2,7 @@
 % Please edit documentation in R/datatables-gen-functions.R
 \name{datatable_add_data_samples}
 \alias{datatable_add_data_samples}
-\title{Add new Samples Data to Data Table}
+\title{Generate ADD_DATA Samples Datatable}
 \usage{
 datatable_add_data_samples(
   contents,
@@ -11,7 +11,8 @@ datatable_add_data_samples(
   ids_vector = "",
   default_data_vals = list(),
   dt_length = 100,
-  summarise_reps = FALSE
+  summarise_reps = FALSE,
+  all_reps = FALSE
 )
 }
 \arguments{
@@ -25,10 +26,12 @@ BE BLANK!}
 EXIST/BE DECLARED BEFORE rmd_line in rmd_path.}
 
 \item{ids_vector}{A vector containing the IDs to add: Can be "ALL", a set of GROUP
-IDs (which must already be declared in datatable name under a 'group-' data
-column), or (a subset of) IDs from datatable.}
+IDs (which must already be declared in datatable name under a 'group' data
+column), or (a subset of) IDs from datatable. Default blank string "" indicates
+to add data to ALL EXISTING IDs.}
 
-\item{default_data_vals}{List of default data values to add to data cols.}
+\item{default_data_vals}{List of default data values to add to data cols &
+IDs.}
 
 \item{dt_length}{Int of data table max length in characters - default 100.}
 
@@ -37,18 +40,33 @@ the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
 otherwise if TRUE, all reps are summarised using r vector index syntax on
 one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
 indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.}
+
+\item{all_reps}{Boolean to indicate whether all reps should be summarised in
+the datatable.  If TRUE then ALL reps for each ID are summarised with keyword
+ALL - which will apply data cols to all the reps for each sample, without the
+potentially complex summary strings representing a disparate collection of reps.
+This comes at the expense of not being clear from reading this datatable what
+reps actually exist.}
+}
+\value{
+List of datatables generated.
 }
 \description{
-Adds new Sample data to an EXISTING Data Table in specified Rmd file at
-specified line.  The Sample DataTable will contain an initial ID column
-containing all the EXISTING IDs (IDs that have been resampled or exported
-will automatically be EXCLUDED), and an optional set of extra data columns as
-specified in the data_cols vector.  If the table exceeds dt_length characters
-(default 100), then the table is split into multiple tables, with IDs as
-first col, and subsequent data_cols given in subsequent tables.
+Add Data to \code{ids_vector} from \code{datatable_name} in \code{contents} with
+\code{data_cols} (column names) and \code{default_data_vals} (data for each column).
 }
 \details{
-The function assumes all EXISTING REPS of the current samples are going to
-be resampled: if more than one rep exists for any of the samples, this table
-will add the first rep column and fill it with all the EXISTING rep numbers.
+Adds new Sample data to an EXISTING Data Table.  The Sample DataTable will
+contain an initial ID column containing all the EXISTING IDs (IDs that have
+been resampled exported disposed will automatically be EXCLUDED), and an optional
+set of extra data columns as specified in the data_cols vector.
+
+The function by default assumes all EXISTING SAMPLE (& REPS) are going to
+have data added: if more than one rep exists for any of the samples, this table
+will add the rep column and fill it with all the EXISTING rep numbers in the
+format indicated by \code{summarise_reps} & \code{all_reps}.
+
+If the table exceeds dt_length characters (default 100), then the table is
+split into multiple tables, with IDs as first col, and subsequent data_cols
+given in subsequent tables.
 }

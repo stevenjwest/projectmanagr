@@ -1,3 +1,6 @@
+
+
+
 #' Create a New Project Organisation
 #'
 #' Generates the layout for a new Project Organisation in the File System.
@@ -33,389 +36,73 @@
 #' @param orgTemplate defines the template to use from the projectmanagr package.
 #' Default is "Org-Template.Rmd".
 #'
-#' @param utime Add update time to write to status.yml - for automated testing.
-#'
 #' @return orgIndexPath The path to the organisation index Rmd file.
 #'
 #' @export
 create_project_org <- function( orgParentPath, orgName, orgTitle="",
-                              settingsYamlPath="", orgTemplate="Org-Template.Rmd",
-                              utime="") {
-
+                              settingsYamlPath="", orgTemplate="Org-Template.Rmd") {
 
   cat( "\nprojectmanagr::create_project_org():\n" )
 
 
-  #### check ARGS ####
+  #### define and check args ####
 
-  # Check orgTitle, and if blank, fill with orgName, replacing all "_" and "-" with spaces & trim whitespace
-  if( nchar(orgTitle)==0 ) {
-    orgTitle <- trimws( gsub("-", " ", gsub("_", " ", orgName) ) )
-  }
+  orgTitle <- define_default_org_title(orgTitle, orgName)
+  orgPath <- define_org_path(orgParentPath, orgName)
 
   # check location of installed projectmanagr package - to retrieve files for org install
-  # lib.loc ensures correct lib path is returned during testing
-  projectmanagrPath <- find.package("projectmanagr", lib.loc = .libPaths())
-
-  #### Create Organisation Dir ####
-
-  orgPath <- paste0(orgParentPath, .Platform$file.sep, orgName)
+  projectmanagrPath <- find.package("projectmanagr", lib.loc = .libPaths()) # lib.loc ensures correct lib path is returned during testing
 
   # get all org paths (including this one) from the parent dir of current orgPath
   orgPaths <- get_org_paths(orgPath) # this also updates the existing org configs to be aware of this new org!
    # this ensures all organisations (at least those written to parent DIR of this new ORG) are aware of each other
    # thus can update links across organisations
+  settings <- load_yml_settings_default(settingsYamlPath, projectmanagrPath)
 
-  # create the fileSystem layout:
-  done <- dir.create( orgPath )
 
-  orgPath <- normalizePath(orgPath)
+  #### create projectmanagr org ####
 
-  if(!done) {
-    stop( paste0("  Organisation directory could not be created: ", orgPath) )
-  }
+  create_org_dir(orgPath)
 
-  cat( "  Made ORG dir: ",orgPath, "\n" )
+  sitePath <- create_html_site_path(orgPath, settings)
+  volumesPath <- create_volumes_path(orgPath, settings)
+  confPath <- create_config_path(orgPath, settings)
 
+  volumesFile <- create_volumes_file(volumesPath, projectmanagrPath, orgPath, settings)
 
-  #### Load Settings YAML file ####
+  settingsYamlFile <- create_settings_yaml_file(orgPath, settings)
+  statusFile <- create_status_yaml_file(orgPath, settings, orgPaths, orgName, orgTitle, sitePath)
 
-  # The default is loaded from the package OR function points to settingsYamlPath yaml file which is used
-  if( settingsYamlPath == "" ) {
+  addinsJsonProjectManagrFile <- create_addins_json(projectmanagrPath, orgPath, settings)
 
-    # no settingsYamlFile supplied - so load the DEFAULT settingsYamlFile from projectmanagr
-    settingsYamlFile <- paste0( projectmanagrPath,
-                                .Platform$file.sep, "config",
-                                .Platform$file.sep, "settings.yml")
+  tempPath <- create_templates_path(projectmanagrPath, orgPath, settings)
 
-    settings <- yaml::read_yaml( settingsYamlFile ) # assumes encoding is UTF-8
-    # to load other files - run yaml::yaml.load( yaml::read_yaml(path))
+  orgFile <- create_org_index(orgName, tempPath, orgTemplate, orgPath, settings,
+                              orgTitle)
 
-  } else {
+  confirm_dirs(c(sitePath, volumesPath, confPath, tempPath))
 
-    # settingsYamlFile supplied - load this and CHECK its valid
-    settingsYamlFile <- settingsYamlPath
-
-    settings <- yaml::read_yaml( settingsYamlFile )# assumes encoding is UTF-8
-
-    # CHECK YAML is valid - must contain all named elements
-    #VolumesDir DocsDir ConfigDir OrgIndexFileName
-    # form list with: cat(paste0('"', names(settings), '" %in% names(settings) &&'), sep='\n')
-    valid <- { "SiteDir" %in% names(settings) &&
-        "FileType" %in% names(settings) &&
-        "VolumesDir" %in% names(settings) &&
-        "VolumesFile" %in% names(settings) &&
-        "ConfigStatusYamlFile" %in% names(settings) &&
-        "OrgIndexFileNamePrefix" %in% names(settings) &&
-        "OrgProgrammeHeader" %in% names(settings) &&
-        "OrgProgrammeFooter" %in% names(settings) &&
-        "OrgProgrammeSummarySep" %in% names(settings) &&
-        "ProgrammeProjectsDir" %in% names(settings) &&
-        "ProgIndexFileNamePrefix" %in% names(settings) &&
-        "ProgSummaryHeader" %in% names(settings) &&
-        "ProgSummaryTitle" %in% names(settings) &&
-        "ProgSummaryFooter" %in% names(settings) &&
-        "ProgProjectsHeader" %in% names(settings) &&
-        "ProgProjectsFooter" %in% names(settings) &&
-        "ProgProjectSummarySep" %in% names(settings) &&
-        "ProjectPrefixSep" %in% names(settings) &&
-        "ProjectIdentifierSep" %in% names(settings) &&
-        "ProjectIndexSep" %in% names(settings) &&
-        "ProjectSummaryHeader" %in% names(settings) &&
-        "ProjectSummaryTitle" %in% names(settings) &&
-        "ProjectSummaryFooter" %in% names(settings) &&
-        "ProjectGoalHeader" %in% names(settings) &&
-        "ProjectGoalTitle" %in% names(settings) &&
-        "ProjectGoalDivider" %in% names(settings) &&
-        "ProjectGoalSep" %in% names(settings) &&
-        "ProjectDeliverableHeader" %in% names(settings) &&
-        "ProjectDeliverableTitle" %in% names(settings) &&
-        "ProjectDeliverableDivider" %in% names(settings) &&
-        "ProjectDeliverableSep" %in% names(settings) &&
-        "ProjectTaskHeader" %in% names(settings) &&
-        "ProjectTaskTitle" %in% names(settings) &&
-        "ProjectTaskDivider" %in% names(settings) &&
-        "ProjectTaskSep" %in% names(settings) &&
-        "ProjectTaskFooter" %in% names(settings) &&
-        "ProjectLinkFormat" %in% names(settings) &&
-        "ProjectTaskLogHeader" %in% names(settings) &&
-        "ProjectTaskLogSep" %in% names(settings) &&
-        "NoteObjectivesSummarySectionHeader" %in% names(settings) &&
-        "NoteObjectivesTodoSectionHeader" %in% names(settings) &&
-        "NoteObjectivesHeader" %in% names(settings) &&
-        "NoteObjectivesSep" %in% names(settings) &&
-        "NoteObjectivesFooter" %in% names(settings) &&
-        "NoteStorageHeader" %in% names(settings) &&
-        "NoteStorageFooter" %in% names(settings) &&
-        "NoteLinkFormat" %in% names(settings) &&
-        "GroupNotePrefixSep" %in% names(settings) &&
-        "HeaderNotePrefix" %in% names(settings) &&
-        "HeaderNoteContentsHeader" %in% names(settings) &&
-        "HeaderNoteContentsFooter" %in% names(settings) &&
-        "HeaderLinkFormat" %in% names(settings) &&
-        "SubNotePrefixSep" %in% names(settings) &&
-        "SubNoteContentsHeader" %in% names(settings) &&
-        "SubNoteContentsFooter" %in% names(settings) &&
-        "SubNoteLinkFormat" %in% names(settings) &&
-        "NoteSummaryTitle" %in% names(settings) &&
-        "NoteGoalLinkLine" %in% names(settings) &&
-        "NoteDeliverableLinkLine" %in% names(settings) &&
-        "NoteTaskLinkLine" %in% names(settings) &&
-        "ContentTitleField" %in% names(settings) &&
-        "ContentDescriptionField" %in% names(settings) &&
-        "ContentSourceField" %in% names(settings) &&
-        "ContentSep" %in% names(settings) &&
-        "ContentInsertionTitle" %in% names(settings) &&
-        "ContentInsertionSep" %in% names(settings) &&
-        "ContentLinkFormat" %in% names(settings) &&
-        "ContentSummaryHeader" %in% names(settings) &&
-        "ContentSummaryFooter" %in% names(settings) &&
-        "ContentGraphicalAbstractHeader" %in% names(settings) &&
-        "ContentGraphicalAbstractSvg" %in% names(settings) &&
-        "ContentGraphicalAbstractFooter" %in% names(settings) &&
-        "ContentBackgroundHeader" %in% names(settings) &&
-        "ContentBackgroundFooter" %in% names(settings) &&
-        "ContentMaterialsHeader" %in% names(settings) &&
-        "ContentMaterialsFooter" %in% names(settings) &&
-        "ContentEquipmentSvg" %in% names(settings) &&
-        "ContentProcedureTemplateSvg" %in% names(settings) &&
-        "ContentResultsLogHeader" %in% names(settings) &&
-        "ContentResultsLogFooter" %in% names(settings) &&
-        "ContentTroubleshootingHeader" %in% names(settings) &&
-        "ContentTroubleshootingFooter" %in% names(settings) &&
-        "ContentSopHeader" %in% names(settings) &&
-        "ContentLogHeader" %in% names(settings) &&
-        "ContentLogSep" %in% names(settings) &&
-        "ContentFooter" %in% names(settings) &&
-        "TodoItemHeaderTemplate" %in% names(settings) &&
-        "TodoItemHeaderComplete" %in% names(settings) &&
-        "TodoItemHeader" %in% names(settings) &&
-        "TodoCollectionDir" %in% names(settings) &&
-        "TodoProgrammeSep" %in% names(settings) &&
-        "DateTimeZone" %in% names(settings) &&
-        "DateSplit" %in% names(settings) &&
-        "DateTimeSplit" %in% names(settings) &&
-        "RunUpdateOnStartup" %in% names(settings) &&
-        "RunCompileWithUpdate" %in% names(settings) &&
-        "FileTypeSuffix" %in% names(settings) &&
-        "WeeklyJournalDir" %in% names(settings) &&
-        "GadgetWidth" %in% names(settings) &&
-        "GadgetHeight" %in% names(settings) &&
-        "rstudioInternalStateDir" %in% names(settings) }
-
-    if( valid == FALSE ) {
-      stop( paste0("  settingsYamlPath is not a valid projectmanagr YAML file : ", settingsYamlPath))
-    }
-
-  }
-
-
-  #### Create HTML site Dir ####
-
-  # This will contain the compiled HTML - which will be made using R Markdown package in the first instance
-    # In future, want to move to using pandoc directly??
-
-  # site dir - placed in the orgPath:
-  sitePath <- paste0(orgPath, .Platform$file.sep, settings[["SiteDir"]])
-  done <- dir.create( sitePath )
-
-  if(!done) {
-    stop( paste0("  Site directory could not be created: ", sitePath) )
-  }
-
-  cat( "  Made html site dir: ", sitePath, "\n" )
-
-
-  #### Create org volumes Dir ####
-
-  # This will contain SYMLINKS to Volume Mounts, which then act as data stores for data as needed:
-    # From each Project Note can run volumes_mkdir() to create a new DIR on a Volume Mount
-    # this will form a DIR on the Volume Mount and be SYMLINKED TO a sub-dir in the Project Note DIR (both same name!)
-    # NO LONGER using a local data storage idea - can just offset data dynamically as needed WITHIN the Project Note DIR!
-
-  # volumes dir:
-  volumesPath <- paste0(orgPath, .Platform$file.sep, settings[["VolumesDir"]])
-  done <- dir.create( volumesPath )
-
-  if(!done) {
-    stop( paste0("  Volumes directory could not be created: ", volumesPath) )
-  }
-
-  cat( "  Made volumes dir: ", volumesPath, "\n" )
-
-  # Add the volumes.Rmd file to the volumes/ DIR
-    # this contains the workflow for MOUNTING an External Volume, then
-    # SYMLINKING location(s)  in the External Volume to the volumes/ directory, then
-    # how to use the projectmanagr::volumes_mkdir() command to generate a DIR on this External Volume for external storage
-
-  # COPY default settings.yml file from the package:
-  volumesFile = paste(volumesPath, .Platform$file.sep, settings[["VolumesFile"]], sep="") # location to copy file to
-  volumesPackageFile <- paste( projectmanagrPath, .Platform$file.sep,
-                               "volumes", .Platform$file.sep, "volumes.Rmd", sep="")
-
-  done <- file.copy(volumesPackageFile, volumesFile)
-
-  if(!done) {
-    stop( paste0("  Volumes file could not be copied: ", volumesPackageFile, " ", volumesFile) )
-  }
-  cat( "  Copied volumes file: ", volumesFile, "\n" )
-
-
-
-  #### Create org .config/ dir ####
-
-  # Contains configuration information for Organisation
-
-  # config dir: FIXED NAME
-  confPath <- get_config_dir(orgPath)
-  done <- dir.create( confPath )
-
-  if(!done) {
-    stop( paste0("  Config directory could not be created: ", confPath) )
-  }
-
-  cat( "  Made config dir: ", confPath, "\n" )
-
-
-  #### Create settings.yml file ####
-
-  # a settings.yml file and a status.yml file
-    # settings.yml contains user-defined defaults for operations
-    # status.yml contains a list of incomplete projects and notes, for each programme
-
-  # define the settingsYamlFile in the org being created
-  settingsYamlFile <- paste0(confPath, .Platform$file.sep, "settings.yml")
-
-  # write YAML to settingsYamlFile location
-  yaml::write_yaml( yaml::as.yaml(settings), settingsYamlFile )
-
-  cat( "  Written settings file: ", settingsYamlFile, "\n" )
-
-
-  #### Create status.yml file ####
-
-  # create status.yml file - need to create it here to get the mtime for this file
-  statusFile <- get_status_yml_file(orgPath, settings)
-  done <- file.create(statusFile)
-
-  if(!done) {
-    stop( paste0("  Status file could not be created: ", statusFile) )
-  }
-
-  cat( "  Made status file: ", statusFile, "\n" )
-
-
-  # Create initial content for status.yml file - data on the Org, plus UPDATE datetime:
-  if( utime == "") {
-    updateTime <- file.info(statusFile)[,5]
-  } else if( is.na(lubridate::ymd_hm(utime)) == FALSE ) {
-    updateTime <- lubridate::ymd_hm(utime)
-  } else {
-    updateTime <- file.info(statusFile)[,5]
-  }
-  org <- list(orgPaths, orgPath, orgName, orgTitle, as.character(updateTime), sitePath )
-   # orgPaths contains all EXISTING ORGs and THIS ORG path at end
-  names(org) <- c("orgPaths", "orgPath", "orgName", "orgTitle", "updateTime", "sitePath")
-  yaml::write_yaml( yaml::as.yaml(org), statusFile )
-
-
-  #### Copy addins.json to .config/ dir ####
-
-  # no settingsYamlFile supplied - so load the DEFAULT settingsYamlFile from projectmanagr
-  addinsJsonPackageFile <- paste0( projectmanagrPath, .Platform$file.sep,
-                              "config", .Platform$file.sep, "addins.json")
-
-  addinsJsonProjectManagrFile <- paste0(confPath, .Platform$file.sep, "addins.json")
-
-  done <- file.copy(addinsJsonPackageFile, addinsJsonProjectManagrFile)
-  if(!done) {
-    stop( paste0("  Failed to copy addins.json: ", addinsJsonPackageFile) )
-  }
-  cat( "  Copied addins.json \n" )
-
-  #### Create templates dir: copy templates from package ####
-
-  # templates Dir - INSIDE the config DIR (these templates are part of the projectmanagr config!):
-  # FIXED NAME
-  # get config templates settings yml
-  tempPath <- get_template_dir(orgPath)
-  done <- dir.create( tempPath )
-
-  if(!done) {
-    stop( paste0("  Templates directory could not be created: ", tempPath) )
-  }
-
-  cat( "  Made templates dir: ",tempPath, "\n" )
-
-  # copy template files:
-    # need to copy from the PACKAGE!
-  templateDir <- paste0( projectmanagrPath, .Platform$file.sep, "templates", .Platform$file.sep)
-  templateRmds <- list.files(templateDir)
-  for(f in templateRmds) {
-    done <- file.copy( paste0(templateDir, f), tempPath)
-    if(!done) {
-      stop( paste0("  Failed with Template: ", f) )
-    }
-    cat( "  Copied template: ",f, "\n" )
-  }
-
-
-  #### Create ORG Rmd file ####
-
-  # first remove any preceding '-' or '_' from orgName
-  orgIndexName <- orgName
-  #if( startsWith(orgIndexName, "_") | startsWith(orgIndexName, "-") ){
-  #  orgIndexName <- sub('.', '', orgIndexName)
-  #}
-  # and remove any following '-' or '_' from orgName
-  #if( endsWith(orgIndexName, "_") | endsWith(orgIndexName, "-") ){
-  #  orgIndexName <- gsub('.{1}$', '', orgIndexName)
-  #}
-
-  orgIndexName <- paste0(settings[["OrgIndexFileNamePrefix"]], orgIndexName, ".Rmd")
-  # use the orgPath - prefix with OrgIndexFileNamePrefix then ORG NAME then .Rmd
-  orgFile <- paste0(orgPath, .Platform$file.sep, orgIndexName)
-  done <- file.create(orgFile)
-
-  if(!done) {
-    stop( paste0("  Org file could not be created: ", orgFile) )
-  }
-
-  cat( "  Made Org file: ",orgFile, "\n" )
-
-
-  # read org template:
-  templateContents <- read_file( paste0( tempPath, .Platform$file.sep, orgTemplate) )
-
-  # use username as author value
-  authorValue <- Sys.info()["user"]
-
-  # modify templateContents to include orgTitle and authorValue
-  templateContents <- gsub("{{TITLE}}", orgTitle, templateContents, fixed=TRUE)
-  templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
-
-  templateContents <- sub_template_param(templateContents, "{{PROGRAMME_HEADER}}",
-                                         settings[["OrgProgrammeHeader"]], orgPath)
-  templateContents <- sub_template_param(templateContents, "{{PROGRAMME_FOOTER}}",
-                                         settings[["OrgProgrammeFooter"]], orgPath)
-
-  # modify templateContents with rmarkdown-html-header content
-  templateContents <- replace_markdown_header(templateContents, orgPath)
-
-  # modify templateContents with SEP values
-  templateContents <- replace_sep_values(templateContents, orgPath)
-
-  # write to orgFile
-  write_file(templateContents, orgFile)
-
-  cat( "  Written template to Org file: ", orgFile, "\n" )
-
-  # return orgIndexPath - orgFile
-  orgFile
-
+  orgFile # return orgIndexPath - orgFile
 }
 
 
+define_default_org_title <- function(orgTitle, orgName) {
+
+  # Check orgTitle, and if blank, fill with orgName, replacing all "_" and "-" with spaces & trim whitespace
+  if( nchar(orgTitle)==0 ) {
+    orgTitle <- trimws( gsub("-", " ", gsub("_", " ", orgName) ) )
+  }
+  orgTitle # return
+}
+
+
+define_org_path <- function(orgParentPath, orgName) {
+  orgPath <- fs::path(orgParentPath, orgName)
+  if(fs::dir_exists(orgPath) ) {
+    stop( paste0("  Organisation directory already exists: ", orgPath) )
+  }
+  orgPath # return
+}
 
 #' Get existing Org paths & update the existing org configs to be aware of newOrgPath
 #'
@@ -441,18 +128,14 @@ get_org_paths <- function(newOrgPath) {
     return(dirs) # return the 0-length char vector
   }
 
-  # identify each dir that is an organisation
-  for (i in 1:length(dirs) ) {
-    dirs[i] <- find_org_directory(dirs[i])
-  }
-
-  # remove all blank strings - all dirs that ARE NOT ORGS
-  dirs <- dirs[ nzchar(dirs) ]
+  dirs <- check_dirs_org(dirs)
 
   # return early if no ORG dirs identified
   if( length(dirs)==0 ) {
     return(dirs) # return the 0-length char vector
   }
+
+  cat("  identified other Orgs\n")
 
   # define the orgPaths as all org paths (including new one)
   orgPaths <- c(dirs, newOrgPath)
@@ -475,13 +158,405 @@ get_org_paths <- function(newOrgPath) {
     # write to statusFile
     yaml::write_yaml( yaml::as.yaml(status), statusFile )
 
+    cat("    Written to Org: ", dirs[i], "\n")
+
   }
+  cat("")
 
   # return orgPaths
   orgPaths
 
 }
 
+
+create_org_dir <- function(orgPath) {
+  fs::dir_create(orgPath)
+  if( fs::dir_exists(orgPath) == FALSE ) {
+    stop( paste0("  Organisation directory could not be created: ", orgPath) )
+  }
+  cat( "  Made ORG dir: ", orgPath, "\n" )
+}
+
+
+load_yml_settings_default <- function(settingsYamlPath, projectmanagrPath) {
+
+  # The default is loaded from the package OR function points to settingsYamlPath yaml file which is used
+  if( settingsYamlPath == "" ) {
+
+    # no settingsYamlFile supplied - so load the DEFAULT settingsYamlFile from projectmanagr
+    settingsYamlFile <- paste0( projectmanagrPath,
+                                .Platform$file.sep, "config",
+                                .Platform$file.sep, "settings.yml")
+
+    settings <- yaml::read_yaml( settingsYamlFile ) # assumes encoding is UTF-8
+    # to load other files - run yaml::yaml.load( yaml::read_yaml(path))
+
+  } else {
+
+    # settingsYamlFile supplied - load this and CHECK its valid
+    settingsYamlFile <- settingsYamlPath
+    settings <- yaml::read_yaml( settingsYamlFile )# assumes encoding is UTF-8
+
+    # CHECK YAML is valid - must contain all named elements
+    extraSettings <- setdiff(names(settings), yaml_keys())
+    missingSettings <- setdiff(yaml_keys(), names(settings))
+
+    if( length(extraSettings) > 0 ) {
+      cat("  settingsYamlPath contains some extra settings: ", paste(extraSettings), "\n")
+    }
+
+    if( length(missingSettings) > 0 ) {
+      stop( paste0("  settingsYamlPath is not a valid projectmanagr YAML file : ", settingsYamlPath, "\n   missing settings: ", paste(missingSettings)))
+    }
+  }
+
+  # lst <- list(settings, settingsYamlFile)
+  # names(list) <- c("settings", "settingsYamlFile")
+  # lst # return named list
+
+  settings # return settings list
+}
+
+
+
+#' return char vector of all keys that should be present in YAML file
+yaml_keys <- function() {
+
+  c("SiteDir",
+    "FileType",
+    "VolumesDir",
+    "VolumesFile",
+    "ConfigStatusYamlFile",
+    "OrgIndexFileNamePrefix",
+    "OrgProgrammeHeader",
+    "OrgProgrammeFooter",
+    "OrgProgrammeSummarySep",
+    "ProgrammeProjectsDir",
+    "ProgIndexFileNamePrefix",
+    "ProgSummaryHeader",
+    "ProgSummaryTitle",
+    "ProgSummaryFooter",
+    "ProgProjectsHeader",
+    "ProgProjectsFooter",
+    "ProgProjectSummarySep",
+    "ProjectPrefixSep",
+    "ProjectIdentifierSep",
+    "ProjectIndexSep",
+    "ProjectSummaryHeader",
+    "ProjectSummaryTitle",
+    "ProjectSummaryFooter",
+    "ProjectGoalHeader",
+    "ProjectGoalTitle",
+    "ProjectGoalDivider",
+    "ProjectGoalSep",
+    "ProjectDeliverableHeader",
+    "ProjectDeliverableTitle",
+    "ProjectDeliverableDivider",
+    "ProjectDeliverableSep",
+    "ProjectTaskHeader",
+    "ProjectTaskTitle",
+    "ProjectTaskDivider",
+    "ProjectTaskSep",
+    "ProjectTaskFooter",
+    "ProjectLinkFormat",
+    "ProjectTaskLogHeader",
+    "ProjectTaskLogSep",
+    "NoteObjectivesTodoSectionHeader",
+    "NoteObjectivesHeader",
+    "NoteObjectivesSep",
+    "NoteObjectivesFooter",
+    "NoteStorageHeader",
+    "NoteStorageFooter",
+    "NoteLinkFormat",
+    "GroupNotePrefixSep",
+    "HeaderNotePrefix",
+    "HeaderNoteContentsHeader",
+    "HeaderNoteContentsFooter",
+    "HeaderLinkFormat",
+    "SubNotePrefixSep",
+    "SubNoteContentsHeader",
+    "SubNoteContentsFooter",
+    "SubNoteLinkFormat",
+    "NoteSummaryTitle",
+    "NoteGoalLinkLine",
+    "NoteDeliverableLinkLine",
+    "NoteTaskLinkLine",
+    "ContentTitleField",
+    "ContentDescriptionField",
+    "ContentSourceField",
+    "ContentSep",
+    "ContentInsertionTitle",
+    "ContentInsertionSep",
+    "ContentLinkFormat",
+    "ContentSummaryHeader",
+    "ContentSummaryFooter",
+    "ContentGraphicalAbstractHeader",
+    "ContentGraphicalAbstractSvg",
+    "ContentGraphicalAbstractFooter",
+    "ContentBackgroundHeader",
+    "ContentBackgroundFooter",
+    "ContentMaterialsHeader",
+    "ContentMaterialsFooter",
+    "ContentEquipmentSvg",
+    "ContentProcedureTemplateSvg",
+    "ContentResultsLogHeader",
+    "ContentResultsLogFooter",
+    "ContentTroubleshootingHeader",
+    "ContentTroubleshootingFooter",
+    "ContentSopHeader",
+    "ContentLogHeader",
+    "ContentLogSep",
+    "ContentFooter",
+    "TodoItemHeaderTemplate",
+    "TodoItemHeaderComplete",
+    "TodoItemHeader",
+    "TodoCollectionDir",
+    "TodoProgrammeSep",
+    "DateTimeZone",
+    "DateSplit",
+    "DateTimeSplit",
+    "RunUpdateOnStartup",
+    "RunCompileWithUpdate",
+    "FileTypeSuffix",
+    "WeeklyJournalDir",
+    "GadgetWidth",
+    "GadgetHeight",
+    "rstudioInternalStateDir")
+
+}
+
+
+create_html_site_path <- function(orgPath, settings) {
+  # This will contain the compiled HTML - which will be made using R Markdown package in the first instance
+  # In future, want to move to using pandoc directly??
+  sitePath <- get_site_dir(orgPath,settings)
+  fs::dir_create(sitePath)
+
+  if( fs::dir_exists(sitePath) == FALSE ) {
+    fs::dir_delete(orgPath) # delete orgPath!
+    stop( paste0("  Site directory could not be created: ", sitePath) )
+  }
+  cat( "  Made html site dir: ", sitePath, "\n" )
+  sitePath # return
+}
+
+
+create_volumes_path <- function(orgPath, settings) {
+
+  volumesPath <- get_volumes_dir(orgPath, settings)
+  fs::dir_create(volumesPath)
+
+  if( fs::dir_exists(volumesPath) == FALSE ) {
+    fs::dir_delete(orgPath) # delete orgPath!
+    stop( paste0("  Volumes directory could not be created: ", volumesPath) )
+  }
+  cat( "  Made volumes dir: ", volumesPath, "\n" )
+  volumesPath # return
+}
+
+create_config_path <- function(orgPath, settings) {
+  # Contains configuration information for Organisation
+  # config dir: FIXED NAME
+  confPath <- get_config_dir(orgPath)
+  fs::dir_create(confPath)
+  confirm_dir(confPath, "  Config directory could not be created: ", orgPath)
+  cat( "  Made config dir: ", confPath, "\n" )
+  confPath # return
+}
+
+confirm_dirs <- function(dirPaths, errMsg, orgPath) {
+  if( any(fs::dir_exists(dirPaths) == FALSE) ) {
+    dp <- dirPaths[fs::dir_exists(dirPaths) == FALSE]
+    fs::dir_delete(orgPath) # remove org
+    stop( paste0(errMsg, paste(dp, collapse='\n  ')) )
+  }
+}
+
+confirm_files <- function(filePaths, errMsg, orgPath) {
+  if( any(fs::file_exists(filePaths) == FALSE) ) {
+    fp <- filePaths[fs::file_exists(filePaths) == FALSE]
+    fs::dir_delete(orgPath) # remove org
+    stop( paste0(errMsg, paste(fp, collapse='\n  ')) )
+  }
+}
+
+
+confirm_dir <- function(dirPath, errMsg, orgPath) {
+  if( fs::dir_exists(dirPath) == FALSE ) {
+    fs::dir_delete(orgPath) # remove org
+    stop( paste0(errMsg, dirPath) )
+  }
+}
+
+confirm_file <- function(filePath, errMsg, orgPath) {
+  if( fs::file_exists(filePath) == FALSE ) {
+    fs::dir_delete(orgPath) # remove org
+    stop( paste0(errMsg, filePath) )
+  }
+}
+
+create_volumes_file <- function(volumesPath, projectmanagrPath, orgPath, settings) {
+
+  # Add the volumes.Rmd file to the volumes/ DIR
+  # this contains the workflow for MOUNTING an External Volume, then
+  # SYMLINKING location(s)  in the External Volume to the volumes/ directory, then
+  # how to use the projectmanagr::volumes_mkdir() command to generate a DIR on this External Volume for external storage
+
+  # COPY template from the package:
+  volumesFile <- fs::path(volumesPath, settings[["VolumesFile"]])
+  volumesPackageFile <- fs::path(projectmanagrPath, "volumes", "volumes.Rmd")
+
+  fs::file_copy(volumesPackageFile, volumesFile)
+
+  confirm_file(volumesFile, "  Volumes file could not be copied: ", orgPath)
+
+  cat( "  Copied volumes file: ", volumesFile, "\n" )
+
+  volumesFile # return
+}
+
+
+create_settings_yaml_file <- function(orgPath, settings, utime,
+                                      orgPaths, orgName, orgTitle, sitePath) {
+
+  # a settings.yml file and a status.yml file
+  # settings.yml contains user-defined defaults for operations
+  # status.yml contains a list of incomplete projects and notes, for each programme
+
+  # define the settingsYamlFile in the org being created
+  settingsYamlFile <- get_settings_yml_file(orgPath)
+
+  # write YAML to settingsYamlFile location
+  yaml::write_yaml( yaml::as.yaml(settings), settingsYamlFile )
+
+  confirm_file(settingsYamlFile, "  Settings file could not be created: ", orgPath)
+
+  cat( "  Written settings file: ", settingsYamlFile, "\n" )
+  settingsYamlFile # return
+}
+
+create_status_yaml_file <- function(orgPath, settings, orgPaths, orgName, orgTitle, sitePath) {
+
+  # create status.yml file - need to create it here to get the mtime for this file
+  statusFile <- get_status_yml_file(orgPath, settings)
+  fs::file_create(statusFile)
+
+  # Create initial content for status.yml file - data on the Org, plus UPDATE datetime:
+
+  # if( utime == "") {
+  #   updateTime <- file.info(statusFile)[,5]
+  # } else if( is.na(lubridate::ymd_hm(utime)) == FALSE ) {
+  #   updateTime <- lubridate::ymd_hm(utime)
+  # } else {
+  #   updateTime <- file.info(statusFile)[,5]
+  # }
+  #updateTime <- get_update_time(statusFile)
+
+  updateTime <- get_datetime() # use the current time: y-m-d:h:m string!
+
+  org <- list(orgPaths, orgPath, orgName, orgTitle, updateTime, sitePath )
+    # orgPaths contains all EXISTING ORGs and THIS ORG path at end
+  names(org) <- c("orgPaths", "orgPath", "orgName", "orgTitle", "updateTime", "sitePath")
+  yaml::write_yaml( yaml::as.yaml(org), statusFile )
+
+  confirm_file(statusFile, "  Status file could not be created: ", orgPath)
+  cat( "  Made status file: ", statusFile, "\n" )
+
+  statusFile # return
+}
+
+
+create_addins_json <- function(projectmanagrPath, orgPath, settings) {
+
+  # no settingsYamlFile supplied - so load the DEFAULT settingsYamlFile from projectmanagr
+  addinsJsonPackageFile <- fs::path(projectmanagrPath, "config", "addins.json")
+  addinsJsonProjectManagrFile <- fs::path(get_config_dir(orgPath), "addins.json")
+
+  fs::file_copy(addinsJsonPackageFile, addinsJsonProjectManagrFile)
+
+  confirm_file(addinsJsonProjectManagrFile, "  addins.json file could not be created: ", orgPath)
+  cat( "  Copied addins.json file: ", addinsJsonProjectManagrFile, "\n" )
+  addinsJsonProjectManagrFile # return
+}
+
+
+create_templates_path <- function(projectmanagrPath, orgPath, settings) {
+
+  # templates Dir - INSIDE the config DIR (these templates are part of the projectmanagr config!):
+  tempPath <- get_template_dir(orgPath)
+  fs::dir_create(tempPath)
+
+  confirm_dir(tempPath, "  Templates directory could not be created: ", orgPath)
+  cat( "  Made templates dir: ",tempPath, "\n" )
+
+  # copy template files:
+  # need to copy from the PACKAGE!
+  templateDir <- fs::path(projectmanagrPath, "templates")
+  templateRmds <- list.files(templateDir)
+  for(f in templateRmds) {
+    fs::file_copy( fs::path(templateDir, f), tempPath)
+    cat( "  Copied template: ",f, "\n" )
+  }
+  # confirm all templates exist
+  tps <- fs::path(tempPath, templateRmds)
+  if( any(fs::file_exists(tps) == FALSE) ) {
+    fs::dir_delete(orgPath) # remove org
+    stop( paste0("  Failed to create Template: ", tps[any(fs::file_exists(tps) == FALSE)]) )
+  }
+  tempPath # return
+}
+
+create_org_index <- function(orgName, tempPath, orgTemplate, orgPath, settings,
+                             orgTitle) {
+
+  # first remove any preceding '-' or '_' from orgName
+  orgIndexName <- orgName
+  #if( startsWith(orgIndexName, "_") | startsWith(orgIndexName, "-") ){
+  #  orgIndexName <- sub('.', '', orgIndexName)
+  #}
+  # and remove any following '-' or '_' from orgName
+  #if( endsWith(orgIndexName, "_") | endsWith(orgIndexName, "-") ){
+  #  orgIndexName <- gsub('.{1}$', '', orgIndexName)
+  #}
+
+
+  orgIndexName <- paste0(settings[["OrgIndexFileNamePrefix"]], orgIndexName, ".Rmd")
+  # use the orgPath - prefix with OrgIndexFileNamePrefix then ORG NAME then .Rmd
+  orgFile <- fs::path(orgPath, orgIndexName)
+
+  fs::file_create(orgFile)
+
+  confirm_file(orgFile, "  Org file could not be created: ", orgPath)
+  cat( "  Made Org file: ",orgFile, "\n" )
+
+
+  # read org template:
+  templateContents <- read_file( fs::path(tempPath, orgTemplate))
+
+  # use username as author value
+  authorValue <- Sys.info()["user"]
+
+  # modify templateContents to include orgTitle and authorValue
+  templateContents <- gsub("{{TITLE}}", orgTitle, templateContents, fixed=TRUE)
+  templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
+
+  templateContents <- sub_template_param(templateContents, "{{PROGRAMME_HEADER}}",
+                                         settings[["OrgProgrammeHeader"]], orgPath)
+  templateContents <- sub_template_param(templateContents, "{{PROGRAMME_FOOTER}}",
+                                         settings[["OrgProgrammeFooter"]], orgPath)
+
+  # modify templateContents with rmarkdown-html-header content
+  templateContents <- replace_markdown_header(templateContents, orgPath)
+
+  # modify templateContents with SEP values
+  templateContents <- replace_sep_values(templateContents, orgPath)
+
+  # write to orgFile
+  write_file(templateContents, orgFile)
+  cat( "  Written template to Org file: ", orgFile, "\n" )
+
+  orgFile # return
+}
 
 #' Create a New Programme
 #'
@@ -511,8 +586,6 @@ get_org_paths <- function(newOrgPath) {
 #' Programme Summary. Default is "Programme-Summary-Template.Rmd" from
 #' projectmanagr templates.
 #'
-#' @param ctime Add creation time to write to status.yml - for automated testing.
-#'
 #' @return progIndexPath The path to the programme index Rmd file.
 
 #'
@@ -520,8 +593,7 @@ get_org_paths <- function(newOrgPath) {
 create_programme <- function(programmeName, organisationPath,
                              programmeTitle="",
                              progTemplate="Programme-Template.Rmd",
-                             progSummaryTemplate = "Programme-Summary-Template.Rmd",
-                             ctime = "") {
+                             progSummaryTemplate = "Programme-Summary-Template.Rmd") {
 
   cat( "\nprojectmanagr::create_programme():\n" )
 
@@ -638,14 +710,15 @@ create_programme <- function(programmeName, organisationPath,
   #### Write Programme to Status file ####
 
   # add title and creation time under the programmeName in the "PROGRAMMES" section of the status.yml List:
-  if( ctime == "") {
-    cTimeVal <- as.character(lubridate::ymd_hm(substr(as.character(file.info(progFilePath)[['ctime']]),1,16) ))
-  } else if( is.na(lubridate::ymd_hm(ctime)) == FALSE ) {
-    cTimeVal <- as.character(lubridate::ymd_hm(ctime))
-  } else {
-    cTimeVal <- as.character(lubridate::ymd_hm(substr(as.character(file.info(progFilePath)[['ctime']]),1,16) ))
-  }
-  attrs <- list(programmeTitle, cTimeVal )
+  # if( ctime == "") {
+  #   cTimeVal <- as.character(lubridate::ymd_hm(substr(as.character(file.info(progFilePath)[['ctime']]),1,16) ))
+  # } else if( is.na(lubridate::ymd_hm(ctime)) == FALSE ) {
+  #   cTimeVal <- as.character(lubridate::ymd_hm(ctime))
+  # } else {
+  #   cTimeVal <- as.character(lubridate::ymd_hm(substr(as.character(file.info(progFilePath)[['ctime']]),1,16) ))
+  # }
+  progCreationTime <- get_datetime()
+  attrs <- list(programmeTitle, progCreationTime )
   names(attrs) <- c("programmeTitle", "creationTime")
   status[["PROGRAMMES"]][[programmeName]] <- attrs
   # can retrieve the creationTime with call to:  status[["PROGRAMMES"]][[programmeName]][["creationTime"]]
@@ -673,7 +746,7 @@ create_programme <- function(programmeName, organisationPath,
   progSummaryHeadIndex <- match_line_index( load_param_vector(settings[["ProgSummaryHeader"]], orgPath),
                                           progContents)
   progSummaryFootIndex <- grep_line_index_from( load_param_vector(settings[["ProgSummaryFooter"]], orgPath),
-                                             progContents, progSummaryHeadIndex)-1
+                                             progContents, progSummaryHeadIndex, orgPath)-1
   # now get programme summary content to paste into org Rmd
   summaryContents <- progContents[progSummaryHeadIndex:progSummaryFootIndex]
   progSummary <- summaryContents[ (match_line_index(orgLink, summaryContents) +1 ) : length(summaryContents) ]
@@ -704,7 +777,7 @@ create_programme <- function(programmeName, organisationPath,
   orgProgrammeHeaderIndex <- match_line_index( load_param_vector(settings[["OrgProgrammeHeader"]], orgPath),
                                              orgContents) # finds FIRST MATCH
   orgProgrammeFooterIndex <- grep_line_index_from( load_param_vector(settings[["OrgProgrammeFooter"]], orgPath),
-                                                orgContents, orgProgrammeHeaderIndex)
+                                                orgContents, orgProgrammeHeaderIndex, orgPath)
 
   # simply insert progSummaryVector at END of orgProgramme summary in orgContents - at orgProgrammeFooterIndex
   orgContents <- insert_at_indices(orgContents, orgProgrammeFooterIndex, progSummaryTemplateContents)
@@ -915,7 +988,7 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath, pr
   projSummaryHeadIndex <- match_line_index( load_param_vector(settings[["ProjectSummaryHeader"]], orgPath),
                                           projDocContents)
   projSummaryFootIndex <- grep_line_index_from( load_param_vector(settings[["ProjectSummaryFooter"]], orgPath),
-                                             projDocContents, projSummaryHeadIndex)-1
+                                             projDocContents, projSummaryHeadIndex, orgPath)-1
   # now get projDoc summary content to paste into prog Rmd
   summaryContents <- projDocContents[projSummaryHeadIndex:projSummaryFootIndex]
   projSummary <- summaryContents[ (match_line_index(progLink, summaryContents) +1 ) : length(summaryContents) ]
@@ -941,7 +1014,7 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath, pr
   progProjDocHeaderIndex <- match_line_index( load_param_vector(settings[["ProgProjectsHeader"]], orgPath),
                                             progContents) # finds FIRST MATCH
   progProjDocFooterIndex <- grep_line_index_from( load_param_vector(settings[["ProgProjectsFooter"]], orgPath),
-                                               progContents, progProjDocHeaderIndex)
+                                               progContents, progProjDocHeaderIndex, orgPath)
 
   # insert projDocSummaryTemplateContents at END of project summary in progContents - progProjDocFooterIndex
   progContents <- insert_at_indices(progContents, progProjDocFooterIndex, projDocSummaryTemplateContents)
@@ -992,8 +1065,8 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath, pr
 #'
 #' @param projNoteLinkSummaryTemplate Template with structure to add underneath the
 #' Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-#' and a 'todo' section by default, linked to `NoteObjectivesSummarySectionHeader`
-#' & `NoteObjectivesTodoSectionHeader` in `.config/settings.yml`
+#' and a 'todo' section by default, linked to `NoteObjectivesTodoSectionHeader`
+#' in `.config/settings.yml`
 #'
 #' @param projNoteSummaryTemplate Template with structure to add Project Note
 #' summary to Project Doc under Goal/Del/Task.
@@ -1131,9 +1204,10 @@ create_project_note <- function( projectNoteName, projectNotePath,
 
   #### Link Project Note and Project Doc ####
 
-  linkFormed <- link_project_note_doc(selection, settings, projNoteRmdPath, projNoteRmdContents, projNoteLinkContents,
-                                      projNoteLinkSummaryContents, todoContents, projNoteSummaryContents,
-                                      projDocContents, orgPath)
+  linkFormed <- link_project_note_doc(selection, settings, projNoteRmdPath,
+                                      projNoteRmdContents, projNoteLinkContents,
+                                      projNoteLinkSummaryContents, todoContents,
+                                      projNoteSummaryContents, projDocContents, orgPath)
 
   if( linkFormed == FALSE ) {
     # remove the project note and directory
@@ -1193,8 +1267,8 @@ create_project_note <- function( projectNoteName, projectNotePath,
 #'
 #' @param projNoteLinkSummaryTemplate Template with structure to add underneath the
 #' Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-#' and a 'todo' section by default, linked to `NoteObjectivesSummarySectionHeader`
-#' & `NoteObjectivesTodoSectionHeader` in `.config/settings.yml`
+#' and a 'todo' section by default, linked to `NoteObjectivesTodoSectionHeader`
+#' in `.config/settings.yml`
 #'
 #' @param projNoteSummaryTemplate Template with structure to add Project Note
 #' summary to Project Doc under Goal/Del/Task.
@@ -1387,7 +1461,7 @@ create_group_note  <- function( groupNoteName, groupNotePath,
   noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["HeaderNoteContentsHeader"]], orgPath),
                                            headerNoteRmdContents)
   noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["HeaderNoteContentsFooter"]], orgPath),
-                                                 headerNoteRmdContents, noteContentsHeadIndex)
+                                                 headerNoteRmdContents, noteContentsHeadIndex, orgPath)
 
   headerNoteRmdContents <- insert_at_indices(headerNoteRmdContents, noteContentsFootIndex, subNoteContentLinkContents)
 
@@ -1494,8 +1568,8 @@ create_group_note  <- function( groupNoteName, groupNotePath,
 #'
 #' @param projNoteLinkSummaryTemplate Template with structure to add underneath the
 #' Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-#' and a 'todo' section by default, linked to `NoteObjectivesSummarySectionHeader`
-#' & `NoteObjectivesTodoSectionHeader` in `.config/settings.yml`
+#' and a 'todo' section by default, linked to `NoteObjectivesTodoSectionHeader`
+#' in `.config/settings.yml`
 #'
 #' @param projNoteSummaryTemplate Template with structure to add Project Note
 #' summary to Project Doc under Goal/Del/Task.
@@ -1915,13 +1989,14 @@ create_weekly_journal <- function(date=lubridate::today(),
   if( lubridate::is.Date(date) == FALSE ) {
     date <- lubridate::ymd(date) # parse the date and convert to ymd format
   }
-
   year <- format(date, "%Y")
   month <- format(date, "%m")
   day <- format(date, "%d")
 
 
   #### Identify root of ORGANISATION ####
+
+  #check_org_dir()
 
   # get the orgPath from organisationPath
   orgPath <- find_org_directory(organisationPath)
@@ -1970,23 +2045,7 @@ create_weekly_journal <- function(date=lubridate::today(),
 
     cat( "  Journal .Rmd file Exists: ",journalRmdPath, "\n" )
 
-    # open the newly created journal
-    if( openJournal == TRUE ) {
-
-      # navigate to journalk file:
-      rstudioapi::navigateToFile(journalRmdPath)
-
-      journalDirPath <- dirname(journalRmdPath)
-      # navigate to containing dir
-      rstudioapi::filesPaneNavigate(journalDirPath)
-      # and set working directory
-      setwd(journalDirPath)
-
-    }
-
-    return()
-
-  }
+  } else {
 
   done <- file.create(journalRmdPath)
 
@@ -2043,19 +2102,9 @@ create_weekly_journal <- function(date=lubridate::today(),
 
   cat( "  Written template to Journal .Rmd file: ", journalRmdPath, "\n" )
 
-  # open the newly created journal
-  if( openJournal == TRUE ) {
-
-    # navigate to journalk file:
-    rstudioapi::navigateToFile(journalRmdPath)
-
-    journalDirPath <- dirname(journalRmdPath)
-    # navigate to containing dir
-    rstudioapi::filesPaneNavigate(journalDirPath)
-    # and set working directory
-    setwd(journalDirPath)
-
   }
+
+  return(journalRmdPath) # return the path
 
 }
 

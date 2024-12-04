@@ -9,7 +9,8 @@ datatable_create(
   data_cols = "",
   datatable_name = "samples",
   default_data_vals = list(),
-  dt_length = 100
+  dt_length = 100,
+  expand = FALSE
 )
 }
 \arguments{
@@ -19,13 +20,27 @@ datatable_create(
 
 \item{datatable_name}{String of data table name - default "samples".}
 
+\item{default_data_vals}{List of default data values to add to data cols &
+IDs.}
+
 \item{dt_length}{Int of data table max length in characters - default 100.}
+
+\item{expand}{Whether to expand any values in vectors set to \code{default_data_vals},
+default is FALSE, meaning custom values can be set in \code{default_data_vals} for
+each ID. If TRUE, teh vector is expanded by the length of IDs, meaning ALL
+values in each vector are set to EACH ID, added as a multi-obs set of rows
+for each ID.}
+}
+\value{
+List of datatables generated.
 }
 \description{
 Creates a new Plaintext DataTable vector. The DataTable will contain an
 initial ID column containing the \code{IDs} vector, and an optional set of extra
-data columns as specified in the \code{data_cols} vector.  If the table exceeds
-\code{dt_length} characters (default 100), then the table is split into multiple
-tables, with IDs as first col, and subsequent data_cols given in subsequent
-tables.
+data columns as specified in the \code{data_cols} vector.
+}
+\details{
+If the table exceeds \code{dt_length} characters (default 100), then the table is
+split into multiple tables, with IDs as first col, and subsequent data_cols
+given in subsequent tables.
 }

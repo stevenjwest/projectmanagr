@@ -2,18 +2,23 @@
 % Please edit documentation in R/datatables-write-functions.R
 \name{datatable_dispose_rmd}
 \alias{datatable_dispose_rmd}
-\title{Dispose of a set of Samples from Rmd}
+\title{Generate DISPOSE Data Table and insert into Rmd}
 \usage{
 datatable_dispose_rmd(
   rmd_path,
   rmd_line,
   datatable_name,
-  settings,
   dt_length = 100,
-  summarise_reps = TRUE
+  summarise_reps = TRUE,
+  all_reps = FALSE,
+  cdt = get_datetime()
 )
 }
 \arguments{
+\item{rmd_path}{path to Rmd file.}
+
+\item{rmd_line}{line in Rmd file to insert table.}
+
 \item{datatable_name}{String of data table name: This data table MUST ALREADY
 EXIST IN \code{contents}.  The resampling will be default include all sample IDs
 from this datatable.  The user may then delete sample IDs as appropriate.}
@@ -24,10 +29,17 @@ from this datatable.  The user may then delete sample IDs as appropriate.}
 the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
 otherwise if TRUE, all reps are summarised using r vector index syntax on
 one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
-indicated as: 1:3,5,6:10,12,14:25 etc.  Default to TRUE}
+indicated as: 1:3,5,6:10,12,14:25 etc.  Default to TRUE.}
 
-\item{contents}{character vector containing current document with
-existing data tables.}
+\item{all_reps}{Boolean to indicate whether all reps should be summarised in
+the datatable.  If TRUE then ALL reps for each ID are summarised with keyword
+ALL - which will apply data cols to all the reps for each sample, without the
+potentially complex summary strings representing a disparate collection of reps.
+This comes at the expense of not being clear from reading this datatable what
+reps actually exist.}
+
+\item{cdt}{Current Datetime to insert into dispose column. Defaults to the
+current datetime string retrieved from \code{get_datetime()}}
 }
 \description{
 This generates a new datatable that disposes samples - indicates they no

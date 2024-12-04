@@ -8,7 +8,8 @@ build_datatable_from_tibble(
   tb,
   datatable_name,
   dt_function = "CREATE",
-  dt_length = 100
+  dt_length = 100,
+  DATATABLE_SPACER_CHAR = "="
 )
 }
 \arguments{
@@ -23,7 +24,7 @@ Assumes the tibble has initial col ID with all IDs in it. Spaces the
 columns based on the col header and contents widths.
 }
 \details{
-NOT CLEAR THIS FUNCTION HANDLES VARIALBE MULTI-ROWS CORRECTLY!
+NOT CLEAR THIS FUNCTION HANDLES VARIABLE MULTI-ROWS CORRECTLY!
 
 Use \code{build_datatable_from_dataframe()}
 }

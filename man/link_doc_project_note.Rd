@@ -28,8 +28,8 @@ with the content from \code{taskSectionHeaderTemplate}).}
 
 \item{projNoteLinkSummaryTemplate}{Template with structure to add underneath the
 Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-and a 'todo' section by default, linked to \code{NoteObjectivesSummarySectionHeader}
-& \code{NoteObjectivesTodoSectionHeader} in \code{config/settings.yml}}
+and a 'todo' section by default, linked to \code{NoteObjectivesTodoSectionHeader}
+in \code{config/settings.yml}}
 
 \item{projNoteSummaryTemplate}{Template with structure to add Project Note
 summary to Project Doc under Goal/Del/Task.}

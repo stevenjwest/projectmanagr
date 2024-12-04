@@ -1,0 +1,189 @@
+---
+title: 'tn-t___006~ PN DSP'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PD : EXAMPLE TASK TITLE
+
+
+[PD_--_Proj_Do](../../PD_--_Proj_Do.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PD_--_Proj_Do.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD_--_Proj_Do.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PD_--_Proj_Do.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
+
+
+
+
++===============================================================================
+
+
+    samples_CNS  :  CREATE
+
+
+      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    
+    ======  =====  ========  ====================  =================  =============  
+
+     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+
++===============================================================================
+
++===============================================================================
+
+
+    TEMPLATE  :  DISPOSE  :  samples_CNS
+
+
+        ID               dspose            
+    =============  ==================      
+
+     <<IDS>>        2024-10-02:1500B       
+                                           
+>>>>                                                                       
+>>>> Fill Datatable Template column values with appropriate defaults       
+>>>>                                                                       
+>>>> Place CURSOR on this line ...                                         
+>>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          
+>>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       
+>>>>                                                                       
+
++===============================================================================
+
+
++===============================================================================
+
+
+    TEMPLATE  :  DISPOSE  :  samples_CNS
+
+
+        ID               dispose           
+    =============  ==================      
+
+     <<IDS>>        2024-10-02:1500B       
+                    2024-10-02:1500B       
+                                           
+>>>>                                                                       
+>>>> Fill Datatable Template column values with appropriate defaults       
+>>>>                                                                       
+>>>> Place CURSOR on this line ...                                         
+>>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          
+>>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       
+>>>>                                                                       
+
++===============================================================================
+
+
++===============================================================================
+
+
+    samples_CNS  :  DISPOSE
+
+
+      ID           dispose        
+    ======  ====================  
+
+     1001     2024-10-02:1500B    
+                                  
+     1002     2024-10-02:1500B    
+                                  
+     1003     2024-10-02:1500B    
+                                  
+     1004     2024-10-02:1500B    
+                                  
+
++===============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

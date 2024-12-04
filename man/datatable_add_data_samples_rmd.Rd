@@ -2,32 +2,35 @@
 % Please edit documentation in R/datatables-write-functions.R
 \name{datatable_add_data_samples_rmd}
 \alias{datatable_add_data_samples_rmd}
-\title{Create new Sample Data Table and insert into Rmd}
+\title{Generate Samples ADD_DATA Data Table and insert into Rmd}
 \usage{
 datatable_add_data_samples_rmd(
   rmd_path,
   rmd_line,
-  data_cols,
   datatable_name,
-  settings,
+  data_cols,
   ids_vector = "",
+  default_data_vals = list(),
   dt_length = 100,
-  summarise_reps = FALSE
+  summarise_reps = FALSE,
+  all_reps = FALSE
 )
 }
 \arguments{
-\item{rmd_path}{path to Rmd file}
+\item{rmd_path}{path to Rmd file.}
 
-\item{rmd_line}{line in Rmd file to insert table
-#'}
-
-\item{data_cols}{Character vector of data table column titles}
+\item{rmd_line}{line in Rmd file to insert table.}
 
 \item{datatable_name}{String of data table name - MUST exist in rmd_path!}
+
+\item{data_cols}{Character vector of data table column titles.}
 
 \item{ids_vector}{A vector containing the IDs to add: Can be "ALL", a set of GROUP
 IDs (which must already be declared in datatable name under a 'group-' data
 column), or (a subset of) IDs from datatable.}
+
+\item{default_data_vals}{List of default data values to add to data cols &
+IDs.}
 
 \item{dt_length}{Int of data table max length in characters - default 100.}
 
@@ -36,9 +39,21 @@ the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
 otherwise if TRUE, all reps are summarised using r vector index syntax on
 one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
 indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.}
+
+\item{all_reps}{Boolean to indicate whether all reps should be summarised in
+the datatable.  If TRUE then ALL reps for each ID are summarised with keyword
+ALL - which will apply data cols to all the reps for each sample, without the
+potentially complex summary strings representing a disparate collection of reps.
+This comes at the expense of not being clear from reading this datatable what
+reps actually exist.}
 }
 \description{
-Creates a new Sample DataTable in specified Rmd file at specified line.
+Creates an \code{ADD_DATA} Sample DataTable in \code{rmd_path} file at \code{rmd_line}
+}
+\details{
+The \code{ADD_DATA} format requires that a datatable titled \code{datatable_name} has
+already been created in the \code{rmd_path} contents becore \code{rmd_line}.
+
 The Sample DataTable will contain an initial ID column containing the
 IDs vector, and an optional set of extra data columns as specified in the
 data_cols vector.  If the table exceeds dt_length characters (default 100),

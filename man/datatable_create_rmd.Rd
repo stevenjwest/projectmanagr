@@ -2,30 +2,40 @@
 % Please edit documentation in R/datatables-write-functions.R
 \name{datatable_create_rmd}
 \alias{datatable_create_rmd}
-\title{Create new Plaintext Data Table and insert into Rmd}
+\title{Generate new CREATE Data Table and insert into Rmd}
 \usage{
 datatable_create_rmd(
   rmd_path,
   rmd_line,
-  settings,
-  IDs = "",
-  data_cols = "",
   datatable_name = "samples",
-  dt_length = 100
+  data_cols = "",
+  IDs = "",
+  default_data_vals = list(),
+  dt_length = 100,
+  expand = FALSE
 )
 }
 \arguments{
-\item{rmd_path}{path to Rmd file}
+\item{rmd_path}{path to Rmd file.}
 
-\item{rmd_line}{line in Rmd file to insert table}
-
-\item{IDs}{Character vector of sample IDs}
-
-\item{data_cols}{Character vector of data table column titles}
+\item{rmd_line}{line in Rmd file to insert table.}
 
 \item{datatable_name}{String of data table name - default "samples".}
 
+\item{data_cols}{Character vector of data table column titles.}
+
+\item{IDs}{Character vector of sample IDs.}
+
+\item{default_data_vals}{List of default data values to add to data cols &
+IDs.}
+
 \item{dt_length}{Int of data table max length in characters - default 100.}
+
+\item{expand}{Whether to expand any values in vectors set to \code{default_data_vals},
+default is FALSE, meaning custom values can be set in \code{default_data_vals} for
+each ID. If TRUE, teh vector is expanded by the length of IDs, meaning ALL
+values in each vector are set to EACH ID, added as a multi-obs set of rows
+for each ID.}
 }
 \description{
 Creates a new Sample DataTable in specified Rmd file at specified line.

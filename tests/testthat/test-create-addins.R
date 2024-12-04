@@ -1,51 +1,74 @@
 
-#### generate test organisation temp directory ####
-
-# define temporary directory with reproducible name - for reproducible testing
-# extract tempdir parts [1] + [2] to avoid issue with check()
-# tempdir() defines a RANDOMLY NAMED dir in the tmp directory! Avoid using this & use "Rsess" instead
-tmpdir <- fs::path( unlist(fs::path_split(tempdir()))[1], unlist(fs::path_split(tempdir()))[2], "Rsess")
-tmpdirNoRoot <- fs::path_join(fs::path_split(tmpdir)[[1]][-1])
-fs::dir_create(tmpdir)
-withr::defer(fs::dir_delete(tmpdir), envir = parent.frame()) # delete once tests finish
 
 
+test_that("create addins testing", {
 
-test_that("addin_create_project_org_ui creates expected HTML", {
-  expect_snapshot(addin_create_project_org_ui())
-})
+  WD <- getwd()
 
-
-# define args
-orgName <- "_T_Ots"
-orgutime <- "2024-02-22:09:56" # for consistent datetime added to status.yml snapshot
-
-orgDir <- fs::path(tmpdir, orgName)
-
-
-test_that("addin_create_project_org_server creates Org correctly", {
+  #### gadget mocked bindings of functions ####
 
   # mock the rstudio navigation function
   local_mocked_bindings(addin_rstudio_nav = function(orgIndexPath) stopApp() ) # just stop the shiny gadget
 
+  #### generate test organisation temp directory ####
+
+  tmpdir <- create_tmpdir_rsess()
+  tmpdirNoRoot <- fs::path_join(fs::path_split(tmpdir)[[1]][-1])
+
+
+  #### addin_create_project_org_ui creates expected HTML ####
+
+  expect_snapshot(addin_create_project_org_ui())
+
+
+  #### addin_create_project_org_server creates Org #####
+
+  orgName <- "_T_Ots"
+  orgDir <- fs::path(tmpdir, orgName)
+
   shiny::testServer(addin_create_project_org_server, {
 
-    # set server inputs
+    # CHECK ERRORS
+    session$setInputs(
+      dir = list(path=c("root", tmpdirNoRoot)),
+      organisationName="",
+      organisationTitle="T O")
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.2)
+
+    expect_equal(output$warning, "PROVIDE ORGANISATION NAME")
+
+    session$setInputs(dir = list(path=c("root", tmpdirNoRoot)),
+                      organisationName=orgName, organisationTitle="")
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.2)
+
+    expect_equal(output$warning2, "PROVIDE ORGANISATION TITLE")
+
+    # Create Organisation: set server inputs
     session$setInputs(dir = list(path=c("root", tmpdirNoRoot)),
                       organisationName=orgName, organisationTitle="T O")
-    Sys.sleep(1)
+
+    # execute the gadget - press done button
+    Sys.sleep(0.2)
     session$setInputs(done=1)
-    Sys.sleep(1)
+    Sys.sleep(0.2)
 
-    # can check reactive input setting values
-    #print(input$dir)
-    #print(input$organisationName)
-    #print(input$organisationTitle)
-
-    #print(global$datapath)
-    #print(output$dirO)
-
-    #print(global$datapath)
+    # # can check reactive input setting values
+    print( paste0("dir: ", input$dir))
+    # print(input$dir)
+    # print(input$organisationName)
+    # print(input$organisationTitle)
+    #
+    # print(global$datapath)
+    # print(output$dirO)
+    #
+    # print(global$datapath)
+    #
+    # print( paste0("OUTPUT WARNING: ", output$warning))
+    # print( paste0("OUTPUT WARNING2: ", output$warning2))
 
     # define outputs to check
     orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
@@ -53,6 +76,8 @@ test_that("addin_create_project_org_server creates Org correctly", {
     statusYml <- fs::path(orgDir, ".config", "status.yml")
     addinsJson <- fs::path(orgDir, ".config", "addins.json")
     volumesRmd <- fs::path(orgDir, "volumes", "volumes.Rmd")
+
+    modify_test_settings_yaml(orgDir)
 
     # check outputs
     # check org name correctly generates index Rmd
@@ -70,54 +95,34 @@ test_that("addin_create_project_org_server creates Org correctly", {
     expect_true( fs::file_exists(volumesRmd) )
 
   })
-})
 
 
+  #### modify yaml settings ####
+
+  # defer removal of orgDir
+  #withr::defer(fs::dir_delete(orgDir), envir = parent.frame())
+
+  #modify_test_settings_yaml(orgDir) # seems to fail ??
 
 
+  #### Org variables ####
+
+  # define test org variables in case useful:
+  orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
+  settingsYml <- fs::path(orgDir, ".config", "settings.yml")
+  statusYml <- fs::path(orgDir, ".config", "status.yml")
+  addinsJson <- fs::path(orgDir, ".config", "addins.json")
+  volumesRmd <- fs::path(orgDir, "volumes", "volumes.Rmd")
 
 
-#### create permanent test Organisation? ####
+  #### addin_create_programme_ui creates expected HTML ####
 
-# this is not necessary as the addin server creates permanent Org!
-
-# define temporary directory with reproducible name - for reproducible testing
-# extract tempdir parts [1] + [2] to avoid issue with check()
-# tempdir() defines a RANDOMLY NAMED dir in the tmp directory! Avoid using this & use "Rsess" instead
-#tmpdir <- fs::path( unlist(fs::path_split(tempdir()))[1], unlist(fs::path_split(tempdir()))[2], "Rsess2")
-#tmpdirNoRoot <- fs::path_join(fs::path_split(tmpdir)[[1]][-1])
-#fs::dir_create(tmpdir)
-#withr::defer(fs::dir_delete(tmpdir), envir = parent.frame()) # delete once tests finish
-
-
-#orgName <- "_T_O_Pts"
-#orgutime <- "2024-02-22:09:56" # for consistent datetime added to status.yml snapshot
-#orgDir <- local_create_org(orgName, orgutime, orgParentPath=tmpdir)
-
-# still keeping these variables un case useful:
-orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
-settingsYml <- fs::path(orgDir, ".config", "settings.yml")
-statusYml <- fs::path(orgDir, ".config", "status.yml")
-addinsJson <- fs::path(orgDir, ".config", "addins.json")
-volumesRmd <- fs::path(orgDir, "volumes", "volumes.Rmd")
-
-#print(settingsYml)
-#settings <- yaml::yaml.load( yaml::read_yaml( settingsYml ) )
-
-
-test_that("addin_create_programme_ui creates expected HTML", {
   expect_snapshot(addin_create_programme_ui(orgDir))
-})
 
+  #### addin_create_programme_server creates Prog  ####
 
-# define args
-progName <- "0-PR-ts"
-
-test_that("addin_create_programme_server creates Prog correctly", {
-
-
-  # mock the rstudio navigation function
-  local_mocked_bindings(addin_rstudio_nav = function(orgIndexPath) stopApp() ) # just stop the shiny gadget
+  # define args
+  progName <- "0-PR-ts"
 
   shiny::testServer(addin_create_programme_server, {
 
@@ -125,25 +130,25 @@ test_that("addin_create_programme_server creates Prog correctly", {
 
     # set name to blank string - check error
     session$setInputs(orgPath=orgDir, programmeName="")
-    Sys.sleep(1)
+    Sys.sleep(0.2)
     session$setInputs(done=1)
-    Sys.sleep(1)
+    Sys.sleep(0.2)
 
     expect_equal(output$warningName, "*** PROVIDE PROGRAMME NAME ***")
 
     # set name to string with space - check error
     session$setInputs(orgPath=orgDir, programmeName="123-test prog")
-    Sys.sleep(1)
+    Sys.sleep(0.2)
     session$setInputs(done=1)
-    Sys.sleep(1)
+    Sys.sleep(0.2)
 
     expect_equal(output$warningName, "*** PROGRAMME NAME CANNOT CONTAIN SPACES ***")
 
     # set name and title to acceptable values - check programme created correctly
     session$setInputs(orgPath=orgDir, programmeName=progName, programmeTitle="0 PR ts")
-    Sys.sleep(1)
+    Sys.sleep(0.2)
     session$setInputs(done=1)
-    Sys.sleep(1)
+    Sys.sleep(0.2)
 
     # define outputs to check
     progIndex <- fs::path(orgDir, progName, paste0("_index_", progName, ".Rmd"))
@@ -155,26 +160,126 @@ test_that("addin_create_programme_server creates Prog correctly", {
     expect_snapshot_file( progIndex )
 
   })
-})
 
 
-progPath <- fs::path(orgDir, progName)
-progIndex <- fs::path(progPath, paste0("_index_", progName, ".Rmd"))
+  #### programme variables ####
+
+  progPath <- fs::path(orgDir, progName)
+  progIndex <- fs::path(progPath, paste0("_index_", progName, ".Rmd"))
 
 
-#### create permanent test Programme? ####
-# this is not necessary as the addin server creates permanent Programme!
-# progName <- "0-PR-Pts"
-# progctime <- "2024-02-22:09:58" # for consistent datetime added to status.yml snapshot
-# progDir <- local_create_prog(progName, orgDir, progctime)
-# progIndex <- fs::path(progDir, paste0("_index_", progName, ".Rmd"))
+  #### addin_create_project_doc_ui creates expected HTML ####
 
-
-
-
-test_that("addin_create_project_doc_ui creates expected HTML", {
   expect_snapshot(addin_create_project_doc_ui(orgDir, get_settings_yml(orgDir), progPath, 1 ) )
+
+
+  #### addin_create_project_doc_server creates ProjDoc  ####
+
+  # define args
+  projectDocPrefix <- "PrP"
+  projectDocName <- "Project_Doc_Test"
+  projectDocTitle <- "Project Doc Test"
+  progPathCh <- as.character(progPath)
+
+  setwd(progPathCh)
+
+  cat("\n\n  programme path: ", progPathCh, "\n\n")
+
+  shiny::testServer(addin_create_project_doc_server, {
+
+    # # set name to blank string - check error
+    session$setInputs(
+      dir = list(root=progPathCh, path=""),
+      projectPrefix=projectDocPrefix,
+      projectName="",
+      projectTitle=projectDocTitle)
+
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.2)
+
+    expect_equal(output$warningName, "*** PROVIDE PROJECT NAME ***")
+
+    # set name to string with space - check error
+    session$setInputs(
+      dir = list(root=progPathCh, path=""),
+      projectPrefix=projectDocPrefix,
+      projectName="Project Doc_Test",
+      projectTitle=projectDocTitle)
+
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.2)
+
+    expect_equal(output$warningName, "*** PROJECT NAME CANNOT CONTAIN SPACES ***")
+
+    # set prefix to blank string - check error
+    session$setInputs(
+      dir = list(root=progPathCh, path=""),
+      projectPrefix="",
+      projectName=projectDocName,
+      projectTitle=projectDocTitle)
+
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.2)
+
+    expect_equal(output$warningName, "*** PROVIDE PROJECT PREFIX ***")
+
+    # set prefix to string with punctuation in - check error
+    # set name to string with space - check error
+    session$setInputs(
+      dir = list(root=progPathCh, path=""),
+      projectPrefix="PrP:",
+      projectName=projectDocName,
+      projectTitle=projectDocTitle)
+
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.2)
+
+    expect_equal(output$warningName, "*** PROJECT PREFIX ONLY SUPPORTS ALPHANUMERICS ***")
+
+
+    # set all vars to acceptable values - check project doc created correctly
+    session$setInputs(
+      dir = list(root=progPathCh, path=""),
+      projectPrefix=projectDocPrefix,
+      projectName=projectDocName,
+      projectTitle=projectDocTitle)
+
+    # print( paste0("projectPrefix: ", input$projectPrefix))
+    # print( paste0("projectName: ", input$projectName))
+    # print( paste0("projectTitle: ", input$projectTitle))
+    # print( paste0("dir: ", input$dir))
+    # print(global$datapath)
+
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.2)
+
+    # define outputs to check
+    projectDocDir <- fs::path(progPath, projectDocPrefix)
+    projectDocRmd <- fs::path(progPath, paste0(projectDocPrefix, "_--_", projectDocName, ".Rmd") )
+
+    ## TESTS ##
+
+    # check project Doc Rmd & Dir generated
+    expect_true(  fs::file_exists( projectDocRmd )  )
+    expect_true(  fs::dir_exists( projectDocDir )  )
+
+    # check Project Doc Rmd file contents are correctly filled
+    expect_snapshot_file( projectDocRmd )
+
+  })
+
+
+  setwd(WD)
+
 })
+
+
+
 
 
 
@@ -189,9 +294,9 @@ test_that("addin_create_project_doc_ui creates expected HTML", {
 # So NOT testing the addins any further in this package for now...
 
 # define args
-projectDocPrefix <- "PrP"
-projectDocName <- "Project_Doc_Test"
-progPathCh <- as.character(progPath)
+# projectDocPrefix <- "PrP"
+# projectDocName <- "Project_Doc_Test"
+# progPathCh <- as.character(progPath)
 
 
 # test_that("addin_create_project_doc_server creates Doc correctly", {
@@ -216,9 +321,9 @@ progPathCh <- as.character(progPath)
 #     print(global$datapath)
 #     print(dir())
 #
-#     Sys.sleep(1)
+#     Sys.sleep(0.2)
 #     session$setInputs(done=1)
-#     Sys.sleep(1)
+#     Sys.sleep(0.2)
 #
 #     expect_equal(output$warningName, "*** PROVIDE PROJECT NAME ***")
 #
@@ -227,9 +332,9 @@ progPathCh <- as.character(progPath)
 #                       projectName="Project Doc_Test",
 #                       programmeDirPaths=progPath,
 #                       progSelected="1")
-#     Sys.sleep(1)
+#     Sys.sleep(0.2)
 #     session$setInputs(done=1)
-#     Sys.sleep(1)
+#     Sys.sleep(0.2)
 #
 #     expect_equal(output$warningName, "*** PROJECT NAME CANNOT CONTAIN SPACES ***")
 #
@@ -238,9 +343,9 @@ progPathCh <- as.character(progPath)
 #                       projectName=projectDocName,
 #                       programmeDirPaths=progPath,
 #                       progSelected="1")
-#     Sys.sleep(1)
+#     Sys.sleep(0.2)
 #     session$setInputs(done=1)
-#     Sys.sleep(1)
+#     Sys.sleep(0.2)
 #     expect_equal(output$warningName, "*** PROVIDE PROJECT PREFIX ***")
 #
 #     # set prefix to string with punctuation in - check error
@@ -248,9 +353,9 @@ progPathCh <- as.character(progPath)
 #                       projectName=projectDocName,
 #                       programmeDirPaths=progPath,
 #                       progSelected="1")
-#     Sys.sleep(1)
+#     Sys.sleep(0.2)
 #     session$setInputs(done=1)
-#     Sys.sleep(1)
+#     Sys.sleep(0.2)
 #     expect_equal(output$warningName, "*** PROJECT PREFIX ONLY SUPPORTS ALPHANUMERICS ***")
 #
 #     # set all vars to acceptable values - check project doc created correctly
@@ -258,9 +363,9 @@ progPathCh <- as.character(progPath)
 #                       projectName=projectDocName,
 #                         programmeDirPaths=progPath,
 #                       progSelected="1")
-#     Sys.sleep(1)
+#     Sys.sleep(0.2)
 #     session$setInputs(done=1)
-#     Sys.sleep(1)
+#     Sys.sleep(0.2)
 #
 #     # define outputs to check
 #     projectDocDir <- fs::path(progPath, projectDocPrefix)
@@ -279,9 +384,12 @@ progPathCh <- as.character(progPath)
 # })
 
 
-projectDocDir <- fs::path(progPath, projectDocPrefix)
-projectDocRmd <- fs::path(progPath, paste0(projectDocPrefix, "~_", projectDocName, ".Rmd") )
+# projectDocDir <- fs::path(progPath, projectDocPrefix)
+# projectDocRmd <- fs::path(progPath, paste0(projectDocPrefix, "~_", projectDocName, ".Rmd") )
 
+
+
+### SHINYTEST2 ####
 
 # this currently does not work - will move to using shinytest2 with recordApp() and testApp()
 # as described in docs: https://rstudio.github.io/shinytest2/articles/shinytest2.html

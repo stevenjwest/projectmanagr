@@ -16,9 +16,7 @@ addin_rstudio_nav <- function(filePath) {
 
   if( rstudioapi::isAvailable() ) {
     rstudioapi::navigateToFile(filePath)
-
     rstudioapi::filesPaneNavigate(dirname(filePath))
-
   }
 
   setwd(dirname(filePath))

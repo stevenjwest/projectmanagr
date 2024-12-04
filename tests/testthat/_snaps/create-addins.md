@@ -1,4 +1,4 @@
-# addin_create_project_org_ui creates expected HTML
+# create addins testing
 
     Code
       addin_create_project_org_ui()
@@ -81,7 +81,7 @@
                 <div class="flexfill-item" style="position:relative;-webkit-flex:1;-ms-flex:1;flex:1;width:100%;height:100%;">
                   <div class="flexfill-item-inner" style="position:absolute;top:0;left:0;right:0;bottom:0;">
                     <div class="flexfill-container flexfill-container-row" style="display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;width:100%;height:100%;">
-                      <div class="flexfill-item" style="position:relative;-webkit-flex:7;-ms-flex:7;flex:7;width:100%;height:100%;">
+                      <div class="flexfill-item" style="position:relative;-webkit-flex:6;-ms-flex:6;flex:6;width:100%;height:100%;">
                         <div class="flexfill-item-inner" style="position:absolute;top:0;left:0;right:0;bottom:0;">
                           <pre id="dirO" class="shiny-text-output"></pre>
                         </div>
@@ -100,7 +100,7 @@
         </div>
       </div>
 
-# addin_create_programme_ui creates expected HTML
+---
 
     Code
       addin_create_programme_ui(orgDir)
@@ -187,7 +187,7 @@
         </div>
       </div>
 
-# addin_create_project_doc_ui creates expected HTML
+---
 
     Code
       addin_create_project_doc_ui(orgDir, get_settings_yml(orgDir), progPath, 1)
@@ -313,31 +313,6 @@
                           <h3>
                             <div id="projectPathOutput" class="shiny-text-output"></div>
                           </h3>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="flexfill-item" style="position:relative;-webkit-flex:1;-ms-flex:1;flex:1;width:100%;height:100%;">
-                  <div class="flexfill-item-inner" style="position:absolute;top:0;left:0;right:0;bottom:0;">
-                    <div class="flexfill-container flexfill-container-row" style="display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;width:100%;height:100%;">
-                      <div class="flexfill-item" style="position:relative;-webkit-flex:1;-ms-flex:1;flex:1;width:100%;height:100%;">
-                        <div class="flexfill-item-inner" style="position:absolute;top:0;left:0;right:0;bottom:0;">
-                          <div class="form-group shiny-input-container shinyjs-hide" style="width:10%;">
-                            <label class="control-label" id="progSelected-label" for="progSelected"></label>
-                            <input id="progSelected" type="text" class="shiny-input-text form-control" value="1"/>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="flexfill-item" style="position:relative;-webkit-flex:1;-ms-flex:1;flex:1;width:100%;height:100%;">
-                        <div class="flexfill-item-inner" style="position:absolute;top:0;left:0;right:0;bottom:0;">
-                          <div class="form-group shiny-input-container shinyjs-hide" style="width:10%;">
-                            <label class="control-label" id="programmeDirPaths-label" for="programmeDirPaths"></label>
-                            <div>
-                              <select id="programmeDirPaths" class="shiny-input-select" multiple="multiple"><option value="/tmp/Rsess/_T_Ots/0-PR-ts" selected>/tmp/Rsess/_T_Ots/0-PR-ts</option></select>
-                              <script type="application/json" data-for="programmeDirPaths">{"plugins":["selectize-plugin-a11y"]}</script>
-                            </div>
-                          </div>
                         </div>
                       </div>
                     </div>

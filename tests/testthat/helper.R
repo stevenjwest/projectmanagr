@@ -1,4 +1,17 @@
 
+#' Create temp dir Rsess
+#'
+#' Create Rsess/ in the temporary directory - on linux: /tmp/
+#'
+#' @return tmpdir full path
+create_tmpdir_rsess <- function(env = parent.frame()) {
+  tmpdir <- fs::path(dirname(tempdir()), "Rsess")
+  fs::dir_create(tmpdir)
+  withr::defer(fs::dir_delete(tmpdir), envir = env) # delete once tests finish
+  tmpdir # return
+}
+
+
 #' create test org
 #'
 #' Create & remove test fixtures in reproducible temp dir using `withr::defer()`
@@ -9,18 +22,27 @@
 #'
 #' @param env parent.frame for withr::deferred_run()
 #'
-local_create_org <- function(orgName, orgutime, orgParentPath,
+local_create_org <- function(orgName, orgParentPath, syp,
                              env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
 
-  # create local yaml file in orgParentPath to point to
-  settingsYamlPath <- create_settings_yaml(orgParentPath)
+  if( syp != "" ) {
 
-  # create project org
-  create_project_org(orgParentPath, orgName,
-                     settingsYamlPath=settingsYamlPath, utime=orgutime)
+    # create local yaml file in orgParentPath to point to
+    settingsYamlPath <- create_test_settings_yaml(syp)
+
+    # create project org
+    create_project_org(orgParentPath, orgName,
+                       settingsYamlPath=settingsYamlPath)
+
+  } else {
+    # create project org
+    create_project_org(orgParentPath, orgName,
+                       settingsYamlPath="")
+
+  }
 
   # define output variable
   orgDir <- fs::path(orgParentPath, orgName)
@@ -28,8 +50,10 @@ local_create_org <- function(orgName, orgutime, orgParentPath,
   # defer removal of orgDir
   withr::defer(fs::dir_delete(orgDir), envir = env)
 
-  # defer removal of settings
-  withr::defer(fs::file_delete(settingsYamlPath), envir = env)
+  if( syp != "" ) {
+    # defer removal of settings
+    withr::defer(fs::file_delete(settingsYamlPath), envir = env)
+  }
 
   # return the org directory
   orgDir
@@ -37,7 +61,7 @@ local_create_org <- function(orgName, orgutime, orgParentPath,
 }
 
 
-create_settings_yaml <- function(orgParentPath) {
+create_test_settings_yaml <- function(orgParentPath) {
 
   projectmanagrPath <- find.package("projectmanagr", lib.loc = .libPaths())
 
@@ -47,13 +71,32 @@ create_settings_yaml <- function(orgParentPath) {
 
   settings <- yaml::read_yaml(settingsYamlFile)
 
-  # modify separators containing '~' character- as not allowed in filenames tested in R packages for CRAN submission
+  # modify separators containing '~' character
+   # as not allowed in filenames tested in R packages for CRAN submission
   settings$ProjectPrefixSep <- "_--_" # from ~_
   settings$ProjectIndexSep <- "___" # from ~
 
   yaml::write_yaml(settings, fs::path(orgParentPath, "settings.yml"))
 
   fs::path_real(fs::path(orgParentPath, "settings.yml"))
+
+}
+
+
+modify_test_settings_yaml <- function(orgPath) {
+
+  settingsYamlFile <- fs::path(orgPath, ".config", "settings.yml")
+
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsYamlFile ) )
+
+  # modify separators containing '~' character
+  # as not allowed in filenames tested in R packages for CRAN submission
+  settings$ProjectPrefixSep <- "_--_" # from ~_
+  settings$ProjectIndexSep <- "___" # from ~
+
+  yaml::write_yaml(yaml::as.yaml(settings), settingsYamlFile)
+
+  fs::path_real(settingsYamlFile)
 
 }
 
@@ -67,14 +110,14 @@ create_settings_yaml <- function(orgParentPath) {
 #'
 #' @param env parent.frame for withr::deferred_run()
 #'
-local_create_prog <- function(progName, orgDir, progctime,
+local_create_prog <- function(progName, orgDir,
                              env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
 
   # create project programme
-  create_programme(progName, orgDir, ctime=progctime)
+  create_programme(progName, orgDir)
   progDir <- fs::path(orgDir, progName)
 
   withr::defer(fs::dir_delete(progDir), envir = env)
@@ -170,6 +213,10 @@ local_create_project_note_simple <- function(projectNoteName, projectNotePath,
                                              projectDocPath, taskLine,
                                              noteIndex="___001", env = parent.frame() ) {
 
+  # interactive testing - set projectDocPath
+  #projectDocPath <- projectDocRmd
+  #noteIndex="___001"
+
   # record current state
   olddir <- getwd()
 
@@ -241,6 +288,9 @@ local_create_project_note_sub <- function(subNoteName, subNotePath,
                                           projectDocRmd, headerLinkLine,
                                              env = parent.frame()) {
 
+  # interactive testing
+  #subNoteName <- subNoteName2
+
   # record current state
   olddir <- getwd()
 
@@ -264,6 +314,45 @@ local_create_project_note_sub <- function(subNoteName, subNotePath,
   # create paths to Rmd & dir - 2ND SUBNOTE!
   subNoteRmd <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-002_--_", subNoteName, ".Rmd") )
   subNoteDir <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-002") )
+
+  # ensure Rmd & Dir are deleted when out of context
+  withr::defer(fs::file_delete(subNoteRmd), envir = env)
+  withr::defer(fs::dir_delete(subNoteDir), envir = env)
+
+  # return the project Rmd
+  subNoteRmd
+
+
+}
+
+
+local_create_project_note_sub_head_sel <- function(subNoteName, subNotePath,
+                                          headNotePath, headLine,
+                                          env = parent.frame()) {
+
+  # record current state
+  olddir <- getwd()
+
+  # generate selection object via projectmanagr function
+  selection <- user_selection(headNotePath, headLine)
+
+  # create project note
+  create_sub_note(subNoteName, subNotePath, selection)
+
+  # other ARGS
+  subNoteTitle=""
+  subNoteTemplate="Project-Sub-Note-Template.Rmd"
+  headerNoteContentLinkTemplate="Project-Header-Note-Content-Link-Template.Rmd"
+  subNoteContentLinkTemplate="Project-Sub-Note-Content-Link-Template.Rmd"
+  projNoteLinkTemplate="Project-Note-Link-Template.Rmd"
+  projNoteLinkSummaryTemplate="Project-Note-Link-Summary-Template.Rmd"
+  todoTemplate="Todo-Template.Rmd"
+  projNoteSummaryTemplate="Project-Note-Summary-Template.Rmd"
+  subNoteSummaryTemplate="Project-Sub-Note-Summary-Template.Rmd"
+
+  # create paths to Rmd & dir - 2ND SUBNOTE!
+  subNoteRmd <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-003_--_", subNoteName, ".Rmd") )
+  subNoteDir <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-003") )
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::file_delete(subNoteRmd), envir = env)
@@ -319,10 +408,9 @@ local_create_journal <- function(date, organisationPath, env = parent.frame() ) 
   # other ARGS
   journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}"
   journalTemplate="Weekly-Work-Journal-Template.Rmd"
-  openJournal = FALSE # do not open when testing!
 
   # create project note
-  create_weekly_journal(date, organisationPath, journalFileNameTemplate, journalTemplate, openJournal)
+  create_weekly_journal(date, organisationPath, journalFileNameTemplate, journalTemplate)
 
   # create paths to Rmd & dir
   journalDir <- fs::path(organisationPath, "weekly-journal")
@@ -400,6 +488,1256 @@ local_rename_project_doc <- function(projectDocPath, projectDocPrefix,
   projectDocRmdRename
 
 }
+
+
+add_dispose_datatables <- function(rmd_path, rmd_line=575, datatable_name="smp") {
+
+  dt_length = 100
+  summarise_reps=FALSE
+  all_reps=FALSE
+  cdt="2024-09-10:1330B"
+  # test function
+  datatable_dispose_rmd(rmd_path, rmd_line, datatable_name,
+                        dt_length, summarise_reps, all_reps, cdt)
+
+  rm_lines(rmd_path, (rmd_line+8), (rmd_line+25))
+
+}
+
+
+add_create_datatables <- function(rmd_path, rmd_line=75, datatable_name="samples") {
+
+  IDs=c(1001, 1002, 1003, 1004)
+  data_cols=c("c", "cage", "genotype", "strain_breed_type", "dob_dt")# range of data col lengths
+  default_data_vals=list()
+  dt_length = 100
+  expand=FALSE
+  datatable_create_rmd(rmd_path, rmd_line, datatable_name, data_cols, IDs,
+                       default_data_vals, dt_length, expand)
+
+  # add second set of sample IDs via CREATE datatable with default_data_vals
+  rmd_line= (rmd_line+20) # 95 # blank line after first CREATE datatable
+  IDs=c(2001, 2002, 2003, 2004)
+  default_data_vals=list(c("F", "F", "M", "M"),
+                         c("CID101", "CID102", "CID103", "CID104"),
+                         c("vgat:wt", "vgat:wt", "vgat:wt", "vgat:wt"),
+                         c("c57bl1", "c57bl2", "c57bl3", "c57bl4"),
+                         c("2024-08-21:12:11", "2024-08-21:12:12",
+                           "2024-08-21:12:13", "2024-08-21:12:14"))
+  datatable_create_rmd(rmd_path, rmd_line, datatable_name, data_cols, IDs,
+                       default_data_vals, dt_length, expand)
+
+  # add third set of sample IDs via CREATE datatable with default_data_vals
+  # using expand is TRUE and default_data_vals vectors of length 1
+  rmd_line= (rmd_line+20) # 115 # blank line after CREATE datatables
+  IDs=c(3001, 3002, 3003, 3004)
+  default_data_vals=list(c("F"),c("CID101"), c("vgat:wt"),c("c57bl1"),
+                         c("2024-08-21:12:11"))
+  expand=TRUE
+  datatable_create_rmd(rmd_path, rmd_line, datatable_name, data_cols, IDs,
+                       default_data_vals, dt_length, expand)
+
+  # add fourth set of sample IDs via CREATE datatable with many data cols
+  # so it spills into making a second datatable ADD_DATA
+  rmd_line= (rmd_line+20) # 135 # blank line after CREATE datatables
+  IDs=c(4001, 4002, 4003, 4004)
+  data_cols=c("x","wt-g", "perfuse_dt", "perfusion_con", "group-fix",
+              "postfix_dt", "postfix_con", "group-postfix")
+  datatable_name=paste0(datatable_name, "2") # new dt name so can read these datatables without error
+  default_data_vals=list()
+  expand=FALSE
+  datatable_create_rmd(rmd_path, rmd_line, datatable_name, data_cols, IDs,
+                       default_data_vals, dt_length, expand)
+
+}
+
+
+
+add_resample_datatables <- function(rmd_path, rmd_line, datatable_name="samples") {
+
+  # now TEST RESAMPLE FUNCTION
+  # resampling to four sub-samples
+  resample_vector=c("CNS", "SC-LUM", "DRG-L4-LT", "DRG-L4-RT")
+  # variable reps
+  rep_vector=c(4,3,1,1)
+  dt_length = 100
+  summarise_reps=TRUE
+  all_reps=FALSE
+  # test function
+  datatable_resample_rmd(rmd_path, rmd_line, datatable_name, resample_vector,
+                         rep_vector, dt_length, summarise_reps, all_reps)
+
+}
+
+
+add_group_lines <- function(rmd_path, rmd_line) {
+
+  contents <- c(
+    "* `group-postfix-time`",
+    "",
+    "    + `1day` : 1 day in postfix F4M1PB",
+    "",
+    "    + `3day` : 3 days in postfix F4M1PB",
+    "",
+    "    + `7day`  : 7 days in postfix F4M1PB",
+    "",
+    "* `group-postfix-temp`",
+    "",
+    "    + `RT` : in postfix F4M1PB at room temperature",
+    "",
+    "    + `4C` : in postfix F4M1PB at 4C",
+    "",
+    "",
+    ">>>> ",
+    ">>>>  COMPLETE List : __GROUP_TITLE__ && __GROUP_ID__",
+    ">>>>          Copy __GROUP_TITLE__ && __GROUP_ID__ bullets as needed",
+    ">>>> ",
+    ">>>>  SELECT the __GROUP_TITLE__ and __GROUP_ID__ Bullets",
+    ">>>>          ALSO Select these comments to delete them!",
+    ">>>> ",
+    ">>>>  run projectmanagr::addin_datatable_add_group() - CTRL + M,T,G",
+    ">>>>          Select appropriate datatable - all available IDs are selected for adding groups",
+    ">>>> ",
+    ">>>>  GROUP Datatable generated under group bullets",
+    ">>>>          Extracts information to fill datatable with group values",
+    ">>>>          NOTE - group values may need adjusting for correct group attribution",
+    ">>>> ",
+    "")
+  insert_lines(rmd_path, contents, rmd_line)
+}
+
+
+insert_lines <- function(rmd_path, contents, start_line) {
+
+  rmd_contents <- read_file(rmd_path)
+
+  rmd_contents <- c(rmd_contents[1:start_line], contents, rmd_contents[(start_line+1):length(rmd_contents)])
+
+  write_file(rmd_contents, rmd_path)
+}
+
+
+
+
+add_template_create_datatables <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  CREATE  :  fix-solution-wts",
+    "",
+    "",
+    "        ID          wt_g_formulation       ",
+    "    =============  ==================      ",
+    "",
+    "     <<IDS>>-CTL        24.4818            ",
+    "                                           ",
+    "     <<IDS>>-CNS        22.2222            ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+add_template_add_data_datatables <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  ADD_DATA  :  samples_CNS",
+    "",
+    "",
+    "        ID          wt_g_formulation       ",
+    "    =============  ==================      ",
+    "",
+    "     <<IDS>>            24.4818            ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  ADD_DATA",
+    "",
+    "",
+    "        ID          wt_g_form              ",
+    "    =============  ==================      ",
+    "",
+    "     <<IDS>>            22.2222            ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+add_dt_create_test <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    samples_CNS  :  CREATE",
+    "",
+    "",
+    "      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    ",
+    "    ======  =====  ========  ====================  =================  =============  ",
+    "",
+    "     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     ",
+    "                                                                                     ",
+    "     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     ",
+    "                                                                                     ",
+    "",
+    "+===============================================================================",
+    "")
+    insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+add_dt_create_test_mice <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    mice  :  CREATE",
+    "",
+    "",
+    "      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    ",
+    "    ======  =====  ========  ====================  =================  =============  ",
+    "",
+    "     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     ",
+    "                                                                                     ",
+    "     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     ",
+    "                                                                                     ",
+    "",
+    "+===============================================================================",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+add_text_group_decl <- function(rmd_path, ins_line) {
+
+  contents <- c(
+    "",
+    ">>>>",
+    ">>>> Delete this Section if no Samples have been grouped",
+    "",
+    "* `group-ab-conc`",
+    "",
+    "    + `1µg/ml` :  ab conc in diluent",
+    "",
+    "    + `0.5µg/ml` :  ab conc in diluent",
+    "",
+    "* `group-ab-inc`",
+    "",
+    "    + `1DAY` :  ab inc time",
+    "",
+    "    + `3DAY` :  ab inc time",
+    "",
+    "",
+    ">>>>",
+    ">>>>  COMPLETE List : __GROUP_TITLE__ && __GROUP_ID__",
+    ">>>>          Copy __GROUP_TITLE__ && __GROUP_ID__ bullets as needed",
+    ">>>>",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+add_template_dispose_datatables <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    samples_CNS  :  CREATE",
+    "",
+    "",
+    "      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    ",
+    "    ======  =====  ========  ====================  =================  =============  ",
+    "",
+    "     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "",
+    "+===============================================================================",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  DISPOSE  :  samples_CNS",
+    "",
+    "",
+    "        ID               dspose            ",
+    "    =============  ==================      ",
+    "",
+    "     <<IDS>>        2024-10-02:1500B       ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  DISPOSE  :  samples_CNS",
+    "",
+    "",
+    "        ID               dispose           ",
+    "    =============  ==================      ",
+    "",
+    "     <<IDS>>        2024-10-02:1500B       ",
+    "                    2024-10-02:1500B       ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  DISPOSE  :  samples_CNS",
+    "",
+    "",
+    "        ID               dispose           ",
+    "    =============  ==================      ",
+    "",
+    "     <<IDS>>        2024-10-02:1500B       ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+add_ad_template_dispose_datatables <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    samples  :  CREATE",
+    "",
+    "",
+    "      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    ",
+    "    ======  =====  ========  ====================  =================  =============  ",
+    "",
+    "     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     ",
+    "                                                                                     ",
+    "     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     ",
+    "                                                                                     ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  DISPOSE  :  samples",
+    "",
+    "",
+    "        ID               dispose           ",
+    "    =============  ==================      ",
+    "",
+    "     <<IDS>>        2024-10-02:1500B       ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    samples_CNS  :  CREATE",
+    "",
+    "",
+    "      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    ",
+    "    ======  =====  ========  ====================  =================  =============  ",
+    "",
+    "     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     ",
+    "                                                                                     ",
+    "     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     ",
+    "                                                                                     ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  DISPOSE",
+    "",
+    "",
+    "        ID               dispose           ",
+    "    =============  ==================      ",
+    "",
+    "     <<IDS>>        2024-10-02:1500B       ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+add_ad2_template_dispose_datatables <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  DISPOSE",
+    "",
+    "",
+    "        ID               dispose           ",
+    "    =============  ==================      ",
+    "",
+    "     <<IDS>>        2024-10-02:1500B       ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+add_template_resample_datatables <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    samples  :  CREATE",
+    "",
+    "",
+    "      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    ",
+    "    ======  =====  ========  ====================  =================  =============  ",
+    "",
+    "     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  RESAMPLE  :  samples",
+    "",
+    "",
+    "        ID          rsample       reps    ",
+    "    ============  =============  ========  ",
+    "",
+    "     <<IDS>>       CNS              1     ",
+    "                   SC-LUM           1     ",
+    "                   SC-THOR          1     ",
+    "                   DRG-L4-LT        1     ",
+    "                   DRG-L4-RT        1     ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  RESAMPLE  :  samples",
+    "",
+    "",
+    "        ID          resample       reps    ",
+    "    ============  =============  ========  ",
+    "",
+    "     <<IDS>>       CNS              1     ",
+    "                   SC-LUM           1     ",
+    "                   SC-THOR          1     ",
+    "                   DRG-L4-LT        1     ",
+    "                   DRG-L4-RT              ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  RESAMPLE  :  samples",
+    "",
+    "",
+    "        ID          resample       reps    ",
+    "    ============  =============  ========  ",
+    "",
+    "     <<IDS>>       CNS              1     ",
+    "                   SC-LUM           1     ",
+    "                   SC-THOR          1     ",
+    "                   DRG-L4-LT        1     ",
+    "                   DRG-L4-RT        1     ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+add_ad_template_resample_datatables <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    samples  :  CREATE",
+    "",
+    "",
+    "      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    ",
+    "    ======  =====  ========  ====================  =================  =============  ",
+    "",
+    "     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1003     F      30.0      2020-01-01:12:01        F4M1PB_4C          fix_4C     ",
+    "                                                                                     ",
+    "     1004     F      30.0      2020-01-01:12:01        F4M1PB_4C          fix_4C     ",
+    "                                                                                     ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  RESAMPLE  :  samples",
+    "",
+    "",
+    "        ID          resample       reps    ",
+    "    ============  =============  ========  ",
+    "",
+    "     <<IDS>>       CNS              1     ",
+    "                   SC-LUM           1     ",
+    "                   SC-THOR          1     ",
+    "                   DRG-L4-LT        1     ",
+    "                   DRG-L4-RT        1     ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    samples2  :  CREATE",
+    "",
+    "",
+    "      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    ",
+    "    ======  =====  ========  ====================  =================  =============  ",
+    "",
+    "     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1003     F      30.0      2020-01-01:12:01        F4M1PB_4C          fix_4C     ",
+    "                                                                                     ",
+    "     1004     F      30.0      2020-01-01:12:01        F4M1PB_4C          fix_4C     ",
+    "                                                                                     ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  RESAMPLE",
+    "",
+    "",
+    "        ID          resample       reps    ",
+    "    ============  =============  ========  ",
+    "",
+    "     <<IDS>>       CNS              1     ",
+    "                   SC-LUM           1     ",
+    "                   SC-THOR          1     ",
+    "                   DRG-L4-LT        1     ",
+    "                   DRG-L4-RT        1     ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+add_ad2_template_resample_datatables <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  RESAMPLE",
+    "",
+    "",
+    "        ID          resample       reps    ",
+    "    ============  =============  ========  ",
+    "",
+    "     <<IDS>>       CNS              1     ",
+    "                   SC-LUM           1     ",
+    "                   SC-THOR          1     ",
+    "                   DRG-L4-LT        1     ",
+    "                   DRG-L4-RT        1     ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+add_template_add_group_datatables <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    samples  :  CREATE",
+    "",
+    "",
+    "      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    ",
+    "    ======  =====  ========  ====================  =================  =============  ",
+    "",
+    "     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  RESAMPLE  :  samples",
+    "",
+    "",
+    "        ID          group_ab_conc      group_solvent_inc    ",
+    "    ============  =================  =====================  ",
+    "",
+    "     <<IDS>>         1mg/ml                1Hr              ",
+    "                     2mg/ml                2Hr              ",
+    "                                           4Hr              ",
+    "                                                            ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+add_template_add_data_samples_datatables <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    samples_CNS  :  CREATE",
+    "",
+    "",
+    "      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    ",
+    "    ======  =====  ========  ====================  =================  =============  ",
+    "",
+    "     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     ",
+    "                                                                                     ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  ADD_DATA",
+    "",
+    "",
+    "        ID       store_wash_dt       store_wash_con    store_wash_loc      ",
+    "    =========  ==================  ================  ===================   ",
+    "",
+    "      <<IDS>>    INSERT__DATETIME    PBS_RT            L160:BENCH:shaker   ",
+    "                 INSERT__DATETIME    PBS_RT            L160:BENCH:shaker   ",
+    "                 INSERT__DATETIME    PBS_RT            L160:BENCH:shaker   ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+
+rm_lines <- function(rmd_path, start_line, end_line) {
+  fileConn <- file(rmd_path)
+  rmd_contents <- readLines(fileConn)
+  close(fileConn)
+
+  rmd_contents <- c(rmd_contents[1:start_line], rmd_contents[end_line:length(rmd_contents)])
+
+  fileConn <- file(rmd_path)
+  writeLines(rmd_contents, fileConn)
+  close(fileConn)
+}
+
+
+#' returns settings yaml as list
+gen_org_prog_doc <- function(env = parent.frame()) {
+
+  #for further tests
+  tmpdir <- fs::path(dirname(tempdir()), "Rsess")
+  fs::dir_create(tmpdir)
+
+  orgName <- "_T_O_DT"
+  orgutime <- "2024-02-22:09:56" # for consistent datetime added to status.yml snapshot
+  orgDir <- local_create_org(orgName, orgutime, orgParentPath=tmpdir, env=env)
+  orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
+  settingsYml <- fs::path(orgDir, ".config", "settings.yml")
+  statusYml <- fs::path(orgDir, ".config", "status.yml")
+  addinsJson <- fs::path(orgDir, ".config", "addins.json")
+  volumesRmd <- fs::path(orgDir, "volumes", "volumes.Rmd")
+
+  settings <- yaml::yaml.load( yaml::read_yaml( settingsYml ) )
+
+  # create test Programme
+  progName <- "0-PR-DT"
+  progctime <- "2024-02-22:09:58" # for consistent datetime added to status.yml snapshot
+  progDir <- local_create_prog(progName, orgDir, progctime, env=env)
+  progIndex <- fs::path(progDir, paste0("_index_", progName, ".Rmd"))
+
+  # create test Project Doc for initial project note link
+  projectDocPrefix <- "PD"
+  projectDocName <- "Proj_Do"
+  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir, env=env)
+  projectDocDir <- fs::path(progDir, projectDocPrefix)
+
+  # modify gdt titles for unique headers
+  taskLine <- local_modify_project_doc_gdt_titles(settingsYml, projectDocRmd)
+
+  # create test Project Note directory
+  projectNotePath <- fs::path(projectDocDir, 'tn-j')
+  fs::dir_create(projectNotePath)
+
+  list(settings, projectDocRmd, projectNotePath) # return
+}
+
+
+
+gen_pn_cre <- function( settings, projectDocRmd, projectNotePath) {
+  # create test Project Note for datatables : CREATE
+  projectNoteNameCre <- "PN_cre"
+  projectNoteRmdCre <- local_create_project_note_simple(projectNoteNameCre, projectNotePath,
+                                                        projectDocRmd, taskLine)
+  projectNoteDirCre <- get_project_note_dir_path(projectNoteRmdCre, settings)
+
+  projectNoteRmdCre # return
+}
+
+
+find_add_create_dt1 <- function(rmd_path, settings, rmd_line=75, datatable_name="samples") {
+
+  data_cols=c("sex","dob_dt","colony_genotype", "treatment", "cage_dt","cage_con","cage_loc")
+  IDs=c(1001, 1002, 1003, 1004)
+  dt_length = 100
+  default_data_vals=list(c("F", "F", "M", "M"),
+                         c("2020-01-01","2020-01-01","2020-01-01","2020-01-01"),
+                         c("nNOS-cre:wt", "nNOS-cre:wt", "nNOS-cre:wt", "nNOS-cre:wt"),
+                         c("NAIVE","NAIVE","NAIVE","NAIVE"),
+                         c("2020-01-01:12:00", "2020-01-21:12:00","2020-01-01:12:00", "2020-01-21:12:00",
+                           "2020-01-01:12:00", "2020-01-21:12:00","2020-01-01:12:00", "2020-01-21:12:00"),
+                         c("IVC:(GM500)", "IVC:(GM500)","IVC:(GM500)", "IVC:(GM500)",
+                           "IVC:(GM500)", "IVC:(GM500)","IVC:(GM500)", "IVC:(GM500)"),
+                         c("SAAA-0300101", "SAAA-0300102","SAAA-0300101", "SAAA-0300102",
+                           "SAAA-0300101", "SAAA-0300102","SAAA-0300101", "SAAA-0300102"))
+  expand=FALSE
+  datatable_create_rmd(rmd_path, rmd_line, settings, datatable_name, data_cols, IDs,
+                       default_data_vals, dt_length, expand)
+
+
+  # default_data_vals=list(
+  #                        c("21.0", "31.0","22.0", "32.0",
+  #                          "23.0", "33.0","24.0", "34.0"),
+  #                        c("2020-01-15:12:00", "2020-03-15:12:00","2020-01-15:12:00", "2020-03-15:12:00",
+  #                          "2020-01-15:12:00", "2020-03-15:12:00","2020-01-15:12:00", "2020-03-15:12:00"))
+
+}
+
+find_add_data_dt1 <- function(rmd_path, settings, rmd_line=75, datatable_name="samples") {
+
+  data_cols=c("wts_g", "wts_g_dt")
+  IDs=c(1001, 1002, 1003, 1004)
+  dt_length = 100
+  default_data_vals=list(
+    c("21.0", "31.0","22.0", "32.0",
+      "23.0", "33.0","24.0", "34.0"),
+    c("2020-01-15:12:00", "2020-03-15:12:00","2020-01-15:12:00", "2020-03-15:12:00",
+      "2020-01-15:12:00", "2020-03-15:12:00","2020-01-15:12:00", "2020-03-15:12:00"))
+  datatable_add_data_samples_rmd(rmd_path, rmd_line, settings, datatable_name, data_cols, IDs,
+                                 default_data_vals, dt_length)
+
+
+
+}
+
+dt_find_add_create_dt1 <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "+===============================================================================",
+    "",
+    "",
+    "    mice  :  CREATE",
+    "",
+    "",
+    "      ID      sex          dob_dt          colony_genotype      treatment           cage_dt        ",
+    "    ======  =======  ==================  ===================  =============  ====================  ",
+    "",
+    "     1001      F         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "     1002      F         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "     1003      M         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "     1004      M         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "",
+    "+===============================================================================",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    mice  :  ADD_DATA",
+    "",
+    "",
+    "      ID        cage_con         cage_loc      ",
+    "    ======  ===============  ================  ",
+    "",
+    "     1001     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "     1002     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "     1003     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "     1004     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    mice  :  ADD_DATA",
+    "",
+    "",
+    "      ID      wts_g          wts_g_dt        ",
+    "    ======  =========  ====================  ",
+    "",
+    "     1001      21.0      2020-01-15:12:00    ",
+    "               31.0      2020-03-15:12:00    ",
+    "",
+    "     1002      22.0      2020-01-15:12:00    ",
+    "               32.0      2020-03-15:12:00    ",
+    "                                             ",
+    "     1003      23.0      2020-01-15:12:00    ",
+    "               33.0      2020-03-15:12:00    ",
+    "                                             ",
+    "     1004      24.0      2020-01-15:12:00    ",
+    "               34.0      2020-03-15:12:00    ",
+    "                                             ",
+    "",
+    "+===============================================================================",
+    "",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+dt_find_add_create_dt2 <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "+===============================================================================",
+    "",
+    "",
+    "    mice  :  CREATE",
+    "",
+    "",
+    "      ID      sex          dob_dt          colony_genotype      treatment           cage_dt        ",
+    "    ======  =======  ==================  ===================  =============  ====================  ",
+    "",
+    "     2001      F         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "     2002      F         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "     2003      M         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "     2004      M         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "",
+    "+===============================================================================",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    mice  :  ADD_DATA",
+    "",
+    "",
+    "      ID        cage_con         cage_loc      ",
+    "    ======  ===============  ================  ",
+    "",
+    "     2001     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "     2002     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "     2003     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "     2004     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    mice  :  ADD_DATA",
+    "",
+    "",
+    "      ID      wts_g          wts_g_dt        ",
+    "    ======  =========  ====================  ",
+    "",
+    "     2001      21.0      2020-01-15:12:00    ",
+    "               31.0      2020-03-15:12:00    ",
+    "",
+    "     2002      22.0      2020-01-15:12:00    ",
+    "               32.0      2020-03-15:12:00    ",
+    "                                             ",
+    "     2003      23.0      2020-01-15:12:00    ",
+    "               33.0      2020-03-15:12:00    ",
+    "                                             ",
+    "     2004      24.0      2020-01-15:12:00    ",
+    "               34.0      2020-03-15:12:00    ",
+    "                                             ",
+    "",
+    "+===============================================================================",
+    "",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+dt_find_add_create_dt3 <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "+===============================================================================",
+    "",
+    "",
+    "    mice  :  CREATE",
+    "",
+    "",
+    "      ID      sex          dob_dt          colony_genotype      treatment           cage_dt        ",
+    "    ======  =======  ==================  ===================  =============  ====================  ",
+    "",
+    "     3001      F         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "     3002      F         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "     3003      M         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "     3004      M         2020-01-01          nNOS-cre:wt          NAIVE        2020-01-01:12:00    ",
+    "                                                                               2020-01-21:12:00    ",
+    "                                                                                                   ",
+    "",
+    "+===============================================================================",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    mice  :  ADD_DATA",
+    "",
+    "",
+    "      ID        cage_con         cage_loc      ",
+    "    ======  ===============  ================  ",
+    "",
+    "     3001     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "     3002     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "     3003     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "     3004     IVC:(GM500)      SAAA-0300101    ",
+    "              IVC:(GM500)      SAAA-0300102    ",
+    "                                               ",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    mice  :  ADD_DATA",
+    "",
+    "",
+    "      ID      wts_g          wts_g_dt        ",
+    "    ======  =========  ====================  ",
+    "",
+    "     3001      21.0      2020-01-15:12:00    ",
+    "               31.0      2020-03-15:12:00    ",
+    "",
+    "     3002      22.0      2020-01-15:12:00    ",
+    "               32.0      2020-03-15:12:00    ",
+    "                                             ",
+    "     3003      23.0      2020-01-15:12:00    ",
+    "               33.0      2020-03-15:12:00    ",
+    "                                             ",
+    "     3004      24.0      2020-01-15:12:00    ",
+    "               34.0      2020-03-15:12:00    ",
+    "                                             ",
+    "",
+    "+===============================================================================",
+    "",
+    "")
+  insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
 
 
 

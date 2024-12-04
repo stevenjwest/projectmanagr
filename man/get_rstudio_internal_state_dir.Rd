@@ -9,3 +9,12 @@ get_rstudio_internal_state_dir()
 \description{
 Returns this from the settings or the default depending on OS.type (unix or Windows)
 }
+\details{
+https://support.posit.co/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State
+'Resetting RStudio Desktop's State'
+
+Accessing the RStudio-Desktop Directory (Internal State)
+
+RStudio Desktop stores its internal state in a hidden directory: includes
+information about open documents, log files, and other state information
+}

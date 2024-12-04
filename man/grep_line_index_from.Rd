@@ -4,7 +4,7 @@
 \alias{grep_line_index_from}
 \title{Grep Line Index from initialIndex to END of contents}
 \usage{
-grep_line_index_from(line, contents, initialIndex)
+grep_line_index_from(line, contents, initialIndex, orgPath)
 }
 \arguments{
 \item{line}{a String to be found}

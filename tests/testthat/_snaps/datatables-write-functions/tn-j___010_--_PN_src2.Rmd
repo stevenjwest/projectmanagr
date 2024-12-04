@@ -1,0 +1,226 @@
+---
+title: 'tn-j___010~ PN src2'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PD : EXAMPLE TASK TITLE
+
+
+[PD_--_Proj_Do](../../PD_--_Proj_Do.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PD_--_Proj_Do.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD_--_Proj_Do.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PD_--_Proj_Do.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
+
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID       c        cage      genotype      strain_breed_type           dob_dt         
+    ======  =======  =========  ============  =====================  ====================  
+
+     1001     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+     1002     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+     1003     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+     1004     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID      c       cage       genotype      strain_breed_type           dob_dt         
+    ======  =====  ==========  ============  =====================  ====================  
+
+     2001     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     2002     F      CID102       vgat:wt            c57bl2           2024-08-21:12:12    
+                                                                                          
+     2003     M      CID103       vgat:wt            c57bl3           2024-08-21:12:13    
+                                                                                          
+     2004     M      CID104       vgat:wt            c57bl4           2024-08-21:12:14    
+                                                                                          
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID      c       cage       genotype      strain_breed_type           dob_dt         
+    ======  =====  ==========  ============  =====================  ====================  
+
+     3001     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     3002     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     3003     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     3004     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+
++===============================================================================
+
++===============================================================================
+
+
+    samples2  :  CREATE
+
+
+      ID       x        wt-g         perfuse_dt         perfusion_con       group-fix     
+    ======  =======  =========  ====================  =================  ===============  
+
+     4001     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     4002     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     4003     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     4004     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+
++===============================================================================
+
++===============================================================================
+
+
+    samples2  :  ADD_DATA
+
+
+      ID         postfix_dt         postfix_con      group-postfix    
+    ======  ====================  ===============  =================  
+
+     4001     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+     4002     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+     4003     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+     4004     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+
++===============================================================================
+
+
+
+# EXPORT : samples
+
+
+Datatable samples exported to new Project Notes.
+
+
++===============================================================================
+
+
+    samples  :  EXPORT
+
+
+      ID                      export                    
+    ======  ==========================================  
+
+     1001     [tn-j___009](tn-j___009_--_PN_des.Rmd)    
+                                                        
+     1002     [tn-j___009](tn-j___009_--_PN_des.Rmd)    
+                                                        
+     1003     [tn-j___009](tn-j___009_--_PN_des.Rmd)    
+                                                        
+     1004     [tn-j___009](tn-j___009_--_PN_des.Rmd)    
+                                                        
+
++===============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

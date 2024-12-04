@@ -2,15 +2,17 @@
 % Please edit documentation in R/datatables-write-functions.R
 \name{datatable_resample_rmd}
 \alias{datatable_resample_rmd}
-\title{Resample a set of samples and insert into Rmd}
+\title{Generate RESAMPLE Data Table and insert into Rmd}
 \usage{
 datatable_resample_rmd(
   rmd_path,
   rmd_line,
   datatable_name,
-  settings,
   resample_vector,
-  dt_length = 100
+  rep_vector = c(1),
+  dt_length = 100,
+  summarise_reps = TRUE,
+  all_reps = FALSE
 )
 }
 \arguments{
@@ -23,7 +25,23 @@ datatable_resample_rmd(
 \item{resample_vector}{A character vector that contains all the resample
 codes to be added to each sample/rep in the resample table.}
 
+\item{rep_vector}{Integer vector of length 1 or \code{resample_vector}, that
+specifies how many reps each \code{resample_vector} code will generate.}
+
 \item{dt_length}{Int of data table max length in characters - default 100.}
+
+\item{summarise_reps}{Boolean to indicate whether reps should be summarised in
+the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
+otherwise if TRUE, all reps are summarised using r vector index syntax on
+one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
+indicated as: 1:3,5,6:10,12,14:25 etc.  Default to TRUE.}
+
+\item{all_reps}{Boolean to indicate whether all reps should be summarised in
+the datatable.  If TRUE then ALL reps for each ID are summarised with keyword
+ALL - which will apply data cols to all the reps for each sample, without the
+potentially complex summary strings representing a disparate collection of reps.
+This comes at the expense of not being clear from reading this datatable what
+reps actually exist.}
 }
 \description{
 Creates a resample datatable consisting of: sample ID column containing all

@@ -1,0 +1,152 @@
+---
+title: 'tn-t___002~ PN ADS'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PD : EXAMPLE TASK TITLE
+
+
+[PD_--_Proj_Do](../../PD_--_Proj_Do.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PD_--_Proj_Do.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD_--_Proj_Do.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PD_--_Proj_Do.Rmd#task-example-task-title)
+
+
+
+**SUMMARY**
+
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+*__SUMMARY_POINT_01__*
+
+
+
+**TODO**
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
+
+
+
+
++===============================================================================
+
+
+    samples_CNS  :  CREATE
+
+
+      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    
+    ======  =====  ========  ====================  =================  =============  
+
+     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+
++===============================================================================
+
+
++===============================================================================
+
+
+    samples_CNS  :  ADD_DATA
+
+
+      ID        store_wash_dt       store_wash_con        store_wash_loc     
+    ======  ====================  ==================  =====================  
+
+     1001     INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+                                                                             
+     1002     INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+                                                                             
+     1003     INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+                                                                             
+     1004     INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
+                                                                             
+
++===============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

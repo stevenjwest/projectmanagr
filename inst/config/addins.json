@@ -1,57 +1,52 @@
 {
-    "projectmanagr::addinAddHyperLink": "Ctrl+M Ctrl+I Ctrl+H",
-    "projectmanagr::addinAddProjectLink": "Ctrl+M Ctrl+L",
-    "projectmanagr::addinAddProjectNote": "Ctrl+M Ctrl+N",
-    "projectmanagr::addinAddProtocolCheatSheet": "Ctrl+M Ctrl+S",
-    "projectmanagr::addinCreateProjectOrg": "Ctrl+M Ctrl+C Ctrl+O",
-    "projectmanagr::addinCreateProgramme": "Ctrl+M Ctrl+C Ctrl+G",
-    "projectmanagr::addinCreateProjectDoc": "Ctrl+M Ctrl+C Ctrl+P",
-    "projectmanagr::addinCreateVolume": "Ctrl+M Ctrl+C Ctrl+V",
-    "projectmanagr::addinInsertDateTimeString": "Ctrl+M Ctrl+I Ctrl+D",
-    "projectmanagr::addinInsertProtocol": "Ctrl+M Ctrl+I Ctrl+S",
-    "projectmanagr::addinRenameComp": "Ctrl+M Ctrl+R",
-    "projectmanagr::setwdActiveDoc": "Ctrl+M Ctrl+C Ctrl+D",
-    "projectmanagr::updateProjectOrg": "Ctrl+M Ctrl+U",
-    "projectmanagr::addinDatatableCreate": "Ctrl+M Ctrl+T Ctrl+C",
-    "projectmanagr::addinDatatableCreateFromFile": "Ctrl+M Ctrl+T Ctrl+F",
-    "projectmanagr::addinDatatableAddData": "Ctrl+M Ctrl+T Ctrl+A",
-    "projectmanagr::addinDatatableAddGroups": "Ctrl+M Ctrl+T Ctrl+G",
-    "projectmanagr::addinDatatableResample": "Ctrl+M Ctrl+T Ctrl+R",
-    "projectmanagr::addinAddProtocolReference": "Ctrl+M Ctrl+A Ctrl+S",
-    "projectmanagr::addinDatatableImport": "Ctrl+M Ctrl+T Ctrl+I",
-    "projectmanagr::addinInsertToDoString": "Ctrl+M Ctrl+I Ctrl+T",
-    "projectmanagr::setSelectionNextHorizontalRule": "Ctrl+M Ctrl+S",
-    "projectmanagr::addin_add_project_note": "Ctrl+M Ctrl+C Ctrl+N",
-    "projectmanagr::addin_add_project_link": "Ctrl+M Ctrl+C Ctrl+L",
-    "projectmanagr::addin_add_protocol_reference": "Ctrl+M Ctrl+C Ctrl+T",
-    "projectmanagr::addin_create_project_org": "Ctrl+M Ctrl+C Ctrl+O",
-    "projectmanagr::addin_create_programme": "Ctrl+M Ctrl+C Ctrl+R",
+
+    "projectmanagr::addin_create_project_org": "Ctrl+M Ctrl+C Ctrl+R",
+    "projectmanagr::addin_create_programme": "Ctrl+M Ctrl+C Ctrl+P",
     "projectmanagr::addin_create_project_doc": "Ctrl+M Ctrl+C Ctrl+D",
-    "projectmanagr::addin_create_volume": "Ctrl+M Ctrl+C Ctrl+V",
-    "projectmanagr::set_wd_active_doc": "Ctrl+M Ctrl+W Ctrl+D",
     "projectmanagr::addin_create_project_note": "Ctrl+M Ctrl+C Ctrl+N",
-    "projectmanagr::addin_create_protocol": "Ctrl+M Ctrl+C Ctrl+P",
-    "projectmanagr::addin_insert_hyperlink": "Ctrl+M Ctrl+I Ctrl+H",
-    "projectmanagr::addin_insert_protocol": "Ctrl+M Ctrl+I Ctrl+P",
-    "projectmanagr::addin_link_doc_to_note": "Ctrl+M Ctrl+L",
-    "projectmanagr::addin_insert_datetime": "Ctrl+M Ctrl+I Ctrl+T",
-    "projectmanagr::addin_rename_project_file": "Ctrl+M Ctrl+R",
-    "projectmanagr::set_selection_next_horizontal_rule": "Ctrl+M Ctrl+S",
+
+    "projectmanagr::addin_create_volume": "Ctrl+M Ctrl+C Ctrl+V",
+
+    "projectmanagr::addin_create_content": "Ctrl+M Ctrl+C Ctrl+C",
+
+
     "projectmanagr::addin_datatable_add_data": "Ctrl+M Ctrl+T Ctrl+A",
     "projectmanagr::addin_datatable_add_groups": "Ctrl+M Ctrl+T Ctrl+G",
     "projectmanagr::addin_datatable_create": "Ctrl+M Ctrl+T Ctrl+C",
     "projectmanagr::addin_datatable_import": "Ctrl+M Ctrl+T Ctrl+I",
     "projectmanagr::addin_datatable_resample": "Ctrl+M Ctrl+T Ctrl+R",
+
+
+    "projectmanagr::addin_insert_content": "Ctrl+M Ctrl+I Ctrl+C",
+
+    "projectmanagr::addin_insert_datetime": "Ctrl+M Ctrl+I Ctrl+T",
     "projectmanagr::addin_insert_date": "Ctrl+M Ctrl+I Ctrl+D",
+
+    "projectmanagr::addin_insert_doc_deliverable_section": "Ctrl+M Ctrl+I Ctrl+L",
+    "projectmanagr::addin_insert_doc_goal_section": "Ctrl+M Ctrl+I Ctrl+G",
+    "projectmanagr::addin_insert_doc_task_section": "Ctrl+M Ctrl+I Ctrl+K",
+
+    "projectmanagr::addin_insert_hyperlink": "Ctrl+M Ctrl+I Ctrl+H",
+
     "projectmanagr::addin_insert_section_sep_1": "Ctrl+M Ctrl+1",
     "projectmanagr::addin_insert_section_sep_2": "Ctrl+M Ctrl+2",
     "projectmanagr::addin_insert_section_sep_3": "Ctrl+M Ctrl+3",
     "projectmanagr::addin_insert_section_sep_4": "Ctrl+M Ctrl+4",
     "projectmanagr::addin_insert_section_sep_5": "Ctrl+M Ctrl+5",
     "projectmanagr::addin_insert_section_sep_6": "Ctrl+M Ctrl+6",
+
+    "projectmanagr::addin_insert_ToDo_string": "Ctrl+M Ctrl+I Ctrl+O",
+
+    "projectmanagr::addin_link_doc_to_note": "Ctrl+M Ctrl+L",
+
+    "projectmanagr::addin_rename": "Ctrl+M Ctrl+R",
+
+    "projectmanagr::addin_search_project_org": "Ctrl+M Ctrl+O Ctrl+S",
+
     "projectmanagr::navigate_markdown_link": "Ctrl+M Ctrl+N",
-    "projectmanagr::addin_append_doc_goal_section": "Ctrl+M Ctrl+I Ctrl+G",
-    "projectmanagr::addin_insert_doc_goal_section": "Ctrl+M Ctrl+I Ctrl+G",
-    "projectmanagr::addin_insert_doc_deliverable_section": "Ctrl+M Ctrl+I Ctrl+L",
-    "projectmanagr::addin_insert_doc_task_section": "Ctrl+M Ctrl+I Ctrl+K"
+
+    "projectmanagr::set_selection_next_horizontal_rule": "Ctrl+M Ctrl+S",
+    "projectmanagr::set_wd_active_doc": "Ctrl+M Ctrl+W Ctrl+D",
+
+    "projectmanagr::update_project_org": "Ctrl+M Ctrl+U"
 }

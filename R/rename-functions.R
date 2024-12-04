@@ -490,6 +490,8 @@ rename_project_doc_task <- function(taskSelection, newTaskName) {
   tempPath <- get_template_dir(orgPath)
   settings <- get_settings_yml(orgPath)
 
+  projectDocPrefix <- get_prefix(projectDocPath, settings)
+
 
   #### CHECK FOR ERRORS IN INPUT ####
 
@@ -549,6 +551,17 @@ rename_project_doc_task <- function(taskSelection, newTaskName) {
 
   update_links(oldtaskLinkSuffix, newtaskLinkSuffix, orgPath,
                settings, oldtaskString, newtaskString)
+
+  #### Update all Headers in GDT for task ####
+
+  # form old and new task headers for this Doc
+  oldtaskHead <- get_doc_task_title_name(projectDocPrefix, oldtaskName)
+  #oldtaskHead <- paste0("## ", projectDocPrefix, " : ", oldtaskName)
+  newtaskHead <- get_doc_task_title_name(projectDocPrefix, newTaskName)
+  #newtaskHead <- paste0("## ", projectDocPrefix, " : ", newTaskName)
+
+  update_headers(oldtaskHead, newtaskHead, orgPath,
+               settings)
 
 }
 

@@ -6,20 +6,24 @@
 #'@export
 set_wd_active_doc <- function( ) {
 
-  rstudioapi::documentSave() # save current file first
-  context <- rstudioapi::getSourceEditorContext() # use this to always get the active document in the source editor
-  dirPath <- dirname(context$path)
+  if( rstudioapi::isAvailable() ) {
 
-  cat( "\nprojectmanagr::set_wd_active_doc():\n" )
+    save_context_doc()
+    path <- get_context_path()
+    dirPath <- dirname(path)
 
-  # navigate to containing dir
-  rstudioapi::filesPaneNavigate( dirPath )
-  # and set working directory
-  setwd( dirPath )
+    cat( "\nprojectmanagr::set_wd_active_doc():\n" )
 
+    # navigate to containing dir
+    rstudioapi::filesPaneNavigate( dirPath )
+    # and set working directory
+    setwd( dirPath )
 
-  cat( "  Set work dir: \n    ", dirPath, "\n" )
+    cat( "  Set work dir: \n    ", dirPath, "\n" )
 
+  } else {
+    cat("\nRStudio context is unavailable")
+  }
 }
 
 
@@ -72,32 +76,63 @@ set_selection_next_horizontal_rule <- function( ) {
 
 #' Navigate link to markdown file and header
 #'
+#' This deals with links that exist over multiple lines in the Markdown file: if
+#' the first line of the link is selected, that contains the NAME (in `[]`) and
+#' the FIRST PART of the PATH (ie. the first `(`), then will search subsequent
+#' lines to identify the remaining path to navigate.
+#'
 #' @export
 navigate_markdown_link <- function() {
 
   WD <- getwd()
   # get currently active doc in rstudio
-  context <- rstudioapi::getSourceEditorContext()
-  path <- normalizePath(context$path)
+  path <- get_context_path()
+  id <- get_context_id()
+  line <- get_context_row()
+  contents <- get_context_contents()
+  # context <- rstudioapi::getSourceEditorContext()
+  # path <- normalizePath(context$path)
+  #
+  # cursor <- rstudioapi::primary_selection(context)
+  # line <- (cursor$range[[1]])[1] # get the line number of cursor
+  # col <- (cursor$range[[1]])[2] # get the col number of cursor position of cursor on line
 
-  cursor <- rstudioapi::primary_selection(context)
-  line <- (cursor$range[[1]])[1] # get the line number of cursor
-  col <- (cursor$range[[1]])[2] # get the col number of cursor position of cursor on line
 
-  lineContent <- context$contents[line]
+  lineContent <- contents[line]
 
   # check if lineContent contains a link
   linkStart <- regexpr("[", lineContent, fixed=TRUE)
   linkMiddle <- regexpr("](", lineContent, fixed=TRUE)
   linkEnd <- regexpr(")", lineContent, fixed=TRUE)
 
-  if( linkStart>linkMiddle | linkMiddle>linkEnd) {
+  if( linkStart>linkMiddle) {
     stop( paste0("  Selected line does not contain a link: ", lineContent))
   }
 
+  if(linkMiddle>linkEnd) {
+    # try to identify the remainder of the link on subsequent lines
+    line2 <- line
+    rP <- ""
+    while(TRUE) {
+      line2 <- line2+1
+      lC <- contents[line2]
+      lE <-regexpr(")", lC, fixed=TRUE)
+      if(lE>-1) { # link End identified - concat to rP
+        rP <- paste0(rP, trimws(substr(lC,1,lE-1) ))
+        break
+      } else {
+        # grab content from line - assume its all part of the path
+        rP <- paste0(rP, trimws(lC))
+      }
+    }
+    relPath <- fs::path(
+      paste0(substr(lineContent, (linkMiddle+2), nchar(lineContent)), rP) )
+  } else {
+    # extract relative path form lineContent
+    relPath <-  fs::path(substr(lineContent, (linkMiddle+2), (linkEnd-1)))
+  }
 
-  # extract relative path
-  relPath <-  substr(lineContent, (linkMiddle+2), (linkEnd-1))
+
 
   # check if link includes pointer to header in markdown doc
   headerPointer <- regexpr("#", relPath, fixed=TRUE)
@@ -105,9 +140,11 @@ navigate_markdown_link <- function() {
   if( headerPointer > 0 ) { # header pointer exists
 
     relPathTrim <- substring(relPath, 1, (headerPointer-1))
-    # compute absolute path
-    setwd(dirname(path)) # set working dir to dir of current file
-    absPath <- R.utils::getAbsolutePath(relPathTrim)
+    absPath <- fs::path_abs(relPathTrim, start=fs::path_dir(path))
+
+    if( fs::file_exists(absPath) == FALSE ) {
+      stop( paste0("  Link points to non-existent file: ", absPath))
+    }
 
     # open doc as vector and identify line where header exists
     contents_orig <- read_file(absPath)
@@ -151,9 +188,7 @@ navigate_markdown_link <- function() {
 
   } else { # no header pointer - just navigate to the file
 
-    # compute absolute path
-    setwd(dirname(path)) # set working dir to dir of current file
-    absPath <- R.utils::getAbsolutePath(relPath)
+    absPath <- fs::path_abs(relPath, start=fs::path_dir(path))
 
     if( file.exists(absPath) ) {
       # navigate to the file
@@ -169,8 +204,8 @@ navigate_markdown_link <- function() {
       # the link may point to an INTERNAL section header in current doc!
 
       # open doc as vector and identify line where header exists
-      contents_orig <- context$contents
-      id <- context$id
+      contents_orig <- contents
+      id <- id
       contents <- contents_orig
 
       header <- relPath
@@ -205,7 +240,7 @@ navigate_markdown_link <- function() {
 
       if( is.na(navLine) ) { # no header exists that contains headerWords
 
-        stop( paste0("  File linked to does not exist: ", lineContent))
+        stop( paste0("  Link points to non-existent file: ", absPath))
 
       } else {
 
@@ -222,10 +257,10 @@ navigate_markdown_link <- function() {
         rstudioapi::setCursorPosition(rstudioapi::document_position(max(navLine, 0), 1), id)
 
         # navigate to containing dir of current doc
-        rstudioapi::filesPaneNavigate( dirname(context$path) )
+        rstudioapi::filesPaneNavigate( dirname(path) )
 
         # and set working directory
-        setwd( dirname(context$path) )
+        setwd( dirname(path) )
       }
 
     }

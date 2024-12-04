@@ -12,7 +12,7 @@ build_datatable(
   dt_function,
   datatable_name,
   MAX_DATATABLE_LENGTH,
-  DATATABLE_SPACER_CHAR
+  DATATABLE_SPACER_CHAR = "="
 )
 }
 \arguments{
@@ -37,7 +37,7 @@ order - so ID\link{1} gets data\link{1}, data\link{2}; ID\link{2} gets data\link
 Typically 100.}
 
 \item{DATATABLE_SPACER_CHAR}{Character used to underline column headers.
-Typically '='.}
+Default '='.}
 }
 \description{
 Creates a new plaintext DataTable vector. The DataTable will contain an

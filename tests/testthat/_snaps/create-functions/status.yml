@@ -1,11 +1,13 @@
 |
-  orgPaths: []
-  orgPath: /tmp/Rsess/_T_O_P
-  orgName: _T_O_P
-  orgTitle: T O P
-  updateTime: 2024-02-22 09:56:00
-  sitePath: /tmp/Rsess/_T_O_P/site
+  orgPaths:
+  - /tmp/Rsess/_T_O
+  - /tmp/Rsess/_T_O2
+  orgPath: /tmp/Rsess/_T_O
+  orgName: _T_O
+  orgTitle: T O
+  updateTime: 2024-02-22:09:56
+  sitePath: /tmp/Rsess/_T_O/site
   PROGRAMMES:
     0-PR:
       programmeTitle: 0 PR
-      creationTime: 2024-02-22 09:58:00
+      creationTime: 2024-02-22:09:58

@@ -1,0 +1,117 @@
+---
+title: 'tn-c___001~ PN con'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PDCon : EXAMPLE TASK TITLE
+
+
+[PDCon_--_Proj_Do_con](../../PDCon_--_Proj_Do_con.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PDCon_--_Proj_Do_con.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PDCon_--_Proj_Do_con.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PDCon_--_Proj_Do_con.Rmd#task-example-task-title)
+
+
+
+### _summary_point_01_
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+
+--------------------- todo ---------------------
+------------------------------------------------
+
+
+### [] TODO_DESCRIPTION
+
+* _details_of_todo_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>> CONTENT >>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+  CONTENT_TITLE: Example Content
+
+
+  CONTENT_DESCRIPTION: 
+
+  Example Content Description
+
+
+  CONTENT_SOURCE: [ex-con.Rmd](tn-c___001/ex-con/ex-con.Rmd)
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>> CONTENT >>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+
+
+
+
+
