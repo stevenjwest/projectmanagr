@@ -410,8 +410,6 @@ get_doc_gdt_project_note_paths <- function(projectDocPath, projDocContents, sett
 extract_note_obj_doc_link_GDT_summ <- function(linkNoteRmdContents, linkNoteRmdPath,
                                                settings, orgPath) {
 
-  #extract_note_obj_doc_link_GDT_summ(linkNoteRmdContents, linkNoteRmdPath,
-  #                                   settings, orgPath)
   # linkNoteRmdContents contains all ProjDoc GDT links to add to new subnote
 
   type <- get_file_type(linkNoteRmdPath, settings)
@@ -465,7 +463,8 @@ extract_note_obj_doc_link_GDT_summ <- function(linkNoteRmdContents, linkNoteRmdP
       # removed NoteObjectivesSummarySectionHeader - using tli as start of summary
       #summi <- grep_line_index_from(settings[["NoteObjectivesSummarySectionHeader"]], o, tli) # summary index
       summi <- tli
-      todoi <- grep_line_index_from(settings[["NoteObjectivesTodoSectionHeader"]], o, summi, orgPath) # todo index
+      todoi <- grep_line_index_from(load_param_vector(settings[["NoteObjectivesTodoSectionHeader"]], orgPath),
+                                    o, summi, orgPath) # todo index
     }
 
     # get ProjDoc RelativePath
@@ -548,7 +547,8 @@ extract_objectives_note_GDT <- function(linkObjectives, linkRmdPath, subNoteRmdP
     # removed NoteObjectivesSummarySectionHeader - using tli as start of summary
     #summi <- grep_line_index_from(settings[["NoteObjectivesSummarySectionHeader"]], o, tli) # summary index
     summi <- tli
-    todoi <- grep_line_index_from(settings[["NoteObjectivesTodoSectionHeader"]], o, summi, orgPath) # todo index
+    todoi <- grep_line_index_from(load_param_vector(settings[["NoteObjectivesTodoSectionHeader"]], orgPath),
+                                  o, summi, orgPath) # todo index
 
     # get ProjDoc RelativePath
     pdrp <- substr(o[pdli], regexpr("](", o[pdli], fixed=TRUE)+2, regexpr(")", o[pdli], fixed=TRUE)-1)
@@ -680,6 +680,9 @@ grep_line_index <- function(line, contents, orgPath, initialIndex=1) {
 #'
 grep_line_index_from <- function(line, contents, initialIndex, orgPath) {
 
+  # line <- load_param_vector(settings[["NoteObjectivesTodoSectionHeader"]], orgPath)
+  # contents <- o
+  # initialIndex <- summi
   grep_line_index(line, contents[initialIndex:length(contents)], orgPath, initialIndex=initialIndex)
   # #### grep line in contents from initialIndex FIXED ####
   #
