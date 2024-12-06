@@ -170,11 +170,9 @@ get_org_paths <- function(newOrgPath) {
 
 
 create_org_dir <- function(orgPath) {
-  fs::dir_create(orgPath)
-  if( fs::dir_exists(orgPath) == FALSE ) {
-    stop( paste0("  Organisation directory could not be created: ", orgPath) )
-  }
-  cat( "  Made ORG dir: ", orgPath, "\n" )
+  create_directory(orgPath,
+                   "  Made ORG dir: ",
+                   "  Organisation directory could not be created: ")
 }
 
 
@@ -587,7 +585,6 @@ create_org_index <- function(orgName, tempPath, orgTemplate, orgPath, settings,
 #' projectmanagr templates.
 #'
 #' @return progIndexPath The path to the programme index Rmd file.
-
 #'
 #' @export
 create_programme <- function(programmeName, organisationPath,
@@ -637,18 +634,8 @@ create_programme <- function(programmeName, organisationPath,
 
   #### create Rmd file ####
 
-  # first remove any preceding '-' or '_' from orgName
-  programmeNameIndex <- programmeName
-  #if( startsWith(programmeNameIndex, "_") | startsWith(programmeNameIndex, "-") ){
-  #  programmeNameIndex <- sub('.', '', programmeNameIndex)
-  #}
-  # and remove any following '-' or '_' from orgName
-  #if( endsWith(programmeNameIndex, "_") | endsWith(programmeNameIndex, "-") ){
-  #  programmeNameIndex <- gsub('.{1}$', '', programmeNameIndex)
-  #}
-
   progFilePath <- paste0(progPath, .Platform$file.sep, settings[["ProgIndexFileNamePrefix"]],
-                         programmeNameIndex, ".Rmd")
+                         programmeName, ".Rmd")
   done <- file.create(progFilePath)
 
   if(!done) {
@@ -1959,13 +1946,16 @@ create_content <- function(selection, contentName, contentDescription,
 
 #' Create Weekly Journal
 #'
+#' Only creates the weekly journal if it does not exist.  If the weekly journal
+#' file already exists, it returns the path to the existing file for opening.
+#'
 #' Saved in directory indicated in settings under "WeeklyJournalDir".
 #'
 #' Can optionally extract TODOs to this file with the `extract_todos()` function.
 #'
-#' @param date The start date of the Weekly Journal - typically a Monday.  This
-#' should be in 'YYYY-MM-DD' format, and can be a String. Can create a Date
-#' object with code `as.Date(paste(year, month, "01", sep = "-"))`.
+#' @param date The start date of the Weekly Journal - converted to the current
+#' week Monday date.  This should be in 'YYYY-MM-DD' format, and can be a String.
+#' Can create a Date object with code `as.Date(paste(year, month, "01", sep = "-"))`.
 #'
 #' @param organisationPath The path to the Organisation where the weekly
 #'  journal is created & saved.
@@ -1980,8 +1970,7 @@ create_content <- function(selection, contentName, contentDescription,
 create_weekly_journal <- function(date=lubridate::today(),
                                   organisationPath=getwd(),
                                   journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
-                                  journalTemplate="Weekly-Work-Journal-Template.Rmd",
-                                  openJournal = TRUE) {
+                                  journalTemplate="Weekly-Work-Journal-Template.Rmd") {
 
 
   #### Instance Variables ####
@@ -1989,6 +1978,10 @@ create_weekly_journal <- function(date=lubridate::today(),
   if( lubridate::is.Date(date) == FALSE ) {
     date <- lubridate::ymd(date) # parse the date and convert to ymd format
   }
+
+  # convert the date to the Monday of current week if needed
+  date <- lubridate::floor_date(date, unit="week", week_start=1)
+
   year <- format(date, "%Y")
   month <- format(date, "%m")
   day <- format(date, "%d")
@@ -2014,20 +2007,21 @@ create_weekly_journal <- function(date=lubridate::today(),
   settings <- get_settings_yml(orgPath)
 
 
-  #### Create Journal Dir ####
+  #### Create Journal Dirs ####
 
-  # create PROG Dir:
-  journalPath <- paste0(orgPath, .Platform$file.sep, settings[["WeeklyJournalDir"]])
-  if(dir.exists(journalPath) ) {
-    cat( "  Journal dir exists - creating weekly journal here: ", journalPath, "\n" )
-  } else { # create the journalPath
-    done <- dir.create(journalPath)
-    if(!done) {
-      stop( paste0("  Programme directory could not be created: ", journalPath) )
-    } else {
-      cat( "  Made Journal dir: ", journalPath, "\n" )
-    }
-  }
+  # create journal root Dir:
+  journalPath <- fs::path(orgPath, settings[["WeeklyJournalDir"]])
+
+  create_directory(journalPath,
+                   "  Made Journal dir: ",
+                   "  Journal directory could not be created: ")
+
+  # create journal year Dir:
+  journalYearPath <- fs::path(journalPath, year)
+
+  create_directory(journalYearPath,
+                   "  Made Journal Year dir: ",
+                   "  Journal Year directory could not be created: ")
 
 
   #### create Journal Rmd file ####
@@ -2039,70 +2033,60 @@ create_weekly_journal <- function(date=lubridate::today(),
 
   journalFileNameTemplate <- gsub('{{ORGNAME}}', orgName, journalFileNameTemplate, fixed = TRUE)
 
-  journalRmdPath <- paste0(journalPath, .Platform$file.sep, journalFileNameTemplate, ".Rmd")
+  journalRmdPath <- fs::path(journalYearPath, paste0(journalFileNameTemplate, ".Rmd"))
 
+  # deal with possibility file may already exists
   if( fs::file_exists(journalRmdPath) ) {
 
+    # if it exists, report this, and do not write to the file!
     cat( "  Journal .Rmd file Exists: ",journalRmdPath, "\n" )
 
   } else {
 
-  done <- file.create(journalRmdPath)
+    create_file(journalRmdPath,
+                "  Made Journal .Rmd file: ",
+                "  Journal .Rmd file could not be created: ")
 
-  if(!done) {
-    stop( paste0("  Journal .Rmd file could not be created: ", journalRmdPath) )
-  }
+    # read journalTemplate:
+    journalContents <- read_file( paste0(tempPath, .Platform$file.sep, journalTemplate) )
 
-  cat( "  Made Journal .Rmd file: ",journalRmdPath, "\n" )
+    # fill template
 
+    # use username as author value
+    authorValue <- Sys.info()["user"]
 
-  # read journalTemplate:
-  journalContents <- read_file( paste0(tempPath, .Platform$file.sep, journalTemplate) )
+    # modify journalContents to include date YYYY MM DD
+    journalContents <- gsub("{{YYYY}}", year, journalContents, fixed=TRUE)
+    journalContents <- gsub("{{MM}}", month, journalContents, fixed=TRUE)
+    journalContents <- gsub("{{DD}}", day, journalContents, fixed=TRUE)
 
-  # use username as author value
-  authorValue <- Sys.info()["user"]
+    # modify journalContents to include authorValue
+    journalContents <- gsub("{{AUTHOR}}", authorValue, journalContents, fixed=TRUE)
 
-  # modify journalContents to include date YYYY MM DD
-  journalContents <- gsub("{{YYYY}}", year, journalContents, fixed=TRUE)
-  journalContents <- gsub("{{MM}}", month, journalContents, fixed=TRUE)
-  journalContents <- gsub("{{DD}}", day, journalContents, fixed=TRUE)
+    # add plaintext calendar
+    journalContents <- sub_template_param(journalContents,
+                                          "{{WEEKLY_JOURNAL_PLAINTEXT_CALENDAR}}",
+                                          generate_plaintext_calendar(year, month, day),
+                                          orgPath)
 
-  # modify journalContents to include authorValue
-  journalContents <- gsub("{{AUTHOR}}", authorValue, journalContents, fixed=TRUE)
+    # add weekly rmarkdown daily journal
+    journalContents <- sub_template_param(journalContents,
+                                          "{{WEEKLY_JOURNAL_DAILY_JOURNAL}}",
+                                          generate_weekly_rmarkdown(year, month, day),
+                                          orgPath)
 
-  # add plaintext calendar
-  journalContents <- sub_template_param(journalContents,
-                                        "{{WEEKLY_JOURNAL_PLAINTEXT_CALENDAR}}",
-                                        generate_plaintext_calendar(year, month, day),
-                                        orgPath)
+    # modify journalContents with rmarkdown-html-header content
+    journalContents <- replace_markdown_header(journalContents, orgPath)
 
-  # add weekly rmarkdown daily journal
-  journalContents <- sub_template_param(journalContents,
-                                        "{{WEEKLY_JOURNAL_DAILY_JOURNAL}}",
-                                        generate_weekly_rmarkdown(year, month, day),
-                                        orgPath)
+    # modify journalContents with SEP values
+    journalContents <- replace_sep_values(journalContents, orgPath)
 
-  # add todo collection from org
-  #journalContents <- sub_template_param(journalContents,
-  #                                      "{{WEEKLY_JOURNAL_TODO_COLLECTION}}",
-  #                                      extract_todos(orgPath),
-  #                                      orgPath)
-  # DEPRECATED - user should extract TODOs as needed into the weekly journal
-  # allows flexibility in TODO extraction!
-  # added separate __EXTRACT_TODOS_HERE__ marker in the Weekly Journal Template now
+    # write to journalFile
+    write_file(journalContents, journalRmdPath)
 
-  # modify journalContents with rmarkdown-html-header content
-  journalContents <- replace_markdown_header(journalContents, orgPath)
+    cat( "  Written template to Journal .Rmd file: ", journalRmdPath, "\n" )
 
-  # modify journalContents with SEP values
-  journalContents <- replace_sep_values(journalContents, orgPath)
-
-  # write to journalFile
-  write_file(journalContents, journalRmdPath)
-
-  cat( "  Written template to Journal .Rmd file: ", journalRmdPath, "\n" )
-
-  }
+  } # end if journalRmdPath exists is FALSE
 
   return(journalRmdPath) # return the path
 

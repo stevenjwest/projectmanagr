@@ -565,6 +565,23 @@ write_file <- function(contents, filePath) {
   close(fileConn)
 }
 
+create_directory <- function(path, log, error) {
+  fs::dir_create(path)
+  if( fs::dir_exists(path) == FALSE ) {
+    stop( paste0(error, path) )
+  }
+  cat( log, path, "\n" )
+}
+
+
+create_file <- function(path, log, error) {
+  fs::file_create(path)
+  if( fs::file_exists(path) == FALSE ) {
+    stop( paste0(error, path) )
+  }
+  cat( log, path, "\n" )
+}
+
 
 #' Check a path is the org root dir
 #'
