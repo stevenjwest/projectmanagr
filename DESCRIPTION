@@ -34,7 +34,8 @@ Imports:
     shinytest2 (>= 0.3.2),
     jsonlite,
     rlist,
-    rappdirs
+    rappdirs,
+    shiny.fluent
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

@@ -8,14 +8,13 @@ create_weekly_journal(
   date = lubridate::today(),
   organisationPath = getwd(),
   journalFileNameTemplate = "{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
-  journalTemplate = "Weekly-Work-Journal-Template.Rmd",
-  openJournal = TRUE
+  journalTemplate = "Weekly-Work-Journal-Template.Rmd"
 )
 }
 \arguments{
-\item{date}{The start date of the Weekly Journal - typically a Monday.  This
-should be in 'YYYY-MM-DD' format, and can be a String. Can create a Date
-object with code \code{as.Date(paste(year, month, "01", sep = "-"))}.}
+\item{date}{The start date of the Weekly Journal - converted to the current
+week Monday date.  This should be in 'YYYY-MM-DD' format, and can be a String.
+Can create a Date object with code \code{as.Date(paste(year, month, "01", sep = "-"))}.}
 
 \item{organisationPath}{The path to the Organisation where the weekly
 journal is created & saved.}
@@ -27,8 +26,11 @@ YYYY & MM & DD are replaced with the year, month, day in the date arg.}
 for the weekly journal.}
 }
 \description{
-Saved in directory indicated in settings under "WeeklyJournalDir".
+Only creates the weekly journal if it does not exist.  If the weekly journal
+file already exists, it returns the path to the existing file for opening.
 }
 \details{
+Saved in directory indicated in settings under "WeeklyJournalDir".
+
 Can optionally extract TODOs to this file with the \code{extract_todos()} function.
 }

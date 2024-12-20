@@ -83,10 +83,11 @@ ContentSopHeader: ::template::SEP03.txt
 ContentLogHeader: ::template::SEP02.txt
 ContentLogSep: ::template::SEP03.txt
 ContentFooter: ::template::SEP01.txt
-TodoItemHeaderTemplate: '### [] TODO_DESCRIPTION'
-TodoItemHeaderComplete: '### [x]'
-TodoItemHeader: '### ['
-TodoCollectionDir: todo
+TodoHeader: '### '
+TodoHeaderTemplate: '### TODO_HEADER'
+TodoItem: '#### ['
+TodoItemTemplate: '#### [] _todo_item_description_'
+TodoItemComplete: '#### [x]'
 TodoProgrammeSep: ::template::SEP02.txt
 DateTimeZone: UTC
 DateSplit: '-'

@@ -39,6 +39,8 @@
 
     "projectmanagr::addin_link_doc_to_note": "Ctrl+M Ctrl+L",
 
+    "projectmanagr::addin_open_weekly_journal": "Ctrl+M Ctrl+J",
+
     "projectmanagr::addin_rename": "Ctrl+M Ctrl+R",
 
     "projectmanagr::addin_search_project_org": "Ctrl+M Ctrl+O Ctrl+S",

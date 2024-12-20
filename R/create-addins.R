@@ -263,7 +263,8 @@ addin_create_project_doc <- function() {
   if(orgPath=="") { addin_error_org("Create Project Document") }
 
   settings <- get_settings_yml(orgPath)
-  #programmeDirPaths <- fund_prog_dirs(orgPath, settings)
+
+  #### RUN GADGET ####
 
   runGadget(addin_create_project_doc_ui(orgPath, settings, find_prog_dirs(orgPath, settings), get_prog_selected(find_prog_dirs(orgPath, settings))),
             addin_create_project_doc_server, viewer = addin_create_dialog_viewer("Create Project Document", settings))
@@ -506,7 +507,7 @@ addin_create_project_doc_server <- function(input, output, session) {
     } else {
 
       # FIRST - save all open documents in RStudio:
-      if( rstudioapi::isAvailable() ) { rstudioapi::documentSaveAll() }
+      save_all_doc()
 
 
       #### create project doc ####
@@ -646,24 +647,22 @@ addin_create_project_note <- function() {
 #'
 addin_create_project_note_from_doc_gdt <- function(selection, settings, orgPath) {
 
-
   #### instance variables ####
-
-  # get projectDir & progDir
-  projectDirPath <- get_project_doc_dir_path(selection[["filePath"]], settings)
-  progPath <- find_prog_dir(selection[["filePath"]])
-
-  # create vector of possible roots for dir selection in server()
-  roots <- c(projectDirPath, progPath, orgPath) # can use projectDirPath, progPath, or orgPath as roots
-  names(roots) <- c(basename(projectDirPath), basename(progPath), basename(orgPath))
 
   # extract GDT titles from selection
   goalTitle <- get_goal_title(selection[["goal"]], settings)
   delTitle <- get_deliverable_title(selection[["deliverable"]], settings)
   taskTitle <- get_deliverable_title(selection[["task"]], settings)
 
+  #### RUN GADGET ####
 
-  #### user interface ####
+  runGadget(addin_create_prn_doc_gdt_ui(goalTitle, delTitle, taskTitle),
+            addin_create_prn_doc_gdt_server, viewer = addin_create_dialog_viewer("Add New Project Note", settings))
+
+}
+
+
+addin_create_prn_doc_gdt_ui <- function(goalTitle, delTitle, taskTitle) {
 
   ui <- miniPage(
 
@@ -717,279 +716,271 @@ addin_create_project_note_from_doc_gdt <- function(selection, settings, orgPath)
         fillRow(   textOutput("subNotePath")  ),
 
       ),
-
       padding = 10
-
     )
-
   )
-
-
-  #### server function ####
-
-  server <- function(input, output, session) {
-
-    # update projectNoteTitle when projectNoteName is changed:
-    observe({
-
-      updateTextInput(session, "projectNoteTitle", value = gsub("-", " ", gsub("_", " ", input$projectNoteName) )  )
-
-    })
-
-    # update subNoteTitle when subNoteName is changed:
-    observe({
-
-      updateTextInput(session, "subNoteTitle", value = gsub("-", " ", gsub("_", " ", input$subNoteName) )  )
-
-    })
-
-
-    # compute Dir selection:
-    global <- reactiveValues(datapath = selection$defaultPath )
-    # this sets initial value of global$datapath to selections defaultPath (either projDocDir or selected note pir)
-
-    # allows selection of Dir, with roots set to project doc DIR or ORG Dir
-    shinyDirChoose(
-      input, 'dir',
-      defaultRoot = names(roots)[1], # set default to first root
-      roots=roots, # can use projectDirPath, progPath, or orgPath as roots
-      filetypes = c('', 'txt', 'Rmd', "tsv", "csv", "bw")
-    )
-
-    dir <- reactive(input$dir)
-
-    # observe({ cat('\n  input$dir: _', input$dir[[1]], '_\n') }) this causes an error when input$dir becomes a list
-     # so check in the observeEvent() function below
-
-    # update global$datapath
-    observeEvent(ignoreNULL = TRUE,
-                 eventExpr = { # if input$dir is changed
-                   input$dir
-                 },
-                 handlerExpr = { # update datapath with dir() list
-                   if (!"path" %in% names(dir())) return() # check the path element exists in dir
-                   #cat("\n dir() names: ", names(dir())) # contains : root, path
-                   #cat("\n  dir$root: ", dir()$root) # name of the root selected in shinyDirChoose
-                   #cat("\n  dir$path: _", unlist( dir()$path ), "_" ) # list of each dir in dirTree, separated by space?
-                   #cat("\n  dir$path pasted with fileSep: _", paste( unlist( dir()$path ), collapse = .Platform$file.sep ), "_" )
-                    # list of each dir in dirTree created into a path
-                   #cat("\n  dir$path[-1]: _", unlist( dir()$path[-1] ), "_" ) # list of each dir in dirTree, separated by space?
-                   #cat("\n  dir$path[-1] pasted with fileSep: _", paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep ), "_" )
-                    # list of each dir in dirTree created into a path
-                   global$datapath <- file.path( # form path with
-                     roots[[dir()$root]], # shinyDirChoose selected ROOT (selected by its NAME found in dir()$root)
-                     paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep )  ) # shinyDirChoose selected PATH with file.sep added
-                 })
-
-    observe({ cat('\n  global$datapath: _', global$datapath, '_\n') })
-
-
-
-    observe({
-      if(global$datapath != "") { # check computed dir is in a Programme
-        global$datapath <- check_prog_sub_dir(global$datapath)
-      }
-    })
-
-    # show the global$datapath computed from input$dir in output$dir (next to shinyDirButton!)
-    output$dir <- renderText({
-      global$datapath
-    })
-
-    observe({
-      if(global$datapath == "") {
-        output$warningDirectory <- renderText({
-          "DIR PATH NOT VALID DIRECTORY - Must be INSIDE a PROGRAMME DIR"
-        })
-      }
-      else {
-        output$warningDirectory <- renderText({
-          ""
-        })
-      }
-    })
-
-
-    observe({
-
-      if(input$prefixType == "1") { # SINGLE NOTE selected
-
-        # render projectNoteName as SINGLE note then DISABLE subnote names & title inputs
-        if( global$datapath != "" && input$projectNoteName != "" ) {
-
-          projNotePath <- get_project_note_path(global$datapath, input$projectNoteName, settings)
-          output$projectNotePath <- renderText({ projNotePath })
-
-        } else { # do not render a projectNotePath
-
-          output$projectNotePath <- renderText({ "" })
-
-        }
-
-        shinyjs::disable("subNoteName")
-        shinyjs::disable("subNoteTitle")
-        shinyjs::disable("addObjToHeader")
-
-      } else if(input$prefixType == "2") { # GROUP NOTE selected
-
-        # render projectNoteName as GROUP HEADER note, THEN enable subnote name/title and render subNoteName as SUB NOTE
-        if( global$datapath != "" && input$projectNoteName != "" ) {
-
-          headerNotePath <- get_header_note_path(global$datapath, input$projectNoteName, settings )
-          output$projectNotePath <- renderText({ headerNotePath })
-
-        }else {
-
-          output$projectNotePath <- renderText({ "" })
-
-        }
-
-        shinyjs::enable("subNoteName")
-        shinyjs::enable("subNoteTitle")
-        shinyjs::enable("addObjToHeader")
-
-        if( global$datapath != "" && input$subNoteName != "" ) {
-
-          headerNoteDir <- get_next_header_note_dir(global$datapath, input$projectNoteName, settings)
-          subNotePath <- get_sub_note_path(headerNoteDir, input$subNoteName, input$projectNoteName, settings)
-          output$subNotePath <- renderText({ subNotePath })
-
-        } else {
-
-          output$subNotePath <- renderText({ "" })
-
-        }
-      }
-    })
-
-
-    observe({
-
-      if( grepl("\\s", input$projectNoteName)  ) {
-        # set the warningName TextOutput:
-        output$warningName <- renderText({
-          "PROJECT NAME CANNOT CONTAIN SPACES"
-        })
-      }
-      else {
-        output$warningName <- renderText({
-          ""
-        })
-      }
-    })
-
-
-    observe({
-
-      if( grepl("\\s", input$subNoteName)  ) {
-        # set the warningSubName TextOutput:
-        output$warningName <- renderText({
-          "SUBNOTE NAME CANNOT CONTAIN SPACES"
-        })
-      }
-      else {
-        output$warningName <- renderText({
-          ""
-        })
-      }
-    })
-
-    # perform computations to create new Programme:
-    observeEvent(input$done, {
-
-      if(input$projectNoteName == "") {
-        # set the warningName TextOutput:
-        output$warningName <- renderText({
-          "*** PROVIDE PROJECT NAME ***"
-        })
-      } else if( grepl("\\s", input$projectNoteName)  ) {
-        # set the warningName TextOutput:
-        output$warningName <- renderText({
-          "*** PROJECT NAME CANNOT CONTAIN SPACES ***"
-        })
-      } else if(input$prefixType == "2" && input$subNoteName == "") {
-        # set the warningName TextOutput:
-        output$warningName <- renderText({
-          "*** PROVIDE SUBNOTE NAME ***"
-        })
-      } else if( input$prefixType == "2" && grepl("\\s", input$subNoteName)  ) {
-        # set the warningName TextOutput:
-        output$warningName <- renderText({
-          "*** SUBNOTE NAME CANNOT CONTAIN SPACES ***"
-        })
-      } else if(global$datapath == "") {
-        output$warningDirectory <- renderText({
-          "*** DIR PATH NOT VALID PROGRAMME ***"
-        })
-      } else { # add project note
-
-        if(input$prefixType == "1") {
-
-          #### Add SINGLE note ####
-
-          # compute new project note path
-          projNotePath <- get_project_note_path(global$datapath, input$projectNoteName, settings)
-
-          # add project note
-          create_project_note(projectNoteName = input$projectNoteName,
-                              projectNotePath = global$datapath,
-                              selection = selection,
-                              projectNoteTitle = input$projectNoteTitle)
-
-          # open new project note
-          rstudioapi::navigateToFile(projNotePath)
-
-          # navigate to containing dir
-          rstudioapi::filesPaneNavigate( global$datapath )
-          # and set working directory
-          setwd( global$datapath )
-
-        } else {
-
-          #### Add GROUP note ####
-
-          # compute new header note dir && subnote path
-          headerNoteDir <- get_next_header_note_dir(global$datapath, input$projectNoteName, settings)
-          subNotePath <- get_sub_note_path(headerNoteDir, input$subNoteName,
-                                           input$projectNoteName, settings)
-
-          # add group note
-          create_group_note(groupNoteName = input$projectNoteName,
-                            groupNotePath = global$datapath,
-                            selection = selection,
-                            subNoteName = input$subNoteName,
-                            addObjToHeader = input$addObjToHeader,
-                            groupNoteTitle = input$projectNoteTitle,
-                            subNoteTitle = input$subNoteTitle)
-
-          # open new subnote
-          rstudioapi::navigateToFile(subNotePath)
-
-          # navigate to containing dir
-          rstudioapi::filesPaneNavigate(headerNoteDir)
-          # and set working directory
-          setwd(headerNoteDir)
-
-        }
-
-        # Close Gadget after computations are complete:
-        stopApp()
-
-      }
-    })
-  }
-
-
-  #### view gadget ####
-
-  viewer <- dialogViewer("Add New Project Note",
-                         width = settings[["GadgetWidth"]],
-                         height = settings[["GadgetHeight"]])
-
-  runGadget(ui, server, viewer = viewer)
-
+  ui # return
 }
 
+
+addin_create_prn_doc_gdt_server <- function(input, output, session) {
+
+  # initialise variables
+  selection <- cursor_selection() # Project Doc, Project Note - Simple, Header, SubNote
+  #cat("selection: ", paste(selection, collapse=' '))
+  orgPath <- find_org_directory(selection$filePath)
+  settings <- get_settings_yml(orgPath)
+  projectDirPath <- get_project_doc_dir_path(selection[["filePath"]], settings)
+  progPath <- find_prog_dir(selection[["filePath"]])
+  # create vector of possible roots for dir selection in server()
+  roots <- c(projectDirPath, progPath, orgPath) # can use projectDirPath, progPath, or orgPath as roots
+  names(roots) <- c(basename(projectDirPath), basename(progPath), basename(orgPath))
+
+
+  # update projectNoteTitle when projectNoteName is changed:
+  observe({
+
+    updateTextInput(session, "projectNoteTitle", value = gsub("-", " ", gsub("_", " ", input$projectNoteName) )  )
+
+  })
+
+  # update subNoteTitle when subNoteName is changed:
+  observe({
+
+    updateTextInput(session, "subNoteTitle", value = gsub("-", " ", gsub("_", " ", input$subNoteName) )  )
+
+  })
+
+
+  # compute Dir selection:
+  global <- reactiveValues(datapath = selection$defaultPath )
+  # this sets initial value of global$datapath to selections defaultPath (either projDocDir or selected note pir)
+
+  # allows selection of Dir, with roots set to project doc DIR or ORG Dir
+  shinyDirChoose(
+    input, 'dir',
+    defaultRoot = names(roots)[1], # set default to first root
+    roots=roots, # can use projectDirPath, progPath, or orgPath as roots
+    filetypes = c('', 'txt', 'Rmd', "tsv", "csv", "bw")
+  )
+
+  dir <- reactive(input$dir)
+
+  # observe({ cat('\n  input$dir: _', input$dir[[1]], '_\n') }) this causes an error when input$dir becomes a list
+  # so check in the observeEvent() function below
+
+  # update global$datapath
+  observeEvent(ignoreNULL = TRUE,
+               eventExpr = { # if input$dir is changed
+                 input$dir
+               },
+               handlerExpr = { # update datapath with dir() list
+                 if (!"path" %in% names(dir())) return() # check the path element exists in dir
+                 #cat("\n dir() names: ", names(dir())) # contains : root, path
+                 #cat("\n  dir$root: ", dir()$root) # name of the root selected in shinyDirChoose
+                 #cat("\n  dir$path: _", unlist( dir()$path ), "_" ) # list of each dir in dirTree, separated by space?
+                 #cat("\n  dir$path pasted with fileSep: _", paste( unlist( dir()$path ), collapse = .Platform$file.sep ), "_" )
+                 # list of each dir in dirTree created into a path
+                 #cat("\n  dir$path[-1]: _", unlist( dir()$path[-1] ), "_" ) # list of each dir in dirTree, separated by space?
+                 #cat("\n  dir$path[-1] pasted with fileSep: _", paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep ), "_" )
+                 # list of each dir in dirTree created into a path
+                 global$datapath <- file.path( # form path with
+                   roots[[dir()$root]], # shinyDirChoose selected ROOT (selected by its NAME found in dir()$root)
+                   paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep )  ) # shinyDirChoose selected PATH with file.sep added
+               })
+
+  observe({ cat('\n  global$datapath: _', global$datapath, '_\n') })
+
+
+
+  observe({
+    if(global$datapath != "") { # check computed dir is in a Programme
+      global$datapath <- check_prog_sub_dir(global$datapath)
+    }
+  })
+
+  # show the global$datapath computed from input$dir in output$dir (next to shinyDirButton!)
+  output$dir <- renderText({
+    global$datapath
+  })
+
+  observe({
+    if(global$datapath == "") {
+      output$warningDirectory <- renderText({
+        "DIR PATH NOT VALID DIRECTORY - Must be INSIDE a PROGRAMME DIR"
+      })
+    }
+    else {
+      output$warningDirectory <- renderText({
+        ""
+      })
+    }
+  })
+
+
+  observe({
+
+    if(input$prefixType == "1") { # SINGLE NOTE selected
+
+      # render projectNoteName as SINGLE note then DISABLE subnote names & title inputs
+      if( global$datapath != "" && input$projectNoteName != "" ) {
+
+        projNotePath <- get_project_note_path(global$datapath, input$projectNoteName, settings)
+        output$projectNotePath <- renderText({ projNotePath })
+
+      } else { # do not render a projectNotePath
+
+        output$projectNotePath <- renderText({ "" })
+
+      }
+
+      shinyjs::disable("subNoteName")
+      shinyjs::disable("subNoteTitle")
+      shinyjs::disable("addObjToHeader")
+
+    } else if(input$prefixType == "2") { # GROUP NOTE selected
+
+      # render projectNoteName as GROUP HEADER note, THEN enable subnote name/title and render subNoteName as SUB NOTE
+      if( global$datapath != "" && input$projectNoteName != "" ) {
+
+        headerNotePath <- get_header_note_path(global$datapath, input$projectNoteName, settings )
+        output$projectNotePath <- renderText({ headerNotePath })
+
+      }else {
+
+        output$projectNotePath <- renderText({ "" })
+
+      }
+
+      shinyjs::enable("subNoteName")
+      shinyjs::enable("subNoteTitle")
+      shinyjs::enable("addObjToHeader")
+
+      if( global$datapath != "" && input$subNoteName != "" ) {
+
+        headerNoteDir <- get_next_header_note_dir(global$datapath, input$projectNoteName, settings)
+        subNotePath <- get_sub_note_path(headerNoteDir, input$subNoteName, input$projectNoteName, settings)
+        output$subNotePath <- renderText({ subNotePath })
+
+      } else {
+
+        output$subNotePath <- renderText({ "" })
+
+      }
+    }
+  })
+
+
+  observe({
+
+    if( grepl("\\s", input$projectNoteName)  ) {
+      # set the warningName TextOutput:
+      output$warningName <- renderText({
+        "PROJECT NAME CANNOT CONTAIN SPACES"
+      })
+    }
+    else {
+      output$warningName <- renderText({
+        ""
+      })
+    }
+  })
+
+
+  observe({
+
+    if( grepl("\\s", input$subNoteName)  ) {
+      # set the warningSubName TextOutput:
+      output$warningName <- renderText({
+        "SUBNOTE NAME CANNOT CONTAIN SPACES"
+      })
+    }
+    else {
+      output$warningName <- renderText({
+        ""
+      })
+    }
+  })
+
+  # perform computations to create new Programme:
+  observeEvent(input$done, {
+
+    if(input$projectNoteName == "") {
+      # set the warningName TextOutput:
+      output$warningName <- renderText({
+        "*** PROVIDE PROJECT NAME ***"
+      })
+    } else if( grepl("\\s", input$projectNoteName)  ) {
+      # set the warningName TextOutput:
+      output$warningName <- renderText({
+        "*** PROJECT NAME CANNOT CONTAIN SPACES ***"
+      })
+    } else if(input$prefixType == "2" && input$subNoteName == "") {
+      # set the warningName TextOutput:
+      output$warningName <- renderText({
+        "*** PROVIDE SUBNOTE NAME ***"
+      })
+    } else if( input$prefixType == "2" && grepl("\\s", input$subNoteName)  ) {
+      # set the warningName TextOutput:
+      output$warningName <- renderText({
+        "*** SUBNOTE NAME CANNOT CONTAIN SPACES ***"
+      })
+    } else if(global$datapath == "") {
+      output$warningDirectory <- renderText({
+        "*** DIR PATH NOT VALID PROGRAMME ***"
+      })
+    } else { # add project note
+
+      if(input$prefixType == "1") {
+
+        #### Add SINGLE note ####
+
+        # compute new project note path
+        projNotePath <- get_project_note_path(global$datapath, input$projectNoteName, settings)
+
+        # add project note
+        create_project_note(projectNoteName = input$projectNoteName,
+                            projectNotePath = global$datapath,
+                            selection = selection,
+                            projectNoteTitle = input$projectNoteTitle)
+
+        # navigate to org index file & close addin:
+        addin_rstudio_nav(projNotePath)
+
+      } else {
+
+        #### Add GROUP note ####
+
+        # compute new header note dir && subnote path
+        headerNoteDir <- get_next_header_note_dir(global$datapath, input$projectNoteName, settings)
+        subNotePath <- get_sub_note_path(headerNoteDir, input$subNoteName,
+                                         input$projectNoteName, settings)
+
+        # add group note
+        create_group_note(groupNoteName = input$projectNoteName,
+                          groupNotePath = global$datapath,
+                          selection = selection,
+                          subNoteName = input$subNoteName,
+                          addObjToHeader = input$addObjToHeader,
+                          groupNoteTitle = input$projectNoteTitle,
+                          subNoteTitle = input$subNoteTitle)
+
+        # open new subnote
+        rstudioapi::navigateToFile(subNotePath)
+
+        # navigate to containing dir
+        rstudioapi::filesPaneNavigate(headerNoteDir)
+        # and set working directory
+        setwd(headerNoteDir)
+
+      }
+
+      # Close Gadget after computations are complete:
+      stopApp()
+
+    }
+  })
+}
 
 #' Add new subnote under group note - inheriting all group note GDTs
 #'
@@ -1649,32 +1640,210 @@ addin_create_content <- function() {
 }
 
 
+#' Addin to Open Weekly Journal
+#'
+#' A Shiny gadget that displays the current ORG directory path and a calendar
+#' interface. The user can select a date, which determines the week for the
+#' weekly journal. If a journal for the selected week already exists, it will
+#' be opened. Otherwise, a new journal is created using the
+#' `create_weekly_journal()` function.
+#'
+#' @details
+#' The function uses the current working directory of the active document to
+#' identify the ORG directory and settings. The user is presented with a
+#' calendar interface to select a date. If the ORG directory is not found,
+#' an error is displayed, and the function terminates.
+#'
+#' Internally, the function:
+#' - Ensures the working directory is set to the active document's path.
+#' - Finds the ORG directory.
+#' - Retrieves settings from a YAML file in the ORG directory.
+#' - Displays a Shiny gadget with the appropriate UI and server components.
+#'
+#' @seealso
+#' - \code{\link{create_weekly_journal}} for creating weekly journal files.
+#' - \code{\link{find_org_directory}} for locating the ORG directory.
+#' - \code{\link{get_settings_yml}} for retrieving settings from a YAML file.
+#' - \code{\link{addin_error_org}} for handling ORG-related errors.
+#'
+#' @examples
+#' # Open the weekly journal gadget:
+#' projectmanagr::addin_open_weekly_journal()
+#'
+#' @note
+#' This function is intended to be used interactively as an RStudio Addin.
+#'
+#' @export
+addin_open_weekly_journal <- function() {
 
-addin_create_weekly_journal <- function(date=lubridate::today(),
-                                  organisationPath=getwd(),
-                                  journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
-                                  journalTemplate="Weekly-Work-Journal-Template.Rmd",
-                                  openJournal = TRUE) {
+  cat("\nprojectmanagr::addin_open_weekly_journal():\n")
 
+  # Set working directory to the active document's path
+  set_wd_active_doc()
 
+  #### Instance Variables ####
 
-  create_weekly_journal(date, organisationPath, journalFileNameTemplate, journalTemplate)
+  # Locate the ORG directory based on the current working directory
+  orgPath <- find_org_directory(getwd())
 
-
-  # open the newly created journal
-  if( openJournal == TRUE ) {
-
-    # navigate to journalk file:
-    rstudioapi::navigateToFile(journalRmdPath)
-
-    journalDirPath <- dirname(journalRmdPath)
-    # navigate to containing dir
-    rstudioapi::filesPaneNavigate(journalDirPath)
-    # and set working directory
-    setwd(journalDirPath)
-
+  # Handle error if ORG directory is not found
+  if (orgPath == "") {
+    addin_error_org("Open Weekly Journal")
   }
 
+  # Retrieve settings from the YAML file in the ORG directory
+  settings <- get_settings_yml(orgPath)
+
+  #### Run Shiny Gadget ####
+
+  runGadget(
+    addin_open_weekly_journal_ui(orgPath), addin_open_weekly_journal_server, viewer = addin_create_dialog_viewer("Open Weekly Journal", settings)
+  )
 }
+
+
+
+#' UI for Addin: Open Weekly Journal
+#'
+#' Constructs the UI for the "Open Weekly Journal" Shiny gadget.
+#' Displays the organisation path, a calendar for selecting a date, and
+#' highlights the week corresponding to the selected date.
+#'
+#' @param orgPath Character string. The path to the ORG directory where journal files are stored.
+#' @param calDate Date object. The default date to display in the calendar. Defaults to the current system date (\code{Sys.Date()}).
+#' @param calendar_function Function. The calendar rendering function to use. Defaults to \code{shiny.fluent::Calendar.shinyInput}.
+#'
+#' @details
+#' This function creates a user interface for selecting a date using a calendar
+#' component. The selected date determines the weekly journal to open or create.
+#' The organisation path is displayed prominently for user context.
+#'
+#' Features:
+#' - Automatically listens for the "Enter" key to trigger the Done button.
+#' - Highlights the current and selected months in the calendar.
+#' - Displays the selected week dynamically.
+#'
+#' The function uses \code{miniUI} to create a compact, user-friendly layout
+#' suitable for Shiny gadgets.
+#'
+#' @return
+#' A \code{miniUI::miniPage} object representing the UI for the gadget.
+#'
+#' @examples
+#' # Example usage:
+#' ui <- addin_open_weekly_journal_ui(
+#'   orgPath = "/path/to/org",
+#'   calDate = as.Date("2024-01-01"),
+#'   calendar_function = shiny.fluent::Calendar.shinyInput
+#' )
+#'
+#' @seealso
+#' - \code{\link[miniUI]{miniPage}} for details on constructing UI components for Shiny gadgets.
+#' - \code{\link[shiny.fluent]{Calendar.shinyInput}} for the calendar component.
+#'
+#' @note
+#' This UI is designed for use with the server logic defined in \code{addin_open_weekly_journal_server}.
+#'
+addin_open_weekly_journal_ui <- function(orgPath, calDate = Sys.Date(), calendar_function = shiny.fluent::Calendar.shinyInput) {
+  miniUI::miniPage(
+    # JavaScript to listen for Enter key and trigger Done button
+    tags$script(HTML("
+      $(document).on('keydown', function(e) {
+        if (e.key === 'Enter') {
+          $('#done').click(); // Trigger the Done button
+        }
+      });
+    ")),
+    miniUI::gadgetTitleBar("Open Weekly Journal: Select a Week"),
+    miniUI::miniContentPanel(
+      h4(paste0("Organisation Path:  ", orgPath), align = "center"),
+      div(
+        style = "padding: 20px;",
+        calendar_function(
+          "calendar", value = calDate, showGoToToday = TRUE,
+          highlightCurrentMonth = TRUE, highlightSelectedMonth = TRUE, firstDayOfWeek = 1
+        ),
+        align = "center"
+      ),
+      br(),
+      verbatimTextOutput("selected_week_text")
+    )
+  )
+}
+
+
+#' Server Logic for Addin: Open Weekly Journal
+#'
+#' Implements the server logic for the "Open Weekly Journal" Shiny gadget.
+#' Handles date selection from the calendar, determines the corresponding week's
+#' Monday, and creates or navigates to the weekly journal file as needed.
+#'
+#' @param input Reactive input object. Contains inputs from the Shiny gadget UI, including the selected date from the calendar (\code{input$calendar}) and the "Done" button action (\code{input$done}).
+#' @param output Reactive output object. Used to render outputs in the UI, such as the text displaying the Monday of the selected week (\code{output$selected_week_text}).
+#' @param session Reactive session object. Used to manage the Shiny gadget's session.
+#'
+#' @details
+#' This function processes user interactions with the "Open Weekly Journal" gadget:
+#' - Monitors the calendar input for date selection.
+#' - Calculates the Monday of the selected week using \code{lubridate::floor_date}.
+#' - Displays the calculated Monday date in the UI.
+#' - Responds to the "Done" button click:
+#'   - If a week is selected, it creates the journal for that week (if necessary) and navigates to the journal file in RStudio.
+#'   - If no week is selected, the gadget is closed without any action.
+#'
+#' @return
+#' This function does not return a value. It is invoked as part of the Shiny server logic for the gadget.
+#'
+#' @examples
+#' # Example usage within a Shiny gadget:
+#' server <- function(input, output, session) {
+#'   addin_open_weekly_journal_server(input, output, session)
+#' }
+#'
+#' @seealso
+#' - \code{\link{addin_open_weekly_journal_ui}} for the corresponding UI function.
+#' - \code{\link{create_weekly_journal}} for creating weekly journal files.
+#' - \code{\link{addin_rstudio_nav}} for navigating to files in RStudio.
+#'
+#' @note
+#' This function is designed to be used exclusively within a Shiny gadget as part of the "Open Weekly Journal" add-in.
+#'
+addin_open_weekly_journal_server <- function(input, output, session) {
+  # Reactive value to store the Monday of the selected week
+  selected_week <- reactiveVal(NULL)
+
+  # Observe date selection
+  observeEvent(input$calendar, {
+    if (!is.null(input$calendar)) {
+      selected_date <- as.Date(input$calendar)
+      monday_of_week <- lubridate::floor_date(selected_date, "week", week_start = 1)
+      selected_week(monday_of_week)
+    }
+  })
+
+  # Display the Monday of the selected week
+  output$selected_week_text <- renderText({
+    if (!is.null(selected_week())) {
+      paste("Monday of selected week:", selected_week())
+    } else {
+      "No week selected yet."
+    }
+  })
+
+  # Handle "Done" button click
+  observeEvent(input$done, {
+    if (!is.null(selected_week())) {
+      # Create journal if necessary
+      journalPath <- create_weekly_journal(selected_week())
+
+      # Navigate to journal file & close add-in
+      addin_rstudio_nav(journalPath)
+    } else {
+      stopApp(NULL)
+    }
+  })
+}
+
+
 
 

@@ -324,9 +324,11 @@ get_context_row_end <- function() {
 }
 
 save_context_doc <- function() {
-  if( rstudioapi::isAvailable() ) {
-    rstudioapi::documentSave(id = get_context_id())
-    }
+  if( rstudioapi::isAvailable() ) { rstudioapi::documentSave(id = get_context_id()) }
+}
+
+save_all_doc <- function() {
+  if( rstudioapi::isAvailable() ) { rstudioapi::documentSaveAll() }
 }
 
 
