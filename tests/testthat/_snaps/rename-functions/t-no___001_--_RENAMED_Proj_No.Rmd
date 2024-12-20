@@ -1,0 +1,103 @@
+---
+title: 't-no___001~ Proj No'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PrDoS : EXAMPLE TASK TITLE
+
+
+[PrDoS_--_RENAMED_PrDoS](../../PrDoS_--_RENAMED_PrDoS.Rmd)
+
+
+* [GOAL: RENAMED EXAMPLE GOAL HEADER](../../PrDoS_--_RENAMED_PrDoS.Rmd#goal-renamed-example-goal-header)
+
+    + [DELIVERABLE: RENAMED EXAMPLE DEL HEADER](../../PrDoS_--_RENAMED_PrDoS.Rmd#deliverable-renamed-example-del-header)
+
+        - [TASK: EXAMPLE RENAMED TASK HEADER](../../PrDoS_--_RENAMED_PrDoS.Rmd#task-example-renamed-task-header)
+
+
+
+### _summary_point_01_
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+
+--------------------- todo ---------------------
+------------------------------------------------
+
+
+### TODO_HEADER
+
+
+* _details_of_todo_
+
+
+
+#### [] _todo_item_description_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# RENAMED Introduction RENAMED
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

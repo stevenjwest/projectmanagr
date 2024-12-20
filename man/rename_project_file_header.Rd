@@ -13,5 +13,7 @@ Header (starts with \verb{#}) to be renamed.}
 \item{headerName}{The new name to use for the selected Header}
 }
 \description{
-Section Headers defined in Markdown plasintext files, beginning wiht \verb{#}.
+Section Headers defined in Markdown plasintext files, beginning with \verb{#}. This
+method ensures all links to a file header are appropriately updated across
+the ProjectManagr Organisation.
 }

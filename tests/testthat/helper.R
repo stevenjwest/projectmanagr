@@ -140,7 +140,7 @@ local_create_prog <- function(progName, orgDir,
 #' @param env parent.frame for withr::deferred_run()
 #'
 local_create_project <- function(projectPrefix, projectName, progDir,
-                              env = parent.frame() ) {
+                                 env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
@@ -149,14 +149,53 @@ local_create_project <- function(projectPrefix, projectName, progDir,
   create_project_doc(projectPrefix, projectName, progDir)
 
   # create paths to Rmd & dir
+  renamedProjectRmd <- fs::path(progDir, paste0(projectPrefix, "_--_", projectName, ".Rmd") )
   projectRmd <- fs::path(progDir, paste0(projectPrefix, "_--_", projectName, ".Rmd") )
+
   projectDir <- fs::path(progDir, projectPrefix)
 
   # ensure Rmd & Dir are deleted when out of context
-  withr::defer(fs::file_delete(projectRmd), envir = env)
+  withr::defer(fs::file_delete(renamedProjectRmd), envir = env)
   withr::defer(fs::dir_delete(projectDir), envir = env)
 
-  # return the project Rmd
+  # return the current project Rmd
+  projectRmd
+
+}
+
+#' create test project
+#'
+#' Create & remove test fixtures in reproducible temp dir using `withr::defer()`
+#'
+#' @param projectPrefix prefix of project
+#'
+#' @param projectName name of project
+#'
+#' @param progDir dir to programme
+#'
+#' @param env parent.frame for withr::deferred_run()
+#'
+local_create_project_rename <- function(projectPrefix, projectName, progDir,
+                                 renamedDocName, env = parent.frame() ) {
+
+  # record current state
+  olddir <- getwd()
+
+  # create project doc
+  create_project_doc(projectPrefix, projectName, progDir)
+
+  # create paths to Rmd & dir - use new renamed Rmd file name for deferred deletion
+  renamedProjectRmd <- fs::path(progDir, paste0(projectPrefix, "_--_", renamedDocName, ".Rmd") )
+  projectRmd <- fs::path(progDir, paste0(projectPrefix, "_--_", projectName, ".Rmd") )
+
+  projectDir <- fs::path(progDir, projectPrefix)
+
+  # ensure Rmd & Dir are deleted when out of context
+  # use new renamed Rmd file name for deferred deletion
+  withr::defer(fs::file_delete(renamedProjectRmd), envir = env)
+  withr::defer(fs::dir_delete(projectDir), envir = env)
+
+  # return the current project Rmd
   projectRmd
 
 }
@@ -211,7 +250,8 @@ local_modify_project_doc_gdt_titles <- function(settingsYml, projectRmd,
 
 local_create_project_note_simple <- function(projectNoteName, projectNotePath,
                                              projectDocPath, taskLine,
-                                             noteIndex="___001", env = parent.frame() ) {
+                                             noteIndex="___001",
+                                             env = parent.frame() ) {
 
   # interactive testing - set projectDocPath
   #projectDocPath <- projectDocRmd
@@ -228,13 +268,51 @@ local_create_project_note_simple <- function(projectNoteName, projectNotePath,
 
   # create paths to Rmd & dir
   projectNoteRmd <- fs::path(projectNotePath, paste0(basename(projectNotePath), noteIndex,"_--_", projectNoteName, ".Rmd") )
+  renameNoteRmd <- fs::path(projectNotePath, paste0(basename(projectNotePath), noteIndex,"_--_", projectNoteName, ".Rmd") )
+
   projectNoteDir <- fs::path(projectNotePath, paste0(basename(projectNotePath), noteIndex) )
 
   # ensure Rmd & Dir are deleted when out of context
-  withr::defer(fs::file_delete(projectNoteRmd), envir = env)
+  withr::defer(fs::file_delete(renameNoteRmd), envir = env)
   withr::defer(fs::dir_delete(projectNoteDir), envir = env)
 
   # return the project Rmd
+  projectNoteRmd
+
+
+}
+
+
+local_create_project_note_simple_rename <- function(projectNoteName, projectNotePath,
+                                             projectDocPath, taskLine,
+                                             noteIndex="___001", renameNoteName="",
+                                             env = parent.frame() ) {
+
+  # interactive testing - set projectDocPath
+  #projectDocPath <- projectDocRmd
+  #noteIndex="___001"
+
+  # record current state
+  olddir <- getwd()
+
+  # generate selection object via projectmanagr function
+  selection <- user_selection(projectDocPath, taskLine)
+
+  # create project note
+  create_project_note(projectNoteName, projectNotePath, selection)
+
+  # create paths to Rmd & dir - ability to defer deletion of rename testing
+  projectNoteRmd <- fs::path(projectNotePath, paste0(basename(projectNotePath), noteIndex,"_--_", projectNoteName, ".Rmd") )
+  renameNoteRmd <- fs::path(projectNotePath, paste0(basename(projectNotePath), noteIndex,"_--_", renameNoteName, ".Rmd") )
+
+  projectNoteDir <- fs::path(projectNotePath, paste0(basename(projectNotePath), noteIndex) )
+
+  # ensure Rmd & Dir are deleted when out of context
+  # use new renamed Rmd file name for deferred deletion
+  withr::defer(fs::file_delete(renameNoteRmd), envir = env)
+  withr::defer(fs::dir_delete(projectNoteDir), envir = env)
+
+  # return the current project Rmd
   projectNoteRmd
 
 
@@ -259,6 +337,35 @@ local_create_project_note_group <- function(groupNoteName, groupNotePath,
   # create paths to Rmd & dir
   groupNoteRmd <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___001-00", "_--_", groupNoteName, ".Rmd") )
   groupNoteDir <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___001-00") )
+
+  # ensure Rmd & Dir are deleted when out of context
+  withr::defer(fs::file_delete(groupNoteRmd), envir = env)
+  withr::defer(fs::dir_delete(groupNoteDir), envir = env)
+
+  # return the group Rmd
+  groupNoteRmd
+
+
+}
+
+
+local_create_project_note_group2 <- function(groupNoteName, groupNotePath,
+                                            projectDocPath, taskLine,
+                                            subNoteName,
+                                            env = parent.frame()) {
+
+  # record current state
+  olddir <- getwd()
+
+  # generate selection object via projectmanagr function
+  selection <- user_selection(projectDocPath, taskLine)
+
+  # create group note
+  create_group_note(groupNoteName, groupNotePath, selection, subNoteName)
+
+  # create paths to Rmd & dir
+  groupNoteRmd <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___002-00", "_--_", groupNoteName, ".Rmd") )
+  groupNoteDir <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___002-00") )
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::file_delete(groupNoteRmd), envir = env)
@@ -325,6 +432,47 @@ local_create_project_note_sub <- function(subNoteName, subNotePath,
 
 }
 
+local_create_project_note_sub2 <- function(subNoteName, subNotePath,
+                                          projectDocRmd, headerLinkLine,
+                                          env = parent.frame()) {
+
+  # interactive testing
+  #subNoteName <- subNoteName2
+
+  # record current state
+  olddir <- getwd()
+
+  # generate selection object via projectmanagr function
+  selection <- user_selection(projectDocRmd, headerLinkLine)
+
+  # create project note
+  create_sub_note(subNoteName, subNotePath, selection)
+
+  # other ARGS
+  subNoteTitle=""
+  subNoteTemplate="Project-Sub-Note-Template.Rmd"
+  headerNoteContentLinkTemplate="Project-Header-Note-Content-Link-Template.Rmd"
+  subNoteContentLinkTemplate="Project-Sub-Note-Content-Link-Template.Rmd"
+  projNoteLinkTemplate="Project-Note-Link-Template.Rmd"
+  projNoteLinkSummaryTemplate="Project-Note-Link-Summary-Template.Rmd"
+  todoTemplate="Todo-Template.Rmd"
+  projNoteSummaryTemplate="Project-Note-Summary-Template.Rmd"
+  subNoteSummaryTemplate="Project-Sub-Note-Summary-Template.Rmd"
+
+  # create paths to Rmd & dir - 2ND SUBNOTE!
+  subNoteRmd <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___002-002_--_", subNoteName, ".Rmd") )
+  subNoteDir <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___002-002") )
+
+  # ensure Rmd & Dir are deleted when out of context
+  withr::defer(fs::file_delete(subNoteRmd), envir = env)
+  withr::defer(fs::dir_delete(subNoteDir), envir = env)
+
+  # return the project Rmd
+  subNoteRmd
+
+
+}
+
 
 local_create_project_note_sub_head_sel <- function(subNoteName, subNotePath,
                                           headNotePath, headLine,
@@ -353,6 +501,45 @@ local_create_project_note_sub_head_sel <- function(subNoteName, subNotePath,
   # create paths to Rmd & dir - 2ND SUBNOTE!
   subNoteRmd <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-003_--_", subNoteName, ".Rmd") )
   subNoteDir <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___001-003") )
+
+  # ensure Rmd & Dir are deleted when out of context
+  withr::defer(fs::file_delete(subNoteRmd), envir = env)
+  withr::defer(fs::dir_delete(subNoteDir), envir = env)
+
+  # return the project Rmd
+  subNoteRmd
+
+
+}
+
+
+local_create_project_note_sub_head_sel2 <- function(subNoteName, subNotePath,
+                                                   headNotePath, headLine,
+                                                   env = parent.frame()) {
+
+  # record current state
+  olddir <- getwd()
+
+  # generate selection object via projectmanagr function
+  selection <- user_selection(headNotePath, headLine)
+
+  # create project note
+  create_sub_note(subNoteName, subNotePath, selection)
+
+  # other ARGS
+  subNoteTitle=""
+  subNoteTemplate="Project-Sub-Note-Template.Rmd"
+  headerNoteContentLinkTemplate="Project-Header-Note-Content-Link-Template.Rmd"
+  subNoteContentLinkTemplate="Project-Sub-Note-Content-Link-Template.Rmd"
+  projNoteLinkTemplate="Project-Note-Link-Template.Rmd"
+  projNoteLinkSummaryTemplate="Project-Note-Link-Summary-Template.Rmd"
+  todoTemplate="Todo-Template.Rmd"
+  projNoteSummaryTemplate="Project-Note-Summary-Template.Rmd"
+  subNoteSummaryTemplate="Project-Sub-Note-Summary-Template.Rmd"
+
+  # create paths to Rmd & dir - 2ND SUBNOTE!
+  subNoteRmd <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___002-003_--_", subNoteName, ".Rmd") )
+  subNoteDir <- fs::path(subNotePath, paste0(basename(dirname(subNotePath)), "___002-003") )
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::file_delete(subNoteRmd), envir = env)
@@ -409,17 +596,14 @@ local_create_journal <- function(date, organisationPath, env = parent.frame() ) 
   journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}"
   journalTemplate="Weekly-Work-Journal-Template.Rmd"
 
-  # create project note
-  create_weekly_journal(date, organisationPath, journalFileNameTemplate, journalTemplate)
+  # create weekly journal
+  journalRmd <- create_weekly_journal(date, organisationPath, journalFileNameTemplate, journalTemplate)
 
-  # create paths to Rmd & dir
-  journalDir <- fs::path(organisationPath, "weekly-journal")
-  # journalRmd is in journalDir and basename is also contentName
-  journalRmd <- fs::path(journalDir, paste0(date, "_", basename(organisationPath), ".Rmd"))
+  # define path to Rmd
+  journalDir <- fs::path_dir(journalRmd)
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::dir_delete(journalDir), envir = env)
-  #withr::defer(fs::file_delete(journalRmd), envir = env)
 
   # return the journal Rmd
   journalRmd
@@ -603,11 +787,11 @@ add_group_lines <- function(rmd_path, rmd_line) {
     ">>>>          NOTE - group values may need adjusting for correct group attribution",
     ">>>> ",
     "")
-  insert_lines(rmd_path, contents, rmd_line)
+  local_insert_lines(rmd_path, contents, rmd_line)
 }
 
 
-insert_lines <- function(rmd_path, contents, start_line) {
+local_insert_lines <- function(rmd_path, contents, start_line) {
 
   rmd_contents <- read_file(rmd_path)
 
@@ -647,7 +831,7 @@ add_template_create_datatables <- function(rmd_path, ins_line) {
     "",
     "+===============================================================================",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -699,7 +883,7 @@ add_template_add_data_datatables <- function(rmd_path, ins_line) {
     "",
     "+===============================================================================",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -729,7 +913,7 @@ add_dt_create_test <- function(rmd_path, ins_line) {
     "",
     "+===============================================================================",
     "")
-    insert_lines(rmd_path, contents, ins_line)
+    local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -759,7 +943,7 @@ add_dt_create_test_mice <- function(rmd_path, ins_line) {
     "",
     "+===============================================================================",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -788,7 +972,7 @@ add_text_group_decl <- function(rmd_path, ins_line) {
     ">>>>          Copy __GROUP_TITLE__ && __GROUP_ID__ bullets as needed",
     ">>>>",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -884,7 +1068,7 @@ add_template_dispose_datatables <- function(rmd_path, ins_line) {
     "+===============================================================================",
     "",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -983,7 +1167,7 @@ add_ad_template_dispose_datatables <- function(rmd_path, ins_line) {
     "",
     "",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -1015,7 +1199,7 @@ add_ad2_template_dispose_datatables <- function(rmd_path, ins_line) {
     "",
     "",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -1123,7 +1307,7 @@ add_template_resample_datatables <- function(rmd_path, ins_line) {
     "",
     "+===============================================================================",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -1230,7 +1414,7 @@ add_ad_template_resample_datatables <- function(rmd_path, ins_line) {
     "",
 
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -1265,7 +1449,7 @@ add_ad2_template_resample_datatables <- function(rmd_path, ins_line) {
     "",
     "+===============================================================================",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -1318,7 +1502,7 @@ add_template_add_group_datatables <- function(rmd_path, ins_line) {
     "",
     "+===============================================================================",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -1372,8 +1556,204 @@ add_template_add_data_samples_datatables <- function(rmd_path, ins_line) {
     "",
     "+===============================================================================",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
+}
+
+
+local_add_todos_to_project_note <- function(projectNoteRmd) {
+
+  rmd_contents <- read_file(projectNoteRmd)
+
+  # replace the template TODO content in rmd_contents[49:60]
+  # KJEEPING TEMPLATE - so can test it is effectively removed!
+  rmd_contents <- c( rmd_contents[1:59],
+    "",
+    "### Test Todo",
+    "",
+    "",
+    "* This is a Test Todo",
+    "",
+    "    + This is a Test Todo sub-comment",
+    "",
+    "    + This is another Test Todo sub-comment",
+    "",
+    "",
+    "",
+    "#### [] todo subtask 1",
+    "",
+    "",
+    "* Test Todo sub-task comments",
+    "",
+    "    + These stay in the project note TODO section",
+    "",
+    "    + and are NOT extracted with the todo subtask header",
+    "",
+    "",
+    "",
+    "#### [] todo subtask 2",
+    "",
+    "",
+    "Test Todo sub-task comments",
+    "",
+    "* These stay in the project note TODO section",
+    "",
+    "* and are NOT extracted with the todo subtask header",
+    "",
+    "",
+    "",
+    "--------------------------------------------------------------------------------",
+    rmd_contents[61:length(rmd_contents)]
+  )
+
+  write_file(rmd_contents, projectNoteRmd)
+
+}
+
+local_add_todos_to_sub_note1 <- function(subNoteRmd) {
+
+  rmd_contents <- read_file(subNoteRmd)
+
+  # replace the template TODO content in rmd_contents[49:60]
+  rmd_contents <- c( rmd_contents[1:48],
+                     "### Test Sub Todo1",
+                     "",
+                     "",
+                     "Test Todo text",
+                     "",
+                     "* This is a Test Todo",
+                     "",
+                     "    + This is a Test Todo sub-comment",
+                     "",
+                     "    + This is another Test Todo sub-comment",
+                     "",
+                     "",
+                     "",
+                     "#### [] SUB1 todo subtask 1",
+                     "",
+                     "",
+                     "* Test Todo sub-task comments",
+                     "",
+                     "    + These stay in the project note TODO section",
+                     "",
+                     "    + and are NOT extracted with the todo subtask header",
+                     "",
+                     "",
+                     "",
+                     "#### [] SUB1 todo subtask 2",
+                     "",
+                     "",
+                     "Test Todo sub-task comments",
+                     "",
+                     "* These stay in the project note TODO section",
+                     "",
+                     "* and are NOT extracted with the todo subtask header",
+                     "",
+                     "",
+                     "",
+                     "--------------------------------------------------------------------------------",
+                     rmd_contents[61:length(rmd_contents)]
+  )
+
+  write_file(rmd_contents, subNoteRmd)
+
+}
+
+local_add_todos_to_sub_note2 <- function(subNoteRmd) {
+
+  rmd_contents <- read_file(subNoteRmd)
+
+  # replace the template TODO content in rmd_contents[49:60]
+  rmd_contents <- c( rmd_contents[1:48],
+                     "### Test Sub Todo2",
+                     "",
+                     "",
+                     "Test Todo text",
+                     "",
+                     "* This is a Test Todo",
+                     "",
+                     "    + This is a Test Todo sub-comment",
+                     "",
+                     "    + This is another Test Todo sub-comment",
+                     "",
+                     "",
+                     "",
+                     "#### [] SUB2 todo subtask 1",
+                     "",
+                     "",
+                     "* Test Todo sub-task comments",
+                     "",
+                     "    + These stay in the project note TODO section",
+                     "",
+                     "    + and are NOT extracted with the todo subtask header",
+                     "",
+                     "",
+                     "",
+                     "#### [] SUB2 todo subtask 2",
+                     "",
+                     "",
+                     "Test Todo sub-task comments",
+                     "",
+                     "* These stay in the project note TODO section",
+                     "",
+                     "* and are NOT extracted with the todo subtask header",
+                     "",
+                     "",
+                     "",
+                     "--------------------------------------------------------------------------------",
+                     rmd_contents[61:length(rmd_contents)]
+  )
+
+  write_file(rmd_contents, subNoteRmd)
+
+}
+
+local_add_todos_to_sub_note3 <- function(subNoteRmd) {
+
+  rmd_contents <- read_file(subNoteRmd)
+
+  # replace the template TODO content in rmd_contents[49:60]
+  rmd_contents <- c( rmd_contents[1:48],
+                     "### Test Sub Todo3",
+                     "",
+                     "",
+                     "Test Todo text",
+                     "",
+                     "* This is a Test Todo",
+                     "",
+                     "    + This is a Test Todo sub-comment",
+                     "",
+                     "    + This is another Test Todo sub-comment",
+                     "",
+                     "",
+                     "",
+                     "#### [] SUB3 todo subtask 1",
+                     "",
+                     "",
+                     "* Test Todo sub-task comments",
+                     "",
+                     "    + These stay in the project note TODO section",
+                     "",
+                     "    + and are NOT extracted with the todo subtask header",
+                     "",
+                     "",
+                     "",
+                     "#### [] SUB3 todo subtask 2",
+                     "",
+                     "",
+                     "Test Todo sub-task comments",
+                     "",
+                     "* These stay in the project note TODO section",
+                     "",
+                     "* and are NOT extracted with the todo subtask header",
+                     "",
+                     "",
+                     "",
+                     "--------------------------------------------------------------------------------",
+                     rmd_contents[61:length(rmd_contents)]
+  )
+
+  write_file(rmd_contents, subNoteRmd)
 }
 
 
@@ -1567,7 +1947,7 @@ dt_find_add_create_dt1 <- function(rmd_path, ins_line) {
     "+===============================================================================",
     "",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -1650,7 +2030,7 @@ dt_find_add_create_dt2 <- function(rmd_path, ins_line) {
     "+===============================================================================",
     "",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 
@@ -1733,7 +2113,7 @@ dt_find_add_create_dt3 <- function(rmd_path, ins_line) {
     "+===============================================================================",
     "",
     "")
-  insert_lines(rmd_path, contents, ins_line)
+  local_insert_lines(rmd_path, contents, ins_line)
 
 }
 

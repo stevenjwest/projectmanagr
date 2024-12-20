@@ -30,8 +30,7 @@ rename_project_note <- function( projectNotePath, newProjectNoteName,
 
   orgPath <- find_org_directory(projectNotePath)
   if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ",
-                   projectNotePath) )
+    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNotePath) )
   }
   # now, orgPath should be the root dir of the organisation
 
@@ -552,17 +551,6 @@ rename_project_doc_task <- function(taskSelection, newTaskName) {
   update_links(oldtaskLinkSuffix, newtaskLinkSuffix, orgPath,
                settings, oldtaskString, newtaskString)
 
-  #### Update all Headers in GDT for task ####
-
-  # form old and new task headers for this Doc
-  oldtaskHead <- get_doc_task_title_name(projectDocPrefix, oldtaskName)
-  #oldtaskHead <- paste0("## ", projectDocPrefix, " : ", oldtaskName)
-  newtaskHead <- get_doc_task_title_name(projectDocPrefix, newTaskName)
-  #newtaskHead <- paste0("## ", projectDocPrefix, " : ", newTaskName)
-
-  update_headers(oldtaskHead, newtaskHead, orgPath,
-               settings)
-
 }
 
 
@@ -570,7 +558,9 @@ rename_project_doc_task <- function(taskSelection, newTaskName) {
 
 #' Rename a Project File Section Header
 #'
-#' Section Headers defined in Markdown plasintext files, beginning wiht `#`.
+#' Section Headers defined in Markdown plaintext files, beginning with `#`. This
+#' method ensures all links to a file header are appropriately updated across
+#' the ProjectManagr Organisation.
 #'
 #' @param selection Selection from projectmanagr Project file, made on the
 #' Header (starts with `#`) to be renamed.
@@ -614,23 +604,22 @@ rename_project_file_header <- function(selection, headerName) {
 
   oldHeader <- selection[["originalLine"]]
   oldHeaderHash <- get_header_hash(selection[["originalLine"]])
-  oldHeaderTitle <- get_header_title(selection[["originalLine"]])
+  oldHeaderTitle <- trimws(get_header_title(selection[["originalLine"]]))
 
   # assumes headerName does not have leading ' '
   newHeader <- paste(oldHeaderHash, headerName)
 
   # to check for lines that link to the header line:
   projectFileName <- basename(selection$filePath)
+
   oldLinkSuffix <- paste0(projectFileName, '#',
                            gsub(' ', '-', tolower(paste(
-                             settings[["ProjectDeliverableTitle"]],
-                             oldDeliverableName)), fixed=TRUE),
+                             oldHeaderTitle)), fixed=TRUE),
                            ')')
 
   newLinkSuffix <- paste0(projectFileName, '#',
                            gsub(' ', '-', tolower(paste(
-                             settings[["ProjectDeliverableTitle"]],
-                             newDeliverableName)), fixed=TRUE),
+                             headerName)), fixed=TRUE),
                            ')')
 
 
@@ -649,6 +638,8 @@ rename_project_file_header <- function(selection, headerName) {
 
   #### Update all links to Header ####
 
-  update_links(oldLinkSuffix, newLinkSuffix, orgPath, settings)
+  update_links(oldLinkSuffix, newLinkSuffix, orgPath, settings,
+               paste0(projectFileName, " : ", oldHeaderTitle),
+               paste0(projectFileName, " : ", headerName) )
 
 }

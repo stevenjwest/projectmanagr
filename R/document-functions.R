@@ -746,31 +746,28 @@ grep_line_index_from_rev <- function(line, contents, initialIndex) {
 #'
 get_header_title <- function(header) {
 
-  # split by '#'
-  hV <- strsplit(header, '#', fixed=TRUE)[[1]]
+  if( startsWith(header, '#' ) ) {
 
-  # count leading #s
-  leadHashNum <- 0
-  for( h in 1:length(hV) ) {
-    if(hV[h] == "") {
-      leadHashNum <- leadHashNum+1
-    } else {
-      break
+    # identify when the # header stops
+    hspl <- strsplit(header, split='')[[1]]
+    endH <- 1
+    for( lt in hspl ) {
+      if( lt == '#' ) {
+        endH <- endH + 1
+      } else {
+        break
+      }
     }
+
+    # now reform the string from hspl
+    hV <- paste0(hspl[endH:length(hspl)], collapse='')
+  } else {
+    hV <- header
   }
 
-  # increment one further
-  leadHashNum <- leadHashNum+1
+  hV # return
 
-  # remove the leading #s
-  hVr <- hV[leadHashNum:length(hV)]
-
-  # re-add subsequent #s
-  hVfinal <- paste0(hVr, collapse ='',sep='#')
-
-  hVfinal
-
-}
+  }
 
 #' Get Header Hash
 #'
@@ -1012,37 +1009,37 @@ cursor_selection <- function() {
 #' If TASK, DELIVERABLE and GOAL lines are all successfully found, this method returns
 #' a LIST:
 #'
-#' [[1]] or [["task"]] - contains the line that starts "#### TASK" in the Active Document.
+#' `[[1]]` or `[["task"]]` - contains the line that starts "#### TASK" in the Active Document.
 #'
-#' [[2]] or [["taskLine"]] - the task line number (index) in the Active Document.
+#' `[[2]]` or `[["taskLine"]]` - the task line number (index) in the Active Document.
 #'
-#' [[3]] or [["deliverable"]] - contains the line that starts "### DELIVERABLE" in the Active Document.
+#' `[[3]]` or `[["deliverable"]]` - contains the line that starts "### DELIVERABLE" in the Active Document.
 #'
-#' [[4]] or [["deliverableLine"]] - the deliverable line number (index) in the Active Document.
+#' `[[4]]` or `[["deliverableLine"]]` - the deliverable line number (index) in the Active Document.
 #'
-#' [[5]] or [["goal"]] - contains the line that starts "## GOAL" in the Active Document.
+#' `[[5]]` or `[["goal"]]` - contains the line that starts "## GOAL" in the Active Document.
 #'
-#' [[6]] or [["goalLine"]] - the goal line number (index) in the Active Document.
+#' `[[6]]` or `[["goalLine"]]` - the goal line number (index) in the Active Document.
 #'
-#' [[7]] or [["originalLine"]] - the original line where the Active Cursor was on in the Active Document.
+#' `[[7]]` or `[["originalLine"]]` - the original line where the Active Cursor was on in the Active Document.
 #'
-#' [[8]] or [["originalLineNumber"]] - the original line number where the Active Cursor was on in the Active Document.
+#' `[[8]]` or `[["originalLineNumber"]]` - the original line number where the Active Cursor was on in the Active Document.
 #'
-#' [[9]] or [["addingSubNote"]] - a Boolean value indicating the Cursor was on a GROUP (HEADER NOTE or SUBNOTE).
+#' `[[9]]` or `[["addingSubNote"]]` - a Boolean value indicating the Cursor was on a GROUP (HEADER NOTE or SUBNOTE).
 #'
-#' [[10]] or [["headerNoteLink"]] - if addingSubNote is TRUE, contains the link to the headerSubNote, AS IS GIVEN
+#' `[[10]]` or `[["headerNoteLink"]]` - if addingSubNote is TRUE, contains the link to the headerSubNote, AS IS GIVEN
 #' IN THE PROJECT DO (i.e. the link TITLE and then the link ADDRESS - for example
-#' **[LAB~001-00~ GARS SC Clearing Labelling](../LAB/LAB~001-00~_GARS_SC_Clearing_Labelling.Rmd)**), else is BLANK
+#' `**[LAB~001-00~ GARS SC Clearing Labelling](../LAB/LAB~001-00~_GARS_SC_Clearing_Labelling.Rmd)**`), else is BLANK
 #'
-#' [[11]] or [["headerNoteLineNumber"]] - if addingSubNote is TRUE, contains the line that contains the headerSubNoteLink, else is BLANK.
+#' `[[11]]` or `[["headerNoteLineNumber"]]` - if addingSubNote is TRUE, contains the line that contains the headerSubNoteLink, else is BLANK.
 #'
-#' [[12]] or [["projectDocPath"]] - the projectDocPath
+#' `[[12]]` or `[["projectDocPath"]]` - the projectDocPath
 #'
 #'
 #' If this method is unsuccessful (there is an error), it returns a LIST that contains:
 #'
-#' [[1]] - contains the String "FALSE"
-#' [[2]] - contains the errorMessage - a String indicating why the method failed.
+#' `[[1]]` - contains the String "FALSE"
+#' `[[2]]` - contains the errorMessage - a String indicating why the method failed.
 #'
 #' @export
 user_selection <- function(filePath, line) {
@@ -1902,6 +1899,7 @@ link_add_section <- function(NoteLink, toFileSection) {
   paste0(NoteLink, '#', gsub("[ ]|[_]", "-", trimws( tolower( gsub("[^[:alnum:] ]", "", toFileSection) ) ) ) )
 }
 
+
 #' Update links
 #'
 #' Updates every hyperlink in all files within `dirTree`, replacing
@@ -2015,10 +2013,14 @@ update_links_filenames <- function( oldFileName, newName, dirTree, settings,
 
     # read file:
     contents <- read_file(fl)
-
-    if( any( grepl(oldLink, contents, fixed=TRUE )) ) {
+    linkLines <- grepl(oldLink, contents, fixed=TRUE )
+    if( any( linkLines ) ) {
+      # replace oldName with newName in contents in link lines too
+      contents[linkLines] <- gsub(oldName, newName, contents[linkLines], fixed=TRUE)
+      # better to just replace old and new names - ensures names without prefix are properly renamed
+      # and just do this replacement on the lines with oldLink in them
       # replace oldLink with newLink in contents
-      contents <- gsub(oldLink, newLink, contents, fixed=TRUE)
+      #contents[linkLines] <- gsub(oldLink, newLink, contents[linkLines], fixed=TRUE)
       # and save file
       cat( "    replaced link(s) in file:", fl ,"\n" )
       write_file(contents, fl)
