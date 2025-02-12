@@ -2,47 +2,89 @@
 % Please edit documentation in R/create-functions.R
 \name{create_project_doc}
 \alias{create_project_doc}
-\title{Create a New Project Document}
+\title{Create a New Project Document within a Programme}
 \usage{
 create_project_doc(
   projectPrefix,
   projectName,
   projectParentPath,
+  authorValue = Sys.info()["user"],
   projectTitle = "",
   projDocTemplate = "Project-Doc-Template.Rmd",
-  projDocSummaryTemplate = "Project-Doc-Summary-Template.Rmd",
-  projectIndex = 0
+  projDocSummaryTemplate = "Project-Doc-Summary-Template.Rmd"
 )
 }
 \arguments{
-\item{projectPrefix}{Prefix of Project - must contain only alphanumeric chars & be unique to Programme.}
+\item{projectPrefix}{Character. A unique alphanumeric identifier for the project.}
 
-\item{projectName}{Name of Project - must NOT contain a space.}
+\item{projectName}{Character. The name of the new project. Must not contain spaces.}
 
-\item{projectParentPath}{Path to insert the Project into.  This must be a Programme dir, one level below the
-organisation, and containing a PROJECTS/ directory.  The Project will be placed into the PROJECTS/ directory.
-If none found, the method will end without making a Project}
+\item{projectParentPath}{Character. The file path to an existing programme directory.}
 
-\item{projectTitle}{Title of project - by default set to \code{projectName} with "_" & "-" replaced with spaces.}
+\item{authorValue}{Character. The author of the project document. Defaults to
+the system username.}
 
-\item{projDocTemplate}{Rmd template used to create the Project Doc - default is "Project-Doc-Template.Rmd"}
+\item{projectTitle}{Character. The title of the project. If empty, it will be
+derived from \code{projectName}.}
 
-\item{projectIndex}{If 0, the function will determine the projectIndex by searching the PROJECTS/ directory.
-Otherwise, the projectIndex is used to number the Project in its Prefix.}
+\item{projDocTemplate}{Character. The filename of the project document template.
+Default is \code{"Project-Doc-Template.Rmd"}.}
+
+\item{projDocSummaryTemplate}{Character. The filename of the project document
+summary template. Default is \code{"Project-Doc-Summary-Template.Rmd"}.}
 }
 \value{
-projectDocRmd The path to the project docRmd file.
+Character. The file path of the created project document Rmd file.
 }
 \description{
-Generates a new Project inside a Programme in an Organisation.  The projectParentPath
-must be in the Programme directory, which is the sub-Dir to the root ORGANISATION
-dir.
+Generates a new project document within an existing programme directory,
+creating the necessary directory structure, R Markdown files, and updating
+the programme's summary.
 }
 \details{
-The project is automatically numbered, by reading the current projects and determining
-the next number in the sequence, as well as deriving the Programme Prefix.
+This function performs the following steps:
+\enumerate{
+\item Ensures \code{projectName} does not contain spaces.
+\item Identifies the root organisation directory from \code{projectParentPath}.
+\item Validates that \code{projectParentPath} is inside a programme directory.
+\item Creates a new project directory and project document Rmd file.
+\item Populates the project document with metadata such as prefix, title, and author.
+\item Updates the programme's index file to include a summary of the new project.
+}
 
-User must supply the project name, which must contain NO SPACES, and optionally a project
-title.  If no title is provided, the Title is derived from the project name, replacing any
-"_" & "-" with " ". The default projectParentPath is the working directory.
+The function ensures that all directories and files are properly created and
+linked within the project structure.
+}
+\note{
+\itemize{
+\item The \code{projectName} should not contain spaces.
+\item The \code{projectPrefix} should be alphanumeric and unique within the programme.
+\item The function modifies files directly on disk. Ensure backups are created
+before running.
+\item The function relies on a structured organisation and programme directory;
+incorrect structures may cause failures.
+}
+}
+\examples{
+\dontrun{
+# Create a new project document within a programme
+create_project_doc(
+  projectPrefix = "PRJ001",
+  projectName = "DataAnalysis",
+  projectParentPath = "/path/to/programme",
+  authorValue = "sjwest",
+  projectTitle = "Data Analysis Project",
+  projDocTemplate = "Project-Doc-Template.Rmd",
+  projDocSummaryTemplate = "Project-Doc-Summary-Template.Rmd"
+)
+}
+
+}
+\seealso{
+\itemize{
+\item \code{\link{find_org_directory}} to locate the organisation directory.
+\item \code{\link{get_settings_yml}} for retrieving configuration settings.
+\item \code{\link{create_directory}} for creating project directories.
+\item \code{\link{write_file}} for writing content to files.
+}
 }

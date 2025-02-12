@@ -2,20 +2,86 @@
 % Please edit documentation in R/filesystem-functions.R
 \name{get_file_type}
 \alias{get_file_type}
-\title{Get File Type}
+\title{Determine File Type}
 \usage{
 get_file_type(filePath, settings)
 }
 \arguments{
-\item{filePath}{the Absolute path to the file.}
+\item{filePath}{Character string. The full path to the file whose type needs
+to be determined. This should be a file within the structured project directory.}
 
-\item{settings}{List from \code{.config/settings.yml} file.}
+\item{settings}{List. A named list containing project-specific configuration
+settings.
+The following settings are expected:
+\itemize{
+\item \code{ProjectPrefixSep}: Separator string between the prefix and the file name.
+\item \code{ProjectIndexSep}: Separator string between prefix characters and numbers.
+\item \code{GroupNotePrefixSep}: Separator string for major and minor numbering in notes.
+\item \code{HeaderNotePrefix}: String indicating the header note's minor numbering.
+}}
+}
+\value{
+A character string indicating the file type. Possible values:
+\itemize{
+\item \code{"DOC"}
+\item \code{"NOTE"}
+\item \code{"HEAD"}
+\item \code{"SUB"}
+\item \code{"UNKNOWN"}
+}
 }
 \description{
-Determine if the current file is a PROJECT DOC (it is inside the PROJECTS/ Directory),
-a HEADER GROUP NOTE (contains the string "-00~_"), or a SIMPLE or SUB Project Note (any
-other file).
+Identifies the type of file based on its file path, naming conventions,
+and organizational settings. The function distinguishes between project
+documents, notes, and their subtypes.
 }
 \details{
-Returns the relevant String:  DOC, HEAD, SUB, NOTE, or UNKNOWN for unidentified file.
+The function parses the \code{filePath} and compares its naming and location
+against expected patterns based on \code{settings}. It evaluates the prefix
+and other components to classify the file into one of the following types:
+\itemize{
+\item \code{"DOC"}: A project document.
+\item \code{"NOTE"}: A simple note.
+\item \code{"HEAD"}: A header note.
+\item \code{"SUB"}: A sub-note.
+\item \code{"UNKNOWN"}: A file that does not match any known project file type.
+}
+
+The function uses the following logic:
+\itemize{
+\item Project documents are identified by mismatches between the prefix and the
+parent directory name.
+\item Header notes are identified by specific substrings in the prefix
+(e.g., \code{"-00~_"}).
+\item Sub-notes are identified by additional separators in their prefixes and the
+naming of their parent directories.
+\item Simple notes are identified by the presence of a single separator in their
+prefixes.
+}
+}
+\note{
+This function assumes that the project directory structure adheres to the naming conventions
+defined in the \code{settings} parameter. Misconfigured settings or unconventional file names
+may lead to incorrect classifications.
+}
+\examples{
+# Example settings
+settings <- list(
+  ProjectPrefixSep = "~_",
+  ProjectIndexSep = "~",
+  GroupNotePrefixSep = "-",
+  HeaderNotePrefix = "00"
+)
+
+# Example file path
+filePath <- "/project/directory/ABC~001~_file.Rmd"
+
+# Determine file type
+get_file_type(filePath, settings)
+
+}
+\seealso{
+\itemize{
+\item \code{\link{basename}} and \code{\link{dirname}} for extracting components of file paths.
+}
 }

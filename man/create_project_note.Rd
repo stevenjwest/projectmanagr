@@ -2,12 +2,13 @@
 % Please edit documentation in R/create-functions.R
 \name{create_project_note}
 \alias{create_project_note}
-\title{Add a New Project Note}
+\title{Create a New Project Note within a Project Document}
 \usage{
 create_project_note(
   projectNoteName,
   projectNotePath,
   selection,
+  authorValue = Sys.info()["user"],
   projectNoteTitle = "",
   projNoteTemplate = "Project-Note-Template.Rmd",
   projNoteLinkTemplate = "Project-Note-Link-Template.Rmd",
@@ -17,43 +18,112 @@ create_project_note(
 )
 }
 \arguments{
-\item{projectNoteName}{The name of the Project Note, a String that should
-not contain any SPACES.}
+\item{projectNoteName}{Character. The name of the new project note. Must not
+contain spaces.}
 
-\item{projectNotePath}{The directory where the Project Note will be stored.
-This may be a Project Directory, or another Directory specified by the User.
-MUST be a sub-directory or lower inside a PROGRAMME Directory. The
-\code{projectNotePrefix} is computed from this directory - where the string identifier
-is the first string in the directory name up to \code{ProjectIdentifierSep} (specified
-in \code{settings.yml}, default is '_').}
+\item{projectNotePath}{Character. The file path where the project note will
+be created.}
 
-\item{selection}{List containing the Goal, Del, Task selected from the Project
-Doc, as well as other useful information - lines of Task/Del/Goal, projectDoc
-path content of selection line.  See \code{cursor_selection()} or \code{user_selection()}.}
+\item{selection}{List. Contains metadata about the selected project document.
+Must include:
+\itemize{
+\item \code{selection$rmdType}: Must be \code{"DOC"} to indicate a valid project doc.
+\item \code{selection$filePath}: The file path of the project document.
+\item \code{selection$goal}: The goal under which the note is being created.
+\item \code{selection$deliverable}: The deliverable related to the note.
+\item \code{selection$task}: The specific task that the note is linked to.
+\item \code{selection$taskLine}: The line number in the project document where
+the task is defined.
+}}
 
-\item{projectNoteTitle}{OPTIONAL title for the Project Note.  Default is to use
-projectNoteName and replace all \verb{_} and \code{-} with SPACES.}
+\item{authorValue}{Character. The author of the project note. Defaults to the
+system username.}
 
-\item{projNoteTemplate}{Template to use, as found in the \verb{.config/templates/}
-directory.  Default is "Project-Note-Template.Rmd"}
+\item{projectNoteTitle}{Character. The title of the project note. If empty,
+it will be derived from \code{projectNoteName}.}
 
-\item{projNoteLinkTemplate}{Template with structure to add the Project Doc
-Goal/Del/Task link in the Project Note.  Includes Project Doc title, link,
-and then links to Goal / Del / Task, plus a Summary Info section (filled
-with the content from \code{taskSectionHeaderTemplate}).}
+\item{projNoteTemplate}{Character. The filename of the project note template.
+Default is \code{"Project-Note-Template.Rmd"}.}
 
-\item{projNoteLinkSummaryTemplate}{Template with structure to add underneath the
-Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-and a 'todo' section by default, linked to \code{NoteObjectivesTodoSectionHeader}
-in \code{.config/settings.yml}}
+\item{projNoteLinkTemplate}{Character. The filename of the project note link
+template. Default is \code{"Project-Note-Link-Template.Rmd"}.}
 
-\item{projNoteSummaryTemplate}{Template with structure to add Project Note
-summary to Project Doc under Goal/Del/Task.}
+\item{projNoteLinkSummaryTemplate}{Character. The filename of the project note
+link summary template. Default is \code{"Project-Note-Link-Summary-Template.Rmd"}.}
+
+\item{todoTemplate}{Character. The filename of the project note's To-Do
+template. Default is \code{"Todo-Template.Rmd"}.}
+
+\item{projNoteSummaryTemplate}{Character. The filename of the project note
+summary template. Default is \code{"Project-Note-Summary-Template.Rmd"}.}
+}
+\value{
+None. The function creates files and modifies the project document.
 }
 \description{
-This Addin adds a single Project Note to a Poject Doc under a Goal / Del /
-Task - the Project Note consists of one Rmd Note and its corresponding
-Directory, named with a computed \code{projectNotePrefix} including identifier
-and Major Numbering, separated by \code{ProjectIndexSep}, as specified in
-\code{settings.yml}, and \code{projectNoteName}.
+Generates a new project note within an existing project document, creating
+the necessary directory structure, R Markdown files, and linking it to the
+corresponding goal, deliverable, or task in the project document.
+}
+\details{
+This function performs the following steps:
+\enumerate{
+\item Ensures \code{projectNoteName} does not contain spaces.
+\item Validates that \code{selection$rmdType} is \code{"DOC"}, ensuring a valid project doc.
+\item Identifies the root organisation directory from \code{projectNotePath}.
+\item Creates a new project note directory and an associated R Markdown file.
+\item Populates the project note with metadata such as title, author, and prefix.
+\item Links the new project note to the corresponding goal, deliverable, or task
+in the project document.
+\item Inserts a summary of the project note into the project document.
+}
+
+The function ensures that all directories and files are properly created and
+linked within the project structure.
+}
+\note{
+\itemize{
+\item The \code{projectNoteName} should not contain spaces.
+\item The function modifies files directly on disk. Ensure backups are created
+before running.
+\item The function relies on a structured organisation and project directory;
+incorrect structures may cause failures.
+\item If a project note link already exists in the document, the function will
+fail and remove the newly created note.
+\item The \code{selection} list must contain \code{goal}, \code{deliverable}, and \code{task} values,
+as they determine where the project note link will be inserted.
+}
+}
+\examples{
+\dontrun{
+# Create a new project note within a project document
+create_project_note(
+  projectNoteName = "Experiment1",
+  projectNotePath = "/path/to/project/notes",
+  selection = list(
+    rmdType = "DOC",
+    filePath = "/path/to/project.Rmd",
+    goal = "Define research objective",
+    deliverable = "Data collection",
+    task = "Set up experiment",
+    taskLine = 42
+  ),
+  authorValue = "sjwest",
+  projectNoteTitle = "First Experiment",
+  projNoteTemplate = "Project-Note-Template.Rmd",
+  projNoteLinkTemplate = "Project-Note-Link-Template.Rmd",
+  projNoteLinkSummaryTemplate = "Project-Note-Link-Summary-Template.Rmd",
+  todoTemplate = "Todo-Template.Rmd",
+  projNoteSummaryTemplate = "Project-Note-Summary-Template.Rmd"
+)
+}
+
+}
+\seealso{
+\itemize{
+\item \code{\link{find_org_directory}} to locate the organisation directory.
+\item \code{\link{get_settings_yml}} for retrieving configuration settings.
+\item \code{\link{write_file}} for writing content to files.
+\item \code{\link{link_project_note_doc}} for linking project notes to project docs.
+}
 }

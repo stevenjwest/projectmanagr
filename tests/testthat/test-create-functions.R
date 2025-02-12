@@ -7,16 +7,27 @@ test_that("test create functions", {
   tmpdir <- create_tmpdir_rsess()
 
 
-  ################ create_project_org creates Org correctly ################
+  ################ create_project_org creates Org correctly ####################
 
   orgName <- "_T_O"
+  authorValue="sjwest"
   # mock the function that returns the update datetime
+  # and function the generates status yaml content - write fixed org paths
   local_mocked_bindings(
-    get_datetime = function (timezone = "UTC", split="-", splitTime=":") { "2024-02-22:09:56" } )
+    get_datetime = function (timezone = "UTC", split="-", splitTime=":") {
+      "2024-02-22:09:56" },
+    create_status_yaml_content = function(orgPaths, orgPath, orgName, orgTitle, updateTime, sitePath) {
+
+      org <- list(c("/tmp/Rsess/_T_O", "/tmp/Rsess/_T_O2"),
+                  "/tmp/Rsess/_T_O", orgName, orgTitle, updateTime, "/tmp/Rsess/_T_O/site" )
+      # orgPaths contains all EXISTING ORGs and THIS ORG path at end
+      names(org) <- c("orgPaths", "orgPath", "orgName", "orgTitle", "updateTime", "sitePath")
+      return(org)
+    } )
 
 
   # create test Organisation - using local helper function and withr package
-  orgDir <- local_create_org(orgName, orgParentPath=tmpdir, syp=tmpdir)
+  orgDir <- local_create_org(orgName, authorValue, orgParentPath=tmpdir, syp=tmpdir)
 
   # define outputs to check
   orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
@@ -51,9 +62,14 @@ test_that("test create functions", {
   orgName2 <- "_T_O2"
   orgutime2 <- "2024-02-22:09:56" # for consistent datetime added to status.yml snapshot
 
-  orgDir2 <- local_create_org(orgName2, orgParentPath=tmpdir, syp="")
+  # mock function to write to status yaml: do nothing, to maintain fixed status yaml content
+  local_mocked_bindings(
+    write_yaml_status = function(status, statusFile) { } ) # do nothing
 
-  # check status correctly written? cannot test as file name on disk is same as status yaml file in original org!
+  orgDir2 <- local_create_org(orgName2, authorValue, orgParentPath=tmpdir, syp="")
+
+  # check status correctly written? cannot test as file name on disk is same as
+   #status yaml file in original org!
   #statusYml2 <- fs::path(orgDir2, ".config", "status.yml")
   #expect_snapshot_file( statusYml2 )
 
@@ -67,7 +83,7 @@ test_that("test create functions", {
 
 
   # create test programme - using local helper function and withr package
-  progDir <- local_create_prog(progName, orgDir)
+  progDir <- local_create_prog(progName, orgDir, authorValue)
 
   # define outputs to check
   progIndex <- fs::path(progDir, paste0("_index_", progName, ".Rmd"))
@@ -85,12 +101,13 @@ test_that("test create functions", {
   expect_snapshot_file( statusYml )
 
 
-  ################ create_project_doc creates project doc correctly ################
+  ################ create_project_doc creates project doc correctly ############
 
   # create test Project Doc
   projectDocPrefix <- "PDo"
   projectDocName <- "Proj_Do"
-  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
+  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName,
+                                        progDir, authorValue)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
 
@@ -109,7 +126,9 @@ test_that("test create functions", {
   # create test Project Doc
   projectDocPrefix <- "PrDoS"
   projectDocName <- "Proj_Do_sim"
-  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
+  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName,
+                                        progDir, authorValue)
+
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
   # modify gdt titles for unique headers - so can test links!
@@ -120,7 +139,7 @@ test_that("test create functions", {
   projectNotePath <- fs::path(projectDocDir, 't-no')
   fs::dir_create(projectNotePath)
   projectNoteRmd <- local_create_project_note_simple(projectNoteName, projectNotePath,
-                                                     projectDocRmd, taskLine)
+                                                     projectDocRmd, taskLine, authorValue)
   projectNoteDir <- get_project_note_dir_path(projectNoteRmd, settings)
 
 
@@ -146,7 +165,8 @@ test_that("test create functions", {
   # create test Project Doc
   projectDocPrefix <- "PrDoG"
   projectDocName <- "Proj_Do_gr"
-  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
+  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName,
+                                        progDir, authorValue)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
   # modify gdt titles for unique headers - so can test links!
@@ -158,7 +178,8 @@ test_that("test create functions", {
   fs::dir_create(groupNotePath)
   subNoteName <- "SNo_01"
   groupNoteRmd <- local_create_project_note_group(groupNoteName, groupNotePath,
-                                                     projectDocRmd, taskLine, subNoteName)
+                                                  projectDocRmd, taskLine,
+                                                  subNoteName, authorValue)
 
   groupNoteDir <- get_project_note_dir_path(groupNoteRmd, settings)
 
@@ -197,7 +218,8 @@ test_that("test create functions", {
   # create test Project Doc
   projectDocPrefix <- "PrDoSu"
   projectDocName <- "Proj_Do_su"
-  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
+  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName,
+                                        progDir, authorValue)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
   # modify gdt titles for unique headers - so can test links!
@@ -209,7 +231,8 @@ test_that("test create functions", {
   fs::dir_create(groupNotePath)
   subNoteName <- "SNo2_01"
   groupNoteRmd <- local_create_project_note_group(groupNoteName, groupNotePath,
-                                                  projectDocRmd, taskLine, subNoteName)
+                                                  projectDocRmd, taskLine,
+                                                  subNoteName, authorValue)
 
   groupNoteDir <- get_project_note_dir_path(groupNoteRmd, settings)
 
@@ -224,10 +247,11 @@ test_that("test create functions", {
   subNotePath <- groupNoteDir
 
   subNoteRmd2 <- local_create_project_note_sub(subNoteName2, subNotePath,
-                                                  projectDocRmd, headerLinkLine)
+                                               projectDocRmd, headerLinkLine,
+                                               authorValue)
 
   subNoteRmd3 <- local_create_project_note_sub_head_sel(subNoteName3, subNotePath,
-                                                        groupNoteRmd, 50)
+                                                        groupNoteRmd, 50, authorValue)
 
   subNoteDir2 <- get_project_note_dir_path(subNoteRmd2, settings)
   subNoteDir3 <- get_project_note_dir_path(subNoteRmd3, settings)
@@ -280,7 +304,8 @@ test_that("test create functions", {
   # create test Project Doc for content
   projectDocPrefix <- "PDCon"
   projectDocName <- "Proj_Do_con"
-  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
+  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName,
+                                        progDir, authorValue)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
   # modify gdt titles for unique headers - so can test links!
@@ -291,7 +316,7 @@ test_that("test create functions", {
   projectNotePath <- fs::path(projectDocDir, 'tn-c')
   fs::dir_create(projectNotePath)
   projectNoteRmd <- local_create_project_note_simple(projectNoteName, projectNotePath,
-                                                     projectDocRmd, taskLine)
+                                                     projectDocRmd, taskLine, authorValue)
   projectNoteDir <- get_project_note_dir_path(projectNoteRmd, settings)
 
   # create content in Project Note
@@ -327,12 +352,13 @@ test_that("test create functions", {
   expect_snapshot_file( contentRmd )
 
 
-  ################ create_weekly_journal creates a journal Rmd ####
+  ################ create_weekly_journal creates a journal Rmd #################
 
   # create test Project Doc for content
   projectDocPrefix <- "PDJou"
   projectDocName <- "Proj_Do_jou"
-  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
+  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName,
+                                        progDir, authorValue)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
   # modify gdt titles for unique headers - so can test links!
@@ -343,14 +369,14 @@ test_that("test create functions", {
   projectNotePath <- fs::path(projectDocDir, 'tn-j')
   fs::dir_create(projectNotePath)
   projectNoteRmd <- local_create_project_note_simple(projectNoteName, projectNotePath,
-                                                     projectDocRmd, taskLine)
+                                                     projectDocRmd, taskLine, authorValue)
   projectNoteDir <- get_project_note_dir_path(projectNoteRmd, settings)
 
   # create journal in Org
   date=lubridate::ymd("2024-05-10")
   organisationPath=orgDir
 
-  journalRmd <- local_create_journal(date, organisationPath)
+  journalRmd <- local_create_journal(date, organisationPath, authorValue)
 
   ## TESTS ##
 

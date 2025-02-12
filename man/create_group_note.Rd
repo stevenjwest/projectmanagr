@@ -2,13 +2,14 @@
 % Please edit documentation in R/create-functions.R
 \name{create_group_note}
 \alias{create_group_note}
-\title{Add a New Group of Project Notes}
+\title{Create a New Group Note within a Project Document}
 \usage{
 create_group_note(
   groupNoteName,
   groupNotePath,
   selection,
   subNoteName,
+  authorValue = Sys.info()["user"],
   addObjToHeader = TRUE,
   groupNoteTitle = "",
   subNoteTitle = "",
@@ -24,61 +25,146 @@ create_group_note(
 )
 }
 \arguments{
-\item{groupNoteName}{The name of the Header Project Note, a String that should
-not contain any SPACES.}
+\item{groupNoteName}{Character. The name of the new group note (header note).
+Must not contain spaces.}
 
-\item{groupNotePath}{The directory where the Header Note will be stored.
-This may be a Project Directory, or another Directory specified by the User.
-MUST be a sub-directory or lower inside a PROGRAMME Directory.}
+\item{groupNotePath}{Character. The file path where the group note will be
+created.}
 
-\item{selection}{List containing the Goal, Del, Task selected from the Project
-Doc, as well as other useful information - lines of Task/Del/Goal, projectDoc
-path content of selection line.  See \code{cursor_selection()} or \code{user_selection()}.}
+\item{selection}{List. Contains metadata about the selected project document.
+Must include:
+\itemize{
+\item \code{selection$rmdType}: Must be \code{"DOC"} to indicate a valid project doc.
+\item \code{selection$filePath}: The file path of the project document.
+\item \code{selection$goal}: The goal under which the note is being created.
+\item \code{selection$deliverable}: The deliverable related to the note.
+\item \code{selection$task}: The specific task that the note is linked to.
+\item \code{selection$taskLine}: The line number in the project document where
+the task is defined.
+}}
 
-\item{subNoteName}{The First SubNote name, added to the Project Note Group
-in the Header Note DIR.}
+\item{subNoteName}{Character. The name of the sub-note associated with the
+header note.}
 
-\item{addObjToHeader}{Boolean to indicate whether the Objective from the
-Project Doc is set in the Header Note. True by default.  If False, no Project
-Doc Goal/Del/Task is inserted into the Header Note, and the first subnote
-is linked in the ProjectDoc G/D/T as a simple note.}
+\item{authorValue}{Character. The author of the group note. Defaults to the
+system username.}
 
-\item{subNoteTitle}{OPTIONAL title for the Project Sub Note.  Default is to
-use subNoteName and replace all _ and - with SPACES.}
+\item{addObjToHeader}{Logical. If TRUE, the project document link is added to
+the header note instead of the sub-note.}
 
-\item{projNoteTemplate}{Template to use, as found in the \verb{.config/templates/}
-directory.  Default is "Project-Header-Note-Template.Rmd"}
+\item{groupNoteTitle}{Character. The title of the group note. If empty, it
+will be derived from \code{groupNoteName}.}
 
-\item{subNoteTemplate}{Template to use, as found in the \verb{.config/templates/}
-directory.  Default is "Project-Sub-Note-Template.Rmd"}
+\item{subNoteTitle}{Character. The title of the sub-note. If empty, it will
+be derived from \code{subNoteName}.}
 
-\item{projNoteLinkTemplate}{Template with structure to add the Project Doc
-Goal/Del/Task link in the Project Note.  Includes Project Doc title, link,
-and then links to Goal / Del / Task, plus a Summary Info section (filled
-with the content from \code{taskSectionHeaderTemplate}).}
+\item{projNoteTemplate}{Character. The filename of the header note template.
+Default is \code{"Project-Header-Note-Template.Rmd"}.}
 
-\item{projNoteLinkSummaryTemplate}{Template with structure to add underneath the
-Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-and a 'todo' section by default, linked to \code{NoteObjectivesTodoSectionHeader}
-in \code{.config/settings.yml}}
+\item{subNoteTemplate}{Character. The filename of the sub-note template.
+Default is \code{"Project-Sub-Note-Template.Rmd"}.}
 
-\item{projNoteSummaryTemplate}{Template with structure to add Project Note
-summary to Project Doc under Goal/Del/Task.}
+\item{headerNoteContentLinkTemplate}{Character. The filename of the header
+note content link template. Default is \code{"Project-Header-Note-Content-Link-Template.Rmd"}.}
 
-\item{subNoteSummaryTemplate}{Template with structure to add Project Sub Note
-summary to Project Doc under Goal/Del/Task.}
+\item{subNoteContentLinkTemplate}{Character. The filename of the sub-note
+content link template. Default is \code{"Project-Sub-Note-Content-Link-Template.Rmd"}.}
 
-\item{projectNoteTitle}{OPTIONAL title for the Project HEADER Note.  Default
-is to use groupNoteName and replaceall _ and - with SPACES.}
+\item{projNoteLinkTemplate}{Character. The filename of the project note link
+template. Default is \code{"Project-Note-Link-Template.Rmd"}.}
+
+\item{projNoteLinkSummaryTemplate}{Character. The filename of the project note
+link summary template. Default is \code{"Project-Note-Link-Summary-Template.Rmd"}.}
+
+\item{todoTemplate}{Character. The filename of the project note's To-Do
+template. Default is \code{"Todo-Template.Rmd"}.}
+
+\item{projNoteSummaryTemplate}{Character. The filename of the project note
+summary template. Default is \code{"Project-Note-Summary-Template.Rmd"}.}
+
+\item{subNoteSummaryTemplate}{Character. The filename of the sub-note summary
+template. Default is \code{"Project-Sub-Note-Summary-Template.Rmd"}.}
+}
+\value{
+None. The function creates files and modifies the project document.
 }
 \description{
-This Function adds a Project Note Group - consisting of one HEADER
-Note, and one SUBNOTE inside the Header Note Dir, named with a computed
-\code{groupNotePrefix}  including identifier and Major Numbering, separated by
-\code{GroupNotePrefixSep} & \code{HeaderNotePrefix} for header note or first subNote
-index for subNote, as specified in \code{settings.yml}.
+Generates a new group note (header note and sub-note) within an existing
+project document, creating the necessary directory structure, R Markdown
+files, and linking it to the corresponding goal, deliverable, or task in
+the project document.
 }
 \details{
-This Note Group can be expanded by adding further SubNotes - useful for
-Optimisation and Experimental Repeats - see \code{create_sub_note()}.
+This function performs the following steps:
+\enumerate{
+\item Ensures \code{groupNoteName} and \code{subNoteName} do not contain spaces.
+\item Validates that \code{selection$rmdType} is \code{"DOC"}, ensuring a valid project doc.
+\item Identifies the root organisation directory from \code{groupNotePath}.
+\item Creates a new header note directory and an associated R Markdown file.
+\item Creates a sub-note directory and its corresponding R Markdown file.
+\item Populates both the header note and sub-note with metadata such as title,
+author, and prefix.
+\item Links the group note to the corresponding goal, deliverable, or task in
+the project document.
+\item Inserts a summary of the group note into the project document.
+}
+
+The function ensures that all directories and files are properly created and
+linked within the project structure.
+}
+\note{
+\itemize{
+\item The \code{groupNoteName} and \code{subNoteName} should not contain spaces.
+\item The function modifies files directly on disk. Ensure backups are created
+if necessary before running.
+\item The function relies on a structured organisation and project directory;
+incorrect structures may cause failures.
+\item If a group note link already exists in the document, the function will
+fail and remove the newly created note.
+\item The \code{selection} list must contain \code{goal}, \code{deliverable}, and \code{task} values,
+as they determine where the group note link will be inserted.
+\item If \code{addObjToHeader} is \code{TRUE}, the project document link is also added to the
+header note; otherwise, it is added to the sub-note only.
+}
+}
+\examples{
+\dontrun{
+# Create a new group note within a project document
+create_group_note(
+  groupNoteName = "ExperimentOverview",
+  groupNotePath = "/path/to/project/notes",
+  selection = list(
+    rmdType = "DOC",
+    filePath = "/path/to/project.Rmd",
+    goal = "Define research objective",
+    deliverable = "Data collection",
+    task = "Set up experiment",
+    taskLine = 42
+  ),
+  subNoteName = "Trial1",
+  authorValue = "sjwest",
+  addObjToHeader = TRUE,
+  groupNoteTitle = "Overview of Experiments",
+  subNoteTitle = "Trial 1 Details",
+  projNoteTemplate = "Project-Header-Note-Template.Rmd",
+  subNoteTemplate = "Project-Sub-Note-Template.Rmd",
+  headerNoteContentLinkTemplate = "Project-Header-Note-Content-Link-Template.Rmd",
+  subNoteContentLinkTemplate = "Project-Sub-Note-Content-Link-Template.Rmd",
+  projNoteLinkTemplate = "Project-Note-Link-Template.Rmd",
+  projNoteLinkSummaryTemplate = "Project-Note-Link-Summary-Template.Rmd",
+  todoTemplate = "Todo-Template.Rmd",
+  projNoteSummaryTemplate = "Project-Note-Summary-Template.Rmd",
+  subNoteSummaryTemplate = "Project-Sub-Note-Summary-Template.Rmd"
+)
+}
+
+}
+\seealso{
+\itemize{
+\item \code{\link{find_org_directory}} to locate the organisation directory.
+\item \code{\link{get_settings_yml}} for retrieving configuration settings.
+\item \code{\link{write_file}} for writing content to files.
+\item \code{\link{link_project_note_doc}} for linking project notes to project docs.
+\item \code{\link{link_group_note_doc}} for linking group notes to project docs.
+}
 }

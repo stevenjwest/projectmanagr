@@ -1,46 +1,71 @@
 
-
-
 #' Create a New Project Organisation
 #'
-#' Generates the layout for a new Project Organisation in the File System.
+#' Generates the directory layout for a new Project Organisation in the file
+#' system. It creates the organisation directory and its initial contents,
+#' including an index Rmd file, a .config/ directory (with config files and
+#' templates), a docs/ directory for documentation, and a volumes/ directory
+#' for data storage. An HTML site directory is also created adjacent to the
+#' organisation directory.
 #'
-#' The function generates the organisation directory and its initial contents:
+#' @param orgParentPath A character string defining the parent directory
+#' where the organisation will be created. Default is the working directory.
+#' @param orgName A string defining the directory name of the Organisation.
+#' @param authorValue A string representing the author name for the Programme
+#' index file. Defaults to the current system user.
+#' @param orgTitle A string defining the title of the Organisation for its
+#' document.
+#' @param settingsYamlPath A valid YAML file for establishing the projectmanagr
+#' organisation layout. Must include keys for SitePath, VolumesDir, DocsDir,
+#' ConfigDir, and OrgIndexFileName. Other parameters are optional.
+#' @param orgTemplate A string defining the template to use from the
+#' projectmanagr package. Default is "Org-Template.Rmd".
 #'
-#' * `index_<orgName>.Rmd` the landing page for the organisation.
+#' @details
+#' This function performs the following operations:
+#' 1. Defines and validates the organisation title using the orgName.
+#' 2. Determines the organisation directory based on orgParentPath and orgName.
+#' 3. Retrieves the projectmanagr package path to access required files.
+#' 4. Gathers existing organisation paths and updates their configurations.
+#' 5. Loads the YAML settings from a provided file or uses the default.
+#' 6. Creates the organisation directory and subdirectories for the HTML site,
+#'    volumes, and configuration.
+#' 7. Copies necessary files such as volumes.Rmd, settings.yaml, and status.yaml.
+#' 8. Creates the organisation index file from the specified template.
 #'
-#' * `.config/` directory with the config files and templates/ directory containing
-#' component templates.
+#' @return A character string representing the path to the organisation index
+#' Rmd file.
 #'
-#' * `docs/` directory, that will hold documentation for a projectmanagr usage.
+#' @examples
+#' \dontrun{
+#'   create_project_org(
+#'     orgParentPath = "/projects",
+#'     orgName = "MyOrganisation",
+#'     authorValue = "sjwest",
+#'     orgTitle = "My Organisation",
+#'     settingsYamlPath = "path/to/settings.yml",
+#'     orgTemplate = "Org-Template.Rmd"
+#'   )
+#' }
 #'
-#' * `volumes/` directory, that will hold all volumes for managing data storage.
+#' @seealso
+#' \code{\link{define_default_org_title}}, \code{\link{define_org_path}},
+#' \code{\link{get_org_paths}}, \code{\link{load_yml_settings_default}},
+#' \code{\link{create_org_dir}}, \code{\link{create_html_site_path}},
+#' \code{\link{create_volumes_path}}, \code{\link{create_config_path}},
+#' \code{\link{create_volumes_file}}, \code{\link{create_settings_yaml_file}},
+#' \code{\link{create_status_yaml_file}}, \code{\link{create_addins_json}},
+#' \code{\link{create_templates_path}}, \code{\link{create_org_index}}
 #'
-#' A HTML site directory is created which will contain the generated html site.
-#' By default this directory will exist next to org directory, suffixed with
-#' `_site`.  This can be modified with the `organsiationSiteDirectory` parameter.
-#'
-#' @param orgParentPath defines where the organisation directory is
-#' written, Default is the working directory.
-#'
-#' @param orgName defines the directory name of the Organisation.
-#'
-#' @param orgTitle defines the title of the Organisation, in its document.
-#'
-#' @param settingsYamlPath A VALID YAML file for establishing the projectmanagr
-#' organisation layout.  For this function the SitePath VolumesDir DocsDir ConfigDir
-#' & OrgIndexFileName params MUST be set.  Optionally all other params for the
-#' projectmanagr settings yaml file can be set, or they are set to default
-#' values.
-#'
-#' @param orgTemplate defines the template to use from the projectmanagr package.
-#' Default is "Org-Template.Rmd".
-#'
-#' @return orgIndexPath The path to the organisation index Rmd file.
+#' @note
+#' This function directly creates and modifies directories and files on disk.
+#' Ensure you have adequate backups before running it. The provided YAML
+#' settings must include all required keys for the organisation layout.
 #'
 #' @export
-create_project_org <- function( orgParentPath, orgName, orgTitle="",
-                              settingsYamlPath="", orgTemplate="Org-Template.Rmd") {
+create_project_org <- function( orgParentPath, orgName, authorValue=Sys.info()["user"],
+                                orgTitle="", settingsYamlPath="",
+                              orgTemplate="Org-Template.Rmd") {
 
   cat( "\nprojectmanagr::create_project_org():\n" )
 
@@ -54,8 +79,10 @@ create_project_org <- function( orgParentPath, orgName, orgTitle="",
   projectmanagrPath <- find.package("projectmanagr", lib.loc = .libPaths()) # lib.loc ensures correct lib path is returned during testing
 
   # get all org paths (including this one) from the parent dir of current orgPath
-  orgPaths <- get_org_paths(orgPath) # this also updates the existing org configs to be aware of this new org!
-   # this ensures all organisations (at least those written to parent DIR of this new ORG) are aware of each other
+  orgPaths <- get_org_paths(orgPath)
+   # this also updates the existing org configs to be aware of this new org!
+   # this ensures all organisations (at least those written to parent DIR of
+    # this new ORG) are aware of each other
    # thus can update links across organisations
   settings <- load_yml_settings_default(settingsYamlPath, projectmanagrPath)
 
@@ -68,17 +95,20 @@ create_project_org <- function( orgParentPath, orgName, orgTitle="",
   volumesPath <- create_volumes_path(orgPath, settings)
   confPath <- create_config_path(orgPath, settings)
 
-  volumesFile <- create_volumes_file(volumesPath, projectmanagrPath, orgPath, settings)
+  volumesFile <- create_volumes_file(volumesPath, projectmanagrPath, orgPath,
+                                     settings)
 
   settingsYamlFile <- create_settings_yaml_file(orgPath, settings)
-  statusFile <- create_status_yaml_file(orgPath, settings, orgPaths, orgName, orgTitle, sitePath)
+  statusFile <- create_status_yaml_file(orgPath, settings, orgPaths, orgName,
+                                        orgTitle, sitePath)
 
-  addinsJsonProjectManagrFile <- create_addins_json(projectmanagrPath, orgPath, settings)
+  addinsJsonProjectManagrFile <- create_addins_json(projectmanagrPath, orgPath,
+                                                    settings)
 
   tempPath <- create_templates_path(projectmanagrPath, orgPath, settings)
 
   orgFile <- create_org_index(orgName, tempPath, orgTemplate, orgPath, settings,
-                              orgTitle)
+                              orgTitle, authorValue)
 
   confirm_dirs(c(sitePath, volumesPath, confPath, tempPath))
 
@@ -86,16 +116,34 @@ create_project_org <- function( orgParentPath, orgName, orgTitle="",
 }
 
 
+#' Define Default Organisation Title
+#'
+#' Ensures that an organisation title is set. If the provided title is blank,
+#' it replaces underscores and hyphens in the organisation name with spaces
+#' and trims whitespace.
+#'
+#' @param orgTitle Character. The proposed title for the organisation.
+#' @param orgName Character. The organisation name to use if no title is provided.
+#'
+#' @return Character. The final organisation title.
 define_default_org_title <- function(orgTitle, orgName) {
 
-  # Check orgTitle, and if blank, fill with orgName, replacing all "_" and "-" with spaces & trim whitespace
+  # Check orgTitle, and if blank, fill with orgName, replacing all "_" and "-"
+  # with spaces & trim whitespace
   if( nchar(orgTitle)==0 ) {
     orgTitle <- trimws( gsub("-", " ", gsub("_", " ", orgName) ) )
   }
   orgTitle # return
 }
 
-
+#' Define Organisation Path
+#'
+#' Constructs the full path for a new organisation and ensures it does not already exist.
+#'
+#' @param orgParentPath Character. The parent directory for the organisation.
+#' @param orgName Character. The name of the organisation.
+#'
+#' @return Character. The full path for the organisation.
 define_org_path <- function(orgParentPath, orgName) {
   orgPath <- fs::path(orgParentPath, orgName)
   if(fs::dir_exists(orgPath) ) {
@@ -104,14 +152,14 @@ define_org_path <- function(orgParentPath, orgName) {
   orgPath # return
 }
 
-#' Get existing Org paths & update the existing org configs to be aware of newOrgPath
+#' Get Existing Organisation Paths
 #'
-#' This function ensures all new Orgs are aware of existing ones, and existing Orgs are aware
-#' of new ones.  Organisations can only be aware of eachother if they are in the same parent
-#' directory.
+#' Ensures all new organisations are aware of existing ones, and vice versa,
+#' if they reside in the same parent directory.
 #'
-#' @param newOrgPath defines the new orgs directory.
+#' @param newOrgPath Character. The directory path of the new organisation.
 #'
+#' @return Character vector. List of paths to all identified organisations.
 #' @export
 get_org_paths <- function(newOrgPath) {
 
@@ -124,9 +172,9 @@ get_org_paths <- function(newOrgPath) {
   dirs <- list.dirs(parent, full.names = TRUE, recursive = FALSE)
 
   # return early if no dirs identified
-  if( length(dirs)==0 ) {
-    return(dirs) # return the 0-length char vector
-  }
+  #if( length(dirs)==0 ) {
+  #  return(dirs) # return the 0-length char vector
+  #}
 
   dirs <- check_dirs_org(dirs)
 
@@ -156,7 +204,7 @@ get_org_paths <- function(newOrgPath) {
     status$orgPaths <- orgPaths
 
     # write to statusFile
-    yaml::write_yaml( yaml::as.yaml(status), statusFile )
+    write_yaml_status(status, statusFile)
 
     cat("    Written to Org: ", dirs[i], "\n")
 
@@ -168,7 +216,21 @@ get_org_paths <- function(newOrgPath) {
 
 }
 
+#' Write Status YAML to File
+#'
+#' Saves the status of an organisation as a YAML file.
+#'
+#' @param status List. The status data to be written.
+#' @param statusFile Character. The path to the status YAML file.
+write_yaml_status <- function(status, statusFile) {
+  yaml::write_yaml( yaml::as.yaml(status), statusFile )
+}
 
+#' Create Organisation Directory
+#'
+#' Creates the root directory for the organisation if it does not exist.
+#'
+#' @param orgPath Character. The full path to the organisation directory.
 create_org_dir <- function(orgPath) {
   create_directory(orgPath,
                    "  Made ORG dir: ",
@@ -176,12 +238,24 @@ create_org_dir <- function(orgPath) {
 }
 
 
+#' Load YAML Settings with Defaults
+#'
+#' Loads a YAML settings file, either from a provided path or from the default
+#' settings in the projectmanagr package.
+#'
+#' @param settingsYamlPath Character. Path to a custom YAML settings file. If empty,
+#'   the default projectmanagr settings are used.
+#' @param projectmanagrPath Character. The file path of the projectmanagr package.
+#'
+#' @return List. The parsed settings from the YAML file.
 load_yml_settings_default <- function(settingsYamlPath, projectmanagrPath) {
 
-  # The default is loaded from the package OR function points to settingsYamlPath yaml file which is used
+  # The default is loaded from the package OR function points to settingsYamlPath
+  # yaml file which is used
   if( settingsYamlPath == "" ) {
 
-    # no settingsYamlFile supplied - so load the DEFAULT settingsYamlFile from projectmanagr
+    # no settingsYamlFile supplied - so load the DEFAULT settingsYamlFile from
+     # projectmanagr
     settingsYamlFile <- paste0( projectmanagrPath,
                                 .Platform$file.sep, "config",
                                 .Platform$file.sep, "settings.yml")
@@ -200,11 +274,13 @@ load_yml_settings_default <- function(settingsYamlPath, projectmanagrPath) {
     missingSettings <- setdiff(yaml_keys(), names(settings))
 
     if( length(extraSettings) > 0 ) {
-      cat("  settingsYamlPath contains some extra settings: ", paste(extraSettings), "\n")
+      cat("  settingsYamlPath contains some extra settings: ",
+          paste(extraSettings), "\n")
     }
 
     if( length(missingSettings) > 0 ) {
-      stop( paste0("  settingsYamlPath is not a valid projectmanagr YAML file : ", settingsYamlPath, "\n   missing settings: ", paste(missingSettings)))
+      stop( paste0("  settingsYamlPath is not a valid projectmanagr YAML file : ",
+                   settingsYamlPath, "\n   missing settings: ", paste(missingSettings)))
     }
   }
 
@@ -216,8 +292,12 @@ load_yml_settings_default <- function(settingsYamlPath, projectmanagrPath) {
 }
 
 
-
-#' return char vector of all keys that should be present in YAML file
+#' Retrieve Expected YAML Keys
+#'
+#' Returns a character vector of all expected keys that should be present in a
+#' YAML configuration file.
+#'
+#' @return Character vector. List of expected YAML keys.
 yaml_keys <- function() {
 
   c("SiteDir",
@@ -325,115 +405,17 @@ yaml_keys <- function() {
 }
 
 
-#' return char vector of all keys that should be present in YAML file
-OLDyaml_keys <- function() {
-
-  c("SiteDir",
-    "FileType",
-    "VolumesDir",
-    "VolumesFile",
-    "ConfigStatusYamlFile",
-    "OrgIndexFileNamePrefix",
-    "OrgProgrammeHeader",
-    "OrgProgrammeFooter",
-    "OrgProgrammeSummarySep",
-    "ProgrammeProjectsDir",
-    "ProgIndexFileNamePrefix",
-    "ProgSummaryHeader",
-    "ProgSummaryTitle",
-    "ProgSummaryFooter",
-    "ProgProjectsHeader",
-    "ProgProjectsFooter",
-    "ProgProjectSummarySep",
-    "ProjectPrefixSep",
-    "ProjectIdentifierSep",
-    "ProjectIndexSep",
-    "ProjectSummaryHeader",
-    "ProjectSummaryTitle",
-    "ProjectSummaryFooter",
-    "ProjectGoalHeader",
-    "ProjectGoalTitle",
-    "ProjectGoalDivider",
-    "ProjectGoalSep",
-    "ProjectDeliverableHeader",
-    "ProjectDeliverableTitle",
-    "ProjectDeliverableDivider",
-    "ProjectDeliverableSep",
-    "ProjectTaskHeader",
-    "ProjectTaskTitle",
-    "ProjectTaskDivider",
-    "ProjectTaskSep",
-    "ProjectTaskFooter",
-    "ProjectLinkFormat",
-    "ProjectTaskLogHeader",
-    "ProjectTaskLogSep",
-    "NoteObjectivesTodoSectionHeader",
-    "NoteObjectivesHeader",
-    "NoteObjectivesSep",
-    "NoteObjectivesFooter",
-    "NoteStorageHeader",
-    "NoteStorageFooter",
-    "NoteLinkFormat",
-    "GroupNotePrefixSep",
-    "HeaderNotePrefix",
-    "HeaderNoteContentsHeader",
-    "HeaderNoteContentsFooter",
-    "HeaderLinkFormat",
-    "SubNotePrefixSep",
-    "SubNoteContentsHeader",
-    "SubNoteContentsFooter",
-    "SubNoteLinkFormat",
-    "NoteSummaryTitle",
-    "NoteGoalLinkLine",
-    "NoteDeliverableLinkLine",
-    "NoteTaskLinkLine",
-    "ContentTitleField",
-    "ContentDescriptionField",
-    "ContentSourceField",
-    "ContentSep",
-    "ContentInsertionTitle",
-    "ContentInsertionSep",
-    "ContentLinkFormat",
-    "ContentSummaryHeader",
-    "ContentSummaryFooter",
-    "ContentGraphicalAbstractHeader",
-    "ContentGraphicalAbstractSvg",
-    "ContentGraphicalAbstractFooter",
-    "ContentBackgroundHeader",
-    "ContentBackgroundFooter",
-    "ContentMaterialsHeader",
-    "ContentMaterialsFooter",
-    "ContentEquipmentSvg",
-    "ContentProcedureTemplateSvg",
-    "ContentResultsLogHeader",
-    "ContentResultsLogFooter",
-    "ContentTroubleshootingHeader",
-    "ContentTroubleshootingFooter",
-    "ContentSopHeader",
-    "ContentLogHeader",
-    "ContentLogSep",
-    "ContentFooter",
-    "TodoItemHeaderTemplate",
-    "TodoItemHeaderComplete",
-    "TodoItemHeader",
-    "TodoCollectionDir",
-    "TodoProgrammeSep",
-    "DateTimeZone",
-    "DateSplit",
-    "DateTimeSplit",
-    "RunUpdateOnStartup",
-    "RunCompileWithUpdate",
-    "FileTypeSuffix",
-    "WeeklyJournalDir",
-    "GadgetWidth",
-    "GadgetHeight",
-    "rstudioInternalStateDir")
-
-}
-
-
+#' Create HTML Site Directory
+#'
+#' Creates a directory for compiled HTML output.
+#'
+#' @param orgPath Character. Path to the organisation directory.
+#' @param settings List. Settings containing the site directory structure.
+#'
+#' @return Character. The path to the created site directory.
 create_html_site_path <- function(orgPath, settings) {
-  # This will contain the compiled HTML - which will be made using R Markdown package in the first instance
+  # This will contain the compiled HTML
+  # which will be made using R Markdown package in the first instance
   # In future, want to move to using pandoc directly??
   sitePath <- get_site_dir(orgPath,settings)
   fs::dir_create(sitePath)
@@ -447,6 +429,14 @@ create_html_site_path <- function(orgPath, settings) {
 }
 
 
+#' Create Volumes Directory
+#'
+#' Creates a directory for storing data volumes.
+#'
+#' @param orgPath Character. Path to the organisation directory.
+#' @param settings List. Settings containing the volumes directory structure.
+#'
+#' @return Character. The path to the created volumes directory.
 create_volumes_path <- function(orgPath, settings) {
 
   volumesPath <- get_volumes_dir(orgPath, settings)
@@ -460,6 +450,14 @@ create_volumes_path <- function(orgPath, settings) {
   volumesPath # return
 }
 
+#' Create Configuration Directory
+#'
+#' Creates a directory for storing configuration files.
+#'
+#' @param orgPath Character. Path to the organisation directory.
+#' @param settings List. Settings containing the configuration directory structure.
+#'
+#' @return Character. The path to the created configuration directory.
 create_config_path <- function(orgPath, settings) {
   # Contains configuration information for Organisation
   # config dir: FIXED NAME
@@ -470,6 +468,15 @@ create_config_path <- function(orgPath, settings) {
   confPath # return
 }
 
+
+#' Confirm Directories Exist
+#'
+#' Checks if all directories in the given list exist. If any are missing, the
+#' organisation directory is deleted and an error is raised.
+#'
+#' @param dirPaths Character vector. A list of directory paths to check.
+#' @param errMsg Character. Error message to display if a directory does not exist.
+#' @param orgPath Character. The root path of the organisation, which will be removed if any check fails.
 confirm_dirs <- function(dirPaths, errMsg, orgPath) {
   if( any(fs::dir_exists(dirPaths) == FALSE) ) {
     dp <- dirPaths[fs::dir_exists(dirPaths) == FALSE]
@@ -478,15 +485,16 @@ confirm_dirs <- function(dirPaths, errMsg, orgPath) {
   }
 }
 
-confirm_files <- function(filePaths, errMsg, orgPath) {
-  if( any(fs::file_exists(filePaths) == FALSE) ) {
-    fp <- filePaths[fs::file_exists(filePaths) == FALSE]
-    fs::dir_delete(orgPath) # remove org
-    stop( paste0(errMsg, paste(fp, collapse='\n  ')) )
-  }
-}
-
-
+#' Confirm a Single Directory Exists
+#'
+#' Checks if a given directory exists. If not, deletes the organisation and
+#' raises an error.
+#'
+#' @param dirPath Character. Path to the directory to check.
+#' @param errMsg Character. Error message to display if the directory does not
+#' exist.
+#' @param orgPath Character. The root path of the organisation, which will be
+#' removed if the check fails.
 confirm_dir <- function(dirPath, errMsg, orgPath) {
   if( fs::dir_exists(dirPath) == FALSE ) {
     fs::dir_delete(orgPath) # remove org
@@ -494,6 +502,15 @@ confirm_dir <- function(dirPath, errMsg, orgPath) {
   }
 }
 
+#' Confirm a File Exists
+#'
+#' Checks if a given file exists. If not, deletes the organisation and raises an
+#' error.
+#'
+#' @param filePath Character. Path to the file to check.
+#' @param errMsg Character. Error message to display if the file does not exist.
+#' @param orgPath Character. The root path of the organisation, which will be
+#' removed if the check fails.
 confirm_file <- function(filePath, errMsg, orgPath) {
   if( fs::file_exists(filePath) == FALSE ) {
     fs::dir_delete(orgPath) # remove org
@@ -501,12 +518,24 @@ confirm_file <- function(filePath, errMsg, orgPath) {
   }
 }
 
+#' Create Volumes File
+#'
+#' Copies the default volumes file template into the organisation's volumes
+#' directory.
+#'
+#' @param volumesPath Character. Path to the volumes directory.
+#' @param projectmanagrPath Character. Path to the projectmanagr package.
+#' @param orgPath Character. Path to the organisation directory.
+#' @param settings List. Project settings containing file structure configurations.
+#'
+#' @return Character. The path to the created volumes file.
 create_volumes_file <- function(volumesPath, projectmanagrPath, orgPath, settings) {
 
   # Add the volumes.Rmd file to the volumes/ DIR
   # this contains the workflow for MOUNTING an External Volume, then
   # SYMLINKING location(s)  in the External Volume to the volumes/ directory, then
-  # how to use the projectmanagr::volumes_mkdir() command to generate a DIR on this External Volume for external storage
+  # how to use the projectmanagr::volumes_mkdir() command to generate a DIR on
+   # this External Volume for external storage
 
   # COPY template from the package:
   volumesFile <- fs::path(volumesPath, settings[["VolumesFile"]])
@@ -521,7 +550,19 @@ create_volumes_file <- function(volumesPath, projectmanagrPath, orgPath, setting
   volumesFile # return
 }
 
-
+#' Create Settings YAML File
+#'
+#' Generates a settings YAML file for the organisation.
+#'
+#' @param orgPath Character. Path to the organisation directory.
+#' @param settings List. Project settings to be saved in the YAML file.
+#' @param utime Unused.
+#' @param orgPaths Character vector. List of existing organisation paths.
+#' @param orgName Character. Name of the organisation.
+#' @param orgTitle Character. Title of the organisation.
+#' @param sitePath Character. Path to the site directory.
+#'
+#' @return Character. Path to the created settings YAML file.
 create_settings_yaml_file <- function(orgPath, settings, utime,
                                       orgPaths, orgName, orgTitle, sitePath) {
 
@@ -541,14 +582,27 @@ create_settings_yaml_file <- function(orgPath, settings, utime,
   settingsYamlFile # return
 }
 
-create_status_yaml_file <- function(orgPath, settings, orgPaths, orgName, orgTitle, sitePath) {
+#' Create Status YAML File
+#'
+#' Generates a status YAML file for the organisation, storing metadata and
+#' update timestamps.
+#'
+#' @param orgPath Character. Path to the organisation directory.
+#' @param settings List. Project settings used to generate the status file.
+#' @param orgPaths Character vector. List of existing organisation paths.
+#' @param orgName Character. Name of the organisation.
+#' @param orgTitle Character. Title of the organisation.
+#' @param sitePath Character. Path to the site directory.
+#'
+#' @return Character. Path to the created status YAML file.
+create_status_yaml_file <- function(orgPath, settings, orgPaths, orgName,
+                                    orgTitle, sitePath) {
 
   # create status.yml file - need to create it here to get the mtime for this file
   statusFile <- get_status_yml_file(orgPath, settings)
   fs::file_create(statusFile)
 
   # Create initial content for status.yml file - data on the Org, plus UPDATE datetime:
-
   # if( utime == "") {
   #   updateTime <- file.info(statusFile)[,5]
   # } else if( is.na(lubridate::ymd_hm(utime)) == FALSE ) {
@@ -560,9 +614,8 @@ create_status_yaml_file <- function(orgPath, settings, orgPaths, orgName, orgTit
 
   updateTime <- get_datetime() # use the current time: y-m-d:h:m string!
 
-  org <- list(orgPaths, orgPath, orgName, orgTitle, updateTime, sitePath )
-    # orgPaths contains all EXISTING ORGs and THIS ORG path at end
-  names(org) <- c("orgPaths", "orgPath", "orgName", "orgTitle", "updateTime", "sitePath")
+  org <- create_status_yaml_content(orgPaths, orgPath, orgName, orgTitle,
+                                    updateTime, sitePath )
   yaml::write_yaml( yaml::as.yaml(org), statusFile )
 
   confirm_file(statusFile, "  Status file could not be created: ", orgPath)
@@ -571,7 +624,37 @@ create_status_yaml_file <- function(orgPath, settings, orgPaths, orgName, orgTit
   statusFile # return
 }
 
+#' Generate Status YAML Content
+#'
+#' Creates a structured list to be written into a status YAML file.
+#'
+#' @param orgPaths Character vector. List of existing organisation paths.
+#' @param orgPath Character. Path to the new organisation.
+#' @param orgName Character. Name of the organisation.
+#' @param orgTitle Character. Title of the organisation.
+#' @param updateTime Character. Timestamp of the last update.
+#' @param sitePath Character. Path to the site directory.
+#'
+#' @return List. A named list containing metadata for the organisation.
+create_status_yaml_content <- function(orgPaths, orgPath, orgName, orgTitle,
+                                      updateTime, sitePath) {
 
+  org <- list(orgPaths, orgPath, orgName, orgTitle, updateTime, sitePath )
+  # orgPaths contains all EXISTING ORGs and THIS ORG path at end
+  names(org) <- c("orgPaths", "orgPath", "orgName", "orgTitle", "updateTime", "sitePath")
+  return(org)
+}
+
+
+#' Create Addins JSON File
+#'
+#' Copies the default addins.json file from the projectmanagr package into the organisation's config directory.
+#'
+#' @param projectmanagrPath Character. Path to the projectmanagr package.
+#' @param orgPath Character. Path to the organisation directory.
+#' @param settings List. Project settings containing file structure configurations.
+#'
+#' @return Character. The path to the created addins.json file.
 create_addins_json <- function(projectmanagrPath, orgPath, settings) {
 
   # no settingsYamlFile supplied - so load the DEFAULT settingsYamlFile from projectmanagr
@@ -585,7 +668,16 @@ create_addins_json <- function(projectmanagrPath, orgPath, settings) {
   addinsJsonProjectManagrFile # return
 }
 
-
+#' Create Templates Directory
+#'
+#' Creates a directory for storing templates and copies template files from the
+#' package.
+#'
+#' @param projectmanagrPath Character. Path to the projectmanagr package.
+#' @param orgPath Character. Path to the organisation directory.
+#' @param settings List. Project settings containing file structure configurations.
+#'
+#' @return Character. The path to the created templates directory.
 create_templates_path <- function(projectmanagrPath, orgPath, settings) {
 
   # templates Dir - INSIDE the config DIR (these templates are part of the projectmanagr config!):
@@ -612,8 +704,22 @@ create_templates_path <- function(projectmanagrPath, orgPath, settings) {
   tempPath # return
 }
 
+
+#' Create Organisation Index File
+#'
+#' Generates the index Rmd file for the organisation based on a template.
+#'
+#' @param orgName Character. Name of the organisation.
+#' @param tempPath Character. Path to the templates directory.
+#' @param orgTemplate Character. Name of the template file.
+#' @param orgPath Character. Path to the organisation directory.
+#' @param settings List. Project settings used for configuring the index file.
+#' @param orgTitle Character. Title of the organisation.
+#' @param authorValue Character. Author of the organisation. Defaults to the system username.
+#'
+#' @return Character. The path to the created organisation index file.
 create_org_index <- function(orgName, tempPath, orgTemplate, orgPath, settings,
-                             orgTitle) {
+                             orgTitle, authorValue=Sys.info()["user"]) {
 
   # first remove any preceding '-' or '_' from orgName
   orgIndexName <- orgName
@@ -639,9 +745,6 @@ create_org_index <- function(orgName, tempPath, orgTemplate, orgPath, settings,
   # read org template:
   templateContents <- read_file( fs::path(tempPath, orgTemplate))
 
-  # use username as author value
-  authorValue <- Sys.info()["user"]
-
   # modify templateContents to include orgTitle and authorValue
   templateContents <- gsub("{{TITLE}}", orgTitle, templateContents, fixed=TRUE)
   templateContents <- gsub("{{AUTHOR}}", authorValue, templateContents, fixed=TRUE)
@@ -662,41 +765,70 @@ create_org_index <- function(orgName, tempPath, orgTemplate, orgPath, settings,
   cat( "  Written template to Org file: ", orgFile, "\n" )
 
   orgFile # return
-}
+} #### ________________________________ ####
 
-#' Create a New Programme
+
+#' Create a New Programme within an Organisation
 #'
-#' Generates a new Programme in an Organisation.  Generates a directory for the
-#' programme, and an initial `_index_` .Rmd file that defines the programme
-#' homepage.
+#' Generates a new programme within an existing organisation directory, creating
+#' the necessary directory structure, R Markdown files, and updating the status
+#' YAML file.
 #'
-#' If `organisationPath` is not at the top of the Organisation, will traverse until
-#' it is found.  This function will halt if no Organisation is found - the
-#' organisation root is defined by the presence of .config/ and .config/templates
-#' dirs at root. An optional programmeTitle (which if not supplied will default
-#' to the programmeName, replacing "_" & "-" with " ").
+#' @param programmeName Character. The name of the new programme. Must not contain
+#'   spaces.
+#' @param organisationPath Character. The file path to an existing organisation
+#'   directory.
+#' @param authorValue Character. The author of the programme. Defaults to system
+#'   username.
+#' @param programmeTitle Character. The title of the programme. If empty, it will
+#'   be derived from `programmeName`.
+#' @param progTemplate Character. The filename of the programme template. Default
+#'   is `"Programme-Template.Rmd"`.
+#' @param progSummaryTemplate Character. The filename of the programme summary
+#'   template. Default is `"Programme-Summary-Template.Rmd"`.
 #'
-#' @param programmeName Name of Progamme - must NOT contain a space.
+#' @details
+#' This function performs the following steps:
+#' 1. Ensures `programmeName` does not contain spaces.
+#' 2. Identifies the root organisation directory from `organisationPath`.
+#' 3. Creates a new programme directory within the organisation.
+#' 4. Generates a new programme index Rmd file from a template.
+#' 5. Updates the organisation's status YAML file with programme details.
+#' 6. Inserts the programme summary into the organisation's index file.
 #'
-#' @param organisationPath Path to insert the PROGRAMME into.  If this is not an
-#' Organisation Directory, will search up the directory tree to attempt to find
-#' one.  If none found, the method will end without making a PROGRAMME.
+#' The function ensures that all directories and files are properly created and
+#' linked within the project structure.
 #'
-#' @param programmeTitle Title of programme - typically the programmeName with
-#' "_" & "-" replaced with spaces.
+#' @return Character. The file path of the created programme index Rmd file.
 #'
-#' @param progTemplate The Rmd file to use as a template to create the Programme.
-#' Default is "Programme-Template.Rmd" from projectmanagr templates.
+#' @examples
+#' \dontrun{
+#' # Create a new programme in an organisation
+#' create_programme(
+#'   programmeName = "MyProgramme",
+#'   organisationPath = "/path/to/organisation",
+#'   authorValue = "sjwest",
+#'   programmeTitle = "My Programme",
+#'   progTemplate = "Programme-Template.Rmd",
+#'   progSummaryTemplate = "Programme-Summary-Template.Rmd"
+#' )
+#' }
 #'
-#' @param progSummaryTemplate The Rmd file to use as a template to create the
-#' Programme Summary. Default is "Programme-Summary-Template.Rmd" from
-#' projectmanagr templates.
+#' @seealso
+#' - \code{\link{find_org_directory}} to locate the organisation directory.
+#' - \code{\link{get_settings_yml}} for retrieving configuration settings.
+#' - \code{\link{write_file}} for writing content to files.
 #'
-#' @return progIndexPath The path to the programme index Rmd file.
+#' @note
+#' - The `programmeName` should not contain spaces.
+#' - The function modifies files directly on disk. Ensure backups are created
+#'   before running.
+#' - The function relies on a structured organisation directory; incorrect
+#'   structures may cause failures.
 #'
 #' @export
 create_programme <- function(programmeName, organisationPath,
-                             programmeTitle="",
+                             authorValue=Sys.info()["user"], programmeTitle="",
                              progTemplate="Programme-Template.Rmd",
                              progSummaryTemplate = "Programme-Summary-Template.Rmd") {
 
@@ -761,9 +893,6 @@ create_programme <- function(programmeName, organisationPath,
     programmeTitle <- gsub("-", " ", gsub("_", " ", programmeName) )
   }
 
-  # use username as author value
-  authorValue <- Sys.info()["user"]
-
   # modify progContents to include programmeTitle and authorValue
   progContents <- gsub("{{TITLE}}", programmeTitle, progContents, fixed=TRUE)
   progContents <- gsub("{{AUTHOR}}", authorValue, progContents, fixed=TRUE)
@@ -804,14 +933,6 @@ create_programme <- function(programmeName, organisationPath,
 
   #### Write Programme to Status file ####
 
-  # add title and creation time under the programmeName in the "PROGRAMMES" section of the status.yml List:
-  # if( ctime == "") {
-  #   cTimeVal <- as.character(lubridate::ymd_hm(substr(as.character(file.info(progFilePath)[['ctime']]),1,16) ))
-  # } else if( is.na(lubridate::ymd_hm(ctime)) == FALSE ) {
-  #   cTimeVal <- as.character(lubridate::ymd_hm(ctime))
-  # } else {
-  #   cTimeVal <- as.character(lubridate::ymd_hm(substr(as.character(file.info(progFilePath)[['ctime']]),1,16) ))
-  # }
   progCreationTime <- get_datetime()
   attrs <- list(programmeTitle, progCreationTime )
   names(attrs) <- c("programmeTitle", "creationTime")
@@ -885,44 +1006,74 @@ create_programme <- function(programmeName, organisationPath,
   # return progIndexPath - progFilePath
   progFilePath
 
-}
+} #### ________________________________ ####
 
 
-#' Create a New Project Document
+#' Create a New Project Document within a Programme
 #'
-#' Generates a new Project inside a Programme in an Organisation.  The projectParentPath
-#' must be in the Programme directory, which is the sub-Dir to the root ORGANISATION
-#' dir.
+#' Generates a new project document within an existing programme directory,
+#' creating the necessary directory structure, R Markdown files, and updating
+#' the programme's summary.
 #'
-#' The project is automatically numbered, by reading the current projects and determining
-#' the next number in the sequence, as well as deriving the Programme Prefix.
+#' @param projectPrefix Character. A unique alphanumeric identifier for the project.
+#' @param projectName Character. The name of the new project. Must not contain spaces.
+#' @param projectParentPath Character. The file path to an existing programme directory.
+#' @param authorValue Character. The author of the project document. Defaults to
+#'   the system username.
+#' @param projectTitle Character. The title of the project. If empty, it will be
+#'   derived from `projectName`.
+#' @param projDocTemplate Character. The filename of the project document template.
+#'   Default is `"Project-Doc-Template.Rmd"`.
+#' @param projDocSummaryTemplate Character. The filename of the project document
+#'   summary template. Default is `"Project-Doc-Summary-Template.Rmd"`.
 #'
-#' User must supply the project name, which must contain NO SPACES, and optionally a project
-#' title.  If no title is provided, the Title is derived from the project name, replacing any
-#' "_" & "-" with " ". The default projectParentPath is the working directory.
+#' @details
+#' This function performs the following steps:
+#' 1. Ensures `projectName` does not contain spaces.
+#' 2. Identifies the root organisation directory from `projectParentPath`.
+#' 3. Validates that `projectParentPath` is inside a programme directory.
+#' 4. Creates a new project directory and project document Rmd file.
+#' 5. Populates the project document with metadata such as prefix, title, and author.
+#' 6. Updates the programme's index file to include a summary of the new project.
 #'
-#' @param projectPrefix Prefix of Project - must contain only alphanumeric chars & be unique to Programme.
+#' The function ensures that all directories and files are properly created and
+#' linked within the project structure.
 #'
-#' @param projectName Name of Project - must NOT contain a space.
+#' @return Character. The file path of the created project document Rmd file.
 #'
-#' @param projectTitle Title of project - by default set to `projectName` with "_" & "-" replaced with spaces.
+#' @examples
+#' \dontrun{
+#' # Create a new project document within a programme
+#' create_project_doc(
+#'   projectPrefix = "PRJ001",
+#'   projectName = "DataAnalysis",
+#'   projectParentPath = "/path/to/programme",
+#'   authorValue = "sjwest",
+#'   projectTitle = "Data Analysis Project",
+#'   projDocTemplate = "Project-Doc-Template.Rmd",
+#'   projDocSummaryTemplate = "Project-Doc-Summary-Template.Rmd"
+#' )
+#' }
 #'
-#' @param projectParentPath Path to insert the Project into.  This must be a Programme dir, one level below the
-#' organisation, and containing a PROJECTS/ directory.  The Project will be placed into the PROJECTS/ directory.
-#' If none found, the method will end without making a Project
+#' @seealso
+#' - \code{\link{find_org_directory}} to locate the organisation directory.
+#' - \code{\link{get_settings_yml}} for retrieving configuration settings.
+#' - \code{\link{create_directory}} for creating project directories.
+#' - \code{\link{write_file}} for writing content to files.
 #'
-#' @param projDocTemplate Rmd template used to create the Project Doc - default is "Project-Doc-Template.Rmd"
-#'
-#' @param projectIndex If 0, the function will determine the projectIndex by searching the PROJECTS/ directory.
-#' Otherwise, the projectIndex is used to number the Project in its Prefix.
-#'
-#' @return projectDocRmd The path to the project docRmd file.
+#' @note
+#' - The `projectName` should not contain spaces.
+#' - The `projectPrefix` should be alphanumeric and unique within the programme.
+#' - The function modifies files directly on disk. Ensure backups are created
+#'   before running.
+#' - The function relies on a structured organisation and programme directory;
+#'   incorrect structures may cause failures.
 #'
 #' @export
-create_project_doc <- function(projectPrefix, projectName, projectParentPath, projectTitle="",
-                             projDocTemplate="Project-Doc-Template.Rmd",
-                             projDocSummaryTemplate="Project-Doc-Summary-Template.Rmd",
-                             projectIndex=0 ) {
+create_project_doc <- function(projectPrefix, projectName, projectParentPath,
+                               authorValue=Sys.info()["user"], projectTitle="",
+                               projDocTemplate="Project-Doc-Template.Rmd",
+                               projDocSummaryTemplate="Project-Doc-Summary-Template.Rmd") {
 
   cat( "\nprojectmanagr::create_project_doc():\n" )
 
@@ -935,7 +1086,7 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath, pr
   }
 
 
-  # get the orgPath from projectParentPath - confirmed above to sit in an organisation!
+  # get the orgPath from projectParentPath - to confirm in an organisation!
   orgPath <- find_org_directory(projectParentPath)
 
   # get config templates settings yml
@@ -946,7 +1097,7 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath, pr
   # get programme path
   progPath <- check_prog_subdir(projectParentPath, settings)
 
-  # extract the PROGRAMME NAME from the progPaths:
+  # extract the PROGRAMME NAME from the progPath:
   programmeName <-basename(progPath)
 
   # define project dir - use prefix as dir name
@@ -981,19 +1132,24 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath, pr
 
   #### Create Project Dir ####
 
-  done <- dir.create(projDir)
+  create_directory(
+    projDir,
+    "  Made Project dir: ",
+    "  Project directory could not be created: ")
 
-  if(!done) {
-    stop( paste0("  Project directory could not be created: ", projDir) )
-  }
+  #done <- dir.create(projDir)
 
-  cat( "  Made Project dir: ",projDir, "\n" )
+  #if(!done) {
+  #  stop( paste0("  Project directory could not be created: ", projDir) )
+  #}
+
+  #cat( "  Made Project dir: ",projDir, "\n" )
 
 
   #### create Rmd file ####
 
-  projDocFilePath <- paste0(projectParentPath, .Platform$file.sep, projectPrefix,
-                            settings[["ProjectPrefixSep"]], projectName, ".Rmd" )
+  projDocFilePath <- fs::path(projectParentPath, paste0(projectPrefix,
+                            settings[["ProjectPrefixSep"]], projectName, ".Rmd") )
   done <- file.create(projDocFilePath)
 
   if(!done) {
@@ -1003,15 +1159,12 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath, pr
   cat( "  Made Project file: ", projDocFilePath, "\n" )
 
   # read project doc template:
-  projDocContents <- read_file(paste0( tempPath, .Platform$file.sep, projDocTemplate))
+  projDocContents <- read_file( fs::path(tempPath, projDocTemplate) )
 
   # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
   if( nchar(projectTitle)==0 ) {
     projectTitle <- gsub("-", " ", gsub("_", " ", projectName) )
   }
-
-  # use username as author value
-  authorValue <- Sys.info()["user"]
 
   # modify projDocContents to include PREFIX projectTitle author
   projDocContents <- gsub("{{PREFIX}}", projectPrefix, projDocContents, fixed=TRUE)
@@ -1070,7 +1223,7 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath, pr
   progContents <- read_file( progFilePath )
 
   # read programme summary header template
-  projDocSummaryTemplateContents <- read_file( paste0(tempPath, .Platform$file.sep, projDocSummaryTemplate) )
+  projDocSummaryTemplateContents <- read_file( fs::path(tempPath, projDocSummaryTemplate) )
 
   # create hyperlink from prog to projDoc - to insert in prog summary of projDoc
   projDocName <- substring( basename(projDocFilePath),
@@ -1122,53 +1275,104 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath, pr
   # return projDocFilePath
   projDocFilePath
 
-}
+} #### ________________________________ ####
 
 
-#' Add a New Project Note
+#' Create a New Project Note within a Project Document
 #'
-#' This Addin adds a single Project Note to a Poject Doc under a Goal / Del /
-#' Task - the Project Note consists of one Rmd Note and its corresponding
-#' Directory, named with a computed `projectNotePrefix` including identifier
-#' and Major Numbering, separated by `ProjectIndexSep`, as specified in
-#' `settings.yml`, and `projectNoteName`.
+#' Generates a new project note within an existing project document, creating
+#' the necessary directory structure, R Markdown files, and linking it to the
+#' corresponding goal, deliverable, or task in the project document.
 #'
-#' @param projectNoteName The name of the Project Note, a String that should
-#' not contain any SPACES.
+#' @param projectNoteName Character. The name of the new project note. Must not
+#'   contain spaces.
+#' @param projectNotePath Character. The file path where the project note will
+#'   be created.
+#' @param selection List. Contains metadata about the selected project document.
+#'   Must include:
+#'   - \code{selection$rmdType}: Must be `"DOC"` to indicate a valid project doc.
+#'   - \code{selection$filePath}: The file path of the project document.
+#'   - \code{selection$goal}: The goal under which the note is being created.
+#'   - \code{selection$deliverable}: The deliverable related to the note.
+#'   - \code{selection$task}: The specific task that the note is linked to.
+#'   - \code{selection$taskLine}: The line number in the project document where
+#'     the task is defined.
+#' @param authorValue Character. The author of the project note. Defaults to the
+#'   system username.
+#' @param projectNoteTitle Character. The title of the project note. If empty,
+#'   it will be derived from `projectNoteName`.
+#' @param projNoteTemplate Character. The filename of the project note template.
+#'   Default is `"Project-Note-Template.Rmd"`.
+#' @param projNoteLinkTemplate Character. The filename of the project note link
+#'   template. Default is `"Project-Note-Link-Template.Rmd"`.
+#' @param projNoteLinkSummaryTemplate Character. The filename of the project note
+#'   link summary template. Default is `"Project-Note-Link-Summary-Template.Rmd"`.
+#' @param todoTemplate Character. The filename of the project note's To-Do
+#'   template. Default is `"Todo-Template.Rmd"`.
+#' @param projNoteSummaryTemplate Character. The filename of the project note
+#'   summary template. Default is `"Project-Note-Summary-Template.Rmd"`.
 #'
-#' @param projectNotePath The directory where the Project Note will be stored.
-#' This may be a Project Directory, or another Directory specified by the User.
-#' MUST be a sub-directory or lower inside a PROGRAMME Directory. The
-#' `projectNotePrefix` is computed from this directory - where the string identifier
-#' is the first string in the directory name up to `ProjectIdentifierSep` (specified
-#' in `settings.yml`, default is '_').
+#' @details
+#' This function performs the following steps:
+#' 1. Ensures `projectNoteName` does not contain spaces.
+#' 2. Validates that `selection$rmdType` is `"DOC"`, ensuring a valid project doc.
+#' 3. Identifies the root organisation directory from `projectNotePath`.
+#' 4. Creates a new project note directory and an associated R Markdown file.
+#' 5. Populates the project note with metadata such as title, author, and prefix.
+#' 6. Links the new project note to the corresponding goal, deliverable, or task
+#'    in the project document.
+#' 7. Inserts a summary of the project note into the project document.
 #'
-#' @param selection List containing the Goal, Del, Task selected from the Project
-#' Doc, as well as other useful information - lines of Task/Del/Goal, projectDoc
-#' path content of selection line.  See `cursor_selection()` or `user_selection()`.
+#' The function ensures that all directories and files are properly created and
+#' linked within the project structure.
 #'
-#' @param projectNoteTitle OPTIONAL title for the Project Note.  Default is to use
-#' projectNoteName and replace all `_` and `-` with SPACES.
+#' @return None. The function creates files and modifies the project document.
 #'
-#' @param projNoteTemplate Template to use, as found in the `.config/templates/`
-#' directory.  Default is "Project-Note-Template.Rmd"
+#' @examples
+#' \dontrun{
+#' # Create a new project note within a project document
+#' create_project_note(
+#'   projectNoteName = "Experiment1",
+#'   projectNotePath = "/path/to/project/notes",
+#'   selection = list(
+#'     rmdType = "DOC",
+#'     filePath = "/path/to/project.Rmd",
+#'     goal = "Define research objective",
+#'     deliverable = "Data collection",
+#'     task = "Set up experiment",
+#'     taskLine = 42
+#'   ),
+#'   authorValue = "sjwest",
+#'   projectNoteTitle = "First Experiment",
+#'   projNoteTemplate = "Project-Note-Template.Rmd",
+#'   projNoteLinkTemplate = "Project-Note-Link-Template.Rmd",
+#'   projNoteLinkSummaryTemplate = "Project-Note-Link-Summary-Template.Rmd",
+#'   todoTemplate = "Todo-Template.Rmd",
+#'   projNoteSummaryTemplate = "Project-Note-Summary-Template.Rmd"
+#' )
+#' }
 #'
-#' @param projNoteLinkTemplate Template with structure to add the Project Doc
-#' Goal/Del/Task link in the Project Note.  Includes Project Doc title, link,
-#' and then links to Goal / Del / Task, plus a Summary Info section (filled
-#' with the content from `taskSectionHeaderTemplate`).
+#' @seealso
+#' - \code{\link{find_org_directory}} to locate the organisation directory.
+#' - \code{\link{get_settings_yml}} for retrieving configuration settings.
+#' - \code{\link{write_file}} for writing content to files.
+#' - \code{\link{link_project_note_doc}} for linking project notes to project docs.
 #'
-#' @param projNoteLinkSummaryTemplate Template with structure to add underneath the
-#' Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-#' and a 'todo' section by default, linked to `NoteObjectivesTodoSectionHeader`
-#' in `.config/settings.yml`
-#'
-#' @param projNoteSummaryTemplate Template with structure to add Project Note
-#' summary to Project Doc under Goal/Del/Task.
+#' @note
+#' - The `projectNoteName` should not contain spaces.
+#' - The function modifies files directly on disk. Ensure backups are created
+#'   before running.
+#' - The function relies on a structured organisation and project directory;
+#'   incorrect structures may cause failures.
+#' - If a project note link already exists in the document, the function will
+#'   fail and remove the newly created note.
+#' - The `selection` list must contain `goal`, `deliverable`, and `task` values,
+#'   as they determine where the project note link will be inserted.
 #'
 #' @export
 create_project_note <- function( projectNoteName, projectNotePath,
-                                 selection, projectNoteTitle="",
+                                 selection, authorValue=Sys.info()["user"],
+                                 projectNoteTitle="",
                                  projNoteTemplate="Project-Note-Template.Rmd",
                                  projNoteLinkTemplate="Project-Note-Link-Template.Rmd",
                                  projNoteLinkSummaryTemplate="Project-Note-Link-Summary-Template.Rmd",
@@ -1215,7 +1419,7 @@ create_project_note <- function( projectNoteName, projectNotePath,
 
   projectDocPath <- selection[["filePath"]] # selection is a project DOC
 
-  projectNotePath <- normalizePath(projectNotePath)
+  projectNotePath <- fs::path_expand(projectNotePath)
 
   projectNotePrefix <- get_next_simple_prefix(projectNotePath, settings)
 
@@ -1260,9 +1464,6 @@ create_project_note <- function( projectNoteName, projectNotePath,
 
 
   #### Replace markup in Note with values ####
-
-  # use username as author value
-  authorValue <- Sys.info()["user"]
 
   # modify projNoteRmdContents to include PREFIX and projectTitle
   projNoteRmdContents <- sub_template_param(projNoteRmdContents, "{{PREFIX}}",
@@ -1310,70 +1511,134 @@ create_project_note <- function( projectNoteName, projectNotePath,
     file.remove(projNoteRmdPath) # remove the project note Rmd
     stop( paste0("  Creating Project Note Failed - link already exists."))
   }
-}
+
+} #### ________________________________ ####
 
 
-#' Add a New Group of Project Notes
+
+
+#' Create a New Group Note within a Project Document
 #'
-#' This Function adds a Project Note Group - consisting of one HEADER
-#' Note, and one SUBNOTE inside the Header Note Dir, named with a computed
-#' `groupNotePrefix`  including identifier and Major Numbering, separated by
-#' `GroupNotePrefixSep` & `HeaderNotePrefix` for header note or first subNote
-#' index for subNote, as specified in `settings.yml`.
+#' Generates a new group note (header note and sub-note) within an existing
+#' project document, creating the necessary directory structure, R Markdown
+#' files, and linking it to the corresponding goal, deliverable, or task in
+#' the project document.
 #'
-#' This Note Group can be expanded by adding further SubNotes - useful for
-#' Optimisation and Experimental Repeats - see `create_sub_note()`.
+#' @param groupNoteName Character. The name of the new group note (header note).
+#'   Must not contain spaces.
+#' @param groupNotePath Character. The file path where the group note will be
+#'   created.
+#' @param selection List. Contains metadata about the selected project document.
+#'   Must include:
+#'   - \code{selection$rmdType}: Must be `"DOC"` to indicate a valid project doc.
+#'   - \code{selection$filePath}: The file path of the project document.
+#'   - \code{selection$goal}: The goal under which the note is being created.
+#'   - \code{selection$deliverable}: The deliverable related to the note.
+#'   - \code{selection$task}: The specific task that the note is linked to.
+#'   - \code{selection$taskLine}: The line number in the project document where
+#'     the task is defined.
+#' @param subNoteName Character. The name of the sub-note associated with the
+#'   header note.
+#' @param authorValue Character. The author of the group note. Defaults to the
+#'   system username.
+#' @param addObjToHeader Logical. If TRUE, the project document link is added to
+#'   the header note instead of the sub-note.
+#' @param groupNoteTitle Character. The title of the group note. If empty, it
+#'   will be derived from `groupNoteName`.
+#' @param subNoteTitle Character. The title of the sub-note. If empty, it will
+#'   be derived from `subNoteName`.
+#' @param projNoteTemplate Character. The filename of the header note template.
+#'   Default is `"Project-Header-Note-Template.Rmd"`.
+#' @param subNoteTemplate Character. The filename of the sub-note template.
+#'   Default is `"Project-Sub-Note-Template.Rmd"`.
+#' @param headerNoteContentLinkTemplate Character. The filename of the header
+#'   note content link template. Default is `"Project-Header-Note-Content-Link-Template.Rmd"`.
+#' @param subNoteContentLinkTemplate Character. The filename of the sub-note
+#'   content link template. Default is `"Project-Sub-Note-Content-Link-Template.Rmd"`.
+#' @param projNoteLinkTemplate Character. The filename of the project note link
+#'   template. Default is `"Project-Note-Link-Template.Rmd"`.
+#' @param projNoteLinkSummaryTemplate Character. The filename of the project note
+#'   link summary template. Default is `"Project-Note-Link-Summary-Template.Rmd"`.
+#' @param todoTemplate Character. The filename of the project note's To-Do
+#'   template. Default is `"Todo-Template.Rmd"`.
+#' @param projNoteSummaryTemplate Character. The filename of the project note
+#'   summary template. Default is `"Project-Note-Summary-Template.Rmd"`.
+#' @param subNoteSummaryTemplate Character. The filename of the sub-note summary
+#'   template. Default is `"Project-Sub-Note-Summary-Template.Rmd"`.
 #'
-#' @param groupNoteName The name of the Header Project Note, a String that should
-#' not contain any SPACES.
+#' @details
+#' This function performs the following steps:
+#' 1. Ensures `groupNoteName` and `subNoteName` do not contain spaces.
+#' 2. Validates that `selection$rmdType` is `"DOC"`, ensuring a valid project doc.
+#' 3. Identifies the root organisation directory from `groupNotePath`.
+#' 4. Creates a new header note directory and an associated R Markdown file.
+#' 5. Creates a sub-note directory and its corresponding R Markdown file.
+#' 6. Populates both the header note and sub-note with metadata such as title,
+#'    author, and prefix.
+#' 7. Links the group note to the corresponding goal, deliverable, or task in
+#'    the project document.
+#' 8. Inserts a summary of the group note into the project document.
 #'
-#' @param groupNotePath The directory where the Header Note will be stored.
-#' This may be a Project Directory, or another Directory specified by the User.
-#' MUST be a sub-directory or lower inside a PROGRAMME Directory.
+#' The function ensures that all directories and files are properly created and
+#' linked within the project structure.
 #'
-#' @param selection List containing the Goal, Del, Task selected from the Project
-#' Doc, as well as other useful information - lines of Task/Del/Goal, projectDoc
-#' path content of selection line.  See `cursor_selection()` or `user_selection()`.
+#' @return None. The function creates files and modifies the project document.
 #'
-#' @param subNoteName The First SubNote name, added to the Project Note Group
-#' in the Header Note DIR.
+#' @examples
+#' \dontrun{
+#' # Create a new group note within a project document
+#' create_group_note(
+#'   groupNoteName = "ExperimentOverview",
+#'   groupNotePath = "/path/to/project/notes",
+#'   selection = list(
+#'     rmdType = "DOC",
+#'     filePath = "/path/to/project.Rmd",
+#'     goal = "Define research objective",
+#'     deliverable = "Data collection",
+#'     task = "Set up experiment",
+#'     taskLine = 42
+#'   ),
+#'   subNoteName = "Trial1",
+#'   authorValue = "sjwest",
+#'   addObjToHeader = TRUE,
+#'   groupNoteTitle = "Overview of Experiments",
+#'   subNoteTitle = "Trial 1 Details",
+#'   projNoteTemplate = "Project-Header-Note-Template.Rmd",
+#'   subNoteTemplate = "Project-Sub-Note-Template.Rmd",
+#'   headerNoteContentLinkTemplate = "Project-Header-Note-Content-Link-Template.Rmd",
+#'   subNoteContentLinkTemplate = "Project-Sub-Note-Content-Link-Template.Rmd",
+#'   projNoteLinkTemplate = "Project-Note-Link-Template.Rmd",
+#'   projNoteLinkSummaryTemplate = "Project-Note-Link-Summary-Template.Rmd",
+#'   todoTemplate = "Todo-Template.Rmd",
+#'   projNoteSummaryTemplate = "Project-Note-Summary-Template.Rmd",
+#'   subNoteSummaryTemplate = "Project-Sub-Note-Summary-Template.Rmd"
+#' )
+#' }
 #'
-#' @param addObjToHeader Boolean to indicate whether the Objective from the
-#' Project Doc is set in the Header Note. True by default.  If False, no Project
-#' Doc Goal/Del/Task is inserted into the Header Note, and the first subnote
-#' is linked in the ProjectDoc G/D/T as a simple note.
+#' @seealso
+#' - \code{\link{find_org_directory}} to locate the organisation directory.
+#' - \code{\link{get_settings_yml}} for retrieving configuration settings.
+#' - \code{\link{write_file}} for writing content to files.
+#' - \code{\link{link_project_note_doc}} for linking project notes to project docs.
+#' - \code{\link{link_group_note_doc}} for linking group notes to project docs.
 #'
-#' @param projectNoteTitle OPTIONAL title for the Project HEADER Note.  Default
-#' is to use groupNoteName and replaceall _ and - with SPACES.
-#'
-#' @param subNoteTitle OPTIONAL title for the Project Sub Note.  Default is to
-#' use subNoteName and replace all _ and - with SPACES.
-#'
-#' @param projNoteTemplate Template to use, as found in the `.config/templates/`
-#' directory.  Default is "Project-Header-Note-Template.Rmd"
-#'
-#' @param subNoteTemplate Template to use, as found in the `.config/templates/`
-#' directory.  Default is "Project-Sub-Note-Template.Rmd"
-#'
-#' @param projNoteLinkTemplate Template with structure to add the Project Doc
-#' Goal/Del/Task link in the Project Note.  Includes Project Doc title, link,
-#' and then links to Goal / Del / Task, plus a Summary Info section (filled
-#' with the content from `taskSectionHeaderTemplate`).
-#'
-#' @param projNoteLinkSummaryTemplate Template with structure to add underneath the
-#' Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-#' and a 'todo' section by default, linked to `NoteObjectivesTodoSectionHeader`
-#' in `.config/settings.yml`
-#'
-#' @param projNoteSummaryTemplate Template with structure to add Project Note
-#' summary to Project Doc under Goal/Del/Task.
-#'
-#' @param subNoteSummaryTemplate Template with structure to add Project Sub Note
-#' summary to Project Doc under Goal/Del/Task.
+#' @note
+#' - The `groupNoteName` and `subNoteName` should not contain spaces.
+#' - The function modifies files directly on disk. Ensure backups are created
+#'   if necessary before running.
+#' - The function relies on a structured organisation and project directory;
+#'   incorrect structures may cause failures.
+#' - If a group note link already exists in the document, the function will
+#'   fail and remove the newly created note.
+#' - The `selection` list must contain `goal`, `deliverable`, and `task` values,
+#'   as they determine where the group note link will be inserted.
+#' - If `addObjToHeader` is `TRUE`, the project document link is also added to the
+#'   header note; otherwise, it is added to the sub-note only.
 #'
 #' @export
 create_group_note  <- function( groupNoteName, groupNotePath,
-                                selection, subNoteName, addObjToHeader=TRUE,
+                                selection, subNoteName, authorValue=Sys.info()["user"],
+                                addObjToHeader=TRUE,
                                 groupNoteTitle="", subNoteTitle="",
                                 projNoteTemplate="Project-Header-Note-Template.Rmd",
                                 subNoteTemplate="Project-Sub-Note-Template.Rmd",
@@ -1430,7 +1695,7 @@ create_group_note  <- function( groupNoteName, groupNotePath,
 
   projectDocPath <- selection[["filePath"]]
   # groupNotePath is the parent directory the headerNoteRmdPath (Rmd file) sits in
-  groupNotePath <- normalizePath(groupNotePath)
+  groupNotePath <- fs::path_expand(groupNotePath)
 
 
   #### Read Rmds ####
@@ -1513,9 +1778,6 @@ create_group_note  <- function( groupNoteName, groupNotePath,
 
   #### HEADER : Replace markup  with values ####
 
-  # use username as author value
-  authorValue <- Sys.info()["user"]
-
   # modify headerNoteRmdContents
   headerNoteRmdContents <- sub_template_param(headerNoteRmdContents, "{{PREFIX}}",
                                            headerNotePrefix, orgPath)
@@ -1570,9 +1832,6 @@ create_group_note  <- function( groupNoteName, groupNotePath,
 
   #### SUBNOTE : Replace markup with values ####
 
-  # use username as author value
-  authorValue <- Sys.info()["user"]
-
   # sub subNoteContents with params
   subNoteContents <-sub_subnote_params(subNoteContents, subNotePrefix,
                                        subNoteTitle, authorValue,
@@ -1623,58 +1882,219 @@ create_group_note  <- function( groupNoteName, groupNotePath,
       stop( paste0("  Creating Project Note Failed - link already exists."))
     }
   }
+
 }
+
+#' Insert Header Link into Subnote
+#'
+#' This function inserts a hyperlink to the header note into the subnote
+#' contents. It creates the link using the header note file name and path,
+#' replaces the "{{SUB_NOTE_CONTENT_LINK}}" placeholder in the provided
+#' template, and inserts the resulting content into the subnote.
+#'
+#' @param subNoteContents Character vector containing the contents of the
+#'        subnote Rmd file.
+#' @param headerNoteFileName A string specifying the header note file name.
+#' @param headerNoteRmdPath A string specifying the full file path of the
+#'        header note Rmd.
+#' @param subNoteRmdPath A string specifying the full file path of the
+#'        subnote Rmd.
+#' @param headerNoteContentLinkContents Character vector containing the template
+#'        for the header link content.
+#' @param settings A list of configuration settings used for loading parameter
+#'        vectors and template values.
+#' @param orgPath A string specifying the root directory path of the
+#'        organisation.
+#'
+#' @details The function creates a hyperlink by calling
+#' \code{create_hyperlink()} with the header note file name and paths. It then
+#' substitutes the placeholder \code{"{{SUB_NOTE_CONTENT_LINK}}"} in the given
+#' template using \code{sub_template_param()}. The insertion point in the
+#' subnote is determined by locating header and footer markers using
+#' \code{load_param_vector()}, \code{match_line_index()}, and
+#' \code{grep_line_index_from()}. Finally, the generated link content is
+#' inserted into the subnote via \code{insert_at_indices()}.
+#'
+#' @note This function assumes that the subnote contains valid header and
+#' footer markers as defined in the settings. Missing markers may lead to
+#' unexpected behavior.
+#'
+#' @examples
+#' \dontrun{
+#' # Read subnote contents and header link template.
+#' subNoteContents <- read_file("subnote.Rmd")
+#' headerTemplate <- read_file("HeaderContentLinkTemplate.Rmd")
+#'
+#' # Define header note details.
+#' headerFileName <- "header_note.Rmd"
+#' headerPath <- "/path/to/header_note.Rmd"
+#' subNotePath <- "/path/to/subnote.Rmd"
+#'
+#' # Load project settings and organisation path.
+#' settings <- get_settings_yml("/path/to/org")
+#' orgPath <- "/path/to/org"
+#'
+#' # Insert the header link into the subnote contents.
+#' newSubNoteContents <- insert_header_link_subnote(subNoteContents,
+#'                            headerFileName, headerPath, subNotePath,
+#'                            headerTemplate, settings, orgPath)
+#'
+#' # Write the updated subnote contents back to file.
+#' write_file(newSubNoteContents, subNotePath)
+#' }
+#'
+#' @seealso create_hyperlink, sub_template_param, load_param_vector,
+#'          match_line_index, grep_line_index_from, insert_at_indices
+insert_header_link_subnote <- function(subNoteContents, headerNoteFileName,
+                                       headerNoteRmdPath, subNoteRmdPath,
+                                       headerNoteContentLinkContents,
+                                       settings, orgPath) {
+
+
+  #### Insert header link content into subnote ####
+
+  headerNoteContentLink <- create_hyperlink( headerNoteFileName, headerNoteRmdPath, subNoteRmdPath)
+  headerNoteContentLinkContents <- sub_template_param(headerNoteContentLinkContents,
+                                                      "{{SUB_NOTE_CONTENT_LINK}}",
+                                                      headerNoteContentLink, orgPath)
+
+  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["SubNoteContentsHeader"]], orgPath),
+                                             subNoteContents)
+  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["SubNoteContentsFooter"]], orgPath),
+                                                 subNoteContents, noteContentsHeadIndex, orgPath)
+
+  subNoteContents <- insert_at_indices(subNoteContents, noteContentsFootIndex, headerNoteContentLinkContents)
+
+  subNoteContents # return
+
+} #### ________________________________ ####
 
 
 #' Add a New Sub Note to a Project Group
 #'
-#' This Function adds a Sub Note to a Project Group: The Sub Note is placed into
-#' the Project Group Directory, links to the Sub Note are added to all Project
-#' Doc(s) Goal-Del-Tasks linked to the Group Header Note, and a link to the Sub
-#' Note is added to the project Group Header Note contents section.
+#' This function creates a new Sub Note within a Project Group. It reads the
+#' necessary template files, creates the required sub-directory and R Markdown
+#' file for the Sub Note, replaces template markup with provided values, and
+#' updates the Project Group Header Note with a link to the new Sub Note. It
+#' then calls link_sub_note_doc() to insert all relevant links and summaries into
+#' the main project document.
 #'
-#' If a Project Doc is in the selection, a Project Note Group must be in the
-#' selection  (`addingSubNote` must be TRUE), and all Project Doc links from the
-#' Header Note  are added to the new SubNote.  If a Header Note is in the
-#' selection, all Project Doc links from the Header Note are added to the new
-#' SubNote.  If a SubNote is in the selection, all Project Doc links from the
-#' SubNote are added to the new SubNote.
+#' @param subNoteName A string representing the name of the Project Sub Note.
+#' Spaces are replaced with '-' or '_' by default.
 #'
-#' @param subNoteName The name of the Project Sub Note, a Title with all SPACES
-#' replaced with - or _ by default.
+#' @param subNotePath A character string specifying the absolute directory
+#' where the Sub Note will be stored. It must reside within the Project Group
+#' Note Directory.
 #'
-#' @param subNotePath The directory where the Sub Note will be stored.  This will
-#' be the Project Group Note Directory.  Must be an ABSOLUTE path!
+#' @param selection A list with metadata about the current selection. The list
+#' must include the following keys:
+#'   - rmdType: A string specifying the file type. Valid values are "DOC",
+#'     "HEAD", or "SUB".
+#'   - filePath: The file path of the associated project document.
+#'   - headerNoteLink: A relative link to the header note (used when rmdType is
+#'     "DOC").
+#'   - goal: A string defining the goal associated with the note.
+#'   - deliverable: A string defining the deliverable linked to the note.
+#'   - task: A string defining the task associated with the note.
+#'   - taskLine: An integer indicating the line number in the project document
+#'     where the task is defined.
+#'   - addingSubNote: (Optional) A boolean that must be TRUE if rmdType is "DOC".
 #'
-#' @param selection List containing `rmdType` that defines the current selection.
-#' From this the `headerNoteRmdPath` is defined.  The function will deal with
-#' SubNote generation with a valid selection of a DOC HEAD or SUB file.
+#' @param authorValue A string representing the author's name for the note.
+#' Defaults to the current system user.
 #'
-#' @param subNoteTitle OPTIONAL title for the Project SubNote.  Default is to use
-#' subNoteName and replace all _ and - with SPACES.
+#' @param subNoteTitle (Optional) A title for the Sub Note. If blank, the
+#' subNoteName is used with underscores and dashes replaced by spaces.
 #'
-#' @param subNoteTemplate Template to use, as found in the `.config/templates/`
-#' directory.  Default is "Project-Sub-Note-Template.Rmd"
+#' @param subNoteTemplate A template file used to generate the Sub Note.
+#' Default is "Project-Sub-Note-Template.Rmd".
 #'
-#' @param projNoteLinkTemplate Template with structure to add the Project Doc
-#' Goal/Del/Task link in the Project Note.  Includes Project Doc title, link,
-#' and then links to Goal / Del / Task, plus a Summary Info section (filled
-#' with the content from `taskSectionHeaderTemplate`).
+#' @param headerNoteContentLinkTemplate A template file for creating a content
+#' link from the header note to the Sub Note. Default is
+#' "Project-Header-Note-Content-Link-Template.Rmd".
 #'
-#' @param projNoteLinkSummaryTemplate Template with structure to add underneath the
-#' Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-#' and a 'todo' section by default, linked to `NoteObjectivesTodoSectionHeader`
-#' in `.config/settings.yml`
+#' @param subNoteContentLinkTemplate A template file for creating a content link
+#' within the Sub Note. Default is
+#' "Project-Sub-Note-Content-Link-Template.Rmd".
 #'
-#' @param projNoteSummaryTemplate Template with structure to add Project Note
-#' summary to Project Doc under Goal/Del/Task.
+#' @param projNoteLinkTemplate A template file that defines the structure of the
+#' Project Doc Goal/Del/Task link in the Sub Note. Default is
+#' "Project-Note-Link-Template.Rmd".
 #'
-#' @param subNoteSummaryTemplate Template with structure to add Project Sub Note
-#' summary to Project Doc under Goal/Del/Task.
+#' @param projNoteLinkSummaryTemplate A template file that adds a summary and
+#' to-do section beneath the Project Doc link in the Sub Note. Default is
+#' "Project-Note-Link-Summary-Template.Rmd".
+#'
+#' @param todoTemplate A template file for the to-do list section. Default is
+#' "Todo-Template.Rmd".
+#'
+#' @param projNoteSummaryTemplate A template file used to add a Project Note
+#' summary to the Project Doc. Default is
+#' "Project-Note-Summary-Template.Rmd".
+#'
+#' @param subNoteSummaryTemplate A template file used to add a Sub Note summary
+#' to the Project Doc. Default is
+#' "Project-Sub-Note-Summary-Template.Rmd".
+#'
+#' @details
+#' The function performs the following steps:
+#' 1. Validates that subNoteName contains no spaces.
+#' 2. Checks that the selection list is valid. The selection must include
+#'    keys such as rmdType, filePath, headerNoteLink, goal, deliverable, task,
+#'    and taskLine; if rmdType is "DOC", addingSubNote must be TRUE.
+#' 3. Determines the header note Rmd path based on the selection.
+#' 4. Reads the required template files for the Sub Note and for header note
+#'    content links.
+#' 5. Creates a sub-directory for the Sub Note and an associated R Markdown file.
+#' 6. Replaces the markup in the Sub Note with provided parameters.
+#' 7. Inserts a header link into the Sub Note and updates the Header Note with
+#'    the Sub Note link.
+#' 8. Calls link_sub_note_doc() to update the project document with all relevant
+#'    Sub Note links and summaries.
+#'
+#' @return This function does not return a value. It creates and updates files on
+#' disk to integrate the new Sub Note into the project documentation.
+#'
+#' @examples
+#' \dontrun{
+#' create_sub_note(
+#'   subNoteName = "analysis_note",
+#'   subNotePath = "/projects/my_project/notes",
+#'   selection = list(
+#'     rmdType = "DOC",
+#'     filePath = "project_doc.Rmd",
+#'     headerNoteLink = "[Header](header_note.Rmd)",
+#'     goal = "Define hypothesis",
+#'     deliverable = "Experiment setup",
+#'     task = "Run pilot study",
+#'     taskLine = 45,
+#'     addingSubNote = TRUE
+#'   ),
+#'   authorValue = "sjwest",
+#'   subNoteTitle = "Data Analysis",
+#'   subNoteTemplate = "Project-Sub-Note-Template.Rmd"
+#' )
+#' }
+#'
+#' @seealso
+#' - \code{\link{link_sub_note_doc}} for linking Sub Notes to Project Docs.
+#' - \code{\link{find_org_directory}} to locate the organisation directory.
+#' - \code{\link{get_settings_yml}} for retrieving project settings.
+#' - \code{\link{insert_header_link_subnote}} for inserting header links into Sub
+#'   Notes.
+#'
+#' @note
+#' The selection list must include the keys: rmdType, filePath, headerNoteLink,
+#' goal, deliverable, task, and taskLine. If rmdType is "DOC", the key
+#' addingSubNote must also be TRUE. This function modifies files on disk; ensure
+#' you have backups before running it. It relies on a structured project directory
+#' and properly configured template files.
 #'
 #' @export
+
 create_sub_note <- function( subNoteName, subNotePath,
-                             selection, subNoteTitle="",
+                             selection, authorValue=Sys.info()["user"],
+                             subNoteTitle="",
                              subNoteTemplate="Project-Sub-Note-Template.Rmd",
                              headerNoteContentLinkTemplate="Project-Header-Note-Content-Link-Template.Rmd",
                              subNoteContentLinkTemplate="Project-Sub-Note-Content-Link-Template.Rmd",
@@ -1756,7 +2176,7 @@ create_sub_note <- function( subNoteName, subNotePath,
   }
 
   headerNoteFileName <- basename(headerNoteRmdPath)
-  subNotePath <- normalizePath(subNotePath)
+  subNotePath <- fs::path_expand(subNotePath)
   subNotePrefix <- get_next_subnote_prefix(subNotePath, settings)
 
 
@@ -1806,9 +2226,6 @@ create_sub_note <- function( subNoteName, subNotePath,
 
   #### Replace markup in Sub Note with values ####
 
-  # use username as author value
-  authorValue <- Sys.info()["user"]
-
   # modify subNoteContents
   subNoteContents <-sub_subnote_params(subNoteContents, subNotePrefix,
                                        subNoteTitle, authorValue,
@@ -1852,69 +2269,416 @@ create_sub_note <- function( subNoteName, subNotePath,
                     projNoteLinkContents, projNoteLinkSummaryContents, todoContents,
                     projNoteSummaryContents, subNoteSummaryContents,
                     linkNoteRmdPath, linkNoteRmdContents, orgPath)
+
 }
 
+#' Insert Header Link into Subnote
+#'
+#' This function inserts a hyperlink to a subnote into the header note
+#' contents. The link is generated from the subnote file name and its file
+#' path, then the function substitutes the "{{HEADER_NOTE_CONTENT_LINK}}"
+#' placeholder in the provided template with this hyperlink. Finally, the
+#' updated header note contents are returned.
+#'
+#' @param headerNoteRmdContents Character vector containing the contents of the
+#' header note Rmd file.
+#' @param subNoteFileName A string specifying the subnote file name.
+#' @param subNoteRmdPath A string with the full file path of the subnote Rmd.
+#' @param headerNoteRmdPath A string with the full file path of the header note
+#' Rmd.
+#' @param subNoteContentLinkContents Character vector containing the template
+#' for the subnote content link.
+#' @param settings A list of configuration settings used to load parameter
+#' vectors and template values.
+#' @param orgPath A string specifying the root directory path of the
+#' organisation.
+#'
+#' @details The function first creates a hyperlink by calling
+#' \code{create_hyperlink()} using the subnote file name and paths. It then
+#' replaces the placeholder "{{HEADER_NOTE_CONTENT_LINK}}" in the provided
+#' template using \code{sub_template_param()}. The insertion location within the
+#' header note is determined by finding header and footer markers loaded from
+#' the settings using \code{load_param_vector()}, \code{match_line_index()}, and
+#' \code{grep_line_index_from()}. The substituted content is inserted at the
+#' footer index via \code{insert_at_indices()}, and the modified header note
+#' contents are returned.
+#'
+#' @note This function assumes that the header note contains the defined
+#' header and footer markers from the settings. If these markers are missing,
+#' the insertion may not occur as expected.
+#'
+#' @examples
+#' \dontrun{
+#' # Read header note contents and subnote template content.
+#' headerContents <- read_file("header_note.Rmd")
+#' templateContent <- read_file("SubNoteContentLinkTemplate.Rmd")
+#'
+#' # Define subnote details.
+#' subNoteName <- "subNote1.Rmd"
+#' subNotePath <- "/path/to/subNote1.Rmd"
+#' headerPath <- "/path/to/header_note.Rmd"
+#'
+#' # Load project settings and organisation path.
+#' settings <- get_settings_yml("/path/to/org")
+#' orgPath <- "/path/to/org"
+#'
+#' # Insert the subnote link into the header note contents.
+#' newHeaderContents <- insert_subnote_link_header(headerContents,
+#'                        subNoteName, subNotePath, headerPath,
+#'                        templateContent, settings, orgPath)
+#'
+#' # Write the updated header note contents back to file.
+#' write_file(newHeaderContents, headerPath)
+#' }
+#'
+#' @seealso create_hyperlink, sub_template_param, load_param_vector,
+#' match_line_index, grep_line_index_from, insert_at_indices
+insert_subnote_link_header <- function(headerNoteRmdContents, subNoteFileName,
+                                       subNoteRmdPath, headerNoteRmdPath,
+                                       subNoteContentLinkContents,
+                                       settings, orgPath) {
 
+  subNoteContentLink <- create_hyperlink( subNoteFileName, subNoteRmdPath, headerNoteRmdPath)
+  subNoteContentLinkContents <- sub_template_param(subNoteContentLinkContents,
+                                                   "{{HEADER_NOTE_CONTENT_LINK}}",
+                                                   subNoteContentLink, orgPath)
+
+  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["HeaderNoteContentsHeader"]], orgPath),
+                                             headerNoteRmdContents)
+  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["HeaderNoteContentsFooter"]], orgPath),
+                                                 headerNoteRmdContents, noteContentsHeadIndex, orgPath)
+
+  headerNoteRmdContents <- insert_at_indices(headerNoteRmdContents, noteContentsFootIndex, subNoteContentLinkContents)
+
+  headerNoteRmdContents # return
+
+}
+
+#' Link Sub Note to Project Doc GDT
+#'
+#' This function links a new sub note to its associated project document
+#' based on Goal-Deliverable-Task (GDT) information. It extracts GDT data
+#' from the link note contents and inserts corresponding links into the sub
+#' note and project document.
+#'
+#' @param selection A list of parameters for the selected Rmd file. Expected
+#'   elements include \code{rmdType}, \code{filePath}, and optionally
+#'   \code{headerNoteLink} and \code{addingSubNote}.
+#' @param settings A list of configuration settings for template processing,
+#'   parameter substitution, and marker definitions.
+#' @param subNoteRmdPath A string specifying the full file path of the sub note
+#'   Rmd file.
+#' @param subNoteContents A character vector containing the sub note's content.
+#' @param headerNoteRmdPath A string specifying the full file path of the header
+#'   note Rmd file.
+#' @param headerNoteRmdContents A character vector containing the header note's
+#'   content.
+#' @param projNoteLinkContents A character vector holding the project note link
+#'   template.
+#' @param projNoteLinkSummaryContents A character vector holding the project note
+#'   link summary template.
+#' @param todoContents A character vector holding the todo template.
+#' @param projNoteSummaryContents A character vector with the project note summary
+#'   template.
+#' @param subNoteSummaryContents A character vector with the sub note summary
+#'   template.
+#' @param linkNoteRmdPath A string specifying the full file path of the link
+#'   note Rmd file.
+#' @param linkNoteRmdContents A character vector containing the link note's
+#'   content.
+#' @param orgPath A string specifying the root directory path of the
+#'   organisation.
+#'
+#' @details This internal function integrates a new sub note into an existing
+#'   project note group. It performs the following tasks:
+#'   \enumerate{
+#'     \item Extracts GDT details from the link note using
+#'       \code{extract_note_obj_doc_link_GDT_summ()}.
+#'     \item Iterates over each GDT to compute hyperlink data via
+#'       \code{compute_doc_GDT_link()}.
+#'     \item Replaces placeholders in link templates with actual values using
+#'       \code{sub_note_link_params()} and \code{sub_template_param()}.
+#'     \item Determines insertion points in the sub note using header and footer
+#'       markers with \code{match_line_index()} and
+#'       \code{grep_line_index_from()}.
+#'     \item Inserts the generated links into the sub note and updates the
+#'       project document.
+#'   }
+#'
+#' @note This function assumes that the link note and sub note belong to the
+#'   same project note group and that required markers and templates are
+#'   present. Missing markers or templates may lead to incorrect link insertion.
+#'
+#' @examples
+#' \dontrun{
+#' # Example: Linking a new sub note to a project document.
+#' selection <- list(rmdType = "SUB", filePath = "/path/to/subnote.Rmd")
+#' settings <- get_settings_yml("/path/to/org")
+#' subNoteRmdPath <- "/path/to/project/subnotes/subNote1.Rmd"
+#' subNoteContents <- read_file(subNoteRmdPath)
+#' headerNoteRmdPath <- "/path/to/project/header_note.Rmd"
+#' headerNoteRmdContents <- read_file(headerNoteRmdPath)
+#' projNoteLinkContents <- read_file("Project-Note-Link-Template.Rmd")
+#' projNoteLinkSummaryContents <- read_file(
+#'   "Project-Note-Link-Summary-Template.Rmd")
+#' todoContents <- read_file("Todo-Template.Rmd")
+#' projNoteSummaryContents <- read_file("Project-Note-Summary-Template.Rmd")
+#' subNoteSummaryContents <- read_file(
+#'   "Project-Sub-Note-Summary-Template.Rmd")
+#' linkNoteRmdPath <- "/path/to/project/link_note.Rmd"
+#' linkNoteRmdContents <- read_file(linkNoteRmdPath)
+#' orgPath <- "/path/to/org"
+#'
+#' # Link the sub note with GDT-based links.
+#' link_sub_note_doc(selection, settings, subNoteRmdPath, subNoteContents,
+#'                   headerNoteRmdPath, headerNoteRmdContents,
+#'                   projNoteLinkContents, projNoteLinkSummaryContents,
+#'                   todoContents, projNoteSummaryContents,
+#'                   subNoteSummaryContents, linkNoteRmdPath,
+#'                   linkNoteRmdContents, orgPath)
+#' }
+#'
+#' @seealso extract_note_obj_doc_link_GDT_summ, compute_doc_GDT_link,
+#'   sub_note_link_params, sub_template_param, insert_at_indices,
+#'   load_param_vector, match_line_index, grep_line_index_from, write_file,
+#'   create_hyperlink
+link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteContents,
+                              headerNoteRmdPath, headerNoteRmdContents, projNoteLinkContents,
+                              projNoteLinkSummaryContents, todoContents, projNoteSummaryContents,
+                              subNoteSummaryContents, linkNoteRmdPath, linkNoteRmdContents, orgPath) {
+
+
+  #### Set Instance Variables ####
+
+  # subNotePath is the parent directory the subNoteRmdPath (Rmd file) sits in
+  subNotePath <- fs::path_expand( dirname(subNoteRmdPath))
+  subNoteFileName <- basename(subNoteRmdPath)
+
+  #### Extract ProjDocGDTs from linkNoteRmdContents ####
+
+  # extract each project Doc + GDT from each objective
+  DocGDTsList <- extract_note_obj_doc_link_GDT_summ(linkNoteRmdContents, linkNoteRmdPath,
+                                                    settings, orgPath)
+
+
+  #### For each DocGDT ####
+
+  # compute the noteObjective Header index in subNoteContents
+  noteObjHeadIndex <- match_line_index( load_param_vector(settings[["NoteObjectivesHeader"]], orgPath),
+                                        subNoteContents)
+
+  # replace projNoteLinkSummaryContents summary headers
+  projNoteLinkSummaryContents <- note_link_summ_params(projNoteLinkSummaryContents,
+                                                       todoContents, settings, orgPath)
+
+  for( dGDT in DocGDTsList ) {
+
+
+    ##### Fill ProjDoc GDT Templates for SUB Note #####
+
+    DocGDTList <- compute_doc_GDT_link(dGDT[["projectDocFilePath"]], subNoteRmdPath, settings,
+                                       dGDT[["goal"]], dGDT[["deliverable"]], dGDT[["task"]])
+    # returns list of DOC TITLE, LINK, GOAL, DEL, TASK in NAMED LIST
+    # using the first path in subNoteRmdPaths - there will ALWAYS be at least one subnote!
+
+    # replace markup in projNoteLinkContents
+    subNoteLinkContents <- sub_note_link_params(projNoteLinkContents, settings, DocGDTList,
+                                                projNoteLinkSummaryContents, orgPath)
+
+
+    #### add Doc GDT Link to SUB Note ####
+
+    # compute location in subNoteContents to insert the GDT Link & summary
+    noteObjFootIndex <- grep_line_index_from( load_param_vector(settings[["NoteObjectivesFooter"]], orgPath),
+                                              subNoteContents, noteObjHeadIndex, orgPath)
+
+    subNoteContents <- insert_at_indices(subNoteContents, noteObjFootIndex, subNoteLinkContents)
+
+  }
+
+  write_file(subNoteContents, subNoteRmdPath)
+
+  cat( "    Written GDTs to Sub Note file: ", basename(subNoteRmdPath), "\n" )
+
+  # replace project note log sep
+  projNoteSummaryContents <- sub_template_param(projNoteSummaryContents, "{{PROJECT_NOTE_LOG_SEP}}",
+                                                settings[["ProjectTaskLogSep"]], orgPath)
+
+  # replace proj note summary
+  summaryContents <- extract_summary_from_link_contents(subNoteLinkContents, settings, orgPath)
+
+  # # replace proj note summary - if NoteObjectivesTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
+  # projNoteLinkSummaryContentsTrim <- projNoteLinkSummaryContents[1 : ifelse( any(grepl(settings[["NoteObjectivesTodoSectionHeader"]],
+  #                                                                                      projNoteLinkSummaryContents, fixed=TRUE)),
+  #                                                                            grep(settings[["NoteObjectivesTodoSectionHeader"]],
+  #                                                                                 projNoteLinkSummaryContents, fixed=TRUE)-1,
+  #                                                                            length(projNoteLinkSummaryContents)) ]
+
+  # replace in projNoteSummaryContents - in case any links are INDIVIDUAL (not group note)
+  # this will be added at end of GDT section as individual project note link
+  projNoteSummaryContents <- sub_template_param(projNoteSummaryContents, "{{PROJECT_NOTE_SUMMARY}}",
+                                                summaryContents, orgPath)
+
+  # replace in subNoteSummaryContents - for links that are GROUP NOTES
+  # this will be added at end of the group note link in GDT section as subnote link
+  subNoteSummaryContents <- sub_template_param(subNoteSummaryContents, "{{PROJECT_NOTE_SUMMARY}}",
+                                               summaryContents, orgPath)
+
+  for( dGDT in DocGDTsList ) {
+
+    ##### Write Sub Note to each DocGDT #####
+
+    # read projDoc
+    projectDocPath <- dGDT[["projectDocFilePath"]]
+    projDocContents <- read_file(projectDocPath)
+
+    # find the GDT vector
+    goalLine <- grep_line_index(dGDT[["goal"]], projDocContents, orgPath)
+    delLine <- grep_line_index_from(dGDT[["deliverable"]], projDocContents, goalLine, orgPath)
+    taskLine <- grep_line_index_from(dGDT[["task"]], projDocContents, delLine, orgPath)
+    logLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
+                                    projDocContents, taskLine, orgPath)
+    taskFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
+                                           projDocContents, logLine, orgPath) # end of log section
+
+    # determine if link exists as a group note link or as a single project note
+    # find index of headernote link then the next ProjectTaskLogSep
+    headerNoteName <- substr(basename(headerNoteRmdPath), 1, regexpr(".Rmd", basename(headerNoteRmdPath))-1)
+    headerNoteLink <- paste0(settings[["HeaderLinkFormat"]],
+                             create_hyperlink( headerNoteName, headerNoteRmdPath, projectDocPath),
+                             settings[["HeaderLinkFormat"]])
+    headLine <- grep(headerNoteLink, projDocContents[logLine:taskFooterLine], fixed=TRUE)
+
+    if( length(headLine) > 0) {
+      # if headLine identified, the link to this GDT must be as a group note under the header
+      # get the headLine in full projDoc vector
+      headLine <- grep_line_index_from(headerNoteLink, projDocContents, logLine, orgPath)
+      # then the sepLine from this point
+      sepLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogSep"]], orgPath),
+                                      projDocContents, headLine, orgPath)
+      # insert the new subnote at end of group note link
+      insertionLine <- sepLine
+
+      # replace sub note link
+      projNoteName <- substr(basename(subNoteRmdPath), 1, regexpr(".Rmd", basename(subNoteRmdPath))-1)
+      projNoteLink <- paste0(settings[["SubNoteLinkFormat"]],
+                             create_hyperlink( projNoteName, subNoteRmdPath, projectDocPath),
+                             settings[["SubNoteLinkFormat"]])
+      snSummaryContents <- sub_template_param(subNoteSummaryContents, "{{PROJECT_NOTE_LINK}}",
+                                              projNoteLink, orgPath)
+
+      projDocContents <- insert_at_indices(projDocContents, insertionLine, snSummaryContents)
+
+      write_file(projDocContents, projectDocPath)
+
+      cat( "  Written Sub Note Link to Project Doc: ", basename(projectDocPath),
+           " at GDT:", "\n  ", dGDT[["goal"]],"\n  ", dGDT[["deliverable"]],"\n  ", dGDT[["task"]], "\n" )
+
+    } else {
+      # if headLine not identified, the link to this GDT must be from a subnote individually linked
+      # insert new subnote at end of the GDT section
+      insertionLine <- taskFooterLine
+
+      # replace sub note link
+      projNoteName <- substr(basename(subNoteRmdPath), 1, regexpr(".Rmd", basename(subNoteRmdPath))-1)
+      projNoteLink <- paste0(settings[["NoteLinkFormat"]],
+                             create_hyperlink( projNoteName, subNoteRmdPath, projectDocPath),
+                             settings[["NoteLinkFormat"]])
+      snSummaryContents <- sub_template_param(projNoteSummaryContents, "{{PROJECT_NOTE_LINK}}",
+                                              projNoteLink, orgPath)
+
+      projDocContents <- insert_at_indices(projDocContents, insertionLine, snSummaryContents)
+
+      write_file(projDocContents, projectDocPath)
+
+      cat( "  Written Project Note Link to Project Doc: ", basename(projectDocPath),
+           " at GDT:", "\n  ", dGDT[["goal"]],"\n  ", dGDT[["deliverable"]],"\n  ", dGDT[["task"]], "\n" )
+
+    }
+  } # end for
+} #### ________________________________ ####
 
 #' Create Insertable Content in a Project Note
 #'
-#' This Function declares new Insertable Content, based on the
-#' `contentDeclarationTemplate`, which is inserted into selected Project Note.
-#' This contains key parameters to declare Insertable Content:
+#' This function declares new insertable content based on a content
+#' declaration template and inserts it into a selected Project Note.
+#' It creates a separate Rmd file (the content source) that initially is blank,
+#' which can be modified to include specific documentation such as SOPs or
+#' protocol logs.
 #'
-#' * `CONTENT_NAME` specifies a name for the content, which can be used to select
-#'  content to be inserted by the `insert_content()` function.
+#' @param selection A list representing the current Project Note selection.
+#'   It must include:
+#'     - filePath: The path of the current Project Note Rmd.
+#'     - originalLineNumber: The line number where content is to be inserted.
+#'     - rmdType: The type of Rmd file; must be "NOTE" or "SUB".
 #'
-#' * `CONTENT_DESCRIPTION` gives a succinct description of the insertable content
-#'  what it contains & how it can be used.
+#' @param contentName A string specifying the name of the content.
+#'   It must not contain any spaces.
 #'
-#' * `CONTENT_SOURCE_LINK` relative path to insertable content Rmd from the content
-#' source Project Note Rmd file.
+#' @param contentDescription A string describing the content. This is shown
+#'   to users when choosing content to insert.
 #'
-#' The actual insertable content is located in a separate Rmd, pointed to by the
-#' CONTENT_SOURCE_LINK parameter.  This is initially a blank Rmd document by
-#' default, that should be filled with the content to be inserted, including all
-#' whitespace.  The `contentSourceTemplate` can be modified to any existing Rmd
-#' file, to provide a base parameterised template for consistent generation of
-#' specific types of documentation (eg. suggested layouts, specific header
-#' ordering, etc).
+#' @param contentSourcePath A string specifying the path where the content
+#'   directory and its Rmd file will be created. It is recommended to place
+#'   it within the Project Note's directory.
 #'
-#' Content is any templated insertable text.  Typically in ProjectManager it is
-#' used to define a set of Standard Operating Procedures (SOPs) and/or LOG
-#' Sections that record Protocol execution.
+#' @param projectNoteTitle (Optional) A title for the content. If left blank,
+#'   contentName is used with underscores and dashes replaced by spaces.
 #'
-#' The Content Declaration in a source Project Note is defined
-#' between specific delimiters; these delimiters are defined in `CONTENT_SEP.txt`.
+#' @param contentDeclarationTemplate A template file for content declaration,
+#'   located in the .config/templates/ directory. Default is
+#'   "Protocol-Declaration-Template.Rmd".
 #'
-#' Content defined in a source Project Note can be inserted into new Project
-#' Notes, using the `insert_content()` function.
+#' @param contentSourceTemplate A template file for the content source, found
+#'   in the .config/templates/ directory. Default is
+#'   "Protocol-Source-Template.Rmd".
 #'
-#' @param selection projectmanagr selection object indicating the type of file
-#' currently selected.  The current file must be a Project Note.
+#' @details
+#' The function executes the following steps:
+#' 1. Determines the content directory and Rmd file path using contentName and
+#'    contentSourcePath.
+#' 2. Creates a relative hyperlink from the Project Note to the new content Rmd.
+#' 3. Reads the content declaration and content source templates from the
+#'    templates directory.
+#' 4. Replaces placeholders in the content declaration template with the
+#'    provided content title, description, and the hyperlink.
+#' 5. Inserts the modified content declaration into the Project Note at the
+#'    specified insertion point.
+#' 6. Creates the content directory and writes the content source template to
+#'    a new Rmd file.
+#' 7. Updates the Project Note with the new content declaration.
 #'
-#' @param contentName The name of the Content; a String that should
-#' not contain any SPACES. For Protocols RECOMMEND using a VERB-DRIVEN Naming
-#' Convention && use the common verb words first. eg. Fix Perfuse Mouse,
-#' Fix Fog Drosophila.
+#' @return A string representing the path to the created content Rmd file.
 #'
-#' @param contentDescription Description of the protocol - shown to users when
-#' choosing a protocol to insert.
+#' @examples
+#' \dontrun{
+#'   create_content(
+#'     selection = list(
+#'       filePath = "project_note.Rmd",
+#'       originalLineNumber = 25,
+#'       rmdType = "NOTE"
+#'     ),
+#'     contentName = "SOP_Fix",
+#'     contentDescription = "Standard operating procedure for fixing the pump.",
+#'     contentSourcePath = "/projects/my_project/notes",
+#'     projectNoteTitle = "Pump Fix SOP",
+#'     contentDeclarationTemplate = "Protocol-Declaration-Template.Rmd",
+#'     contentSourceTemplate = "Protocol-Source-Template.Rmd"
+#'   )
+#' }
 #'
-#' @param contentSourcePath Path to where the content Dir & Rmd should be stored.
-#' This can be any location on the filesystem, but RECOMMEND placing it within
-#' the project note's directory where the content declaration link will be written.
+#' @seealso
+#' \code{\link{create_hyperlink}}, \code{\link{read_file}},
+#' \code{\link{write_file}}, \code{\link{get_settings_yml}},
+#' \code{\link{find_org_directory}}, \code{\link{insert_at_indices}}
 #'
-#' @param projectNoteTitle OPTIONAL title for the Content.  Default is a blank
-#' string (`""`), in which case the function will use contentName and replace
-#' all `_` and `-` with SPACES.
-#'
-#' @param contentDeclarationTemplate Template used for content declaration,
-#' found in the `.config/templates/`directory.  Default is
-#' "Protocol-Declaration-Template.Rmd"
-#'
-#' @param contentSourceTemplate Template used for source of insertable text,
-#' found in the `.config/templates/` directory.  Default is
-#' "Protocol-Source-Template.Rmd", a blank Rmd file.
+#' @note
+#' The function assumes that the current file in the selection is a Project Note.
+#' The selection must include keys 'filePath' and 'originalLineNumber'. The
+#' contentName must not have spaces, and the content declaration template must
+#' define placeholders for CONTENT_TITLE_FIELD, CONTENT_TITLE,
+#' CONTENT_DESCRIPTION_FIELD, CONTENT_DESCRIPTION, CONTENT_SOURCE_FIELD, and
+#' CONTENT_SOURCE_LINK.
 #'
 #' @export
 create_content <- function(selection, contentName, contentDescription,
@@ -1967,11 +2731,10 @@ create_content <- function(selection, contentName, contentDescription,
   }
 
 
-
   #### Read Rmds ####
 
-  contentDeclarationContents <- read_file( paste0( tempPath, .Platform$file.sep, contentDeclarationTemplate) )
-  contentSourceContents <- read_file( paste0( tempPath, .Platform$file.sep, contentSourceTemplate) )
+  contentDeclarationContents <- read_file( fs::path( tempPath, contentDeclarationTemplate) )
+  contentSourceContents <- read_file( fs::path( tempPath, contentSourceTemplate) )
   projNoteRmdContents <- read_file(projNoteRmdPath)
 
 
@@ -2049,34 +2812,68 @@ create_content <- function(selection, contentName, contentDescription,
   # return contentRmd path
   contentRmd
 
-}
-
+} #### ________________________________ ####
 
 #' Create Weekly Journal
 #'
-#' Only creates the weekly journal if it does not exist.  If the weekly journal
-#' file already exists, it returns the path to the existing file for opening.
+#' This function creates a weekly journal file for an organisation if it does
+#' not already exist. If the journal file exists, it returns the path to the
+#' existing file. The journal is stored in the directory specified in the
+#' settings under "WeeklyJournalDir". Optionally, TODOs can be extracted to
+#' this file using the extract_todos() function.
 #'
-#' Saved in directory indicated in settings under "WeeklyJournalDir".
+#' @param date A string or Date object representing the start date for the
+#'   Weekly Journal. It is converted to the Monday of the current week. The date
+#'   should be in 'YYYY-MM-DD' format.
 #'
-#' Can optionally extract TODOs to this file with the `extract_todos()` function.
+#' @param organisationPath A string representing the path to the Organisation
+#'   where the journal is created and saved.
 #'
-#' @param date The start date of the Weekly Journal - converted to the current
-#' week Monday date.  This should be in 'YYYY-MM-DD' format, and can be a String.
-#' Can create a Date object with code `as.Date(paste(year, month, "01", sep = "-"))`.
+#' @param authorValue A string representing the author name for the Programme
+#'   index file.
 #'
-#' @param organisationPath The path to the Organisation where the weekly
-#'  journal is created & saved.
+#' @param journalFileNameTemplate A string that defines the journal file name.
+#'   Placeholders for {{YYYY}}, {{MM}}, {{DD}}, and {{ORGNAME}} are replaced with
+#'   the corresponding values.
 #'
-#' @param journalFileNameTemplate A string that defines the journal File Name.
-#' YYYY & MM & DD are replaced with the year, month, day in the date arg.
+#' @param journalTemplate A template file name from the templates directory that
+#'   defines the layout for the weekly journal.
 #'
-#' @param journalTemplate File in template/s dir that indicates the layout
-#' for the weekly journal.
+#' @details
+#' The function first converts the input date to the Monday of the current week
+#' and extracts the year, month, and day. It then determines the organisation
+#' directory using the given organisationPath. Next, it creates the necessary
+#' directories (the journal root and a year subdirectory) and generates a journal
+#' Rmd file using the provided journal template. If the journal file already exists,
+#' the function does not overwrite it and returns its path instead.
+#'
+#' @return A string representing the path to the weekly journal Rmd file.
+#'
+#' @examples
+#' \dontrun{
+#'   create_weekly_journal(
+#'     date = "2023-04-10",
+#'     organisationPath = "/path/to/organisation",
+#'     authorValue = "John Doe",
+#'     journalFileNameTemplate = "{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
+#'     journalTemplate = "Weekly-Work-Journal-Template.Rmd"
+#'   )
+#' }
+#'
+#' @seealso
+#' \code{\link{find_org_directory}}, \code{\link{get_settings_yml}},
+#' \code{\link{create_directory}}, \code{\link{read_file}},
+#' \code{\link{write_file}}, \code{\link{extract_todos}}
+#'
+#' @note
+#' The function converts the date to a Date object if it is not already. It
+#' relies on proper configuration in the YAML settings and assumes that the
+#' organisation directory structure is correctly set up.
 #'
 #' @export
 create_weekly_journal <- function(date=lubridate::today(),
                                   organisationPath=getwd(),
+                                  authorValue=Sys.info()["user"],
                                   journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
                                   journalTemplate="Weekly-Work-Journal-Template.Rmd") {
 
@@ -2160,9 +2957,6 @@ create_weekly_journal <- function(date=lubridate::today(),
 
     # fill template
 
-    # use username as author value
-    authorValue <- Sys.info()["user"]
-
     # modify journalContents to include date YYYY MM DD
     journalContents <- gsub("{{YYYY}}", year, journalContents, fixed=TRUE)
     journalContents <- gsub("{{MM}}", month, journalContents, fixed=TRUE)
@@ -2203,15 +2997,47 @@ create_weekly_journal <- function(date=lubridate::today(),
 
 #' Generate Plaintext Calendar
 #'
-#' Internal function to generate a plaintext calendar for insertion into
-#' the weekly journal.
+#' This internal function generates a plaintext calendar for insertion
+#' into a weekly journal. The calendar is arranged as a matrix with columns
+#' for each day of the week (starting with Sunday) and includes dates from
+#' the first day of the month to the Saturday after the month's end.
 #'
-#' The calendar is laid out as a matrix with columns for each day of the week,
-#' starting with SUNDAY, and dates filled into this matrix - from the first date
-#' of the month to the end of the week (ie. the Saturday) BEYOND the last date
-#' of the month.
+#' @param year A string or numeric value representing the year (YYYY).
+#' @param month A string or numeric value representing the month (MM).
+#' @param day A string or numeric value representing the day (DD). This is used
+#'   only for header display purposes.
+#' @param calendar_header (Optional) A string used as the header for the
+#'   calendar. Default is "# DAILY LOG :".
 #'
-generate_plaintext_calendar <- function(year, month, day, calendar_header="# DAILY LOG :") {
+#' @return A string containing the formatted plaintext calendar.
+#'
+#' @details
+#' The function constructs a date object for the first day of the given
+#' month and year, and determines the last day of the month. It then
+#' extends the date range to fill the calendar grid up to the following
+#' Saturday. A 7x7 matrix is built with the day names as column headers and
+#' date numbers filled in appropriately. Blank spaces are inserted where
+#' no date exists, and the matrix is converted into a formatted string.
+#'
+#' @examples
+#' \dontrun{
+#'   # Generate a calendar for April 2023 with a custom header.
+#'   cal <- generate_plaintext_calendar("2023", "04", "01",
+#'                                        calendar_header="# WEEKLY LOG :")
+#'   cat(cal)
+#' }
+#'
+#' @seealso
+#' \code{\link[lubridate]{floor_date}}, \code{\link{as.Date}},
+#' \code{\link{seq.Date}}, \code{\link{format}}
+#'
+#' @note
+#' This function assumes that the input year, month, and day are provided in
+#' valid 'YYYY', 'MM', and 'DD' formats. It is designed for internal use
+#' and may require further formatting for presentation in different contexts.
+#'
+generate_plaintext_calendar <- function(year, month, day,
+                                        calendar_header="# DAILY LOG :") {
   # Create a date object for the first day of the specified month and year
   first_date <- as.Date(paste(year, month, "01", sep = "-"))
 
@@ -2292,11 +3118,43 @@ generate_plaintext_calendar <- function(year, month, day, calendar_header="# DAI
   return(calendar_text)
 }
 
-
 #' Generate Weekly RMarkdown Daily Log
 #'
-#' Creates RMarkdown content for 7 days, from the year-month-day date passed
-#' to this function.
+#' Creates RMarkdown content for 7 days starting from the provided year-
+#' month-day date. It returns a character vector with RMarkdown headers
+#' and separator lines for each day.
+#'
+#' @param year A string or numeric value representing the year (YYYY).
+#' @param month A string or numeric value representing the month (MM).
+#' @param day A string or numeric value representing the day (DD) from which
+#'   the log begins.
+#' @param separator_lines A string specifying the separator lines to insert
+#'   before each day's header. Default is "{{SEP02}}".
+#'
+#' @details
+#' This function creates a weekly daily log in RMarkdown format. It computes
+#' the date range by adding 6 days to the starting date. For each day in the
+#' range, it generates an uppercase header that includes the weekday, day,
+#' month, and year. Separator lines are added before each header. The result
+#' is returned as a character vector of RMarkdown text lines.
+#'
+#' @return A character vector containing the RMarkdown lines for the weekly
+#' daily log.
+#'
+#' @examples
+#' \dontrun{
+#'   # Generate a weekly log for April 10, 2023.
+#'   md_lines <- generate_weekly_rmarkdown("2023", "04", "10")
+#'   cat(md_lines, sep = "\n")
+#' }
+#'
+#' @seealso
+#' \code{\link{as.Date}}, \code{\link{format}}, \code{\link{toupper}},
+#' \code{\link{paste}}, \code{\link{while}}
+#'
+#' @note
+#' Ensure the year, month, and day are provided in valid formats. The function
+#' assumes the input date is valid and performs minimal error checking.
 #'
 generate_weekly_rmarkdown <- function(year, month, day, separator_lines="{{SEP02}}") {
 
@@ -2333,6 +3191,7 @@ generate_weekly_rmarkdown <- function(year, month, day, separator_lines="{{SEP02
   #markdown_text <- paste(markdown_lines, collapse = "")
 
   return(markdown_lines)
-}
+
+} #### ________________________________ ####
 
 

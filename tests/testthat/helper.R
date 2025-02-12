@@ -6,6 +6,8 @@
 #' @return tmpdir full path
 create_tmpdir_rsess <- function(env = parent.frame()) {
   tmpdir <- fs::path(dirname(tempdir()), "Rsess")
+  #tmpdir <- fs::path('/', 'tmp', 'Rsess')
+  # set a fixed tmpdir path!
   fs::dir_create(tmpdir)
   withr::defer(fs::dir_delete(tmpdir), envir = env) # delete once tests finish
   tmpdir # return
@@ -18,11 +20,17 @@ create_tmpdir_rsess <- function(env = parent.frame()) {
 #'
 #' @param orgName name of org
 #'
+#' @param authorValue name of author
+#'
 #' @param orgParentPath Temp dir to generate org
+#'
+#' @param syp Serttings Yaml Path - path to settings.yml to read, if blank will
+#' read the projectmanagr package settings.yml. Used to insert custom settings
+#' data.
 #'
 #' @param env parent.frame for withr::deferred_run()
 #'
-local_create_org <- function(orgName, orgParentPath, syp,
+local_create_org <- function(orgName, authorValue, orgParentPath, syp,
                              env = parent.frame() ) {
 
   # record current state
@@ -32,14 +40,17 @@ local_create_org <- function(orgName, orgParentPath, syp,
 
     # create local yaml file in orgParentPath to point to
     settingsYamlPath <- create_test_settings_yaml(syp)
+     # also modify some key parameters:
+     # ProjectPrefixSep : only - or _ used
+     # ProjectIndexSep : only - or _ used
 
     # create project org
-    create_project_org(orgParentPath, orgName,
+    create_project_org(orgParentPath, orgName, authorValue=authorValue,
                        settingsYamlPath=settingsYamlPath)
 
   } else {
     # create project org
-    create_project_org(orgParentPath, orgName,
+    create_project_org(orgParentPath, orgName, authorValue=authorValue,
                        settingsYamlPath="")
 
   }
@@ -108,16 +119,18 @@ modify_test_settings_yaml <- function(orgPath) {
 #'
 #' @param orgDir dir to org
 #'
+#' @param authorValue name of author
+#'
 #' @param env parent.frame for withr::deferred_run()
 #'
-local_create_prog <- function(progName, orgDir,
+local_create_prog <- function(progName, orgDir, authorValue,
                              env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
 
   # create project programme
-  create_programme(progName, orgDir)
+  create_programme(progName, orgDir, authorValue)
   progDir <- fs::path(orgDir, progName)
 
   withr::defer(fs::dir_delete(progDir), envir = env)
@@ -139,14 +152,14 @@ local_create_prog <- function(progName, orgDir,
 #'
 #' @param env parent.frame for withr::deferred_run()
 #'
-local_create_project <- function(projectPrefix, projectName, progDir,
+local_create_project <- function(projectPrefix, projectName, progDir, authorValue,
                                  env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
 
   # create project doc
-  create_project_doc(projectPrefix, projectName, progDir)
+  create_project_doc(projectPrefix, projectName, progDir, authorValue)
 
   # create paths to Rmd & dir
   renamedProjectRmd <- fs::path(progDir, paste0(projectPrefix, "_--_", projectName, ".Rmd") )
@@ -176,13 +189,14 @@ local_create_project <- function(projectPrefix, projectName, progDir,
 #' @param env parent.frame for withr::deferred_run()
 #'
 local_create_project_rename <- function(projectPrefix, projectName, progDir,
-                                 renamedDocName, env = parent.frame() ) {
+                                        authorValue, renamedDocName,
+                                        env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
 
   # create project doc
-  create_project_doc(projectPrefix, projectName, progDir)
+  create_project_doc(projectPrefix, projectName, progDir, authorValue)
 
   # create paths to Rmd & dir - use new renamed Rmd file name for deferred deletion
   renamedProjectRmd <- fs::path(progDir, paste0(projectPrefix, "_--_", renamedDocName, ".Rmd") )
@@ -249,7 +263,7 @@ local_modify_project_doc_gdt_titles <- function(settingsYml, projectRmd,
 
 
 local_create_project_note_simple <- function(projectNoteName, projectNotePath,
-                                             projectDocPath, taskLine,
+                                             projectDocPath, taskLine, authorValue,
                                              noteIndex="___001",
                                              env = parent.frame() ) {
 
@@ -264,7 +278,7 @@ local_create_project_note_simple <- function(projectNoteName, projectNotePath,
   selection <- user_selection(projectDocPath, taskLine)
 
   # create project note
-  create_project_note(projectNoteName, projectNotePath, selection)
+  create_project_note(projectNoteName, projectNotePath, selection, authorValue)
 
   # create paths to Rmd & dir
   projectNoteRmd <- fs::path(projectNotePath, paste0(basename(projectNotePath), noteIndex,"_--_", projectNoteName, ".Rmd") )
@@ -284,7 +298,7 @@ local_create_project_note_simple <- function(projectNoteName, projectNotePath,
 
 
 local_create_project_note_simple_rename <- function(projectNoteName, projectNotePath,
-                                             projectDocPath, taskLine,
+                                             projectDocPath, taskLine,  authorValue,
                                              noteIndex="___001", renameNoteName="",
                                              env = parent.frame() ) {
 
@@ -299,7 +313,7 @@ local_create_project_note_simple_rename <- function(projectNoteName, projectNote
   selection <- user_selection(projectDocPath, taskLine)
 
   # create project note
-  create_project_note(projectNoteName, projectNotePath, selection)
+  create_project_note(projectNoteName, projectNotePath, selection,  authorValue)
 
   # create paths to Rmd & dir - ability to defer deletion of rename testing
   projectNoteRmd <- fs::path(projectNotePath, paste0(basename(projectNotePath), noteIndex,"_--_", projectNoteName, ".Rmd") )
@@ -322,7 +336,7 @@ local_create_project_note_simple_rename <- function(projectNoteName, projectNote
 
 local_create_project_note_group <- function(groupNoteName, groupNotePath,
                                             projectDocPath, taskLine,
-                                            subNoteName,
+                                            subNoteName, authorValue,
                                             env = parent.frame()) {
 
   # record current state
@@ -332,7 +346,7 @@ local_create_project_note_group <- function(groupNoteName, groupNotePath,
   selection <- user_selection(projectDocPath, taskLine)
 
   # create group note
-  create_group_note(groupNoteName, groupNotePath, selection, subNoteName)
+  create_group_note(groupNoteName, groupNotePath, selection, subNoteName, authorValue)
 
   # create paths to Rmd & dir
   groupNoteRmd <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___001-00", "_--_", groupNoteName, ".Rmd") )
@@ -351,7 +365,7 @@ local_create_project_note_group <- function(groupNoteName, groupNotePath,
 
 local_create_project_note_group2 <- function(groupNoteName, groupNotePath,
                                             projectDocPath, taskLine,
-                                            subNoteName,
+                                            subNoteName,  authorValue,
                                             env = parent.frame()) {
 
   # record current state
@@ -361,7 +375,7 @@ local_create_project_note_group2 <- function(groupNoteName, groupNotePath,
   selection <- user_selection(projectDocPath, taskLine)
 
   # create group note
-  create_group_note(groupNoteName, groupNotePath, selection, subNoteName)
+  create_group_note(groupNoteName, groupNotePath, selection, subNoteName,  authorValue)
 
   # create paths to Rmd & dir
   groupNoteRmd <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___002-00", "_--_", groupNoteName, ".Rmd") )
@@ -393,7 +407,8 @@ local_get_project_doc_file_link_line <- function(projectDocRmd, groupNoteRmd, se
 
 local_create_project_note_sub <- function(subNoteName, subNotePath,
                                           projectDocRmd, headerLinkLine,
-                                             env = parent.frame()) {
+                                          authorValue,
+                                          env = parent.frame()) {
 
   # interactive testing
   #subNoteName <- subNoteName2
@@ -405,7 +420,7 @@ local_create_project_note_sub <- function(subNoteName, subNotePath,
   selection <- user_selection(projectDocRmd, headerLinkLine)
 
   # create project note
-  create_sub_note(subNoteName, subNotePath, selection)
+  create_sub_note(subNoteName, subNotePath, selection, authorValue)
 
   # other ARGS
   subNoteTitle=""
@@ -434,6 +449,7 @@ local_create_project_note_sub <- function(subNoteName, subNotePath,
 
 local_create_project_note_sub2 <- function(subNoteName, subNotePath,
                                           projectDocRmd, headerLinkLine,
+                                          authorValue,
                                           env = parent.frame()) {
 
   # interactive testing
@@ -446,7 +462,7 @@ local_create_project_note_sub2 <- function(subNoteName, subNotePath,
   selection <- user_selection(projectDocRmd, headerLinkLine)
 
   # create project note
-  create_sub_note(subNoteName, subNotePath, selection)
+  create_sub_note(subNoteName, subNotePath, selection,  authorValue)
 
   # other ARGS
   subNoteTitle=""
@@ -475,7 +491,7 @@ local_create_project_note_sub2 <- function(subNoteName, subNotePath,
 
 
 local_create_project_note_sub_head_sel <- function(subNoteName, subNotePath,
-                                          headNotePath, headLine,
+                                          headNotePath, headLine, authorValue,
                                           env = parent.frame()) {
 
   # record current state
@@ -485,7 +501,7 @@ local_create_project_note_sub_head_sel <- function(subNoteName, subNotePath,
   selection <- user_selection(headNotePath, headLine)
 
   # create project note
-  create_sub_note(subNoteName, subNotePath, selection)
+  create_sub_note(subNoteName, subNotePath, selection, authorValue)
 
   # other ARGS
   subNoteTitle=""
@@ -515,6 +531,7 @@ local_create_project_note_sub_head_sel <- function(subNoteName, subNotePath,
 
 local_create_project_note_sub_head_sel2 <- function(subNoteName, subNotePath,
                                                    headNotePath, headLine,
+                                                   authorValue,
                                                    env = parent.frame()) {
 
   # record current state
@@ -524,7 +541,7 @@ local_create_project_note_sub_head_sel2 <- function(subNoteName, subNotePath,
   selection <- user_selection(headNotePath, headLine)
 
   # create project note
-  create_sub_note(subNoteName, subNotePath, selection)
+  create_sub_note(subNoteName, subNotePath, selection,  authorValue)
 
   # other ARGS
   subNoteTitle=""
@@ -555,7 +572,8 @@ local_create_project_note_sub_head_sel2 <- function(subNoteName, subNotePath,
 
 
 local_create_content <- function(contentName, contentDescription, contentSourcePath,
-                                 projectNoteRmd, noteLine, contentTitle, env = parent.frame() ) {
+                                 projectNoteRmd, noteLine, contentTitle,
+                                 env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
@@ -587,7 +605,8 @@ local_create_content <- function(contentName, contentDescription, contentSourceP
 
 
 
-local_create_journal <- function(date, organisationPath, env = parent.frame() ) {
+local_create_journal <- function(date, organisationPath, authorValue,
+                                 env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
@@ -597,7 +616,8 @@ local_create_journal <- function(date, organisationPath, env = parent.frame() ) 
   journalTemplate="Weekly-Work-Journal-Template.Rmd"
 
   # create weekly journal
-  journalRmd <- create_weekly_journal(date, organisationPath, journalFileNameTemplate, journalTemplate)
+  journalRmd <- create_weekly_journal(date, organisationPath, authorValue,
+                                      journalFileNameTemplate, journalTemplate)
 
   # define path to Rmd
   journalDir <- fs::path_dir(journalRmd)

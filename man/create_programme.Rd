@@ -2,45 +2,85 @@
 % Please edit documentation in R/create-functions.R
 \name{create_programme}
 \alias{create_programme}
-\title{Create a New Programme}
+\title{Create a New Programme within an Organisation}
 \usage{
 create_programme(
   programmeName,
   organisationPath,
+  authorValue = Sys.info()["user"],
   programmeTitle = "",
   progTemplate = "Programme-Template.Rmd",
   progSummaryTemplate = "Programme-Summary-Template.Rmd"
 )
 }
 \arguments{
-\item{programmeName}{Name of Progamme - must NOT contain a space.}
+\item{programmeName}{Character. The name of the new programme. Must not contain
+spaces.}
 
-\item{organisationPath}{Path to insert the PROGRAMME into.  If this is not an
-Organisation Directory, will search up the directory tree to attempt to find
-one.  If none found, the method will end without making a PROGRAMME.}
+\item{organisationPath}{Character. The file path to an existing organisation
+directory.}
 
-\item{programmeTitle}{Title of programme - typically the programmeName with
-"_" & "-" replaced with spaces.}
+\item{authorValue}{Character. The author of the programme. Defaults to system
+username.}
 
-\item{progTemplate}{The Rmd file to use as a template to create the Programme.
-Default is "Programme-Template.Rmd" from projectmanagr templates.}
+\item{programmeTitle}{Character. The title of the programme. If empty, it will
+be derived from \code{programmeName}.}
 
-\item{progSummaryTemplate}{The Rmd file to use as a template to create the
-Programme Summary. Default is "Programme-Summary-Template.Rmd" from
-projectmanagr templates.}
+\item{progTemplate}{Character. The filename of the programme template. Default
+is \code{"Programme-Template.Rmd"}.}
+
+\item{progSummaryTemplate}{Character. The filename of the programme summary
+template. Default is \code{"Programme-Summary-Template.Rmd"}.}
 }
 \value{
-progIndexPath The path to the programme index Rmd file.
+Character. The file path of the created programme index Rmd file.
 }
 \description{
-Generates a new Programme in an Organisation.  Generates a directory for the
-programme, and an initial \verb{_index_} .Rmd file that defines the programme
-homepage.
+Generates a new programme within an existing organisation directory, creating
+the necessary directory structure, R Markdown files, and updating the status
+YAML file.
 }
 \details{
-If \code{organisationPath} is not at the top of the Organisation, will traverse until
-it is found.  This function will halt if no Organisation is found - the
-organisation root is defined by the presence of .config/ and .config/templates
-dirs at root. An optional programmeTitle (which if not supplied will default
-to the programmeName, replacing "_" & "-" with " ").
+This function performs the following steps:
+\enumerate{
+\item Ensures \code{programmeName} does not contain spaces.
+\item Identifies the root organisation directory from \code{organisationPath}.
+\item Creates a new programme directory within the organisation.
+\item Generates a new programme index Rmd file from a template.
+\item Updates the organisation's status YAML file with programme details.
+\item Inserts the programme summary into the organisation's index file.
+}
+
+The function ensures that all directories and files are properly created and
+linked within the project structure.
+}
+\note{
+\itemize{
+\item The \code{programmeName} should not contain spaces.
+\item The function modifies files directly on disk. Ensure backups are created
+before running.
+\item The function relies on a structured organisation directory; incorrect
+structures may cause failures.
+}
+}
+\examples{
+\dontrun{
+# Create a new programme in an organisation
+create_programme(
+  programmeName = "MyProgramme",
+  organisationPath = "/path/to/organisation",
+  authorValue = "sjwest",
+  programmeTitle = "My Programme",
+  progTemplate = "Programme-Template.Rmd",
+  progSummaryTemplate = "Programme-Summary-Template.Rmd"
+)
+}
+
+}
+\seealso{
+\itemize{
+\item \code{\link{find_org_directory}} to locate the organisation directory.
+\item \code{\link{get_settings_yml}} for retrieving configuration settings.
+\item \code{\link{write_file}} for writing content to files.
+}
 }

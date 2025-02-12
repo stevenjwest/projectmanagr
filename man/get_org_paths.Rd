@@ -2,15 +2,17 @@
 % Please edit documentation in R/create-functions.R
 \name{get_org_paths}
 \alias{get_org_paths}
-\title{Get existing Org paths & update the existing org configs to be aware of newOrgPath}
+\title{Get Existing Organisation Paths}
 \usage{
 get_org_paths(newOrgPath)
 }
 \arguments{
-\item{newOrgPath}{defines the new orgs directory.}
+\item{newOrgPath}{Character. The directory path of the new organisation.}
+}
+\value{
+Character vector. List of paths to all identified organisations.
 }
 \description{
-This function ensures all new Orgs are aware of existing ones, and existing Orgs are aware
-of new ones.  Organisations can only be aware of eachother if they are in the same parent
-directory.
+Ensures all new organisations are aware of existing ones, and vice versa,
+if they reside in the same parent directory.
 }

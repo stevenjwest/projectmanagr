@@ -11,13 +11,49 @@ generate_plaintext_calendar(
   calendar_header = "# DAILY LOG :"
 )
 }
+\arguments{
+\item{year}{A string or numeric value representing the year (YYYY).}
+
+\item{month}{A string or numeric value representing the month (MM).}
+
+\item{day}{A string or numeric value representing the day (DD). This is used
+only for header display purposes.}
+
+\item{calendar_header}{(Optional) A string used as the header for the
+calendar. Default is "# DAILY LOG :".}
+}
+\value{
+A string containing the formatted plaintext calendar.
+}
 \description{
-Internal function to generate a plaintext calendar for insertion into
-the weekly journal.
+This internal function generates a plaintext calendar for insertion
+into a weekly journal. The calendar is arranged as a matrix with columns
+for each day of the week (starting with Sunday) and includes dates from
+the first day of the month to the Saturday after the month's end.
 }
 \details{
-The calendar is laid out as a matrix with columns for each day of the week,
-starting with SUNDAY, and dates filled into this matrix - from the first date
-of the month to the end of the week (ie. the Saturday) BEYOND the last date
-of the month.
+The function constructs a date object for the first day of the given
+month and year, and determines the last day of the month. It then
+extends the date range to fill the calendar grid up to the following
+Saturday. A 7x7 matrix is built with the day names as column headers and
+date numbers filled in appropriately. Blank spaces are inserted where
+no date exists, and the matrix is converted into a formatted string.
+}
+\note{
+This function assumes that the input year, month, and day are provided in
+valid 'YYYY', 'MM', and 'DD' formats. It is designed for internal use
+and may require further formatting for presentation in different contexts.
+}
+\examples{
+\dontrun{
+  # Generate a calendar for April 2023 with a custom header.
+  cal <- generate_plaintext_calendar("2023", "04", "01",
+                                       calendar_header="# WEEKLY LOG :")
+  cat(cal)
+}
+
+}
+\seealso{
+\code{\link[lubridate]{floor_date}}, \code{\link{as.Date}},
+\code{\link{seq.Date}}, \code{\link{format}}
 }

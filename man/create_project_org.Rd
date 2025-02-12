@@ -7,45 +7,81 @@
 create_project_org(
   orgParentPath,
   orgName,
+  authorValue = Sys.info()["user"],
   orgTitle = "",
   settingsYamlPath = "",
   orgTemplate = "Org-Template.Rmd"
 )
 }
 \arguments{
-\item{orgParentPath}{defines where the organisation directory is
-written, Default is the working directory.}
+\item{orgParentPath}{A character string defining the parent directory
+where the organisation will be created. Default is the working directory.}
 
-\item{orgName}{defines the directory name of the Organisation.}
+\item{orgName}{A string defining the directory name of the Organisation.}
 
-\item{orgTitle}{defines the title of the Organisation, in its document.}
+\item{authorValue}{A string representing the author name for the Programme
+index file. Defaults to the current system user.}
 
-\item{settingsYamlPath}{A VALID YAML file for establishing the projectmanagr
-organisation layout.  For this function the SitePath VolumesDir DocsDir ConfigDir
-& OrgIndexFileName params MUST be set.  Optionally all other params for the
-projectmanagr settings yaml file can be set, or they are set to default
-values.}
+\item{orgTitle}{A string defining the title of the Organisation for its
+document.}
 
-\item{orgTemplate}{defines the template to use from the projectmanagr package.
-Default is "Org-Template.Rmd".}
+\item{settingsYamlPath}{A valid YAML file for establishing the projectmanagr
+organisation layout. Must include keys for SitePath, VolumesDir, DocsDir,
+ConfigDir, and OrgIndexFileName. Other parameters are optional.}
+
+\item{orgTemplate}{A string defining the template to use from the
+projectmanagr package. Default is "Org-Template.Rmd".}
 }
 \value{
-orgIndexPath The path to the organisation index Rmd file.
+A character string representing the path to the organisation index
+Rmd file.
 }
 \description{
-Generates the layout for a new Project Organisation in the File System.
+Generates the directory layout for a new Project Organisation in the file
+system. It creates the organisation directory and its initial contents,
+including an index Rmd file, a .config/ directory (with config files and
+templates), a docs/ directory for documentation, and a volumes/ directory
+for data storage. An HTML site directory is also created adjacent to the
+organisation directory.
 }
 \details{
-The function generates the organisation directory and its initial contents:
-\itemize{
-\item \verb{index_<orgName>.Rmd} the landing page for the organisation.
-\item \verb{.config/} directory with the config files and templates/ directory containing
-component templates.
-\item \verb{docs/} directory, that will hold documentation for a projectmanagr usage.
-\item \verb{volumes/} directory, that will hold all volumes for managing data storage.
+This function performs the following operations:
+\enumerate{
+\item Defines and validates the organisation title using the orgName.
+\item Determines the organisation directory based on orgParentPath and orgName.
+\item Retrieves the projectmanagr package path to access required files.
+\item Gathers existing organisation paths and updates their configurations.
+\item Loads the YAML settings from a provided file or uses the default.
+\item Creates the organisation directory and subdirectories for the HTML site,
+volumes, and configuration.
+\item Copies necessary files such as volumes.Rmd, settings.yaml, and status.yaml.
+\item Creates the organisation index file from the specified template.
+}
+}
+\note{
+This function directly creates and modifies directories and files on disk.
+Ensure you have adequate backups before running it. The provided YAML
+settings must include all required keys for the organisation layout.
+}
+\examples{
+\dontrun{
+  create_project_org(
+    orgParentPath = "/projects",
+    orgName = "MyOrganisation",
+    authorValue = "sjwest",
+    orgTitle = "My Organisation",
+    settingsYamlPath = "path/to/settings.yml",
+    orgTemplate = "Org-Template.Rmd"
+  )
 }
 
-A HTML site directory is created which will contain the generated html site.
-By default this directory will exist next to org directory, suffixed with
-\verb{_site}.  This can be modified with the \code{organsiationSiteDirectory} parameter.
+}
+\seealso{
+\code{\link{define_default_org_title}}, \code{\link{define_org_path}},
+\code{\link{get_org_paths}}, \code{\link{load_yml_settings_default}},
+\code{\link{create_org_dir}}, \code{\link{create_html_site_path}},
+\code{\link{create_volumes_path}}, \code{\link{create_config_path}},
+\code{\link{create_volumes_file}}, \code{\link{create_settings_yaml_file}},
+\code{\link{create_status_yaml_file}}, \code{\link{create_addins_json}},
+\code{\link{create_templates_path}}, \code{\link{create_org_index}}
 }

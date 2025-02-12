@@ -8,6 +8,7 @@ create_sub_note(
   subNoteName,
   subNotePath,
   selection,
+  authorValue = Sys.info()["user"],
   subNoteTitle = "",
   subNoteTemplate = "Project-Sub-Note-Template.Rmd",
   headerNoteContentLinkTemplate = "Project-Header-Note-Content-Link-Template.Rmd",
@@ -20,49 +21,130 @@ create_sub_note(
 )
 }
 \arguments{
-\item{subNoteName}{The name of the Project Sub Note, a Title with all SPACES
-replaced with - or _ by default.}
+\item{subNoteName}{A string representing the name of the Project Sub Note.
+Spaces are replaced with '-' or '_' by default.}
 
-\item{subNotePath}{The directory where the Sub Note will be stored.  This will
-be the Project Group Note Directory.  Must be an ABSOLUTE path!}
+\item{subNotePath}{A character string specifying the absolute directory
+where the Sub Note will be stored. It must reside within the Project Group
+Note Directory.}
 
-\item{selection}{List containing \code{rmdType} that defines the current selection.
-From this the \code{headerNoteRmdPath} is defined.  The function will deal with
-SubNote generation with a valid selection of a DOC HEAD or SUB file.}
+\item{selection}{A list with metadata about the current selection. The list
+must include the following keys:
+\itemize{
+\item rmdType: A string specifying the file type. Valid values are "DOC",
+"HEAD", or "SUB".
+\item filePath: The file path of the associated project document.
+\item headerNoteLink: A relative link to the header note (used when rmdType is
+"DOC").
+\item goal: A string defining the goal associated with the note.
+\item deliverable: A string defining the deliverable linked to the note.
+\item task: A string defining the task associated with the note.
+\item taskLine: An integer indicating the line number in the project document
+where the task is defined.
+\item addingSubNote: (Optional) A boolean that must be TRUE if rmdType is "DOC".
+}}
 
-\item{subNoteTitle}{OPTIONAL title for the Project SubNote.  Default is to use
-subNoteName and replace all _ and - with SPACES.}
+\item{authorValue}{A string representing the author's name for the note.
+Defaults to the current system user.}
 
-\item{subNoteTemplate}{Template to use, as found in the \verb{.config/templates/}
-directory.  Default is "Project-Sub-Note-Template.Rmd"}
+\item{subNoteTitle}{(Optional) A title for the Sub Note. If blank, the
+subNoteName is used with underscores and dashes replaced by spaces.}
 
-\item{projNoteLinkTemplate}{Template with structure to add the Project Doc
-Goal/Del/Task link in the Project Note.  Includes Project Doc title, link,
-and then links to Goal / Del / Task, plus a Summary Info section (filled
-with the content from \code{taskSectionHeaderTemplate}).}
+\item{subNoteTemplate}{A template file used to generate the Sub Note.
+Default is "Project-Sub-Note-Template.Rmd".}
 
-\item{projNoteLinkSummaryTemplate}{Template with structure to add underneath the
-Project Doc Goal/Del/Task link in the Project Note.  Includes a 'summary' section
-and a 'todo' section by default, linked to \code{NoteObjectivesTodoSectionHeader}
-in \code{.config/settings.yml}}
+\item{headerNoteContentLinkTemplate}{A template file for creating a content
+link from the header note to the Sub Note. Default is
+"Project-Header-Note-Content-Link-Template.Rmd".}
 
-\item{projNoteSummaryTemplate}{Template with structure to add Project Note
-summary to Project Doc under Goal/Del/Task.}
+\item{subNoteContentLinkTemplate}{A template file for creating a content link
+within the Sub Note. Default is
+"Project-Sub-Note-Content-Link-Template.Rmd".}
 
-\item{subNoteSummaryTemplate}{Template with structure to add Project Sub Note
-summary to Project Doc under Goal/Del/Task.}
+\item{projNoteLinkTemplate}{A template file that defines the structure of the
+Project Doc Goal/Del/Task link in the Sub Note. Default is
+"Project-Note-Link-Template.Rmd".}
+
+\item{projNoteLinkSummaryTemplate}{A template file that adds a summary and
+to-do section beneath the Project Doc link in the Sub Note. Default is
+"Project-Note-Link-Summary-Template.Rmd".}
+
+\item{todoTemplate}{A template file for the to-do list section. Default is
+"Todo-Template.Rmd".}
+
+\item{projNoteSummaryTemplate}{A template file used to add a Project Note
+summary to the Project Doc. Default is
+"Project-Note-Summary-Template.Rmd".}
+
+\item{subNoteSummaryTemplate}{A template file used to add a Sub Note summary
+to the Project Doc. Default is
+"Project-Sub-Note-Summary-Template.Rmd".}
+}
+\value{
+This function does not return a value. It creates and updates files on
+disk to integrate the new Sub Note into the project documentation.
 }
 \description{
-This Function adds a Sub Note to a Project Group: The Sub Note is placed into
-the Project Group Directory, links to the Sub Note are added to all Project
-Doc(s) Goal-Del-Tasks linked to the Group Header Note, and a link to the Sub
-Note is added to the project Group Header Note contents section.
+This function creates a new Sub Note within a Project Group. It reads the
+necessary template files, creates the required sub-directory and R Markdown
+file for the Sub Note, replaces template markup with provided values, and
+updates the Project Group Header Note with a link to the new Sub Note. It
+then calls link_sub_note_doc() to insert all relevant links and summaries into
+the main project document.
 }
 \details{
-If a Project Doc is in the selection, a Project Note Group must be in the
-selection  (\code{addingSubNote} must be TRUE), and all Project Doc links from the
-Header Note  are added to the new SubNote.  If a Header Note is in the
-selection, all Project Doc links from the Header Note are added to the new
-SubNote.  If a SubNote is in the selection, all Project Doc links from the
-SubNote are added to the new SubNote.
+The function performs the following steps:
+\enumerate{
+\item Validates that subNoteName contains no spaces.
+\item Checks that the selection list is valid. The selection must include
+keys such as rmdType, filePath, headerNoteLink, goal, deliverable, task,
+and taskLine; if rmdType is "DOC", addingSubNote must be TRUE.
+\item Determines the header note Rmd path based on the selection.
+\item Reads the required template files for the Sub Note and for header note
+content links.
+\item Creates a sub-directory for the Sub Note and an associated R Markdown file.
+\item Replaces the markup in the Sub Note with provided parameters.
+\item Inserts a header link into the Sub Note and updates the Header Note with
+the Sub Note link.
+\item Calls link_sub_note_doc() to update the project document with all relevant
+Sub Note links and summaries.
+}
+}
+\note{
+The selection list must include the keys: rmdType, filePath, headerNoteLink,
+goal, deliverable, task, and taskLine. If rmdType is "DOC", the key
+addingSubNote must also be TRUE. This function modifies files on disk; ensure
+you have backups before running it. It relies on a structured project directory
+and properly configured template files.
+}
+\examples{
+\dontrun{
+create_sub_note(
+  subNoteName = "analysis_note",
+  subNotePath = "/projects/my_project/notes",
+  selection = list(
+    rmdType = "DOC",
+    filePath = "project_doc.Rmd",
+    headerNoteLink = "[Header](header_note.Rmd)",
+    goal = "Define hypothesis",
+    deliverable = "Experiment setup",
+    task = "Run pilot study",
+    taskLine = 45,
+    addingSubNote = TRUE
+  ),
+  authorValue = "sjwest",
+  subNoteTitle = "Data Analysis",
+  subNoteTemplate = "Project-Sub-Note-Template.Rmd"
+)
+}
+
+}
+\seealso{
+\itemize{
+\item \code{\link{link_sub_note_doc}} for linking Sub Notes to Project Docs.
+\item \code{\link{find_org_directory}} to locate the organisation directory.
+\item \code{\link{get_settings_yml}} for retrieving project settings.
+\item \code{\link{insert_header_link_subnote}} for inserting header links into Sub
+Notes.
+}
 }

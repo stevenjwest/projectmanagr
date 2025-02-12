@@ -15,63 +15,88 @@ create_content(
 )
 }
 \arguments{
-\item{selection}{projectmanagr selection object indicating the type of file
-currently selected.  The current file must be a Project Note.}
+\item{selection}{A list representing the current Project Note selection.
+It must include:
+- filePath: The path of the current Project Note Rmd.
+- originalLineNumber: The line number where content is to be inserted.
+- rmdType: The type of Rmd file; must be "NOTE" or "SUB".}
 
-\item{contentName}{The name of the Content; a String that should
-not contain any SPACES. For Protocols RECOMMEND using a VERB-DRIVEN Naming
-Convention && use the common verb words first. eg. Fix Perfuse Mouse,
-Fix Fog Drosophila.}
+\item{contentName}{A string specifying the name of the content.
+It must not contain any spaces.}
 
-\item{contentDescription}{Description of the protocol - shown to users when
-choosing a protocol to insert.}
+\item{contentDescription}{A string describing the content. This is shown
+to users when choosing content to insert.}
 
-\item{contentSourcePath}{Path to where the content Dir & Rmd should be stored.
-This can be any location on the filesystem, but RECOMMEND placing it within
-the project note's directory where the content declaration link will be written.}
+\item{contentSourcePath}{A string specifying the path where the content
+directory and its Rmd file will be created. It is recommended to place
+it within the Project Note's directory.}
 
-\item{contentDeclarationTemplate}{Template used for content declaration,
-found in the \verb{.config/templates/}directory.  Default is
-"Protocol-Declaration-Template.Rmd"}
+\item{contentDeclarationTemplate}{A template file for content declaration,
+located in the .config/templates/ directory. Default is
+"Protocol-Declaration-Template.Rmd".}
 
-\item{contentSourceTemplate}{Template used for source of insertable text,
-found in the \verb{.config/templates/} directory.  Default is
-"Protocol-Source-Template.Rmd", a blank Rmd file.}
+\item{contentSourceTemplate}{A template file for the content source, found
+in the .config/templates/ directory. Default is
+"Protocol-Source-Template.Rmd".}
 
-\item{projectNoteTitle}{OPTIONAL title for the Content.  Default is a blank
-string (\code{""}), in which case the function will use contentName and replace
-all \verb{_} and \code{-} with SPACES.}
+\item{projectNoteTitle}{(Optional) A title for the content. If left blank,
+contentName is used with underscores and dashes replaced by spaces.}
+}
+\value{
+A string representing the path to the created content Rmd file.
 }
 \description{
-This Function declares new Insertable Content, based on the
-\code{contentDeclarationTemplate}, which is inserted into selected Project Note.
-This contains key parameters to declare Insertable Content:
+This function declares new insertable content based on a content
+declaration template and inserts it into a selected Project Note.
+It creates a separate Rmd file (the content source) that initially is blank,
+which can be modified to include specific documentation such as SOPs or
+protocol logs.
 }
 \details{
-\itemize{
-\item \code{CONTENT_NAME} specifies a name for the content, which can be used to select
-content to be inserted by the \code{insert_content()} function.
-\item \code{CONTENT_DESCRIPTION} gives a succinct description of the insertable content
-what it contains & how it can be used.
-\item \code{CONTENT_SOURCE_LINK} relative path to insertable content Rmd from the content
-source Project Note Rmd file.
+The function executes the following steps:
+\enumerate{
+\item Determines the content directory and Rmd file path using contentName and
+contentSourcePath.
+\item Creates a relative hyperlink from the Project Note to the new content Rmd.
+\item Reads the content declaration and content source templates from the
+templates directory.
+\item Replaces placeholders in the content declaration template with the
+provided content title, description, and the hyperlink.
+\item Inserts the modified content declaration into the Project Note at the
+specified insertion point.
+\item Creates the content directory and writes the content source template to
+a new Rmd file.
+\item Updates the Project Note with the new content declaration.
+}
+}
+\note{
+The function assumes that the current file in the selection is a Project Note.
+The selection must include keys 'filePath' and 'originalLineNumber'. The
+contentName must not have spaces, and the content declaration template must
+define placeholders for CONTENT_TITLE_FIELD, CONTENT_TITLE,
+CONTENT_DESCRIPTION_FIELD, CONTENT_DESCRIPTION, CONTENT_SOURCE_FIELD, and
+CONTENT_SOURCE_LINK.
+}
+\examples{
+\dontrun{
+  create_content(
+    selection = list(
+      filePath = "project_note.Rmd",
+      originalLineNumber = 25,
+      rmdType = "NOTE"
+    ),
+    contentName = "SOP_Fix",
+    contentDescription = "Standard operating procedure for fixing the pump.",
+    contentSourcePath = "/projects/my_project/notes",
+    projectNoteTitle = "Pump Fix SOP",
+    contentDeclarationTemplate = "Protocol-Declaration-Template.Rmd",
+    contentSourceTemplate = "Protocol-Source-Template.Rmd"
+  )
 }
 
-The actual insertable content is located in a separate Rmd, pointed to by the
-CONTENT_SOURCE_LINK parameter.  This is initially a blank Rmd document by
-default, that should be filled with the content to be inserted, including all
-whitespace.  The \code{contentSourceTemplate} can be modified to any existing Rmd
-file, to provide a base parameterised template for consistent generation of
-specific types of documentation (eg. suggested layouts, specific header
-ordering, etc).
-
-Content is any templated insertable text.  Typically in ProjectManager it is
-used to define a set of Standard Operating Procedures (SOPs) and/or LOG
-Sections that record Protocol execution.
-
-The Content Declaration in a source Project Note is defined
-between specific delimiters; these delimiters are defined in \code{CONTENT_SEP.txt}.
-
-Content defined in a source Project Note can be inserted into new Project
-Notes, using the \code{insert_content()} function.
+}
+\seealso{
+\code{\link{create_hyperlink}}, \code{\link{read_file}},
+\code{\link{write_file}}, \code{\link{get_settings_yml}},
+\code{\link{find_org_directory}}, \code{\link{insert_at_indices}}
 }
