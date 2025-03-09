@@ -89,30 +89,38 @@ create_project_org <- function( orgParentPath, orgName, authorValue=Sys.info()["
 
   #### create projectmanagr org ####
 
-  create_org_dir(orgPath)
+  tryCatch({
 
-  sitePath <- create_html_site_path(orgPath, settings)
-  volumesPath <- create_volumes_path(orgPath, settings)
-  confPath <- create_config_path(orgPath, settings)
+    create_org_dir(orgPath)
 
-  volumesFile <- create_volumes_file(volumesPath, projectmanagrPath, orgPath,
-                                     settings)
+    sitePath <- create_html_site_path(orgPath, settings)
+    volumesPath <- create_volumes_path(orgPath, settings)
+    confPath <- create_config_path(orgPath, settings)
 
-  settingsYamlFile <- create_settings_yaml_file(orgPath, settings)
-  statusFile <- create_status_yaml_file(orgPath, settings, orgPaths, orgName,
-                                        orgTitle, sitePath)
+    volumesFile <- create_volumes_file(volumesPath, projectmanagrPath, orgPath,
+                                       settings)
 
-  addinsJsonProjectManagrFile <- create_addins_json(projectmanagrPath, orgPath,
-                                                    settings)
+    settingsYamlFile <- create_settings_yaml_file(orgPath, settings)
+    statusFile <- create_status_yaml_file(orgPath, settings, orgPaths, orgName,
+                                          orgTitle, sitePath)
 
-  tempPath <- create_templates_path(projectmanagrPath, orgPath, settings)
+    addinsJsonProjectManagrFile <- create_addins_json(projectmanagrPath, orgPath,
+                                                      settings)
 
-  orgFile <- create_org_index(orgName, tempPath, orgTemplate, orgPath, settings,
-                              orgTitle, authorValue)
+    tempPath <- create_templates_path(projectmanagrPath, orgPath, settings)
 
-  confirm_dirs(c(sitePath, volumesPath, confPath, tempPath))
+    orgIndex <- create_org_index(orgName, tempPath, orgTemplate, orgPath, settings,
+                                orgTitle, authorValue)
 
-  orgFile # return orgIndexPath - orgFile
+  }, error = function(e) {
+    cat("  ====================  \n")
+    cat("  Error encountered:", e$message, "\n")
+    cleanup_created(orgPath)
+    stop(e)  # Rethrow the error after cleanup
+  })
+
+  return(orgIndex)
+
 }
 
 
@@ -226,18 +234,6 @@ write_yaml_status <- function(status, statusFile) {
   yaml::write_yaml( yaml::as.yaml(status), statusFile )
 }
 
-#' Create Organisation Directory
-#'
-#' Creates the root directory for the organisation if it does not exist.
-#'
-#' @param orgPath Character. The full path to the organisation directory.
-create_org_dir <- function(orgPath) {
-  create_directory(orgPath,
-                   "  Made ORG dir: ",
-                   "  Organisation directory could not be created: ")
-}
-
-
 #' Load YAML Settings with Defaults
 #'
 #' Loads a YAML settings file, either from a provided path or from the default
@@ -309,7 +305,6 @@ yaml_keys <- function() {
     "OrgProgrammeHeader",
     "OrgProgrammeFooter",
     "OrgProgrammeSummarySep",
-    "ProgrammeProjectsDir",
     "ProgIndexFileNamePrefix",
     "ProgSummaryHeader",
     "ProgSummaryTitle",
@@ -405,6 +400,19 @@ yaml_keys <- function() {
 }
 
 
+#' Create Organisation Directory
+#'
+#' Creates the root directory for the organisation if it does not exist.
+#'
+#' @param orgPath Character. The full path to the organisation directory.
+create_org_dir <- function(orgPath) {
+  create_directory(orgPath,
+                   "  Made ORG dir: ",
+                   "  Organisation directory could not be created: ")
+}
+
+
+
 #' Create HTML Site Directory
 #'
 #' Creates a directory for compiled HTML output.
@@ -419,11 +427,7 @@ create_html_site_path <- function(orgPath, settings) {
   # In future, want to move to using pandoc directly??
   sitePath <- get_site_dir(orgPath,settings)
   fs::dir_create(sitePath)
-
-  if( fs::dir_exists(sitePath) == FALSE ) {
-    fs::dir_delete(orgPath) # delete orgPath!
-    stop( paste0("  Site directory could not be created: ", sitePath) )
-  }
+  confirm_dir(sitePath, "  Site directory could not be created: ")
   cat( "  Made html site dir: ", sitePath, "\n" )
   sitePath # return
 }
@@ -441,11 +445,7 @@ create_volumes_path <- function(orgPath, settings) {
 
   volumesPath <- get_volumes_dir(orgPath, settings)
   fs::dir_create(volumesPath)
-
-  if( fs::dir_exists(volumesPath) == FALSE ) {
-    fs::dir_delete(orgPath) # delete orgPath!
-    stop( paste0("  Volumes directory could not be created: ", volumesPath) )
-  }
+  confirm_dir(volumesPath, "  Volumes directory could not be created: ")
   cat( "  Made volumes dir: ", volumesPath, "\n" )
   volumesPath # return
 }
@@ -463,60 +463,12 @@ create_config_path <- function(orgPath, settings) {
   # config dir: FIXED NAME
   confPath <- get_config_dir(orgPath)
   fs::dir_create(confPath)
-  confirm_dir(confPath, "  Config directory could not be created: ", orgPath)
+  confirm_dir(confPath, "  Config directory could not be created: ")
   cat( "  Made config dir: ", confPath, "\n" )
   confPath # return
 }
 
 
-#' Confirm Directories Exist
-#'
-#' Checks if all directories in the given list exist. If any are missing, the
-#' organisation directory is deleted and an error is raised.
-#'
-#' @param dirPaths Character vector. A list of directory paths to check.
-#' @param errMsg Character. Error message to display if a directory does not exist.
-#' @param orgPath Character. The root path of the organisation, which will be removed if any check fails.
-confirm_dirs <- function(dirPaths, errMsg, orgPath) {
-  if( any(fs::dir_exists(dirPaths) == FALSE) ) {
-    dp <- dirPaths[fs::dir_exists(dirPaths) == FALSE]
-    fs::dir_delete(orgPath) # remove org
-    stop( paste0(errMsg, paste(dp, collapse='\n  ')) )
-  }
-}
-
-#' Confirm a Single Directory Exists
-#'
-#' Checks if a given directory exists. If not, deletes the organisation and
-#' raises an error.
-#'
-#' @param dirPath Character. Path to the directory to check.
-#' @param errMsg Character. Error message to display if the directory does not
-#' exist.
-#' @param orgPath Character. The root path of the organisation, which will be
-#' removed if the check fails.
-confirm_dir <- function(dirPath, errMsg, orgPath) {
-  if( fs::dir_exists(dirPath) == FALSE ) {
-    fs::dir_delete(orgPath) # remove org
-    stop( paste0(errMsg, dirPath) )
-  }
-}
-
-#' Confirm a File Exists
-#'
-#' Checks if a given file exists. If not, deletes the organisation and raises an
-#' error.
-#'
-#' @param filePath Character. Path to the file to check.
-#' @param errMsg Character. Error message to display if the file does not exist.
-#' @param orgPath Character. The root path of the organisation, which will be
-#' removed if the check fails.
-confirm_file <- function(filePath, errMsg, orgPath) {
-  if( fs::file_exists(filePath) == FALSE ) {
-    fs::dir_delete(orgPath) # remove org
-    stop( paste0(errMsg, filePath) )
-  }
-}
 
 #' Create Volumes File
 #'
@@ -543,7 +495,7 @@ create_volumes_file <- function(volumesPath, projectmanagrPath, orgPath, setting
 
   fs::file_copy(volumesPackageFile, volumesFile)
 
-  confirm_file(volumesFile, "  Volumes file could not be copied: ", orgPath)
+  confirm_file(volumesFile, "  Volumes file could not be copied: ")
 
   cat( "  Copied volumes file: ", volumesFile, "\n" )
 
@@ -576,7 +528,7 @@ create_settings_yaml_file <- function(orgPath, settings, utime,
   # write YAML to settingsYamlFile location
   yaml::write_yaml( yaml::as.yaml(settings), settingsYamlFile )
 
-  confirm_file(settingsYamlFile, "  Settings file could not be created: ", orgPath)
+  confirm_file(settingsYamlFile, "  Settings file could not be created: ")
 
   cat( "  Written settings file: ", settingsYamlFile, "\n" )
   settingsYamlFile # return
@@ -602,23 +554,13 @@ create_status_yaml_file <- function(orgPath, settings, orgPaths, orgName,
   statusFile <- get_status_yml_file(orgPath, settings)
   fs::file_create(statusFile)
 
-  # Create initial content for status.yml file - data on the Org, plus UPDATE datetime:
-  # if( utime == "") {
-  #   updateTime <- file.info(statusFile)[,5]
-  # } else if( is.na(lubridate::ymd_hm(utime)) == FALSE ) {
-  #   updateTime <- lubridate::ymd_hm(utime)
-  # } else {
-  #   updateTime <- file.info(statusFile)[,5]
-  # }
-  #updateTime <- get_update_time(statusFile)
-
   updateTime <- get_datetime() # use the current time: y-m-d:h:m string!
 
   org <- create_status_yaml_content(orgPaths, orgPath, orgName, orgTitle,
                                     updateTime, sitePath )
   yaml::write_yaml( yaml::as.yaml(org), statusFile )
 
-  confirm_file(statusFile, "  Status file could not be created: ", orgPath)
+  confirm_file(statusFile, "  Status file could not be created: ")
   cat( "  Made status file: ", statusFile, "\n" )
 
   statusFile # return
@@ -663,7 +605,8 @@ create_addins_json <- function(projectmanagrPath, orgPath, settings) {
 
   fs::file_copy(addinsJsonPackageFile, addinsJsonProjectManagrFile)
 
-  confirm_file(addinsJsonProjectManagrFile, "  addins.json file could not be created: ", orgPath)
+  confirm_file(addinsJsonProjectManagrFile,
+               "  addins.json file could not be created: ")
   cat( "  Copied addins.json file: ", addinsJsonProjectManagrFile, "\n" )
   addinsJsonProjectManagrFile # return
 }
@@ -683,8 +626,7 @@ create_templates_path <- function(projectmanagrPath, orgPath, settings) {
   # templates Dir - INSIDE the config DIR (these templates are part of the projectmanagr config!):
   tempPath <- get_template_dir(orgPath)
   fs::dir_create(tempPath)
-
-  confirm_dir(tempPath, "  Templates directory could not be created: ", orgPath)
+  confirm_dir(tempPath, "  Templates directory could not be created: ")
   cat( "  Made templates dir: ",tempPath, "\n" )
 
   # copy template files:
@@ -698,7 +640,6 @@ create_templates_path <- function(projectmanagrPath, orgPath, settings) {
   # confirm all templates exist
   tps <- fs::path(tempPath, templateRmds)
   if( any(fs::file_exists(tps) == FALSE) ) {
-    fs::dir_delete(orgPath) # remove org
     stop( paste0("  Failed to create Template: ", tps[any(fs::file_exists(tps) == FALSE)]) )
   }
   tempPath # return
@@ -721,26 +662,11 @@ create_templates_path <- function(projectmanagrPath, orgPath, settings) {
 create_org_index <- function(orgName, tempPath, orgTemplate, orgPath, settings,
                              orgTitle, authorValue=Sys.info()["user"]) {
 
-  # first remove any preceding '-' or '_' from orgName
-  orgIndexName <- orgName
-  #if( startsWith(orgIndexName, "_") | startsWith(orgIndexName, "-") ){
-  #  orgIndexName <- sub('.', '', orgIndexName)
-  #}
-  # and remove any following '-' or '_' from orgName
-  #if( endsWith(orgIndexName, "_") | endsWith(orgIndexName, "-") ){
-  #  orgIndexName <- gsub('.{1}$', '', orgIndexName)
-  #}
+  orgIndex <- get_index_org(orgPath, settings)
 
-
-  orgIndexName <- paste0(settings[["OrgIndexFileNamePrefix"]], orgIndexName, ".Rmd")
-  # use the orgPath - prefix with OrgIndexFileNamePrefix then ORG NAME then .Rmd
-  orgFile <- fs::path(orgPath, orgIndexName)
-
-  fs::file_create(orgFile)
-
-  confirm_file(orgFile, "  Org file could not be created: ", orgPath)
-  cat( "  Made Org file: ",orgFile, "\n" )
-
+  # create Rmd file
+  create_file(orgIndex, "  Made Organisation index file: ",
+              "  Organisation index file could not be created: ")
 
   # read org template:
   templateContents <- read_file( fs::path(tempPath, orgTemplate))
@@ -760,19 +686,36 @@ create_org_index <- function(orgName, tempPath, orgTemplate, orgPath, settings,
   # modify templateContents with SEP values
   templateContents <- replace_sep_values(templateContents, orgPath)
 
-  # write to orgFile
-  write_file(templateContents, orgFile)
-  cat( "  Written template to Org file: ", orgFile, "\n" )
+  # write to orgIndex
+  write_file(templateContents, orgIndex)
+  cat( "  Written template to Org Index: ", orgIndex, "\n" )
 
-  orgFile # return
-} #### ________________________________ ####
+  orgIndex # return
+}
+
+
+get_index_org <- function(orgPath, settings) {
+  fs::path(orgPath,
+           paste0(settings[["OrgIndexFileNamePrefix"]],
+                  fs::path_file(orgPath), ".Rmd"))
+}
+
+# Helper function to remove a vector of directories and files for cleanup
+cleanup_created <- function(createdFilesVector) {
+  # delete all files in vector that exist
+  fvex <- fs::file_exists(createdFilesVector)
+  fs::file_delete( createdFilesVector[fvex] )
+  cat("    cleanup - removed path(s): ",
+        paste(createdFilesVector[fvex], sep=' '))
+
+}#### ________________________________ ####
 
 
 #' Create a New Programme within an Organisation
 #'
 #' Generates a new programme within an existing organisation directory, creating
-#' the necessary directory structure, R Markdown files, and updating the status
-#' YAML file.
+#' the necessary directory structure, R Markdown files, and linking to the
+#' organisation index file.
 #'
 #' @param programmeName Character. The name of the new programme. Must not contain
 #'   spaces.
@@ -794,7 +737,7 @@ create_org_index <- function(orgName, tempPath, orgTemplate, orgPath, settings,
 #' 3. Creates a new programme directory within the organisation.
 #' 4. Generates a new programme index Rmd file from a template.
 #' 5. Updates the organisation's status YAML file with programme details.
-#' 6. Inserts the programme summary into the organisation's index file.
+#' 6. Links & inserts the programme summary into the organisation's index file.
 #'
 #' The function ensures that all directories and files are properly created and
 #' linked within the project structure.
@@ -834,20 +777,11 @@ create_programme <- function(programmeName, organisationPath,
 
   cat( "\nprojectmanagr::create_programme():\n" )
 
-  # check programmeName contains NO SPACES:
-  if( grepl("\\s+", programmeName) ) {
-    stop( paste0("  programmeName contains a SPACE: ", programmeName) )
-  }
 
-  #### Identify root of ORGANISATION ####
+  #### define and check args ####
 
   # get the orgPath from organisationPath
-  orgPath <- find_org_directory(organisationPath)
-
-  if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  organisationPath is not in an Organisation: ", organisationPath) )
-  }
-  # now, orgPath should be the root dir of the organisation
+  orgPath <- confirm_find_org(organisationPath)
 
   # get config templates settings yml
   confPath <- get_config_dir(orgPath)
@@ -858,40 +792,104 @@ create_programme <- function(programmeName, organisationPath,
   statusFile <- get_status_yml_file(orgPath, settings)
   status <- get_status_yml(orgPath, settings)
 
+  # check args validity
+  check_prog_name(programmeName)
+  programmeTitle <- define_prog_title(programmeTitle, programmeName)
 
-  #### Create Programme Dir ####
 
-  # create PROG Dir:
-  progPath <- paste(orgPath, .Platform$file.sep, programmeName, sep="")
-  done <- dir.create(progPath)
+  #### Create Programme ####
 
-  if(!done) {
-    stop( paste0("  Programme directory could not be created: ", progPath) )
+  tryCatch({
+
+    progPath <- create_prog_dir(orgPath, programmeName)
+
+    progContents <- create_prog_index(progPath, programmeTitle,
+                                      tempPath, progTemplate, authorValue,
+                                      orgPath, settings)
+
+    #write_prog_to_status(programmeTitle, programmeName, status, statusFile)
+     # no longer writing programme to status as not needed
+
+    progIndex <- link_prog_to_org_index(progPath, programmeName, progContents,
+                                        tempPath, progSummaryTemplate,
+                                        orgPath, settings)
+
+  }, error = function(e) {
+    cat("  ====================  \n")
+    cat("  Error encountered:", e$message, "\n")
+    cleanup_created(progPath)
+    stop(e)  # Rethrow the error after cleanup
+  })
+
+  return(progIndex)
+
+}
+
+
+#' check programmeName contains NO SPACES:
+check_prog_name <- function(programmeName) {
+  if( grepl("\\s+", programmeName) ) {
+    stop( paste0("  programmeName contains a SPACE: ", programmeName) )
   }
+}
 
-  cat( "  Made Programme dir: ", progPath, "\n" )
-
-
-  #### create Rmd file ####
-
-  progFilePath <- paste0(progPath, .Platform$file.sep, settings[["ProgIndexFileNamePrefix"]],
-                         programmeName, ".Rmd")
-  done <- file.create(progFilePath)
-
-  if(!done) {
-    stop( paste0("  Programme index .Rmd file could not be created: ", progFilePath) )
-  }
-
-  cat( "  Made Programme index .Rmd file: ",progFilePath, "\n" )
-
-
-  # read progTemplate:
-  progContents <- read_file( paste0(tempPath, .Platform$file.sep, progTemplate) )
-
-  # Check programmeTitle, and if blank, fill with programmeName, replacing all "_" and "-" with spaces
+#' Check programmeTitle, and if blank, fill with programmeName
+#' replacing all "_" and "-" with spaces
+define_prog_title <- function(programmeTitle, programmeName) {
   if( nchar(programmeTitle) == 0 ) {
     programmeTitle <- gsub("-", " ", gsub("_", " ", programmeName) )
   }
+  return(programmeTitle)
+}
+
+#' Create Programme Directory
+#'
+create_prog_dir <- function(orgPath, programmeName) {
+
+  progPath <- fs::path(orgPath, programmeName)
+  create_directory(progPath, "  Made Programme dir: ",
+                   "  Programme directory could not be created: ")
+  return(progPath)
+}
+
+#' Create Programme Index Rmd
+#'
+#' Fill with contents, return contents
+#'
+create_prog_index <- function(progPath, programmeTitle,
+                              tempPath, progTemplate, authorValue,
+                              orgPath, settings) {
+
+  # define index paths
+  orgIndex <- get_index_org(orgPath, settings)
+  progIndex <- get_index_prog(progPath, settings)
+
+  # create Rmd file
+  create_file(progIndex, "  Made Programme index file: ",
+              "  Programme index file could not be created: ")
+
+  progContents <- read_file( fs::path(tempPath, progTemplate) )
+
+  progContents <- init_template_prog(progContents, programmeTitle, authorValue,
+                                     orgIndex, progIndex, orgPath, settings)
+
+  write_file(progContents, progIndex)
+  cat( "  Written template to Programme index.Rmd file: ", progIndex, "\n" )
+
+  return(progContents)
+
+}
+
+
+get_index_prog <- function(progPath, settings) {
+  fs::path(progPath,
+           paste0(settings[["ProgIndexFileNamePrefix"]],
+                  fs::path_file(progPath), ".Rmd"))
+}
+
+
+init_template_prog <- function(progContents, programmeTitle, authorValue,
+                               orgIndex, progIndex, orgPath, settings) {
 
   # modify progContents to include programmeTitle and authorValue
   progContents <- gsub("{{TITLE}}", programmeTitle, progContents, fixed=TRUE)
@@ -904,13 +902,7 @@ create_programme <- function(programmeName, organisationPath,
                                      settings[["ProgSummaryFooter"]], orgPath)
 
   # modify progContents to include relative link to org index Rmd
-  orgFilePath <- paste0(orgPath, .Platform$file.sep,
-                        settings[["OrgIndexFileNamePrefix"]], status[["orgName"]], ".Rmd")
-  orgTitle <- substring(basename(orgFilePath), first=1, last=nchar(basename(orgFilePath))-4)
-  NoteLink <- R.utils::getRelativePath(orgFilePath, relativeTo=progFilePath)
-  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  orgLink <- paste("[", orgTitle, "](", NoteLink, ")",  sep="")
-
+  orgLink <- create_hyperlink_no_ext(orgIndex, progIndex)
   progContents <- gsub("{{ORGLINK}}", orgLink, progContents, fixed=TRUE)
 
   # modify programme projects header/footer
@@ -919,92 +911,500 @@ create_programme <- function(programmeName, organisationPath,
   progContents <- sub_template_param(progContents, "{{PROJECTS_FOOTER}}",
                                      settings[["ProgProjectsFooter"]], orgPath)
 
-  # modify progContents with rmarkdown-html-header content
   progContents <- replace_markdown_header(progContents, orgPath)
-
-  # modify progContents with SEP values
   progContents <- replace_sep_values(progContents, orgPath)
 
-  # write to progFile
-  write_file(progContents, progFilePath)
+  return(progContents)
+}
 
-  cat( "  Written template to Programme index.Rmd file: ", progFilePath, "\n" )
-
-
-  #### Write Programme to Status file ####
+#' Write Programme to Status yml file
+#'
+#' Fill with datetime of programme creation && programme title
+#'
+write_prog_to_status <- function(programmeTitle, programmeName, status, statusFile) {
 
   progCreationTime <- get_datetime()
   attrs <- list(programmeTitle, progCreationTime )
   names(attrs) <- c("programmeTitle", "creationTime")
   status[["PROGRAMMES"]][[programmeName]] <- attrs
-  # can retrieve the creationTime with call to:  status[["PROGRAMMES"]][[programmeName]][["creationTime"]]
+  # can retrieve the creationTime with call to:
+   #status[["PROGRAMMES"]][[programmeName]][["creationTime"]]
 
   # Write status list to the statusFile:
   yaml::write_yaml(yaml::as.yaml(status), statusFile)
 
   cat( "  Written PROGRAMME to Status.yml file: ", statusFile, "\n" )
+}
+
+#' Link Programme Index to Project Org Index
+#'
+#' Fill with default Programme Summary - updated with projectmanagr::update()
+#'
+link_prog_to_org_index <- function(progPath, programmeName, progContents,
+                                   tempPath, progSummaryTemplate,
+                                   orgPath, settings) {
+
+  # define index paths
+  progIndex <- get_index_prog(progPath, settings)
+  orgIndex <- get_index_org(orgPath, settings)
+
+  progSummContents <- read_file( fs::path(tempPath, progSummaryTemplate) )
+
+  progSummary <- extract_prog_summ(progContents, orgIndex, progIndex,
+                                   orgPath, settings)
+
+  progSummContents <- init_template_prog_summ(progSummContents, programmeName,
+                                              orgIndex, progIndex, progSummary,
+                                              orgPath, settings)
+
+  insert_prog_summ_org(progSummContents, orgIndex, orgPath, settings)
+
+  return(progIndex)
+
+}
 
 
-  #### Insert PROG Summary in ORG index file ####
-
-  # first generate the progSummary filling in the progSummaryTemplate:
-
-  # read programme summary header template
-  progSummaryTemplateContents <- read_file( paste0(tempPath, .Platform$file.sep, progSummaryTemplate) )
-
-  # create the progIndexLink:
-  NoteLink <- R.utils::getRelativePath(progFilePath, relativeTo=orgFilePath)
-  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  progIndexLink <- paste("[", programmeName, "](", NoteLink, ")",  sep="")
+#' extract string vector that contains the programme summary - between indices
+#' of settings: `ProgSummaryHeader` & `ProgSummaryFooter` & after `orgLink`
+extract_prog_summ <- function(progContents, orgIndex, progIndex,
+                              orgPath, settings) {
 
   # collect string from programme summary section to paste into org index
+
+  orgLink <- create_hyperlink_no_ext(orgIndex, progIndex)
+
   # first identify the indices between which the programme summary exists in prog Rmd
-  progSummaryHeadIndex <- match_line_index( load_param_vector(settings[["ProgSummaryHeader"]], orgPath),
-                                          progContents)
-  progSummaryFootIndex <- grep_line_index_from( load_param_vector(settings[["ProgSummaryFooter"]], orgPath),
-                                             progContents, progSummaryHeadIndex, orgPath)-1
+  progSummaryHeadIndex <- match_line_index(
+    load_param_vector(settings[["ProgSummaryHeader"]], orgPath),
+    progContents)
+  progSummaryFootIndex <- grep_line_index_from(
+    load_param_vector(settings[["ProgSummaryFooter"]], orgPath),
+    progContents, progSummaryHeadIndex, orgPath)-1
+
   # now get programme summary content to paste into org Rmd
   summaryContents <- progContents[progSummaryHeadIndex:progSummaryFootIndex]
-  progSummary <- summaryContents[ (match_line_index(orgLink, summaryContents) +1 ) : length(summaryContents) ]
+  # extract the summary vector AFTER the hyperlink from programme to org!
+  progSummary <- summaryContents[
+    (match_line_index(orgLink, summaryContents) +1 ) :
+      length(summaryContents) ]
 
+  return(progSummary)
 
-  # fill progSummaryTemplateContents with correct content
-  progSummaryTemplateContents <- sub_template_param(progSummaryTemplateContents,
-                                                    "{{PROG_SUMMARY_SEP}}",
-                                                    settings[["OrgProgrammeSummarySep"]], orgPath)
+}
+
+init_template_prog_summ <- function(progSummContents, programmeName,
+                                    orgIndex, progIndex, progSummary,
+                                    orgPath, settings) {
+
+  # fill progSummContents with correct content
+  progSummContents <- sub_template_param(
+    progSummContents, "{{PROG_SUMMARY_SEP}}",
+    settings[["OrgProgrammeSummarySep"]], orgPath)
 
   progSummaryTitle <- paste0(settings[["ProgSummaryTitle"]], programmeName)
-  progSummaryTemplateContents <- gsub("{{PROG_SUMMARY_TITLE}}", progSummaryTitle,
-                                      progSummaryTemplateContents, fixed=TRUE)
+  progSummContents <- gsub("{{PROG_SUMMARY_TITLE}}", progSummaryTitle,
+                           progSummContents, fixed=TRUE)
 
-  progSummaryTemplateContents <- gsub("{{PROG_LINK}}", progIndexLink,
-                                      progSummaryTemplateContents, fixed=TRUE)
+  progLink <- create_hyperlink_no_ext(progIndex, orgIndex)
+  progSummContents <- gsub("{{PROG_LINK}}", progLink,
+                           progSummContents, fixed=TRUE)
 
-  progSummaryTemplateContents <- sub_template_param(progSummaryTemplateContents,
-                                                    "{{PROG_SUMMARY}}",
-                                                    progSummary, orgPath)
+  progSummContents <- sub_template_param(progSummContents,
+                                         "{{PROG_SUMMARY}}",
+                                         progSummary, orgPath)
 
+  return(progSummContents)
+}
+
+insert_prog_summ_org <- function(progSummContents, orgIndex, orgPath, settings) {
   # Next, insert progSummary into orgContents
 
   # read Organisation File from ORG
-  orgContents <- read_file(orgFilePath)
+  orgContents <- read_file(orgIndex)
 
   # find programme header -> footer indices
-  orgProgrammeHeaderIndex <- match_line_index( load_param_vector(settings[["OrgProgrammeHeader"]], orgPath),
-                                             orgContents) # finds FIRST MATCH
-  orgProgrammeFooterIndex <- grep_line_index_from( load_param_vector(settings[["OrgProgrammeFooter"]], orgPath),
-                                                orgContents, orgProgrammeHeaderIndex, orgPath)
+  orgProgrammeHeaderIndex <- match_line_index(
+    load_param_vector(settings[["OrgProgrammeHeader"]], orgPath),
+    orgContents) # finds FIRST MATCH
+  orgProgrammeFooterIndex <- grep_line_index_from(
+    load_param_vector(settings[["OrgProgrammeFooter"]], orgPath),
+    orgContents, orgProgrammeHeaderIndex, orgPath)
 
-  # simply insert progSummaryVector at END of orgProgramme summary in orgContents - at orgProgrammeFooterIndex
-  orgContents <- insert_at_indices(orgContents, orgProgrammeFooterIndex, progSummaryTemplateContents)
+  # simply insert progSummaryVector at END of orgProgramme summary in orgContents
+  #at orgProgrammeFooterIndex
+  orgContents <- insert_at_indices(orgContents, orgProgrammeFooterIndex,
+                                   progSummContents)
 
-  # write to orgFilePath
-  write_file(orgContents, orgFilePath)
+  # write to orgIndex
+  write_file(orgContents, orgIndex)
 
-  cat( "  Written Programme Link to Org File: ", basename(orgFilePath), "\n" )
+  cat( "  Written Programme Link to Org Index: ", basename(orgIndex), "\n" )
 
-  # return progIndexPath - progFilePath
-  progFilePath
+} #### ________________________________ ####
+
+
+#' Create Programme Section
+#'
+#' Generates a new programme section within an existing programme directory,
+#' creating the necessary directory structure, R Markdown index file, and
+#' linking to its programme or parent section index file.
+#'
+#' @param sectionName Character. The name of the new programme section. Must not
+#'   contain spaces.
+#' @param sectionParentPath Character. The file path to an existing organisation
+#'   directory, within a programme.
+#' @param authorValue Character. The author of the section. Defaults to system
+#'   username.
+#' @param sectionTitle Character. The title of the programme. If empty, it will
+#'   be derived from `programmeName`.
+#' @param sectTemplate Character. The filename of the programme template. Default
+#'   is `"Programme-Section-Template.Rmd"`.
+#' @param sectSummaryTemplate Character. The filename of the programme summary
+#'   template. Default is `"Programme-Section-Summary-Template.Rmd"`.
+#'
+#' @details
+#' This function performs the following steps:
+#' 1. Ensures `sectionName` does not contain spaces.
+#' 2. Identifies the root organisation directory from `sectionParentPath`.
+#' 3. Creates a new programme sdction directory within the organisation.
+#' 4. Generates a new programme section index Rmd file from a template.
+#' 5. Links and inserts the programme section into its parent's index file.
+#'
+#' The function ensures that all directories and files are properly created and
+#' linked within the project structure.
+#'
+#' @return Character. The file path of the created programme index Rmd file.
+#'
+#' @examples
+#' \dontrun{
+#' # Create a new programme in an organisation
+#' create_programme_section(
+#'   programmeName = "programme-section",
+#'   organisationPath = "/path/to/organisation/programme",
+#'   authorValue = "sjwest",
+#'   programmeTitle = "Programme Section",
+#'   progTemplate = "Programme-Section-Template.Rmd",
+#'   progSummaryTemplate = "Programme-Section-Summary-Template.Rmd"
+#' )
+#' }
+#'
+#' @seealso
+#' - \code{\link{find_org_directory}} to locate the organisation directory.
+#' - \code{\link{get_settings_yml}} for retrieving configuration settings.
+#' - \code{\link{write_file}} for writing content to files.
+#'
+#' @note
+#' - The `sectionName` should not contain spaces.
+#' - The function modifies files directly on disk. Ensure backups are created
+#'   before running.
+#' - The function relies on a structured organisation directory; incorrect
+#'   structures may cause failures.
+#'
+#' @export
+create_programme_section <- function(sectionName, sectionParentPath,
+                             authorValue=Sys.info()["user"], sectionTitle="",
+                             sectTemplate="Programme-Section-Template.Rmd",
+                             sectSummaryTemplate = "Programme-Section-Summary-Template.Rmd") {
+
+  cat( "\nprojectmanagr::create_programme_section():\n" )
+
+  #### define and check args ####
+
+  # get the orgPath from sectionParentPath
+  orgPath <- confirm_find_org(sectionParentPath)
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  settings <- get_settings_yml(orgPath)
+
+  sectionParentPath <- check_section_name_pir(sectionParentPath, sectionName)
+  sectionTitle <- define_section_title(sectionTitle, sectionName)
+
+  # parentIndex can be to a parent programme section or programme index Rmd
+  parentIndex <- confirm_parent_index(sectionParentPath, authorValue, sectTemplate,
+                                      sectSummaryTemplate, settings)
+
+
+  #### Create Programme Section ####
+
+  tryCatch({
+
+    sectPath <- create_sect_dir(sectionParentPath, sectionName)
+
+    sectContents <- create_sect_index(sectPath, sectionTitle,
+                                      parentIndex, tempPath, sectTemplate,
+                                      authorValue, orgPath, settings)
+
+    sectIndex <- link_sect_to_parent_index(sectPath, sectionName, sectContents,
+                                           parentIndex, tempPath, sectSummaryTemplate,
+                                           orgPath, settings)
+
+  }, error = function(e) {
+    cat("  ====================  \n")
+    cat("  Error encountered:", e$message, "\n")
+    cleanup_created(sectPath)
+    stop(e)  # Rethrow the error after cleanup
+  })
+
+  return(sectIndex)
+}
+
+
+#' check programme section name & parent path
+check_section_name_pir <- function(sectionParentPath, sectionName) {
+  progPath <- check_prog_subdir(sectionParentPath, settings)
+  if( progPath == "" ) { #
+    stop( paste0("  sectionParentPath not within a PROGRAMME: ", sectionParentPath) )
+  }
+  if( grepl("\\s+", sectionName) ) {
+    stop( paste0("  sectionName contains a SPACE: ", sectionName) )
+  }
+  return(sectionParentPath)
+}
+
+#' Check sectionTitle, and if blank, fill with sectionName
+#' replacing all "_" and "-" with spaces
+define_section_title <- function(sectionTitle, sectionName) {
+  if( nchar(sectionTitle) == 0 ) {
+    sectionTitle <- gsub("-", " ", gsub("_", " ", sectionName) )
+  }
+  return(sectionTitle)
+}
+
+
+confirm_parent_index <- function(sectionParentPath, authorValue, sectTemplate,
+                                 sectSummaryTemplate, settings) {
+
+  if( check_prog_dir(fs::path_dir(sectionParentPath)) == "" ) { # parent is programme
+
+    parentIndex <- get_index_prog(sectionParentPath, settings)
+
+    if( fs::file_exists(parentIndex) == FALSE ) {
+      stop( paste0("  organisation Programme not initialised: ",
+                   sectionParentPath) )
+    }
+
+  } else { # parent is a nested programme section
+
+    parentIndex <- get_index_sect(sectionParentPath, settings)
+
+    if( fs::file_exists(parentIndex) == FALSE ) {
+      # Prog Section that has not been initialised
+      # So create the parent section index
+      create_programme_section(fs::path_file(sectionParentPath),
+                               fs::path_dir(sectionParentPath),
+                               authorValue, "", sectTemplate, sectSummaryTemplate)
+    }
+  }
+  return(parentIndex)
+}
+
+
+#' Create Programme Section Directory
+#'
+create_sect_dir <- function(sectionParentPath, sectionName) {
+
+  sectPath <- fs::path(sectionParentPath, sectionName)
+  create_directory(sectPath, "  Made Programme Section dir: ",
+                   "  Programme Section directory could not be created: ")
+  return(sectPath)
+}
+
+#' Create Programme Section Index Rmd
+#'
+#' Fill with contents, return contents
+#'
+create_sect_index <- function(sectPath, sectionTitle,
+                              parentIndex, tempPath, sectTemplate,
+                              authorValue, orgPath, settings) {
+
+  # define index path
+  sectIndex <- get_index_sect(sectPath, settings)
+
+  # create index Rmd file
+  create_file(sectIndex, "  Made Programme Section index file: ",
+              "  Programme Section index file could not be created: ")
+
+  # read sectTemplate:
+  sectContents <- read_file( fs::path(tempPath, sectTemplate) )
+
+  # modify sectContents to include sectionTitle and authorValue
+  sectContents <- gsub("{{TITLE}}", sectionTitle, sectContents, fixed=TRUE)
+  sectContents <- gsub("{{AUTHOR}}", authorValue, sectContents, fixed=TRUE)
+
+  # modify summary header/footer
+  sectContents <- sub_template_param(sectContents, "{{SUMMARY_HEADER}}",
+                                     settings[["SectionSummaryHeader"]], orgPath)
+  sectContents <- sub_template_param(sectContents, "{{SUMMARY_FOOTER}}",
+                                     settings[["SectionSummaryFooter"]], orgPath)
+
+  # modify sectContents to include relative link to PARENT index Rmd
+
+  parentLink <- create_hyperlink_no_ext(parentIndex, sectIndex)
+  sectContents <- gsub("{{PARENTLINK}}", parentLink, sectContents, fixed=TRUE)
+
+  # modify projects header/footer
+  sectContents <- sub_template_param(sectContents, "{{PROJECTS_HEADER}}",
+                                     settings[["SectionProjectsHeader"]], orgPath)
+  sectContents <- sub_template_param(sectContents, "{{PROJECTS_FOOTER}}",
+                                     settings[["SectionProjectsFooter"]], orgPath)
+
+  # modify sectContents with rmarkdown-html-header content
+  sectContents <- replace_markdown_header(sectContents, orgPath)
+
+  # modify sectContents with SEP values
+  sectContents <- replace_sep_values(sectContents, orgPath)
+
+  # write to sectFile
+  write_file(sectContents, sectIndex)
+
+  cat( "  Written template to Programme Section index.Rmd file: ", sectIndex, "\n" )
+
+  return(sectContents)
+
+}
+
+
+get_index_sect <- function(sectPath, settings) {
+  fs::path(sectPath,
+           paste0(settings[["SectionIndexFileNamePrefix"]],
+                  fs::path_file(sectPath), ".Rmd"))
+}
+
+
+#' Link Programme Section Index to Parent Index
+#'
+#' Fill with default Programme Section Summary - updated with
+#' `projectmanagr::update()`
+#'
+link_sect_to_parent_index <- function(sectPath, sectionName, sectContents,
+                                      parentIndex, tempPath, sectSummaryTemplate,
+                                      orgPath, settings) {
+
+  # define index path
+  sectIndex <- get_index_sect(sectPath, settings)
+
+  sectSummContents <- read_file( fs::path(tempPath, sectSummaryTemplate) )
+
+  sectSummary <- extract_sect_summ(sectContents, parentIndex, sectIndex,
+                                   orgPath, settings)
+
+  sectSummContents <- init_template_sect_summ(sectSummContents, sectionName,
+                                               parentIndex, sectIndex, sectSummary,
+                                              orgPath, settings)
+
+  insert_sect_summ_parent(sectSummContents, parentIndex, orgPath, settings)
+
+  return(sectIndex)
+
+}
+
+#' extract string vector that contains the programme section summary - between
+#' indices of settings: `SectionSummaryHeader` & `SectionSummaryFooter` & after
+#' `parLink`
+extract_sect_summ <- function(sectContents, parentIndex, sectIndex,
+                              orgPath, settings) {
+
+  # collect string from programme summary section to paste into org index
+
+  parLink <- create_hyperlink_no_ext(parentIndex, sectIndex)
+
+  # first identify the indices between which the programme summary exists in sect Rmd
+  sectSummaryHeadIndex <- match_line_index(
+    load_param_vector(settings[["SectionSummaryHeader"]], orgPath),
+    sectContents)
+  sectSummaryFootIndex <- grep_line_index_from(
+    load_param_vector(settings[["SectionSummaryFooter"]], orgPath),
+    sectContents, sectSummaryHeadIndex, orgPath)-1
+
+  # now get programme summary content to paste into org Rmd
+  summaryContents <- sectContents[sectSummaryHeadIndex:sectSummaryFootIndex]
+  # extract the summary vector AFTER the hyperlink from programme to org!
+  sectSummary <- summaryContents[
+    (match_line_index(parLink, summaryContents) +1 ) :
+      length(summaryContents) ]
+
+  return(sectSummary)
+
+}
+
+
+init_template_sect_summ <- function(sectSummContents, programmeName,
+                                    parentIndex, sectIndex, sectSummary,
+                                    orgPath, settings) {
+
+  # fill sectSummContents with correct content
+  sectSummContents <- sub_template_param(
+    sectSummContents, "{{PROG_SECT_SUMMARY_SEP}}",
+    settings[["SectionProjectSummarySep"]], orgPath)
+
+  sectSummaryTitle <- paste0(settings[["SectionSummaryTitle"]], programmeName)
+  sectSummContents <- gsub("{{PROG_SECT_SUMMARY_TITLE}}", sectSummaryTitle,
+                           sectSummContents, fixed=TRUE)
+
+  sectLink <- create_hyperlink_no_ext(sectIndex, parentIndex)
+  sectSummContents <- gsub("{{PROG_SECT_LINK}}", sectLink,
+                           sectSummContents, fixed=TRUE)
+
+  sectSummContents <- sub_template_param(sectSummContents,
+                                         "{{PROG_SECT_SUMMARY}}",
+                                         sectSummary, orgPath)
+
+  return(sectSummContents)
+}
+
+insert_sect_summ_parent <- function(sectSummContents, parentIndex, orgPath,
+                                    settings) {
+
+
+  # insert sectSummContents into parentContents
+  parentContents <- read_file(parentIndex)
+
+  if( check_prog_dir(
+    fs::path_dir(fs::path_dir(parentIndex))) == "" ) { # parent is programme
+
+  # find programme header -> footer indices:
+  parentHeaderIndex <- match_line_index(
+        load_param_vector(settings[["ProgProjectsHeader"]], orgPath),
+        parentContents) # finds FIRST MATCH
+  parentFooterIndex <- grep_line_index_from(
+        load_param_vector(settings[["ProgProjectsFooter"]], orgPath),
+        parentContents, parentHeaderIndex, orgPath)
+
+  # insert progSummContents at END of programme Projects section in parentContents
+   #at parentFooterIndex
+  parentContents <- insert_at_indices(parentContents, parentFooterIndex,
+                                      sectSummContents)
+
+  # write to parentIndex
+  write_file(parentContents, parentIndex)
+
+  cat( "  Written Programme Section Link to Programme Index: ",
+       basename(parentIndex), "\n" )
+
+  } else { # parent is nested programme section
+    # find programme section header -> footer indices:
+    parentHeaderIndex <- match_line_index(
+      load_param_vector(settings[["SectionProjectsHeader"]], orgPath),
+      parentContents) # finds FIRST MATCH
+    parentFooterIndex <- grep_line_index_from(
+      load_param_vector(settings[["SectionProjectsFooter"]], orgPath),
+      parentContents, parentHeaderIndex, orgPath)
+
+    # insert sectSummContents at END of programme Projects section in parentContents
+    #at parentFooterIndex
+    parentContents <- insert_at_indices(parentContents, parentFooterIndex,
+                                        sectSummContents)
+
+    # write to parentIndex
+    write_file(parentContents, parentIndex)
+
+    cat( "  Written Programme Section Link to Parent Section Index: ",
+         basename(parentIndex), "\n" )
+
+
+  }
 
 } #### ________________________________ ####
 
@@ -1012,12 +1412,13 @@ create_programme <- function(programmeName, organisationPath,
 #' Create a New Project Document within a Programme
 #'
 #' Generates a new project document within an existing programme directory,
-#' creating the necessary directory structure, R Markdown files, and updating
-#' the programme's summary.
+#' creating the necessary directory structure, R Markdown files, and linking
+#' the new project document to the programme or section index file.
 #'
 #' @param projectPrefix Character. A unique alphanumeric identifier for the project.
 #' @param projectName Character. The name of the new project. Must not contain spaces.
-#' @param projectParentPath Character. The file path to an existing programme directory.
+#' @param projectParentPath Character. The file path to an existing directory
+#'   below a programme.
 #' @param authorValue Character. The author of the project document. Defaults to
 #'   the system username.
 #' @param projectTitle Character. The title of the project. If empty, it will be
@@ -1034,7 +1435,10 @@ create_programme <- function(programmeName, organisationPath,
 #' 3. Validates that `projectParentPath` is inside a programme directory.
 #' 4. Creates a new project directory and project document Rmd file.
 #' 5. Populates the project document with metadata such as prefix, title, and author.
-#' 6. Updates the programme's index file to include a summary of the new project.
+#' 6. Updates the programme or section index file to link to the new project.
+#'    A section index file defines a programme section, and is created to bridge
+#'    the summary of new project documents in a programme section with the main
+#'    programme index.
 #'
 #' The function ensures that all directories and files are properly created and
 #' linked within the project structure.
@@ -1077,94 +1481,117 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath,
 
   cat( "\nprojectmanagr::create_project_doc():\n" )
 
+  #### define and check args ####
 
-  #### instance variables ####
-
-  # check projectName contains NO SPACES:
-  if( grepl("\\s+", projectName) ) {
-    stop( paste0("  projectName contains a SPACE: ", projectName) )
-  }
-
-
-  # get the orgPath from projectParentPath - to confirm in an organisation!
-  orgPath <- find_org_directory(projectParentPath)
+  # get the orgPath from projectParentPath
+  orgPath <- confirm_find_org(projectParentPath)
 
   # get config templates settings yml
   confPath <- get_config_dir(orgPath)
   tempPath <- get_template_dir(orgPath)
   settings <- get_settings_yml(orgPath)
 
-  # get programme path
+  projectParentPath <- check_doc_pir_name_prefix(projectParentPath,
+                                                     projectName,
+                                                     projectPrefix)
+  projectTitle <- define_doc_title(projectTitle, projectName)
+
+
+  #### Create Project Doc ####
+
+  tryCatch({
+
+    projDocDir <- create_doc_dir(projectParentPath, projectPrefix)
+
+    projDocFilePath <- create_doc_file(projectParentPath, projectPrefix,
+                                projectName, settings)
+
+    projDocContents <- fill_doc_file(projDocFilePath, projectPrefix, projectTitle,
+                                     tempPath, projDocTemplate, authorValue,
+                                     orgPath, settings)
+
+    link_doc_parent(projectParentPath, projDocFilePath, projDocContents,
+                    tempPath, projDocSummaryTemplate, authorValue,
+                    orgPath, settings)
+
+  }, error = function(e) {
+    cat("  ====================  \n")
+    cat("  Error encountered:", e$message, "\n")
+    cleanup_created( c(projDocFilePath, projDocDir) )
+    stop(e)  # Rethrow the error after cleanup
+  })
+
+  # return projDocFilePath
+  return(projDocFilePath)
+
+}
+
+
+check_doc_pir_name_prefix <- function(projectParentPath, projectName, projectPrefix) {
+
   progPath <- check_prog_subdir(projectParentPath, settings)
-
-  # extract the PROGRAMME NAME from the progPath:
-  programmeName <-basename(progPath)
-
-  # define project dir - use prefix as dir name
-  projDir <- paste0(projectParentPath, .Platform$file.sep, projectPrefix)
-
-  # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
-  if( nchar(projectTitle)==0 ) {
-    projectTitle <- gsub("-", " ", gsub("_", " ", projectName) )
+  if( progPath == "" ) { #
+    stop( paste0("  projectParentPath not within a PROGRAMME: ", projectParentPath) )
   }
-
-
-  #### ERROR CHECKING ####
-
-  # Check projectParentPath is in a Programme DIR, a sub-dir to the root of an ORGANISATION:
-  if(  progPath == ""  ) {
-    # the search reached the root of the filesystem without finding the Organisation files,
-    # therefore, projectParentPath is not inside a PROGRAMME sub-dir!
-    stop( paste0("  projectParentPath is not withinin a PROGRAMME Directory: ", projectParentPath) )
+  # check projectName contains NO SPACES:
+  if( grepl("\\s+", projectName) ) {
+    stop( paste0("  projectName contains a SPACE: ", projectName) )
   }
-
-  # projectParentPath is therefore in a PROGRAMME DIR
-
   # Check projectPrefix is alphanumeric (no punctuation chars) and unique to programme
   if( grepl('[[:punct:]]', projectPrefix) == TRUE ) {
     stop( paste0("  projectPrefix contains non-alphanumeric characters: ", projectPrefix) )
   }
-
-  if( file.exists(projDir) == TRUE ) {
-    stop( paste0("  projectPrefix already used in directory: ", projDir) )
+  projDocDir <- fs::path(projectParentPath, projectPrefix)
+  if( file.exists(projDocDir) == TRUE ) {
+    stop( paste0("  projectPrefix already used in directory: ", projDocDir) )
   }
+  return(projectParentPath)
+}
 
 
-  #### Create Project Dir ####
-
-  create_directory(
-    projDir,
-    "  Made Project dir: ",
-    "  Project directory could not be created: ")
-
-  #done <- dir.create(projDir)
-
-  #if(!done) {
-  #  stop( paste0("  Project directory could not be created: ", projDir) )
-  #}
-
-  #cat( "  Made Project dir: ",projDir, "\n" )
-
-
-  #### create Rmd file ####
-
-  projDocFilePath <- fs::path(projectParentPath, paste0(projectPrefix,
-                            settings[["ProjectPrefixSep"]], projectName, ".Rmd") )
-  done <- file.create(projDocFilePath)
-
-  if(!done) {
-    stop( paste0("  Project file could not be created: ", projDocFilePath) )
-  }
-
-  cat( "  Made Project file: ", projDocFilePath, "\n" )
-
-  # read project doc template:
-  projDocContents <- read_file( fs::path(tempPath, projDocTemplate) )
-
-  # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
+define_doc_title <- function(projectTitle, projectName) {
+  # Check projectTitle, and if blank, fill with projectName
+  # replacing all "_" and "-" with spaces
   if( nchar(projectTitle)==0 ) {
     projectTitle <- gsub("-", " ", gsub("_", " ", projectName) )
   }
+  return(projectTitle)
+}
+
+
+#' Create Project Directory
+#'
+create_doc_dir <- function(projectParentPath, projectPrefix) {
+
+  projDocDir <- fs::path(projectParentPath, projectPrefix)
+  create_directory(projDocDir, "  Made Project dir: ",
+                   "  Project directory could not be created: ")
+  return(projDocDir)
+}
+
+
+create_doc_file <- function(projectParentPath, projectPrefix,
+                            projectName, settings) {
+
+  projDocFilePath <- fs::path(projectParentPath,
+                              paste0(projectPrefix, settings[["ProjectPrefixSep"]],
+                                     projectName, ".Rmd") )
+
+  # create index Rmd file
+  create_file(projDocFilePath, "  Made Project document: ",
+              "  Project document could not be created: ")
+
+  return(projDocFilePath)
+
+}
+
+fill_doc_file <- function(projDocFilePath, projectPrefix, projectTitle,
+                          tempPath, projDocTemplate,
+                          authorValue, orgPath, settings) {
+
+
+  # read project doc template:
+  projDocContents <- read_file( fs::path(tempPath, projDocTemplate) )
 
   # modify projDocContents to include PREFIX projectTitle author
   projDocContents <- gsub("{{PREFIX}}", projectPrefix, projDocContents, fixed=TRUE)
@@ -1176,14 +1603,6 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath,
                                         settings[["ProjectSummaryHeader"]], orgPath)
   projDocContents <- sub_template_param(projDocContents, "{{SUMMARY_FOOTER}}",
                                         settings[["ProjectSummaryFooter"]], orgPath)
-
-  # write correct programme link
-  progFilePath <- fs::path( progPath,
-                            paste0(settings[["ProgIndexFileNamePrefix"]], programmeName, ".Rmd") )
-  programmeTitle <- programmeName
-  progLink <- create_hyperlink( programmeTitle,
-                               progFilePath, projDocFilePath)
-  projDocContents <- gsub("{{PROGLINK}}", progLink, projDocContents, fixed=TRUE)
 
   # modify goal/del/task sep, header, footer vals
   projDocContents <- sub_template_param(projDocContents, "{{GOAL_SEP}}",
@@ -1211,13 +1630,81 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath,
   # modify projDocContents with SEP values
   projDocContents <- replace_sep_values(projDocContents, orgPath)
 
+  return(projDocContents)
+
+}
+
+
+link_doc_parent <- function(projectParentPath, projDocFilePath, projDocContents,
+                            tempPath, projDocSummaryTemplate, authorValue,
+                            orgPath, settings) {
+
+  # get programme path
+  progPath <- check_prog_subdir(projectParentPath, settings)
+
+  if( projectParentPath == progPath ) { # link doc to programme
+
+    projDocContents <- link_prog_index_to_doc(progPath, projDocFilePath,
+                                              projDocContents, settings)
+
+    link_doc_to_prog_index(progPath, tempPath, projDocSummaryTemplate,
+                           projDocFilePath, projDocContents, orgPath, settings)
+
+  } else { # link doc to programme section
+
+    # first check projectParentPath has prog section index - if not create one
+    sectPath <- check_prog_section(projectParentPath, authorValue, settings)
+
+    projDocContents <- link_sect_index_to_doc(sectPath, projDocFilePath,
+                                              projDocContents, settings)
+
+    link_doc_to_sect_index(sectPath, tempPath, projDocSummaryTemplate,
+                           projDocFilePath, projDocContents, orgPath, settings)
+  }
+
+}
+
+link_prog_index_to_doc <- function(progPath, projDocFilePath,
+                                   projDocContents, settings) {
+
+  programmeName <-basename(progPath)
+
+  progLink <- hyperlink_doc_to_prog_index(progPath, programmeName,
+                                          projDocFilePath, settings)
+
+  projDocContents <- gsub("{{PROGLINK}}", progLink, projDocContents, fixed=TRUE)
+
   # write to projDocFilePath
   write_file(projDocContents, projDocFilePath)
+  cat( "  Written template to Project document: ", projDocFilePath, "\n" )
 
-  cat( "  Written template to Project file: ", projDocFilePath, "\n" )
+  return(projDocContents)
+
+}
+
+hyperlink_doc_to_prog_index <- function(progPath, programmeName, projDocFilePath,
+                                   settings) {
+  progFilePath <- fs::path(progPath,
+                           paste0(settings[["ProgIndexFileNamePrefix"]],
+                                  programmeName, ".Rmd") )
+  progLink <- create_hyperlink(programmeName, progFilePath, projDocFilePath)
+  return(progLink)
+
+}
 
 
-  #### Insert Project Doc Summary in Programme ####
+link_doc_to_prog_index <- function(progPath, tempPath, projDocSummaryTemplate,
+                                   projDocFilePath, projDocContents, orgPath,
+                                   settings) {
+
+  programmeName <-basename(progPath)
+
+  progFilePath <- fs::path( progPath,
+                            paste0(settings[["ProgIndexFileNamePrefix"]],
+                                   programmeName, ".Rmd") )
+
+  progLink <- hyperlink_doc_to_prog_index(progPath, programmeName, projDocFilePath,
+                                     settings)
 
   # read Programme File from ORG
   progContents <- read_file( progFilePath )
@@ -1229,53 +1716,200 @@ create_project_doc <- function(projectPrefix, projectName, projectParentPath,
   projDocName <- substring( basename(projDocFilePath),
                             first=1, last=nchar(basename(projDocFilePath))-4)
   projDocLink <- create_hyperlink( projDocName,
-                                  projDocFilePath, progFilePath )
+                                   projDocFilePath, progFilePath )
 
   # collect string from projDoc summary section to paste into prog index
   # first identify the indices between which the projDoc summary exists in projDoc Rmd
-  projSummaryHeadIndex <- match_line_index( load_param_vector(settings[["ProjectSummaryHeader"]], orgPath),
-                                          projDocContents)
-  projSummaryFootIndex <- grep_line_index_from( load_param_vector(settings[["ProjectSummaryFooter"]], orgPath),
-                                             projDocContents, projSummaryHeadIndex, orgPath)-1
+  projSummaryHeadIndex <- match_line_index(
+    load_param_vector(settings[["ProjectSummaryHeader"]], orgPath),
+    projDocContents)
+  projSummaryFootIndex <- grep_line_index_from(
+    load_param_vector(settings[["ProjectSummaryFooter"]], orgPath),
+    projDocContents, projSummaryHeadIndex, orgPath)-1
   # now get projDoc summary content to paste into prog Rmd
   summaryContents <- projDocContents[projSummaryHeadIndex:projSummaryFootIndex]
-  projSummary <- summaryContents[ (match_line_index(progLink, summaryContents) +1 ) : length(summaryContents) ]
+  projSummary <- summaryContents[
+    (match_line_index(progLink, summaryContents) +1 ) : length(summaryContents) ]
 
 
   # fill projDocSummaryTemplateContents with correct content
   projSummaryTitle <- paste0(settings[["ProjectSummaryTitle"]], projDocName)
-  projDocSummaryTemplateContents <- gsub("{{PROJECT_DOC_SUMMARY_TITLE}}", projSummaryTitle,
+  projDocSummaryTemplateContents <- gsub("{{PROJECT_DOC_SUMMARY_TITLE}}",
+                                         projSummaryTitle,
                                          projDocSummaryTemplateContents, fixed=TRUE)
-  projDocSummaryTemplateContents <- gsub("{{PROJECT_DOC_LINK}}", projDocLink,
+  projDocSummaryTemplateContents <- gsub("{{PROJECT_DOC_LINK}}",
+                                         projDocLink,
                                          projDocSummaryTemplateContents, fixed=TRUE)
 
-  projDocSummaryTemplateContents <- sub_template_param(projDocSummaryTemplateContents,
-                                                       "{{PROJECT_DOC_SUMMARY_SEP}}",
-                                                       settings[["ProgProjectSummarySep"]], orgPath)
-  projDocSummaryTemplateContents <- sub_template_param(projDocSummaryTemplateContents,
-                                                       "{{PROJECT_DOC_SUMMARY}}",
-                                                       projSummary, orgPath)
+  projDocSummaryTemplateContents <- sub_template_param(
+    projDocSummaryTemplateContents,
+    "{{PROJECT_DOC_SUMMARY_SEP}}",
+    settings[["ProgProjectSummarySep"]], orgPath)
+
+  projDocSummaryTemplateContents <- sub_template_param(
+    projDocSummaryTemplateContents,
+    "{{PROJECT_DOC_SUMMARY}}",
+    projSummary, orgPath)
 
 
-  # compute location in org to insert the programme summary
-  # FIRST check if projDocLink exists IN THE PROJECTS SECTION of progContents
-  progProjDocHeaderIndex <- match_line_index( load_param_vector(settings[["ProgProjectsHeader"]], orgPath),
-                                            progContents) # finds FIRST MATCH
-  progProjDocFooterIndex <- grep_line_index_from( load_param_vector(settings[["ProgProjectsFooter"]], orgPath),
-                                               progContents, progProjDocHeaderIndex, orgPath)
+  # compute location in prog to insert the doc summary
+  progProjDocHeaderIndex <- match_line_index(
+    load_param_vector(settings[["ProgProjectsHeader"]], orgPath),
+    progContents) # finds FIRST MATCH
 
-  # insert projDocSummaryTemplateContents at END of project summary in progContents - progProjDocFooterIndex
-  progContents <- insert_at_indices(progContents, progProjDocFooterIndex, projDocSummaryTemplateContents)
+  progProjDocFooterIndex <- grep_line_index_from(
+    load_param_vector(settings[["ProgProjectsFooter"]], orgPath),
+    progContents, progProjDocHeaderIndex, orgPath)
+
+  # insert projDocSummaryTemplateContents at END of project summary in progContents
+  # progProjDocFooterIndex
+  progContents <- insert_at_indices(
+    progContents,
+    progProjDocFooterIndex,
+    projDocSummaryTemplateContents )
 
   # write to progFilePath
   write_file(progContents, progFilePath)
 
   cat( "  Written Project Doc to Programme File: ", basename(progFilePath), "\n" )
 
-  # return projDocFilePath
-  projDocFilePath
+}
 
-} #### ________________________________ ####
+check_prog_section <- function(projectParentPath, authorValue, settings) {
+
+  # define index path
+  sectIndex <- get_index_sect(projectParentPath, settings)
+
+  if( fs::file_exists(sectIndex) == FALSE ) { # create programme section!
+
+    cat( "  Programme Section Index not detected - generating Programme Section: ",
+         projectParentPath, "\n" )
+    create_programme_section(fs::path_file(projectParentPath),
+                             fs::path_dir(projectParentPath),
+                             authorValue)
+  } else {
+    cat( "  Programme Section Index detected: ", sectIndex, "\n" )
+  }
+
+  return(projectParentPath)
+
+}
+
+
+link_sect_index_to_doc <- function(sectPath, projDocFilePath,
+                                   projDocContents, settings) {
+
+  sectionName <-basename(sectPath)
+
+  sectLink <- hyperlink_doc_to_sect_index(sectPath, sectionName,
+                                          projDocFilePath, settings)
+
+  projDocContents <- gsub("{{PROGLINK}}", sectLink, projDocContents, fixed=TRUE)
+
+  # write to projDocFilePath
+  write_file(projDocContents, projDocFilePath)
+  cat( "  Written template to Project document: ", projDocFilePath, "\n" )
+
+  return(projDocContents)
+
+}
+
+hyperlink_doc_to_sect_index <- function(sectPath, sectionName, projDocFilePath,
+                                        settings) {
+  sectFilePath <- fs::path(sectPath,
+                           paste0(settings[["SectionIndexFileNamePrefix"]],
+                                  sectionName, ".Rmd") )
+  sectLink <- create_hyperlink(sectionName, sectFilePath, projDocFilePath)
+  return(sectLink)
+
+}
+
+
+link_doc_to_sect_index <- function(sectPath, tempPath, projDocSummaryTemplate,
+                                   projDocFilePath, projDocContents, orgPath,
+                                   settings) {
+
+  sectionName <-basename(sectPath)
+
+  sectFilePath <- fs::path(sectPath,
+                           paste0(settings[["SectionIndexFileNamePrefix"]],
+                                  sectionName, ".Rmd") )
+
+  sectLink <- hyperlink_doc_to_sect_index(sectPath, sectionName, projDocFilePath,
+                                          settings)
+
+  # read Programme Section Index
+  sectContents <- read_file( sectFilePath )
+
+  # read doc summary header template
+  projDocSummaryTemplateContents <- read_file( fs::path(tempPath, projDocSummaryTemplate) )
+
+  # create hyperlink from sect to projDoc - to insert in sect summary of projDoc
+  projDocName <- substring( basename(projDocFilePath),
+                            first=1, last=nchar(basename(projDocFilePath))-4)
+  projDocLink <- create_hyperlink( projDocName,
+                                   projDocFilePath, sectFilePath )
+
+  # collect string from projDoc summary section to paste into sect index
+  # first identify the indices between which the projDoc summary exists in projDoc Rmd
+  projSummaryHeadIndex <- match_line_index(
+    load_param_vector(settings[["ProjectSummaryHeader"]], orgPath),
+    projDocContents)
+  projSummaryFootIndex <- grep_line_index_from(
+    load_param_vector(settings[["ProjectSummaryFooter"]], orgPath),
+    projDocContents, projSummaryHeadIndex, orgPath)-1
+  # now get projDoc summary content to paste into sect Rmd
+  summaryContents <- projDocContents[projSummaryHeadIndex:projSummaryFootIndex]
+  projSummary <- summaryContents[
+    (match_line_index(sectLink, summaryContents) +1 ) : length(summaryContents) ]
+
+
+  # fill projDocSummaryTemplateContents with correct content
+  projSummaryTitle <- paste0(settings[["ProjectSummaryTitle"]], projDocName)
+  projDocSummaryTemplateContents <- gsub("{{PROJECT_DOC_SUMMARY_TITLE}}",
+                                         projSummaryTitle,
+                                         projDocSummaryTemplateContents, fixed=TRUE)
+  projDocSummaryTemplateContents <- gsub("{{PROJECT_DOC_LINK}}",
+                                         projDocLink,
+                                         projDocSummaryTemplateContents, fixed=TRUE)
+
+  projDocSummaryTemplateContents <- sub_template_param(
+    projDocSummaryTemplateContents,
+    "{{PROJECT_DOC_SUMMARY_SEP}}",
+    settings[["SectionProjectSummarySep"]], orgPath)
+
+  projDocSummaryTemplateContents <- sub_template_param(
+    projDocSummaryTemplateContents,
+    "{{PROJECT_DOC_SUMMARY}}",
+    projSummary, orgPath)
+
+
+  # compute location in sect to insert the doc summary
+  sectProjDocHeaderIndex <- match_line_index(
+    load_param_vector(settings[["SectionProjectsHeader"]], orgPath),
+    sectContents) # finds FIRST MATCH
+
+  sectProjDocFooterIndex <- grep_line_index_from(
+    load_param_vector(settings[["SectionProjectsFooter"]], orgPath),
+    sectContents, sectProjDocHeaderIndex, orgPath)
+
+  # insert projDocSummaryTemplateContents at END of project summary in sectContents
+  # sectProjDocFooterIndex
+  sectContents <- insert_at_indices(
+    sectContents,
+    sectProjDocFooterIndex,
+    projDocSummaryTemplateContents )
+
+  # write to sectFilePath
+  write_file(sectContents, sectFilePath)
+
+  cat( "  Written Project Doc to Programme Section File: ", basename(sectFilePath), "\n" )
+
+}
+
+
+#### ________________________________ ####
+
 
 
 #' Create a New Project Note within a Project Document

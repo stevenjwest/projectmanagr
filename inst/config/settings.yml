@@ -7,14 +7,20 @@ OrgIndexFileNamePrefix: _index_
 OrgProgrammeHeader: '# PROGRAMMES'
 OrgProgrammeFooter: ::template::SEP01.txt
 OrgProgrammeSummarySep: ::template::SEP02.txt
-ProgrammeProjectsDir: PROJECTS
 ProgIndexFileNamePrefix: _index_
 ProgSummaryHeader: '# PROGRAMME OVERVIEW'
 ProgSummaryTitle: '# '
 ProgSummaryFooter: ::template::SEP01.txt
-ProgProjectsHeader: '# PROJECTS'
+ProgProjectsHeader: '# SUB-SECTIONS AND PROJECTS'
 ProgProjectsFooter: ::template::SEP01.txt
 ProgProjectSummarySep: ::template::SEP02.txt
+SectionIndexFileNamePrefix: _index_
+SectionSummaryHeader: '# PROGRAMME SECTION OVERVIEW'
+SectionSummaryTitle: '# '
+SectionSummaryFooter: ::template::SEP01.txt
+SectionProjectsHeader: '# SUB-SECTIONS AND PROJECTS'
+SectionProjectsFooter: ::template::SEP01.txt
+SectionProjectSummarySep: ::template::SEP02.txt
 ProjectPrefixSep: ~_
 ProjectIdentifierSep: _
 ProjectIndexSep: '~'

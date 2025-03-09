@@ -1,0 +1,88 @@
+---
+title: 'ps2'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# PROGRAMME SECTION OVERVIEW
+
+
+[_index_ps1](../_index_ps1.Rmd)
+
+
+
+*Welcome to the ps2 Programme Section*
+
+
+_one_sentence_summary_statement_of_programme_scope__This_Programme_documents__
+
+
+>>> What does this programme aim to achieve?  Complete sentence "This Programme documents..."
+
+
+>>> Summarise Programme Aim with Plans and Progress
+>>> Each AIM should be a broad objective that one or more projects attempt to meet.
+>>> These AIMs will be copied under programme link in Organisation Index page to summarise this programme
+>>> Continue expanding with summary of achievements of progress in this programme as work is completed
+>>> Consider adding a summary GRAPHIC to update & insert.
+
+
+
+## _PROG_SECTION_AIM_01__OBJECTIVE_
+
+
+
+
+
+
+## _PROG_SECTION_AIM_02__OBJECTIVE_
+
+
+
+
+
+
+## _PROG_SECTION_AIM_03__OBJECTIVE_
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# Programme Section Background Information
+
+
+
+>>> Provide background and context to reader
+>>> Keep notes on programme research which do not have a project to go into yet
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# SUB-SECTIONS AND PROJECTS
+
+
+Programme work is organised into the following Sub-Sections & Projects
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+

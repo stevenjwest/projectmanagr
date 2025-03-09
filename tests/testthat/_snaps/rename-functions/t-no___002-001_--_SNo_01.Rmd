@@ -20,7 +20,7 @@ output:
 
 
 
-## PrDoS : EXAMPLE TASK TITLE
+## PrDoS : EXAMPLE RENAMED TASK HEADER
 
 
 [PrDoS_--_RENAMED_PrDoS](../../../PrDoS_--_RENAMED_PrDoS.Rmd)

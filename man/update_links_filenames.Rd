@@ -2,7 +2,7 @@
 % Please edit documentation in R/document-functions.R
 \name{update_links_filenames}
 \alias{update_links_filenames}
-\title{Update links}
+\title{Update Filenames in Links in Files within a Directory Tree}
 \usage{
 update_links_filenames(
   oldFileName,
@@ -13,26 +13,65 @@ update_links_filenames(
 )
 }
 \arguments{
-\item{oldFileName}{defines the OLD name that will be in Hyperlinks.  Should be
-the FILE NAME - with no spaces, including PREFIX and .Rmd EXTENSION}
+\item{oldFileName}{Character string of the basename of the file, including prefix
+and extension of the old filename to be replaced. Must not contain spaces.}
 
-\item{newName}{defines the NEW name to be written into Hyperlinks.  Should
-be the FILE NAME - with no spaces.}
+\item{newName}{Character string. The new name to replace the old filename. Must
+not contain spaces.}
 
-\item{dirTree}{Directory tree to search for files for replacing links in.}
+\item{dirTree}{Character string. The path to the root directory containing the
+files to be updated.}
 
-\item{fileExtensions}{List of file extensions indicating what types of files
-should be searched for links and have links replaced.  Must be plaintext file
-type.  Default is Rmd files only.}
+\item{settings}{List. Configuration details, including the \code{ProjectPrefixSep}
+and \code{VolumesDir}.}
 
-\item{oldTitle}{defines the OLD TITLE that will be in Hyperlinks.  By default
-replaces - & _ with spaces from name.}
-
-\item{newTitle}{defines the NEW TITLE that will be in Hyperlinks.  By default
-replaces - & _ with spaces from name.}
+\item{fileExtensions}{List. A list of file extensions to include in the search
+(e.g., \code{list("Rmd")}). Defaults to \code{list("Rmd")}.}
+}
+\value{
+The function does not return a value but modifies files in place as necessary.
 }
 \description{
-Updates every hyperlink in all files within \code{dirTree}, replacing
-\code{oldFileName} (the basename of the file, including prefix and extension) with
-\code{newName} (the new file name, without prefix or extension).
+Updates references to a specific filename in files within a directory tree,
+replacing the old filename with a new name. This includes replacing the
+corresponding links within the file contents. Processes specific file
+extensions and excludes certain directories from processing.
+}
+\details{
+This function identifies all files matching the specified extensions in the
+directory tree. It processes each file, searching for links or references
+that match the \code{oldFileName}, and replaces them with the \code{newName}.
+
+The function ensures:
+\itemize{
+\item Both \code{oldFileName} and \code{newName} do not contain spaces.
+\item Excluded paths (e.g., configuration or volume directories) are not processed.
+\item Links are reconstructed using the project prefix and the provided settings.
+}
+
+Files are updated in place, and any changes made are logged to the console.
+}
+\note{
+\itemize{
+\item Ensure that both \code{oldFileName} and \code{newName} do not contain spaces.
+\item Files are modified in place. Backup your directory before using this function.
+}
+}
+\examples{
+# Update file references in Rmd files within the directory
+update_links_filenames(
+  oldFileName = "project_old.Rmd",
+  newName = "project_new",
+  dirTree = "/path/to/directory",
+  settings = list(ProjectPrefixSep = "_", VolumesDir = "volumes"),
+  fileExtensions = list("Rmd")
+)
+
+}
+\seealso{
+\itemize{
+\item \code{\link{find_org_directory}} for locating the ORG directory.
+\item \code{\link{get_file_list_to_project_notes}} for recursive file traversal.
+\item \code{\link{read_file}} and \code{\link{write_file}} for file I/O operations.
+}
 }

@@ -1,5 +1,5 @@
 ---
-title: 'PDo~ Proj Do'
+title: 'PDo~ P Do'
 author: 'sjwest'
 output:
   html_document:
@@ -18,7 +18,7 @@ output:
 
 
 
-*Welcome to the Proj Do Project!*
+*Welcome to the P Do Project!*
 
 
 >>>> succinct description of project scope in one sentence - what does this project hope to achieve?

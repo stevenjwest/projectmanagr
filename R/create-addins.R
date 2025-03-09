@@ -21,6 +21,8 @@ addin_create_project_org_ui <- function() {
 
   miniPage(
 
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
+
     gadgetTitleBar("Create New Project Org"),
 
     miniContentPanel(
@@ -72,7 +74,7 @@ addin_create_project_org_server <- function(input, output, session) {
 
   # define global$datapath as rootDir
   global <- reactiveValues(datapath = rootDir, filepath = rootDir )
-  #global <- reactiveValues(datapath = normalizePath("~") )
+  #global <- reactiveValues(datapath = fs::path_expand("~") )
 
   # encode functionality for shinyDirButton - select from rootDir
   shinyDirChoose(
@@ -88,7 +90,7 @@ addin_create_project_org_server <- function(input, output, session) {
   observeEvent(ignoreNULL = TRUE,
                eventExpr = { input$dir },
                handlerExpr = { if (!"path" %in% names(dir())) return()
-                 #home <- normalizePath("~")
+                 #home <- fs::path_expand("~")
                  #global$datapath <- file.path(rootDir, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep) ) })
                  global$datapath <- fs::path(rootDir, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep) ) })
 
@@ -124,9 +126,7 @@ addin_create_project_org_server <- function(input, output, session) {
       addin_rstudio_nav(orgIndexPath)
     }
   })
-}
-
-
+}#### ________________________________ ####
 
 
 #' Create a New Programme Addin
@@ -163,6 +163,8 @@ addin_create_programme <- function() {
 addin_create_programme_ui <- function(orgPath) {
 
   miniPage(
+
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
 
     shinyjs::useShinyjs(), # to enable & disable subNote input
 
@@ -231,9 +233,7 @@ addin_create_programme_server <- function(input, output, session) {
         addin_rstudio_nav(progIndexPath)
       }
     })
-}
-
-
+}#### ________________________________ ####
 
 
 #' Create a New Project Document Addin
@@ -290,6 +290,8 @@ get_prog_selected <- function(programmeDirPaths) {
 addin_create_project_doc_ui <- function(orgPath, settings, programmeDirPaths, progSelected) {
 
   miniPage(
+
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
 
     shinyjs::useShinyjs(), # to enable & disable subNote input
 
@@ -526,8 +528,7 @@ addin_create_project_doc_server <- function(input, output, session) {
       addin_rstudio_nav(projectDocRmdPath)
     }
   })
-}
-
+}#### ________________________________ ####
 
 
 #' Add a New Project Note Addin
@@ -665,6 +666,8 @@ addin_create_project_note_from_doc_gdt <- function(selection, settings, orgPath)
 addin_create_prn_doc_gdt_ui <- function(goalTitle, delTitle, taskTitle) {
 
   ui <- miniPage(
+
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
 
     shinyjs::useShinyjs(), # to enable & disable subNote input
 
@@ -991,6 +994,8 @@ addin_create_subnote_from_group <- function(selection, settings, orgPath) {
 
   ui <- miniPage(
 
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
+
     gadgetTitleBar("Add New Sub Note"),
 
     miniContentPanel(
@@ -1126,6 +1131,8 @@ addin_create_subnote_from_subnote <- function(selection, settings, orgPath) {
   #### user interface ####
 
   ui <- miniPage(
+
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
 
     gadgetTitleBar("Add New Sub Note"),
 
@@ -1263,6 +1270,8 @@ addin_create_project_note_from_single <- function(selection, settings, orgPath) 
   #### user interface ####
 
   ui <- miniPage(
+
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
 
     gadgetTitleBar("Add New Project Note"),
 
@@ -1475,6 +1484,8 @@ addin_create_content <- function() {
   #### user interface ####
 
   ui <- miniPage(
+
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
 
     gadgetTitleBar("Add New Content"),
 
@@ -1744,29 +1755,34 @@ addin_open_weekly_journal <- function() {
 #' @note
 #' This UI is designed for use with the server logic defined in \code{addin_open_weekly_journal_server}.
 #'
-addin_open_weekly_journal_ui <- function(orgPath, calDate = Sys.Date(), calendar_function = shiny.fluent::Calendar.shinyInput) {
-  miniUI::miniPage(
-    # JavaScript to listen for Enter key and trigger Done button
-    tags$script(HTML("
-      $(document).on('keydown', function(e) {
-        if (e.key === 'Enter') {
-          $('#done').click(); // Trigger the Done button
-        }
-      });
-    ")),
-    miniUI::gadgetTitleBar("Open Weekly Journal: Select a Week"),
-    miniUI::miniContentPanel(
-      h4(paste0("Organisation Path:  ", orgPath), align = "center"),
-      div(
-        style = "padding: 20px;",
-        calendar_function(
-          "calendar", value = calDate, showGoToToday = TRUE,
-          highlightCurrentMonth = TRUE, highlightSelectedMonth = TRUE, firstDayOfWeek = 1
+addin_open_weekly_journal_ui <- function(orgPath, calDate = Sys.Date(),
+                                         calendar_function = shiny.fluent::Calendar.shinyInput) {
+
+    miniUI::miniPage(
+
+      tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
+
+      # JavaScript to listen for Enter key and trigger Done button
+      tags$script(HTML("
+        $(document).on('keydown', function(e) {
+          if (e.key === 'Enter') {
+            $('#done').click(); // Trigger the Done button
+          }
+        });
+      ")),
+      miniUI::gadgetTitleBar("Open Weekly Journal: Select a Week"),
+      miniUI::miniContentPanel(
+        h4(paste0("Organisation Path:  ", orgPath), align = "center"),
+        div(
+          style = "padding: 20px;",
+          calendar_function(
+            "calendar", value = calDate, showGoToToday = TRUE,
+            highlightCurrentMonth = TRUE, highlightSelectedMonth = TRUE, firstDayOfWeek = 1
+          ),
+          align = "center"
         ),
-        align = "center"
-      ),
-      br(),
-      verbatimTextOutput("selected_week_text")
+        br(),
+        verbatimTextOutput("selected_week_text")
     )
   )
 }
@@ -1824,7 +1840,7 @@ addin_open_weekly_journal_server <- function(input, output, session) {
   # Display the Monday of the selected week
   output$selected_week_text <- renderText({
     if (!is.null(selected_week())) {
-      paste("Monday of selected week:", selected_week())
+      paste("Selected week beginning:", selected_week())
     } else {
       "No week selected yet."
     }

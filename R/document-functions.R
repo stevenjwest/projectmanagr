@@ -56,6 +56,53 @@ compute_doc_GDT_link <- function(projectDocPath, projNoteRmdPath, settings,
 }
 
 
+#' update GDT links in all project notes with new Task Title that are linked
+#' to a given GDT in Project Doc.
+#'
+#' Updating the GDT Link TITLE - which contains the Task String.
+#'
+#' Updating the GDT TASK LINK - which is formed from the Task String.
+#'
+update_GDT_link_task <- function(projectDocPath, projectDocContents, taskSelection,
+                                 newTaskName, settings) {
+
+  # get note absolute paths from project doc GDT
+  notePaths <- get_doc_GDT_link_note_paths(projectDocPath, projectDocContents,
+                                           taskSelection[['taskLine']], settings)
+
+  # if paths to notes have been found:
+  if(length(notePaths) > 0 ) {
+
+    # loop through all notes
+    for(pn in notePaths) {
+      # generate old GDT and new GDT structures
+      oldGDT <- compute_doc_GDT_link(projectDocPath, pn, settings,
+                                    taskSelection[["goal"]],
+                                    taskSelection[["deliverable"]],
+                                    taskSelection[["task"]])
+      newGDT <- compute_doc_GDT_link(projectDocPath, pn, settings,
+                                     taskSelection[["goal"]],
+                                     taskSelection[["deliverable"]],
+                                    paste0(settings[['ProjectTaskHeader']], ' ',
+                                           newTaskName) )
+
+      # replace lines in pn contents:
+      pnc <- read_file(pn)
+      #oldGDT$title -> newGDT$title
+      titlei <- grep(oldGDT$title, pnc, fixed=TRUE)[1] # get first - should only be one GDT link title!
+      pnc[titlei] <- newGDT$title
+
+      #oldGDT$task -> newGDT$task
+      taski <- grep(oldGDT$task, pnc, fixed=TRUE)[1] # get first - should only be one GDT link task!
+      pnc[taski] <- newGDT$task
+
+      write_file(pnc, pn)
+    } # end loop pn
+  } # end if pn > 0
+  # finished!
+}
+
+
 #' compute goal link
 #'
 #' generate new link from project doc with html # tag for goal section.
@@ -341,28 +388,29 @@ get_doc_task_title_name <- function(DocPrefix, taskName, settings) {
           DocPrefix, " : ", taskName )
 }
 
+
 #' Get Project Note Paths from Doc GDT links
 #'
-#' Get project note paths from doc GDT links  Assumes `projDocContents` is a
+#' Get project note paths from doc GDT links  Assumes `projectDocContents` is a
 #' character vector from a project doc.
 #'
-get_doc_gdt_project_note_paths <- function(projectDocPath, projDocContents, settings) {
+get_doc_gdt_project_note_paths <- function(projectDocPath, projectDocContents, settings) {
 
-  projectDocParent <- dirname( normalizePath(projectDocPath))
+  projectDocParent <- dirname( fs::path_expand(projectDocPath))
   orgPath <- find_org_directory(projectDocParent)
 
 
-  #### split projDocContents into each TASK ####
+  #### split projectDocContents into each TASK ####
 
   # indices of each task HEADER
-  taskHeaderIndices <- grep( trimws(settings[["ProjectTaskHeader"]]), trimws(projDocContents), fixed=TRUE)
+  taskHeaderIndices <- grep( trimws(settings[["ProjectTaskHeader"]]), trimws(projectDocContents), fixed=TRUE)
 
   # index of each task LOG HEADER from each task HEADER
   taskLogIndices <- c()
   fi <- 1
   for(head in taskHeaderIndices) {
     taskLogIndices[fi] <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
-                                                  projDocContents, head, orgPath)
+                                                  projectDocContents, head, orgPath)
     fi <- fi+1
   }
 
@@ -371,7 +419,7 @@ get_doc_gdt_project_note_paths <- function(projectDocPath, projDocContents, sett
   fi <- 1
   for(head in taskHeaderIndices) {
     taskFooterIndices[fi] <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
-                                                  projDocContents, head, orgPath)
+                                                  projectDocContents, head, orgPath)
     fi <- fi+1
   }
 
@@ -381,7 +429,7 @@ get_doc_gdt_project_note_paths <- function(projectDocPath, projDocContents, sett
   # loop through index of taskLogIndices
   for(i in 1:length(taskLogIndices) ) {
 
-    taskContents <- projDocContents[ (taskLogIndices[i]):(taskFooterIndices[i]) ]
+    taskContents <- projectDocContents[ (taskLogIndices[i]):(taskFooterIndices[i]) ]
 
     # find lines that start with note link format && contain a link
     pnLines <- taskContents[startsWith(taskContents, paste0(settings[["NoteLinkFormat"]],"[") ) & grepl("](", taskContents, fixed=TRUE)]
@@ -390,9 +438,53 @@ get_doc_gdt_project_note_paths <- function(projectDocPath, projDocContents, sett
 
     # extract the absolute path from each link
     relLinks <- substr(lines, regexpr("](", lines, fixed=TRUE)+2, regexpr(")", lines, fixed=TRUE)-1 )
-    absPaths <- R.utils::getAbsolutePath( paste0(projectDocParent, .Platform$file.sep, relLinks))
+    absPaths <- fs::path_abs( fs::path(projectDocParent, relLinks))
 
   }
+
+  # return
+  absPaths
+}
+
+
+#' Get Project Note Paths from specified Doc GDT link
+#'
+#' Get project note paths from the doc GDT link at `taskLine`. Assumes
+#' `projectDocContents` is a character vector from `projectDocPath`.
+#'
+get_doc_GDT_link_note_paths <- function(projectDocPath, projectDocContents,
+                                        taskLine, settings) {
+
+  projectDocParent <- dirname( fs::path_expand(projectDocPath))
+  orgPath <- find_org_directory(projectDocParent)
+
+  # indices of each task HEADER
+  taskHeaderIndex <- taskLine
+
+  # index of each task LOG HEADER from each task HEADER
+  taskLogIndex <- grep_line_index_from(load_param_vector(
+                                          settings[["ProjectTaskLogHeader"]],
+                                          orgPath),
+                                       projectDocContents, taskHeaderIndex, orgPath)
+  # index of each task FOOTER from each task HEADER
+  taskFooterIndex <- grep_line_index_from(load_param_vector(
+                                            settings[["ProjectTaskFooter"]], orgPath),
+                                          projectDocContents, taskLogIndex, orgPath)
+
+
+  #### get each project note absolute path linked to GDT ####
+  taskContents <- projectDocContents[ taskLogIndex:taskFooterIndex ]
+
+  # find lines that start with note link format && contain a link
+  pnLines <- taskContents[startsWith(taskContents, paste0(settings[["NoteLinkFormat"]],"[") ) & grepl("](", taskContents, fixed=TRUE)]
+  snLines <- taskContents[startsWith(taskContents, paste0(settings[["SubNoteLinkFormat"]],"[") ) & grepl("](", taskContents, fixed=TRUE)]
+  lines <- c(pnLines, snLines)
+
+  # extract the absolute path from each link
+  # get relative path from the hyperlink
+  relLinks <- substr(lines, regexpr("](", lines, fixed=TRUE)+2, regexpr(")", lines, fixed=TRUE)-1 )
+  # get absolute paths by combining relLinks with projectDocParent path
+  absPaths <- fs::path_abs( fs::path(projectDocParent, relLinks))
 
   # return
   absPaths
@@ -597,7 +689,7 @@ extract_objectives_note_GDT <- function(linkObjectives, linkRmdPath, subNoteRmdP
 
   DocGDTsList
 
-}
+} #### ________________________________ ####
 
 
 #' Grep Line Index
@@ -872,7 +964,8 @@ match_vector_sub <- function(vector, parent, nomatch = 0L) {
   # e. when the last element in parent matches first element in vector, and further retireval
   # of elements in parent beyond its length result in NA being returned
   sieved[!is.na(sieved)]
-}
+
+  } #### ________________________________ ####
 
 
 #' Document Cursor Selection
@@ -969,7 +1062,7 @@ cursor_selection <- function() {
 
   #### get path contents & selected line ####
 
-  filePath <- normalizePath(context$path)
+  filePath <- fs::path_expand(context$path)
   contents <- context$contents
 
   cursor <- rstudioapi::primary_selection(context)
@@ -1398,7 +1491,7 @@ create_no_selection <- function(rmdType, errorMessage, filePath,
                       "originalLine", "originalLineNumber")
   output # return output
 
-}
+} #### ________________________________ ####
 
 
 
@@ -1449,13 +1542,6 @@ sub_subnote_params <- function(subNoteContents, subNotePrefix,
 #'
 note_link_summ_params <- function(projNoteLinkSummaryContents, todoContents, settings, orgPath) {
 
-  # add SUMMARY header
-  #projNoteLinkSummaryContents <- sub_template_param(projNoteLinkSummaryContents,
-  #                                           "{{OBJECTIVES_SUMMARY_HEADER}}",
-  #                                           settings[["NoteObjectivesSummarySectionHeader"]],
-  #                                           orgPath)
-  ### NO LONGER USING SUMMARY HEADER
-
   # add TODO header
   noteLinkSummContents <- sub_template_param(projNoteLinkSummaryContents,
                                              "{{OBJECTIVES_TODO_HEADER}}",
@@ -1463,8 +1549,12 @@ note_link_summ_params <- function(projNoteLinkSummaryContents, todoContents, set
                                              orgPath)
 
   # replace todoContents
-  todo <- sub_template_param(todoContents, "{{TODO_ITEM_HEADER_TEMPLATE}}",
-                                     settings[["TodoItemHeaderTemplate"]], orgPath)
+  todo <- sub_template_param(todoContents, "{{TODO_HEADER_TEMPLATE}}",
+                                     settings[["TodoHeaderTemplate"]], orgPath)
+
+  todo <- sub_template_param(todo, "{{TODO_ITEM_TEMPLATE}}",
+                             settings[["TodoItemTemplate"]], orgPath)
+
   noteLinkSummContents <- sub_template_param(noteLinkSummContents, "{{TODO_TEMPLATE}}",
                                          todo, orgPath)
 
@@ -1508,7 +1598,8 @@ sub_note_link_params <- function(noteLinkContents, settings, DocGDTList,
 #' vector, or where paramContents points to to a template file in templates/ that
 #' specifies multi-lined content to insert into the templateContents vector.
 #'
-sub_template_param <- function(templateContents, templateParam, paramContents, orgPath) {
+sub_template_param <- function(templateContents, templateParam, paramContents,
+                               orgPath) {
 
   #### sub param in contents ####
 
@@ -1516,36 +1607,29 @@ sub_template_param <- function(templateContents, templateParam, paramContents, o
      length(paramContents) == 1 &&
      startsWith(paramContents, "::template::")) {
 
-    # # check orgPath
-    # orgPath <- find_org_directory(orgPath)
-
     # get templates
     tempPath <- get_template_dir(orgPath)
-    # confPath <- get_config_dir(orgPath)
-    # settings <- get_settings_yml(orgPath)
 
     # paramContents is a POINTER to a multi-line content file in templates dir
     # so open this and insert the multi-lined vector into templateContents
     paramPointer <- substr(paramContents, nchar("::template::")+1, nchar(paramContents))
     paramContents <- read_file( paste0( tempPath, .Platform$file.sep, paramPointer) )
 
-    templateContents <- replace_params_with_vector(templateContents, templateParam, paramContents)
-
+    templateContents <- replace_params_with_vector(templateContents,
+                                                   templateParam, paramContents)
   } else if( length(paramContents) > 1 ) {
 
     # paramContents is a multi-lined vector
     # so insert the multi-lined vector appropriately
-    templateContents <- replace_params_with_vector(templateContents, templateParam, paramContents)
-
+    templateContents <- replace_params_with_vector(templateContents,
+                                                   templateParam, paramContents)
   } else {
 
     # paramContents is a vector of length 1, insert appropriately with gsub()
     templateContents <- gsub(templateParam, paramContents, templateContents, fixed=TRUE)
-
   }
 
   templateContents # return
-
 }
 
 #' Replace every instance of `templateParam` in `templateContents` with `paramContents`.
@@ -1831,7 +1915,7 @@ replace_hyper_links <- function(contentContents, sourceFilePath, destinationFile
   # return
   contentContents
 
-}
+} #### ________________________________ ####
 
 
 split_path_header <- function(kPath) {
@@ -1864,9 +1948,18 @@ create_hyperlink <- function(toFileName, toFilePath, fromFilePath) {
   NoteLink <- R.utils::getRelativePath(toFilePath, relativeTo=fromFilePath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
   HyperLink <- paste("[", toFileName, "](", NoteLink, ")",  sep="")
-  HyperLink # return
+  return(HyperLink)
 }
 
+
+#' generate a hyperlink between two files, using `toFilePath` name without
+#' extension as the link text.
+create_hyperlink_no_ext <- function(toFilePath, fromFilePath) {
+  create_hyperlink(substring(basename(toFilePath),
+                             first=1, last=nchar(basename(toFilePath))-4),
+                   toFilePath,
+                   fromFilePath)
+}
 
 
 #' Create Hyperlink Section
@@ -1900,29 +1993,57 @@ link_add_section <- function(NoteLink, toFileSection) {
 }
 
 
-#' Update links
+#' Update Filenames in Links in Files within a Directory Tree
 #'
-#' Updates every hyperlink in all files within `dirTree`, replacing
-#' `oldFileName` (the basename of the file, including prefix and extension) with
-#' `newName` (the new file name, without prefix or extension).
+#' Updates references to a specific filename in files within a directory tree,
+#' replacing the old filename with a new name. This includes replacing the
+#' corresponding links within the file contents. Processes specific file
+#' extensions and excludes certain directories from processing.
 #'
-#' @param oldFileName defines the OLD name that will be in Hyperlinks.  Should be
-#' the FILE NAME - with no spaces, including PREFIX and .Rmd EXTENSION
+#' @param oldFileName Character string of the basename of the file, including prefix
+#' and extension of the old filename to be replaced. Must not contain spaces.
+#' @param newName Character string. The new name to replace the old filename. Must
+#' not contain spaces.
+#' @param dirTree Character string. The path to the root directory containing the
+#' files to be updated.
+#' @param settings List. Configuration details, including the \code{ProjectPrefixSep}
+#' and \code{VolumesDir}.
+#' @param fileExtensions List. A list of file extensions to include in the search
+#' (e.g., \code{list("Rmd")}). Defaults to \code{list("Rmd")}.
 #'
-#' @param newName defines the NEW name to be written into Hyperlinks.  Should
-#' be the FILE NAME - with no spaces.
+#' @details
+#' This function identifies all files matching the specified extensions in the
+#' directory tree. It processes each file, searching for links or references
+#' that match the \code{oldFileName}, and replaces them with the \code{newName}.
 #'
-#' @param dirTree Directory tree to search for files for replacing links in.
+#' The function ensures:
+#' - Both \code{oldFileName} and \code{newName} do not contain spaces.
+#' - Excluded paths (e.g., configuration or volume directories) are not processed.
+#' - Links are reconstructed using the project prefix and the provided settings.
 #'
-#' @param oldTitle defines the OLD TITLE that will be in Hyperlinks.  By default
-#' replaces - & _ with spaces from name.
+#' Files are updated in place, and any changes made are logged to the console.
 #'
-#' @param newTitle defines the NEW TITLE that will be in Hyperlinks.  By default
-#' replaces - & _ with spaces from name.
+#' @return
+#' The function does not return a value but modifies files in place as necessary.
 #'
-#' @param fileExtensions List of file extensions indicating what types of files
-#' should be searched for links and have links replaced.  Must be plaintext file
-#' type.  Default is Rmd files only.
+#' @examples
+#' # Update file references in Rmd files within the directory
+#' update_links_filenames(
+#'   oldFileName = "project_old.Rmd",
+#'   newName = "project_new",
+#'   dirTree = "/path/to/directory",
+#'   settings = list(ProjectPrefixSep = "_", VolumesDir = "volumes"),
+#'   fileExtensions = list("Rmd")
+#' )
+#'
+#' @seealso
+#' - \code{\link{find_org_directory}} for locating the ORG directory.
+#' - \code{\link{get_file_list_to_project_notes}} for recursive file traversal.
+#' - \code{\link{read_file}} and \code{\link{write_file}} for file I/O operations.
+#'
+#' @note
+#' - Ensure that both \code{oldFileName} and \code{newName} do not contain spaces.
+#' - Files are modified in place. Backup your directory before using this function.
 #'
 #' @export
 update_links_filenames <- function( oldFileName, newName, dirTree, settings,
@@ -1939,7 +2060,7 @@ update_links_filenames <- function( oldFileName, newName, dirTree, settings,
   }
 
   # make dirTree full path
-  dirTree <- normalizePath(dirTree)
+  dirTree <- fs::path_expand(dirTree)
 
   # split oldFileName into PREFIX, NAME, EXTENSION
   oldPrefix <- get_prefix(oldFileName, settings)
@@ -1992,20 +2113,6 @@ update_links_filenames <- function( oldFileName, newName, dirTree, settings,
     fileList <- get_file_list_to_project_notes(fileList, dl, settings, fileExtensions)
   }
 
-  # now RECURSIVELY traverse EVERY Rmd file in dirTree
-  #fileList <- c()
-  #for(fe in fileExtensions) {
-  #  for(dl in dirsList) {
-  #    fileList <- c(fileList,
-  #                  paste0( dl, .Platform$file.sep,
-  #                          list.files(path = dl, pattern = paste0("*.",fe),
-  #                          all.files = TRUE, recursive = TRUE, include.dirs = TRUE) ) )
-  #  }
-  #}
-
-  # remove all files in config directory
-  #fileList <- fileList[ !startsWith(fileList, confPath)]
-
 
   #### replace oldLink with newLink ####
 
@@ -2019,39 +2126,83 @@ update_links_filenames <- function( oldFileName, newName, dirTree, settings,
       contents[linkLines] <- gsub(oldName, newName, contents[linkLines], fixed=TRUE)
       # better to just replace old and new names - ensures names without prefix are properly renamed
       # and just do this replacement on the lines with oldLink in them
-      # replace oldLink with newLink in contents
-      #contents[linkLines] <- gsub(oldLink, newLink, contents[linkLines], fixed=TRUE)
+        # replace oldLink with newLink in contents
+        #contents[linkLines] <- gsub(oldLink, newLink, contents[linkLines], fixed=TRUE)
       # and save file
-      cat( "    replaced link(s) in file:", fl ,"\n" )
+      cat( "    replaced link(s) in file:",
+           fs::path_rel(fs::path(fl), start=fs::path(dirTree)) ,"\n" )
       write_file(contents, fl)
     }
   }
 }
 
 
-#' Update links
+#' Update Links in Files within a Directory Tree
 #'
-#' Updates every hyperlink in all Project Notes within `dirTree`, replacing
-#' `oldLinkSuffix` (the path of the file) with `newLinkSuffix` (the new path).
+#' Searches for and replaces old link suffixes with new link suffixes in files
+#' located in a specified directory tree. Optionally replaces specific strings
+#' within the same files. Recursively processes subdirectories while excluding
+#' specific paths.
 #'
-#' @param oldLinkSuffix Old link string to be updated.
+#' @param oldLinkSuffix Character string. The old link suffix to be replaced (e.g., \code{"old_suffix"}).
+#' @param newLinkSuffix Character string. The new link suffix to replace the old suffix (e.g., \code{"new_suffix"}).
+#' @param dirTree Character string. The path to the root directory containing files to be updated.
+#' @param settings List. Contains configuration details such as the volumes directory key (\code{"VolumesDir"}).
+#' @param oldLinkString Character string. Optional. A specific string within files to replace. Default is an empty string (\code{""}).
+#' @param newLinkString Character string. Optional. The replacement for \code{oldLinkString}. Default is an empty string (\code{""}).
+#' @param fileExtensions List. A list of file extensions (e.g., \code{list("Rmd")}) to include in the search. Defaults to \code{list("Rmd")}.
 #'
-#' @param newLinkSuffix New link string to replace `oldLinkSuffix`.
+#' @details
+#' The function normalizes the input directory path and identifies the ORG directory.
+#' It generates a list of files to be processed, excluding specific directories
+#' such as the configuration and volume directories. For each file, it reads
+#' the contents, identifies occurrences of \code{oldLinkSuffix}, replaces them
+#' with \code{newLinkSuffix}, and optionally replaces \code{oldLinkString} with
+#' \code{newLinkString}.
 #'
-#' @param dirTree Directory tree to search for files for replacing links in.
+#' The directory tree is traversed recursively, but only down to the project note
+#' parent directory level. Any file changes are saved, and the relative paths
+#' of modified files are logged to the console.
 #'
-#' @param settings projectmanagr settings list.
+#' @return
+#' The function does not return a value but modifies files in place as necessary.
 #'
-#' @param fileExtensions List of file extensions indicating what types of files
-#' should be searched for links and have links replaced.  Must be plaintext file
-#' type.  Default is Rmd files only.
+#' @examples
+#' # Update links in Rmd files within the given directory
+#' update_links(
+#'   oldLinkSuffix = "_old",
+#'   newLinkSuffix = "_new",
+#'   dirTree = "/path/to/directory",
+#'   settings = list(VolumesDir = "volumes"),
+#'   fileExtensions = list("Rmd")
+#' )
+#'
+#' # Replace specific strings in addition to link suffixes
+#' update_links(
+#'   oldLinkSuffix = "_v1",
+#'   newLinkSuffix = "_v2",
+#'   dirTree = "/path/to/directory",
+#'   settings = list(VolumesDir = "volumes"),
+#'   oldLinkString = "http://old.link",
+#'   newLinkString = "http://new.link",
+#'   fileExtensions = list("Rmd", "txt")
+#' )
+#'
+#' @seealso
+#' - \code{\link{find_org_directory}} for locating the ORG directory.
+#' - \code{\link{get_file_list_to_project_notes}} for recursive file traversal.
+#' - \code{\link{read_file}} and \code{\link{write_file}} for file I/O operations.
+#'
+#' @note
+#' - Ensure that the \code{settings} list contains a valid \code{"VolumesDir"} key.
+#' - Files are modified in place. It is recommended to back up your directory before using this function.
 #'
 #' @export
 update_links <- function( oldLinkSuffix, newLinkSuffix, dirTree, settings,
                           oldLinkString="", newLinkString="", fileExtensions = list("Rmd") ) {
 
   # make dirTree full path
-  dirTree <- normalizePath(dirTree)
+  dirTree <- fs::path_expand(dirTree)
 
   # get orgPath from dirTree
   orgPath <- find_org_directory(dirTree)
@@ -2091,20 +2242,6 @@ update_links <- function( oldLinkSuffix, newLinkSuffix, dirTree, settings,
                                                fileExtensions)
   }
 
-  # now RECURSIVELY traverse EVERY Rmd file in dirTree
-  #fileList <- c()
-  #for(fe in fileExtensions) {
-  #  for(dl in dirsList) {
-  #    fileList <- c(fileList,
-  #                  paste0( dl, .Platform$file.sep,
-  #                          list.files(path = dl, pattern = paste0("*.",fe),
-  #                          all.files = TRUE, recursive = TRUE, include.dirs = TRUE) ) )
-  #  }
-  #}
-
-  # remove all files in config directory
-  #fileList <- fileList[ !startsWith(fileList, confPath)]
-
 
   #### replace oldLinkSuffix with newLinkSuffix ####
 
@@ -2119,7 +2256,8 @@ update_links <- function( oldLinkSuffix, newLinkSuffix, dirTree, settings,
         contents[cL] <- gsub(oldLinkString, newLinkString, contents[cL], fixed=TRUE)
       }
       # and save file
-      cat( "    replaced link(s) in file:", fl ,"\n" )
+      cat( "    replaced link(s) in file:",
+           fs::path_rel(fs::path(fl), start=fs::path(dirTree)) ,"\n" )
       write_file(contents, fl)
     }
   }
@@ -2152,7 +2290,7 @@ update_headers <- function( oldHeader, newHeader, dirTree, settings,
 
 
   # make dirTree full path
-  dirTree <- normalizePath(dirTree)
+  dirTree <- fs::path_expand(dirTree)
 
   # get orgPath from dirTree
   orgPath <- find_org_directory(dirTree)
@@ -2771,6 +2909,7 @@ update_contents_org_tree <- function(contentsCache, orgPath, settings) {
 #'
 write_insertable_contents_cache <- function(contentRetrievalDateTime, contents,
                                             orgPath, status, statusFile) {
+  status[['CONTENTS']] <- list() # reset contents - remove any old cache!
   attrs <- list(contentRetrievalDateTime, contents )
   names(attrs) <- c("contentRetrievalDateTime", "contents")
   status[["CONTENTS"]][[orgPath]] <- attrs

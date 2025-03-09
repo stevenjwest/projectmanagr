@@ -10,13 +10,14 @@ test_that("test rename functions", {
   ################ generate test ORG PROG Doc Notes ################
 
   orgName <- "_T_O"
+  authorValue="sjwest"
   # mock the function that returns the update datetime
   local_mocked_bindings(
     get_datetime = function (timezone = "UTC", split="-", splitTime=":") { "2024-02-22:09:56" } )
 
 
   # create test Organisation - using local helper function and withr package
-  orgDir <- local_create_org(orgName, orgParentPath=tmpdir, syp=tmpdir)
+  orgDir <- local_create_org(orgName, authorValue, orgParentPath=tmpdir, syp=tmpdir)
 
   # define outputs to check
   orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
@@ -35,7 +36,7 @@ test_that("test rename functions", {
 
 
   # create test programme - using local helper function and withr package
-  progDir <- local_create_prog(progName, orgDir)
+  progDir <- local_create_prog(progName, orgDir, authorValue)
 
   # define outputs to check
   progIndex <- fs::path(progDir, paste0("_index_", progName, ".Rmd"))
@@ -45,8 +46,10 @@ test_that("test rename functions", {
   projectDocPrefix <- "PrDoS"
   projectDocName <- "Proj_Do_sim"
   renameDocName <- "RENAMED_PrDoS"
+  # using special rename() function so withr:: knows to DELTE NEW FILE NAME
   projectDocRmd <- local_create_project_rename(projectDocPrefix, projectDocName,
-                                               progDir, renamedDocName = renameDocName)
+                                               progDir,  authorValue,
+                                               renamedDocName = renameDocName)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
   # modify gdt titles for unique headers - so can test links!
@@ -58,9 +61,11 @@ test_that("test rename functions", {
   renameNoteName <- "RENAMED_Proj_No"
   projectNotePath <- fs::path(projectDocDir, 't-no')
   fs::dir_create(projectNotePath)
+  # using special rename() function so withr:: knows to DELTE NEW FILE NAME
   projectNoteRmd <- local_create_project_note_simple_rename(
                           projectNoteName, projectNotePath, projectDocRmd,
-                          taskLine, noteIndex="___001", renameNoteName=renameNoteName)
+                          taskLine,  authorValue,
+                          noteIndex="___001", renameNoteName=renameNoteName)
   projectNoteDir <- get_project_note_dir_path(projectNoteRmd, settings)
 
 
@@ -71,7 +76,8 @@ test_that("test rename functions", {
   subNoteName <- "SNo_01"
   # use local_create_project_note_group2 to output prefix: 002-00
   groupNoteRmd <- local_create_project_note_group2(groupNoteName, groupNotePath,
-                                                   projectDocRmd, taskLine, subNoteName)
+                                                   projectDocRmd, taskLine,
+                                                   subNoteName,  authorValue)
 
   groupNoteDir <- get_project_note_dir_path(groupNoteRmd, settings)
 
@@ -87,17 +93,18 @@ test_that("test rename functions", {
 
   # use local_create_project_note_group2 to output prefix: 002-002
   subNoteRmd2 <- local_create_project_note_sub2(subNoteName2, subNotePath,
-                                                projectDocRmd, headerLinkLine)
+                                                projectDocRmd, headerLinkLine,
+                                                authorValue)
 
   # use local_create_project_note_group2 to output prefix: 002-003
   subNoteRmd3 <- local_create_project_note_sub_head_sel2(subNoteName3, subNotePath,
-                                                         groupNoteRmd, 50)
+                                                         groupNoteRmd, 50,  authorValue)
 
   subNoteDir2 <- get_project_note_dir_path(subNoteRmd2, settings)
   subNoteDir3 <- get_project_note_dir_path(subNoteRmd3, settings)
 
 
-  #### add links ####
+  ################ add links ###################################################
 
   # add links to other files to confirm the links update correctly
 
@@ -171,7 +178,7 @@ test_that("test rename functions", {
 
 
 
-  #### rename_project_doc_goal() works ####
+  #################### rename_project_doc_goal() works #########################
 
   # goal with no links
   goalSelection <- user_selection(renamedDocRmd, 215)
@@ -184,7 +191,7 @@ test_that("test rename functions", {
   rename_project_doc_goal(goalSelection, newGoalName)
 
 
-  #### rename_project_doc_deliverable() works ####
+  #################### rename_project_doc_deliverable() works ##################
 
   deliverableSelection <- user_selection(renamedDocRmd, 228)
   newDeliverableName <- "RENAMED DEL HEADER"
@@ -195,7 +202,7 @@ test_that("test rename functions", {
   rename_project_doc_deliverable(deliverableSelection, newDeliverableName)
 
 
-  #### rename_project_doc_task() ####
+  #################### rename_project_doc_task() ###############################
 
   taskSelection <- user_selection(renamedDocRmd, 241)
   newTaskName <- "RENAMED TASK HEADER"
@@ -233,7 +240,7 @@ test_that("test rename functions", {
 
 
 
-  #### rename_project_file_header() works ####
+  #################### rename_project_file_header() works ######################
 
   # on project doc
   selection <- user_selection(renamedDocRmd, 70)

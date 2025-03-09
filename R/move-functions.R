@@ -22,7 +22,78 @@ move_file <- function(filePath, destinationDir) {
 
   cat( "\nprojectmanagr::move_file():\n" )
 
+  #### get org and settings ####
+
+  projectNotePath <- fs::path_expand(filePath)
+
+  orgPath <- find_org_directory(filePath)
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  filePath is not in a ProjectManagr Organsiation: ", filePath) )
+  }
+
+  # get config templates settings yml
+  settings <- get_settings_yml(orgPath)
+
+  # step required to mvoe file depend on its type
+  type <- get_file_type(filePath, settings)
+
+  if( type == "UNKNOWN" ) { # do not support moving files that are not Project Docs or Notes
+
+  } else if( type == "DOC" ) {
+
+  } else if( type == "NOTE") {
+
+  } else if( type == "HEAD") {
+
+  } else if( type == "SUB") {
+
+  } else { # type returned does not match any expected value??
+
+  }
 }
+
+
+move_doc <- function() {
+
+  # create new project doc
+
+  # replicate the content & modify GDT links to notes
+
+  # update links to project docs in linked notes
+
+
+}
+
+
+move_note <- function() {
+
+  # create new project note
+
+  # link all GDTs to new note && update links in project docs
+
+
+}
+
+
+move_head <- function() {
+
+  # create new project note
+
+  # link all GDTs to new note && update links in project docs
+
+
+}
+
+
+move_sub <- function() {
+
+  # create new project note
+
+  # link all GDTs to new note && update links in project docs
+
+
+}
+
 
 
 

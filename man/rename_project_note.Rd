@@ -2,7 +2,7 @@
 % Please edit documentation in R/rename-functions.R
 \name{rename_project_note}
 \alias{rename_project_note}
-\title{Rename a Project Note}
+\title{Rename a Project Note File and Update References}
 \usage{
 rename_project_note(
   projectNotePath,
@@ -12,22 +12,67 @@ rename_project_note(
 )
 }
 \arguments{
-\item{projectNotePath}{defines the path to the Project Note - should point
-to the Project Note Rmd file}
+\item{projectNotePath}{Character string. The full path to the project note file
+to be renamed.}
 
-\item{newProjectNoteName}{defines the NEW Project Note File name}
+\item{newProjectNoteName}{Character string. The new name for the project note
+file. Must not contain spaces.}
 
-\item{newProjectNoteTitle}{defines the NEW Project Note Title - written to
-its Rmd file.  By default this is the projectNotePath, with spaces replacing
-"-" and "_".}
+\item{newProjectNoteTitle}{Character string. The new title for the project note.
+If empty, it will be auto-generated from \code{newProjectNoteName}. Defaults
+to an empty string.}
+
+\item{replaceLinksFileExtensions}{List. A list of file extensions where references
+to the project note should be updated. Defaults to \code{list("Rmd")}.}
+}
+\value{
+The function does not return a value but modifies files in place. Changes include:
+\itemize{
+\item Renaming the specified project note file.
+\item Updating the title in the renamed project note.
+\item Updating references to the renamed project note in other files.
+}
 }
 \description{
-Renames a Project Note at projectNotePath with file name newProjectNoteName,
-and replaces title with newProjectNoteTitle if set.
+Renames a project note file to a new name and optionally updates the title in
+its content. Additionally, updates all references to the old project note
+filename within the organization structure, ensuring consistent linking.
 }
 \details{
-This also modifies all LINKS to this file throughout the Organisation -
-updating them to use the new project Note name and title.
+This function performs the following tasks:
+\enumerate{
+\item Validates inputs, including ensuring no spaces in \code{newProjectNoteName}.
+\item Renames the project note file based on the specified \code{newProjectNoteName}.
+\item Updates the project note's title in its content if \code{newProjectNoteTitle}
+is provided.
+\item Updates all references to the old project note filename across the organization,
+restricted to the specified file extensions.
+}
 
-NOTE - this DOES NOT modify the PREFIX for a Project Note.
+The function automatically detects the organization root directory and other
+configurations required to process the files.
+}
+\note{
+\itemize{
+\item Ensure that \code{newProjectNoteName} does not contain spaces.
+\item The function modifies files in place. It is recommended to backup the directory before use.
+\item The project note's title will be updated only if a matching title is found.
+}
+}
+\examples{
+# Rename a project note and update references in Rmd files
+rename_project_note(
+  projectNotePath = "/path/to/project_note.Rmd",
+  newProjectNoteName = "new_note_name",
+  newProjectNoteTitle = "New Note Title",
+  replaceLinksFileExtensions = list("Rmd")
+)
+
+}
+\seealso{
+\itemize{
+\item \code{\link{update_links_filenames}} for updating references to renamed files.
+\item \code{\link{find_org_directory}} for locating the organization root directory.
+\item \code{\link{get_settings_yml}} for retrieving configuration settings.
+}
 }

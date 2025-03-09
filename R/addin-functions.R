@@ -1,4 +1,86 @@
 
+#' Return CSS theme that matches RStudio theme: Light or Dark Mode.
+get_css_theme <- function() {
+
+  # Check the current theme
+  themeInfo <- rstudioapi::getThemeInfo()
+  isDarkTheme <- themeInfo$dark
+
+  # Define CSS for light and dark themes
+  lightThemeCSS <- "
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+    }
+    .miniUI-gadget {
+      background-color: #F7F7F7;
+    }
+    .gadget-title {
+      background-color: #EFEFEF;
+      color: #000000;
+      border-bottom: 1px solid #DADADA;
+    }
+    .gadget-title .close {
+      color: #000000;
+    }
+    .btn {
+      background-color: #EFEFEF;
+      color: #000000;
+      border: 1px solid #DADADA;
+    }
+    .btn:hover {
+      background-color: #DADADA;
+      color: #000000;
+    }
+  "
+
+  darkThemeCSS <- "
+    body {
+      background-color: #222222;
+      color: #FFFFFF;
+    }
+    .miniUI-gadget {
+      background-color: #333333;
+    }
+    .gadget-title {
+      background-color: #444444;
+      color: #FFFFFF;
+      border-bottom: 1px solid #555555;
+    }
+    .gadget-title .close {
+      color: #FFFFFF;
+    }
+    .btn {
+      background-color: #555555;
+      color: #FFFFFF;
+      border: 1px solid #666666;
+    }
+    .btn:hover {
+      background-color: #666666;
+      color: #FFFFFF;
+    }
+    /* Additional styling for shinyDirChoose modal dialog in Dark Theme */
+    .modal-content {
+      background-color: #333333 !important;
+      color: #FFFFFF !important;
+      border: 1px solid #555555;
+    }
+    .modal-header {
+      background-color: #444444 !important;
+      border-bottom: 1px solid #555555;
+    }
+    .modal-footer {
+      background-color: #444444 !important;
+      border-top: 1px solid #555555;
+    }
+  "
+
+  # Select the appropriate CSS based on the theme
+  themeCSS <- if (isDarkTheme) darkThemeCSS else lightThemeCSS
+
+  return(themeCSS)
+}
+
 
 #' Create Dialog Viewer for Addin
 addin_create_dialog_viewer <- function(title, settings) {
@@ -38,6 +120,7 @@ addin_rstudio_nav <- function(filePath) {
 addin_error <- function(errorTitle, errorMessage, settings=NULL) {
 
   ui <- miniPage(
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
     gadgetTitleBar(errorTitle),
     h2(errorMessage, align="center", style="color:red")
   )
@@ -77,6 +160,7 @@ addin_error <- function(errorTitle, errorMessage, settings=NULL) {
 addin_error_path <- function(errorTitle, errorMessage, path, settings=NULL) {
 
   ui <- miniPage(
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
     gadgetTitleBar(errorTitle),
     h2(errorMessage, align="center", style="color:red"),
     fillRow( code( path ) )

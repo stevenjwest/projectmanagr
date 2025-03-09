@@ -4,9 +4,9 @@
 \alias{get_doc_gdt_project_note_paths}
 \title{Get Project Note Paths from Doc GDT links}
 \usage{
-get_doc_gdt_project_note_paths(projectDocPath, projDocContents, settings)
+get_doc_gdt_project_note_paths(projectDocPath, projectDocContents, settings)
 }
 \description{
-Get project note paths from doc GDT links  Assumes \code{projDocContents} is a
+Get project note paths from doc GDT links  Assumes \code{projectDocContents} is a
 character vector from a project doc.
 }

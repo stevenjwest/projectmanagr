@@ -35,7 +35,7 @@ search_dir_tree <- function(path, searchTerm, updateProgress = NULL,
   }
 
   # normalize path - remove HOME REF ~
-  path <- normalizePath(path)
+  path <- fs::path_expand(path)
 
 
 

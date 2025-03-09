@@ -2,7 +2,7 @@
 % Please edit documentation in R/link-doc-functions.R
 \name{note_summary_headers_quote_in}
 \alias{note_summary_headers_quote_in}
-\title{quote out all Markdown Headers}
+\title{quote in all Markdown Headers}
 \usage{
 note_summary_headers_quote_in(summary)
 }

@@ -1,3 +1,5 @@
+
+
 #' Extract All TODO lists from a Collection of Project Notes
 #'
 #' Extracted to Todo-Extraction-Template.Rmd that provides a template to
@@ -10,10 +12,7 @@
 #' incompleted TODOs can then be reviewed, and prioritised by re-ordering &
 #' deleting the project note / doc GDT / TODOs.
 #'
-#' The filled Todo-Extraction-Template.Rmd is saved to the todo directory,
-#' defined in settings.  The TODO extraction is saved using a naming convention
-#' of the date & scope (location directory name or project-note title) :
-#' `YYYMMDD_SCOPE.Rmd`
+#' The filled Todo-Extraction-Template.Rmd is returned as character vector.
 #'
 #' @param location A path to a Directory or Project Note file inside an
 #' Organisation where TODO lists should be extracted from each GDT.  Can be
@@ -23,12 +22,22 @@
 #' @param date The date of extraction, default is today's date. Should be in
 #' char format as 'YYYY-MM-DD' - added to header of Todo Collection.
 #'
+#' @param todoGDTExtractionTemplate Rmd template for todo GDT extraction
+#'
+#' @param todoExtractionTemplate Rmd template for todo Extraction
+#'
+#' @param todoProgCollectionTemplate Rmd template for todo Prog Collection
+#'
+#' @param todoCollectionTemplate Rmd template for todo Collection
+#'
+#' @return Character Vector of Todo Collection.
+#'
 #' @export
 extract_todos <- function(location, date=get_date(split='-'),
                           todoGDTExtractionTemplate="Todo-GDT-Extraction-Template.Rmd",
                           todoExtractionTemplate="Todo-Extraction-Template.Rmd",
                           todoProgCollectionTemplate="Todo-Programme-Collection-Template.Rmd",
-                          todoCollectionTemplate="Todo-Collection-Template.Rmd") {
+                          todoCollectionTemplate="Todo-Collection-Template.Rmd" ) {
 
   cat( "\nprojectmanagr::extract_todos():\n" )
 
@@ -51,13 +60,10 @@ extract_todos <- function(location, date=get_date(split='-'),
   # define todoCollectionFileName with fileNamingConvention
   #fileNamingConvention <- sub("YYYYMMDD", get_date(split=""), fileNamingConvention )
 
-  # define scope
+  # define scope - location directory name or project-note title
   scope <- basename(location)
   if( substr(scope, nchar(scope)-3, nchar(scope)-3) == '.' ) {
     scope <- substr(scope, 1, nchar(scope)-4) # trim file extension
-  } else if(scope == settings[["ProgrammeProjectsDir"]]) {
-    # if location is ProgrammeProjectsDir give the programme name too!
-    scope <- paste0( basename(dirname(location)), "-", scope)
   }
 
   #fileNamingConvention <- sub("SCOPE", scope, fileNamingConvention )
@@ -79,10 +85,10 @@ extract_todos <- function(location, date=get_date(split='-'),
 
   #### Read todo Template Rmds ####
 
-  todoGDTExtractionContents <- read_file( paste0( tempPath, .Platform$file.sep, todoGDTExtractionTemplate) )
-  todoExtractionContents <- read_file( paste0( tempPath, .Platform$file.sep, todoExtractionTemplate) )
-  todoProgCollectionContents <- read_file( paste0( tempPath, .Platform$file.sep, todoProgCollectionTemplate) )
-  todoCollectionContents <- read_file( paste0( tempPath, .Platform$file.sep, todoCollectionTemplate) )
+  todoGDTExtractionContents <- read_file( fs::path( tempPath, todoGDTExtractionTemplate) )
+  todoExtractionContents <- read_file( fs::path( tempPath, todoExtractionTemplate) )
+  todoProgCollectionContents <- read_file( fs::path( tempPath, todoProgCollectionTemplate) )
+  todoCollectionContents <- read_file( fs::path( tempPath, todoCollectionTemplate) )
 
   # replace programme sep
   todoProgCollectionContents <- sub_template_param(todoProgCollectionContents, "{{TODO_PROGRAMME_SEP}}",
@@ -161,12 +167,11 @@ extract_todos <- function(location, date=get_date(split='-'),
 
           # APPEND to todoExtract
           gdtTodoSummLine <- grep_line_index("{{GDT_TODO_SUMMARY}}", todoExtract)
-          todoExtract <- insert_at_indices(todoExtract,
-                                                      gdtTodoSummLine, todoGDTExtract)
+          todoExtract <- insert_at_indices(todoExtract, gdtTodoSummLine, todoGDTExtract)
         }
 
 
-      }# dGDT
+      } # dGDT
 
       # append only if incomplete TODOs were found
       if( incompleteTodoFound == TRUE ) {
@@ -205,7 +210,7 @@ extract_todos <- function(location, date=get_date(split='-'),
 
   #### return todo collection char vector ####
 
-  cat("  return todo collection")
+  cat("\n  return todo collection\n\n")
   return(todoCollectionContents)
 
   #write_file(todoCollectionContents, todoCollectionPath)
@@ -234,7 +239,7 @@ check_location_project_notes <- function(location, settings) {
     if( get_file_type(location, settings) == "HEAD" |
         get_file_type(location, settings) == "SUB" |
         get_file_type(location, settings) == "NOTE" ) {
-      projectNotePaths <- normalizePath(location)
+      projectNotePaths <- fs::path_expand(location)
 
     } else if( get_file_type(location, settings) == "DOC" ) {
       # get all project note paths that link to this Docs GDTs
@@ -289,6 +294,26 @@ split_project_notes_by_programme <- function(projectNotePaths, settings) {
 
 
 filter_todos_incomplete <- function(todoList, settings) {
+
+  # filter out just Headers & Items
+  todoListFiltered <- todoList[ startsWith(todoList, settings[["TodoHeader"]]) | startsWith(todoList, settings[["TodoItem"]]) ]
+
+  # remove any items that are the TEMPLATE Todos
+  todoListFiltered <- todoListFiltered[ !startsWith(todoListFiltered, settings[["TodoHeaderTemplate"]]) ]
+  todoListFiltered <- todoListFiltered[ !startsWith(todoListFiltered, settings[["TodoItemTemplate"]]) ]
+
+  # remove any items that are COMPLETE
+  todoListFiltered <- todoListFiltered[ !startsWith(todoListFiltered, settings[["TodoItemComplete"]]) ]
+
+  # interlace with blank strings for whitespace
+  todoListFiltered <- as.vector(rbind(todoListFiltered, rep("", length(todoListFiltered))))
+
+  # return todo list with template and completed todos removed
+  todoListFiltered
+
+}
+
+OLDfilter_todos_incomplete <- function(todoList, settings) {
 
   todoListFiltered <- c()
   skip <- FALSE

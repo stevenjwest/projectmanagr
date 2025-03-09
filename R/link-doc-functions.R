@@ -1,4 +1,5 @@
 
+#### ________________________________ ####
 
 #' Link Project Document GDT to Project Note
 #'
@@ -41,7 +42,7 @@ link_doc_project_note <- function(selection, projNoteRmdPath,
 
   projectDocPath <- selection[["filePath"]]
   # projectNotePath is the parent directory the projNoteRmdPath (Rmd file) sits in
-  projectNotePath <- normalizePath( dirname(projNoteRmdPath))
+  projectNotePath <- fs::path_expand( dirname(projNoteRmdPath))
 
   # Check projectNotePath is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
   orgPath <- dirname( dirname(projectNotePath) ) # this should be the orgPath!
@@ -91,7 +92,6 @@ link_doc_project_note <- function(selection, projNoteRmdPath,
 
 }
 
-
 #' Link Project Note to Project Doc GDT
 #'
 #' Single internal function to perform the linking between a project doc at GDT
@@ -106,7 +106,7 @@ link_project_note_doc <- function(selection, settings, projNoteRmdPath, projNote
 
   projectDocPath <- selection[["filePath"]] # selection is a project DOC
   # projectNotePath is the parent directory the projNoteRmdPath (Rmd file) sits in
-  projectNotePath <- normalizePath( dirname(projNoteRmdPath))
+  projectNotePath <- fs::path_expand( dirname(projNoteRmdPath))
 
   # create link from projDoc to projNote
   projNoteName <- substr(basename(projNoteRmdPath), 1, regexpr(".Rmd", basename(projNoteRmdPath))-1)
@@ -258,7 +258,7 @@ note_summary_headers_quote_out <- function(summary) {
   summary # return
 }
 
-#' quote out all Markdown Headers
+#' quote in all Markdown Headers
 #'
 #' Converts every line beginning with `>#` in `summary` to `#`
 #'
@@ -272,7 +272,7 @@ note_summary_headers_quote_in <- function(summary) {
 
   summary[startsWith(summary, '>#')] <- substring(summary[startsWith(summary, '>#')], 2)
   summary # return
-}
+} #### ________________________________ ####
 
 
 #' Link Project Document GDT to Project Note Group (Header plus all Sub Notes)
@@ -320,7 +320,7 @@ link_doc_group_note <- function(selection, headerNoteRmdPath,
 
   projectDocPath <- selection[["filePath"]]
   # projectNotePath is the parent directory the headerNoteRmdPath (Rmd file) sits in
-  headerNoteDir <- normalizePath( dirname(headerNoteRmdPath))
+  headerNoteDir <- fs::path_expand( dirname(headerNoteRmdPath))
 
   # Check headerNoteDir is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
   orgPath <- dirname( dirname(headerNoteDir) ) # this should be the orgPath!
@@ -375,7 +375,6 @@ link_doc_group_note <- function(selection, headerNoteRmdPath,
 
 }
 
-
 #' Link Group Note to Project Doc GDT
 #'
 #' Single internal function to perform the linking between a project doc at GDT
@@ -392,7 +391,7 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
 
   projectDocPath <- selection[["filePath"]] # selection is a project DOC
   # groupNotePath is the parent directory the headerNoteRmdPath (Rmd file) sits in
-  groupNotePath <- normalizePath( dirname(headerNoteRmdPath))
+  groupNotePath <- fs::path_expand( dirname(headerNoteRmdPath))
   # headerNoteDir : get prefix from headerNoteRmdPath and append to groupNotePath
   headerNoteDir <- paste0(groupNotePath, .Platform$file.sep,
                           substr(basename(headerNoteRmdPath),
@@ -586,7 +585,7 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
 
   return(TRUE)
 
-}
+} #### ________________________________ ####
 
 
 
@@ -595,6 +594,10 @@ link_group_note_doc <- function(selection, settings, headerNoteRmdPath, headerNo
 #' Add a cross-reference between a Project Doc at the Goal-Del-Task as shown in
 #' `selection` with the project subnote at `subNoteRmdPath`, using the
 #' provided templates.
+#'
+#' NB : using `link_project_note_doc()` to link the subnote - still have kept
+#' `link_sub_note_doc()` but moved to create-functions.R as this function is used
+#' in `create_sub_note()`
 #'
 #' @param selection List containing the Goal, Del, Task selected from the Project
 #' Doc, as well as other useful information - lines of Task/Del/Goal, projectDoc
@@ -631,7 +634,7 @@ link_doc_sub_note <- function(selection, subNoteRmdPath,
 
   projectDocPath <- selection[["filePath"]]
   # projectNotePath is the parent directory the subNoteRmdPath (Rmd file) sits in
-  projectNotePath <- normalizePath( dirname(subNoteRmdPath))
+  projectNotePath <- fs::path_expand( dirname(subNoteRmdPath))
 
   # Check projectNotePath is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
   orgPath <- dirname( dirname(projectNotePath) ) # this should be the orgPath!
@@ -674,173 +677,5 @@ link_doc_sub_note <- function(selection, subNoteRmdPath,
   link_project_note_doc(selection, settings, subNoteRmdPath, projNoteRmdContents, projNoteLinkContents,
                   projNoteLinkSummaryContents, todoContents, projNoteSummaryContents, projDocContents, orgPath)
 
-}
-
-
-#' Link Sub Note to Project Doc GDT
-#'
-#' Single internal function to perform the linking between all project doc GDT
-#' links the `linkNoteRmdContents` and the `subNoteRmdPath`.
-#'
-#' Assumes these are both in the same project note group -
-#' `linkNoteRmdContents` should be either the header note of the group, or a
-#' subnote, and `subNoteRmdPath` should be a new subnote in the project note
-#' group with no links. This function is used exclusively for the addition of
-#' new sub-notes to a project note group.
-#'
-link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteContents,
-            headerNoteRmdPath, headerNoteRmdContents, projNoteLinkContents,
-            projNoteLinkSummaryContents, todoContents, projNoteSummaryContents,
-            subNoteSummaryContents, linkNoteRmdPath, linkNoteRmdContents, orgPath) {
-
-
-  #### Set Instance Variables ####
-
-  # subNotePath is the parent directory the subNoteRmdPath (Rmd file) sits in
-  subNotePath <- normalizePath( dirname(subNoteRmdPath))
-  subNoteFileName <- basename(subNoteRmdPath)
-
-  #### Extract ProjDocGDTs from linkNoteRmdContents ####
-
-  # extract each project Doc + GDT from each objective
-  DocGDTsList <- extract_note_obj_doc_link_GDT_summ(linkNoteRmdContents, linkNoteRmdPath,
-                                                    settings, orgPath)
-
-
-  #### For each DocGDT ####
-
-  # compute the noteObjective Header index in subNoteContents
-  noteObjHeadIndex <- match_line_index( load_param_vector(settings[["NoteObjectivesHeader"]], orgPath),
-                                      subNoteContents)
-
-  # replace projNoteLinkSummaryContents summary headers
-  projNoteLinkSummaryContents <- note_link_summ_params(projNoteLinkSummaryContents,
-                                                       todoContents, settings, orgPath)
-
-  for( dGDT in DocGDTsList ) {
-
-
-    ##### Fill ProjDoc GDT Templates for SUB Note #####
-
-    DocGDTList <- compute_doc_GDT_link(dGDT[["projectDocFilePath"]], subNoteRmdPath, settings,
-                                            dGDT[["goal"]], dGDT[["deliverable"]], dGDT[["task"]])
-    # returns list of DOC TITLE, LINK, GOAL, DEL, TASK in NAMED LIST
-    # using the first path in subNoteRmdPaths - there will ALWAYS be at least one subnote!
-
-    # replace markup in projNoteLinkContents
-    subNoteLinkContents <- sub_note_link_params(projNoteLinkContents, settings, DocGDTList,
-                                                 projNoteLinkSummaryContents, orgPath)
-
-
-    #### add Doc GDT Link to SUB Note ####
-
-    # compute location in subNoteContents to insert the GDT Link & summary
-    noteObjFootIndex <- grep_line_index_from( load_param_vector(settings[["NoteObjectivesFooter"]], orgPath),
-                                           subNoteContents, noteObjHeadIndex, orgPath)
-
-    subNoteContents <- insert_at_indices(subNoteContents, noteObjFootIndex, subNoteLinkContents)
-
-  }
-
-  write_file(subNoteContents, subNoteRmdPath)
-
-  cat( "    Written GDTs to Sub Note file: ", basename(subNoteRmdPath), "\n" )
-
-  # replace project note log sep
-  projNoteSummaryContents <- sub_template_param(projNoteSummaryContents, "{{PROJECT_NOTE_LOG_SEP}}",
-                                                settings[["ProjectTaskLogSep"]], orgPath)
-
-  # replace proj note summary
-  summaryContents <- extract_summary_from_link_contents(subNoteLinkContents, settings, orgPath)
-
-  # # replace proj note summary - if NoteObjectivesTodoSectionHeader is in summaryBullet, remove everything FROM THAT LINE
-  # projNoteLinkSummaryContentsTrim <- projNoteLinkSummaryContents[1 : ifelse( any(grepl(settings[["NoteObjectivesTodoSectionHeader"]],
-  #                                                                                      projNoteLinkSummaryContents, fixed=TRUE)),
-  #                                                                            grep(settings[["NoteObjectivesTodoSectionHeader"]],
-  #                                                                                 projNoteLinkSummaryContents, fixed=TRUE)-1,
-  #                                                                            length(projNoteLinkSummaryContents)) ]
-
-  # replace in projNoteSummaryContents - in case any links are INDIVIDUAL (not group note)
-   # this will be added at end of GDT section as individual project note link
-  projNoteSummaryContents <- sub_template_param(projNoteSummaryContents, "{{PROJECT_NOTE_SUMMARY}}",
-                                                summaryContents, orgPath)
-
-  # replace in subNoteSummaryContents - for links that are GROUP NOTES
-   # this will be added at end of the group note link in GDT section as subnote link
-  subNoteSummaryContents <- sub_template_param(subNoteSummaryContents, "{{PROJECT_NOTE_SUMMARY}}",
-                                               summaryContents, orgPath)
-
-  for( dGDT in DocGDTsList ) {
-
-    ##### Write Sub Note to each DocGDT #####
-
-    # read projDoc
-    projectDocPath <- dGDT[["projectDocFilePath"]]
-    projDocContents <- read_file(projectDocPath)
-
-    # find the GDT vector
-    goalLine <- grep_line_index(dGDT[["goal"]], projDocContents, orgPath)
-    delLine <- grep_line_index_from(dGDT[["deliverable"]], projDocContents, goalLine, orgPath)
-    taskLine <- grep_line_index_from(dGDT[["task"]], projDocContents, delLine, orgPath)
-    logLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogHeader"]], orgPath),
-                                 projDocContents, taskLine, orgPath)
-    taskFooterLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskFooter"]], orgPath),
-                                        projDocContents, logLine, orgPath) # end of log section
-
-    # determine if link exists as a group note link or as a single project note
-    # find index of headernote link then the next ProjectTaskLogSep
-    headerNoteName <- substr(basename(headerNoteRmdPath), 1, regexpr(".Rmd", basename(headerNoteRmdPath))-1)
-    headerNoteLink <- paste0(settings[["HeaderLinkFormat"]],
-                             create_hyperlink( headerNoteName, headerNoteRmdPath, projectDocPath),
-                             settings[["HeaderLinkFormat"]])
-    headLine <- grep(headerNoteLink, projDocContents[logLine:taskFooterLine], fixed=TRUE)
-
-    if( length(headLine) > 0) {
-      # if headLine identified, the link to this GDT must be as a group note under the header
-      # get the headLine in full projDoc vector
-      headLine <- grep_line_index_from(headerNoteLink, projDocContents, logLine, orgPath)
-      # then the sepLine from this point
-      sepLine <- grep_line_index_from(load_param_vector(settings[["ProjectTaskLogSep"]], orgPath),
-                                   projDocContents, headLine, orgPath)
-      # insert the new subnote at end of group note link
-      insertionLine <- sepLine
-
-      # replace sub note link
-      projNoteName <- substr(basename(subNoteRmdPath), 1, regexpr(".Rmd", basename(subNoteRmdPath))-1)
-      projNoteLink <- paste0(settings[["SubNoteLinkFormat"]],
-                             create_hyperlink( projNoteName, subNoteRmdPath, projectDocPath),
-                             settings[["SubNoteLinkFormat"]])
-      snSummaryContents <- sub_template_param(subNoteSummaryContents, "{{PROJECT_NOTE_LINK}}",
-                                              projNoteLink, orgPath)
-
-      projDocContents <- insert_at_indices(projDocContents, insertionLine, snSummaryContents)
-
-      write_file(projDocContents, projectDocPath)
-
-      cat( "  Written Sub Note Link to Project Doc: ", basename(projectDocPath),
-           " at GDT:", "\n  ", dGDT[["goal"]],"\n  ", dGDT[["deliverable"]],"\n  ", dGDT[["task"]], "\n" )
-
-    } else {
-      # if headLine not identified, the link to this GDT must be from a subnote individually linked
-      # insert new subnote at end of the GDT section
-      insertionLine <- taskFooterLine
-
-      # replace sub note link
-      projNoteName <- substr(basename(subNoteRmdPath), 1, regexpr(".Rmd", basename(subNoteRmdPath))-1)
-      projNoteLink <- paste0(settings[["NoteLinkFormat"]],
-                             create_hyperlink( projNoteName, subNoteRmdPath, projectDocPath),
-                             settings[["NoteLinkFormat"]])
-      snSummaryContents <- sub_template_param(projNoteSummaryContents, "{{PROJECT_NOTE_LINK}}",
-                                              projNoteLink, orgPath)
-
-      projDocContents <- insert_at_indices(projDocContents, insertionLine, snSummaryContents)
-
-      write_file(projDocContents, projectDocPath)
-
-      cat( "  Written Project Note Link to Project Doc: ", basename(projectDocPath),
-           " at GDT:", "\n  ", dGDT[["goal"]],"\n  ", dGDT[["deliverable"]],"\n  ", dGDT[["task"]], "\n" )
-
-    }
-  } # end for
-}
+} #### ________________________________ ####
 

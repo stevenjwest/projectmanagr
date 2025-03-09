@@ -57,7 +57,7 @@ datatable_read_rmd <- function(rmd_path) {
   # now, orgPath should be the root dir of the organisation
 
   # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
+  rmd_path <- fs::path_expand(rmd_path)
 
   # read rmd_path file:
   rmd_file_conn <- file( rmd_path )
@@ -171,7 +171,7 @@ datatable_read <- function() {
 datatable_read_to_selection <- function() {
 
   row <- rstudioapi::getSourceEditorContext()$selection[[1]]$range$start[1]
-  rmd_path <- normalizePath( rstudioapi::getSourceEditorContext()$path )
+  rmd_path <- fs::path_expand( rstudioapi::getSourceEditorContext()$path )
 
   # read rmd_path file:
   rmd_file_conn <- file( rmd_path )
@@ -231,7 +231,7 @@ datatable_read_to_selection <- function() {
 #' @export
 datatable_read_to_line <- function(line) {
 
-  rmd_path <- normalizePath( rstudioapi::getSourceEditorContext()$path )
+  rmd_path <- fs::path_expand( rstudioapi::getSourceEditorContext()$path )
 
   # read rmd_path file:
   rmd_file_conn <- file( rmd_path )
@@ -443,7 +443,7 @@ OLDdatatable_find <- function( path, datatable_name_prefix = 'samples', updatePr
   settings <- get_settings_yml(orgPath)
 
   # normalize path - remove HOME REF ~
-  path <- normalizePath(path)
+  path <- fs::path_expand(path)
 
   # get all Project Docs/Notes inside path - they all contain "~_" in filename and end with .Rmd
   if( file.info(path)$isdir == FALSE ) {

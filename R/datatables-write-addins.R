@@ -64,7 +64,7 @@ addin_datatable_create <- function() {
 ad_dt_create <- function(path, contents, row) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Create Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Create Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -172,7 +172,7 @@ dt_create_server <- function(input, output, session) {
 ad_dt_create_template <- function(path, contents, indices, indices_row) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Create Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Create Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -446,7 +446,7 @@ get_datatable_types_list <- function() {
 ad_dt_create_file <- function(path, row, dtT) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Create Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Create Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -598,7 +598,7 @@ addin_datatable_add_data <- function() {
 ad_dt_add_data <- function(path, contents, row) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Add Data Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Add Data Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -986,7 +986,7 @@ dt_add_data_server <- function(input, output, session) {
 ad_dt_add_data_template <- function(path, contents, row, indices, indices_row) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Add Data Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Add Data Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -1197,7 +1197,7 @@ addin_datatable_add_groups <- function() {
 ad_dt_add_group <- function(path, contents, row, rowEnd) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Add Group Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Add Group Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -1478,7 +1478,7 @@ addin_datatable_resample <- function() {
 ad_dt_resample <- function(path, contents, row) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Resample Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Resample Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -1578,7 +1578,7 @@ dt_resample_server <- function(input, output, session) {
 ad_dt_resample_template <- function(path, contents, row, indices, indices_row) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Resample Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Resample Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -1787,7 +1787,7 @@ addin_datatable_dispose <- function() {
 ad_dt_dispose <- function(path, contents, row) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Dispose Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Dispose Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -1876,7 +1876,7 @@ dt_dispose_server <- function(input, output, session) {
 ad_dt_dispose_template <- function(path, contents, row, indices, indices_row) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Dispose Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Dispose Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -2082,7 +2082,7 @@ addin_datatable_import_export <- function() {
 ad_dt_import_export <- function(path, contents, row) {
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- confirm_org_path_addin(normalizePath(path), "Import/Export Datatable")
+  orgPath <- confirm_org_path_addin(fs::path_expand(path), "Import/Export Datatable")
 
   # get settings yml for runGadget call
   settings <- get_settings_yml(orgPath)
@@ -2173,7 +2173,7 @@ dt_import_export_server <- function(input, output, session) {
                  #cat("\n  dir$path[-1]: _", unlist( dir()$path[-1] ), "_" ) # -1 removes first position?
                  #cat("\n  dir$path[-1] pasted with fileSep: _", paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep ), "_" )
                   # this removes the first filesep?
-                 #home <- normalizePath("~")
+                 #home <- fs::path_expand("~")
                  # so can form the datapath selected by concatenating 'home' path (set to orgPath above in roots) and the pasted path value
                  global$datapath <-
                    file.path(orgPath, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))

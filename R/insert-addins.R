@@ -441,6 +441,11 @@ addin_insert_content <- function() {
 
     cat("  insertable contents cache found - ensuring cache is up-to-date...\n\n")
 
+    # first get only the contents that relates to the current ORG PATH
+    # may have cache from other paths if ORG is ever moved
+    contentsCache <- list(contentsCache[[orgPath]])
+    names(contentsCache) <- orgPath
+
     # update contents list: Check if any project Notes are updated since the contentRetrievalDateTime
     contents <- update_contents_org_tree(contentsCache, orgPath, settings) # faster as only search since laste retrieval dt
 

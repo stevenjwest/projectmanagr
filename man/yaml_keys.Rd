@@ -2,10 +2,14 @@
 % Please edit documentation in R/create-functions.R
 \name{yaml_keys}
 \alias{yaml_keys}
-\title{return char vector of all keys that should be present in YAML file}
+\title{Retrieve Expected YAML Keys}
 \usage{
 yaml_keys()
 }
+\value{
+Character vector. List of expected YAML keys.
+}
 \description{
-return char vector of all keys that should be present in YAML file
+Returns a character vector of all expected keys that should be present in a
+YAML configuration file.
 }

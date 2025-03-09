@@ -464,7 +464,7 @@ volume_add_dir <- function(dirName, volName,
   context <- rstudioapi::getSourceEditorContext()
 
   # normalise path of active doc - make sure path is absolute!
-  projectNote <- normalizePath(context$path)
+  projectNote <- fs::path_expand(context$path)
 
   # get potential projectNoteDir:
   projectNoteDir <- substr(projectNote, 1, regexpr("~_", projectNote)-1 )
@@ -699,7 +699,7 @@ volume_mkdir <- function(dirName, projectNoteDir, volName) {
   # define the volPath - orgPath - volumes - volName
   volPath <- paste0(orgPath, .Platform$file.sep, "volumes", .Platform$file.sep, volName)
 
-  projectNoteDir <- normalizePath(projectNoteDir)
+  projectNoteDir <- fs::path_expand(projectNoteDir)
 
   # Create the new sub-DIR in full path through volume:
     # volumes/[volName]/[path-from org-root-to-proj-note-dir]/[dirName]
@@ -825,7 +825,7 @@ moveToVolume <- function(volName, projectNotePath) {
   }
 
   # normalise path - remove "~" ref:
-  projectNotePath <- normalizePath(projectNotePath)
+  projectNotePath <- fs::path_expand(projectNotePath)
 
   # check projectNotePath is a Project Note:
   type <- getFileType(projectNotePath)

@@ -19,9 +19,6 @@ the parent Dir to fileSystemPath, to see if '.config/' and
 '.config/templates/' exist.
 }
 \details{
-Secondly, it checks the 'PROJECTS/' directory exists in this
-putative Programme Directory.
-
 If a Programme path is confirmed, it is returned, otherwise
 the function returns a BLANK string "".
 }

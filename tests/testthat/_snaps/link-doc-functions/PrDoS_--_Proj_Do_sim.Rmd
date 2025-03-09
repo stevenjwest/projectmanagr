@@ -1,0 +1,548 @@
+---
+title: 'PrDoS~ Proj Do sim'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# PROJECT SUMMARY
+
+
+[0-PR](_index_0-PR.Rmd)
+
+
+
+*Welcome to the Proj Do sim Project!*
+
+
+>>>> succinct description of project scope in one sentence - what does this project hope to achieve?
+>>>> Complete the sentence: "This project..."
+
+
+_one_sentence_summary_statement_of_project_scope__This_Project__
+
+
+>>>>
+>>>> Summarise Project Goals below
+>>>> * This Summary will be copied to Project Summary on Programme Index page
+>>>>
+>>>> * Record Goal Development stages:
+>>>>   - Each GOAL is INDEPENDENT:
+>>>>   - defines one complete set of objectives : Review, Data Collection & Processing, Analysis, Dissemination
+>>>>
+>>>> * Record key achievements & progress in this project here
+>>>>   - Consider adding a summary GRAPHIC to insert.
+>>>>
+
+
+## __PROJECT_GOAL_TITLE__
+
+
+
+
+
+
+## __PROJECT_GOAL_TITLE__
+
+
+
+
+
+
+## __PROJECT_GOAL_TITLE__
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# Project Background Information
+
+
+
+>>> Provide background and context to reader
+>>> Provide links to other relevant projects
+>>> Keep notes on project ideas & research which do not have a note to go into yet..
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# GOAL: __GOAL_TITLE__
+
+
+
+__GOAL_AIMS__
+
+
+>>>> Each GOAL is INDEPENDENT
+>>>>  All the work to achieve one key aim : REVIEW, DEVELOPMENT, ANALYSIS, DISSEMINATION
+>>>> Breakdown work into GOALS : INDEPENDENT DOMAINS of Project Objectives
+>>>>    Consider DPAD Workflow : Develop > Process > Analyse > Disseminate
+>>>>    GOALS capture DOMAINS of work 
+>>>>    DELIVERABLES Capture a well-defined achievement in a domain 
+>>>>    TASKS capture individual steps/iterations on a deliverable
+>>>>
+>>>>    REMEMBER : Each project note can be assigned MORE THAN ONE PROJECT GOAL > DELIVERABLE > TASK (GDT)
+>>>>      This mechanism is the heart of how projectmaangr EFFICIENTLY MAPS WORK ACROSS MULTIPLE GOALS
+>>>>      relevant work in each note can be effectively CROSS-REFERENCED to all relevant GDTs
+>>>>
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## DELIVERABLE: __DELIVERABLE_TITLE__
+
+
+
+__DELIVERABLE_AIMS__
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+------------------------------------
+------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## DELIVERABLE: __DELIVERABLE_TITLE__
+
+
+
+__DELIVERABLE_AIMS__
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+------------------------------------
+------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# GOAL: __GOAL_TITLE__
+
+
+
+__GOAL_AIMS__
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## DELIVERABLE: __DELIVERABLE_TITLE__
+
+
+
+__DELIVERABLE_AIMS__
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+------------
+
+
+
+**[t-no___002-00_--_Gr_No_Head](PrDoS/t-no/t-no___002-00_--_Gr_No_Head.Rmd)**
+
+
+
+*[t-no___002-001_--_SNo_01](PrDoS/t-no/t-no___002-00/t-no___002-001_--_SNo_01.Rmd)*
+
+
+
+
+
+>### _summary_point_01_
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+
+------------------------------------
+------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## DELIVERABLE: __DELIVERABLE_TITLE__
+
+
+
+__DELIVERABLE_AIMS__
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+------------------------------------
+------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# GOAL: EXAMPLE GOAL TITLE
+
+
+
+__GOAL_AIMS__
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## DELIVERABLE: __DELIVERABLE_TITLE__
+
+
+
+__DELIVERABLE_AIMS__
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+------------
+
+
+
+**[t-no___001_--_Proj_No](PrDoS/t-no/t-no___001_--_Proj_No.Rmd)**
+
+
+
+
+
+>### _summary_point_01_
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+
+------------
+
+
+
+**[t-no___002-00_--_Gr_No_Head](PrDoS/t-no/t-no___002-00_--_Gr_No_Head.Rmd)**
+
+
+
+*[t-no___002-001_--_SNo_01](PrDoS/t-no/t-no___002-00/t-no___002-001_--_SNo_01.Rmd)*
+
+
+
+
+
+>### _summary_point_01_
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+
+------------------------------------
+------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## DELIVERABLE: EXAMPLE DEL TITLE
+
+
+
+__DELIVERABLE_AIMS__
+
+
+
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+### TASK: __TASK_TITLE__
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+------------------------------------
+------------------------------------
+
+
+
+### TASK: EXAMPLE TASK TITLE
+
+
+
+__TASK_OVERVIEW__
+
+
+
+
+
+#### log
+
+
+
+------------
+
+
+
+**[t-no___001_--_Proj_No](PrDoS/t-no/t-no___001_--_Proj_No.Rmd)**
+
+
+
+
+
+>### _summary_point_01_
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+
+------------
+
+
+
+**[t-no___002-00_--_Gr_No_Head](PrDoS/t-no/t-no___002-00_--_Gr_No_Head.Rmd)**
+
+
+
+*[t-no___002-001_--_SNo_01](PrDoS/t-no/t-no___002-00/t-no___002-001_--_SNo_01.Rmd)*
+
+
+
+
+
+>### _summary_point_01_
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+
+
+

@@ -129,14 +129,62 @@ local_create_prog <- function(progName, orgDir, authorValue,
   # record current state
   olddir <- getwd()
 
+  # function args: for interactive testing
+  programmeName <- progName
+  organisationPath <- orgDir
+  authorValue <- authorValue
+  programmeTitle <- ""
+  progTemplate <- "Programme-Template.Rmd"
+  progSummaryTemplate <- "Programme-Summary-Template.Rmd"
   # create project programme
   create_programme(progName, orgDir, authorValue)
+
   progDir <- fs::path(orgDir, progName)
 
   withr::defer(fs::dir_delete(progDir), envir = env)
 
   # return the prog directory
   progDir
+
+}
+
+
+#' create test programme
+#'
+#' Create & remove test fixtures in reproducible temp dir using `withr::defer()`
+#'
+#' @param sectionName Character. The name of the new programme section. Must not
+#'   contain spaces.
+#' @param sectionParentPath Character. The file path to an existing organisation
+#'   directory, within a programme.
+#'
+#' @param authorValue name of author
+#'
+#' @param env parent.frame for withr::deferred_run()
+#'
+local_create_prog_section <- function(sectionName, sectionParentPath, authorValue,
+                                      env = parent.frame() ) {
+
+  # record current state
+  olddir <- getwd()
+
+  # function parameters for interactive testing
+  sectionName <- sectionName
+  sectionParentPath <- sectionParentPath
+  authorValue <- authorValue
+  sectionTitle <- ""
+  sectTemplate <- "Programme-Section-Template.Rmd"
+  sectSummaryTemplate <- "Programme-Section-Summary-Template.Rmd"
+  # create programme section
+  create_programme_section(sectionName, sectionParentPath, authorValue)
+
+  # create paths to Rmd & dir
+  sectDir <- fs::path(sectionParentPath, sectionName)
+
+  withr::defer(fs::dir_delete(sectDir), envir = env)
+
+  # return the section directory
+  sectDir
 
 }
 
@@ -152,20 +200,28 @@ local_create_prog <- function(progName, orgDir, authorValue,
 #'
 #' @param env parent.frame for withr::deferred_run()
 #'
-local_create_project <- function(projectPrefix, projectName, progDir, authorValue,
-                                 env = parent.frame() ) {
+local_create_project <- function(projectDocPrefix, projectDocName, projectParentPath,
+                                 authorValue, env = parent.frame() ) {
 
   # record current state
   olddir <- getwd()
 
   # create project doc
-  create_project_doc(projectPrefix, projectName, progDir, authorValue)
+  # function parameters for interactive testing
+  projectPrefix <- projectDocPrefix
+  projectName <- projectDocName
+  projectParentPath <- projectParentPath
+  projectTitle=""
+  projDocTemplate="Project-Doc-Template.Rmd"
+  projDocSummaryTemplate="Project-Doc-Summary-Template.Rmd"
+  # create project doc
+  create_project_doc(projectPrefix, projectName, projectParentPath, authorValue)
 
   # create paths to Rmd & dir
-  renamedProjectRmd <- fs::path(progDir, paste0(projectPrefix, "_--_", projectName, ".Rmd") )
-  projectRmd <- fs::path(progDir, paste0(projectPrefix, "_--_", projectName, ".Rmd") )
+  renamedProjectRmd <- fs::path(projectParentPath, paste0(projectPrefix, "_--_", projectName, ".Rmd") )
+  projectRmd <- fs::path(projectParentPath, paste0(projectPrefix, "_--_", projectName, ".Rmd") )
 
-  projectDir <- fs::path(progDir, projectPrefix)
+  projectDir <- fs::path(projectParentPath, projectPrefix)
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::file_delete(renamedProjectRmd), envir = env)

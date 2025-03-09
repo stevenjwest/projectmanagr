@@ -2,7 +2,7 @@
 % Please edit documentation in R/document-functions.R
 \name{update_links}
 \alias{update_links}
-\title{Update links}
+\title{Update Links in Files within a Directory Tree}
 \usage{
 update_links(
   oldLinkSuffix,
@@ -15,19 +15,73 @@ update_links(
 )
 }
 \arguments{
-\item{oldLinkSuffix}{Old link string to be updated.}
+\item{oldLinkSuffix}{Character string. The old link suffix to be replaced (e.g., \code{"old_suffix"}).}
 
-\item{newLinkSuffix}{New link string to replace \code{oldLinkSuffix}.}
+\item{newLinkSuffix}{Character string. The new link suffix to replace the old suffix (e.g., \code{"new_suffix"}).}
 
-\item{dirTree}{Directory tree to search for files for replacing links in.}
+\item{dirTree}{Character string. The path to the root directory containing files to be updated.}
 
-\item{settings}{projectmanagr settings list.}
+\item{settings}{List. Contains configuration details such as the volumes directory key (\code{"VolumesDir"}).}
 
-\item{fileExtensions}{List of file extensions indicating what types of files
-should be searched for links and have links replaced.  Must be plaintext file
-type.  Default is Rmd files only.}
+\item{oldLinkString}{Character string. Optional. A specific string within files to replace. Default is an empty string (\code{""}).}
+
+\item{newLinkString}{Character string. Optional. The replacement for \code{oldLinkString}. Default is an empty string (\code{""}).}
+
+\item{fileExtensions}{List. A list of file extensions (e.g., \code{list("Rmd")}) to include in the search. Defaults to \code{list("Rmd")}.}
+}
+\value{
+The function does not return a value but modifies files in place as necessary.
 }
 \description{
-Updates every hyperlink in all Project Notes within \code{dirTree}, replacing
-\code{oldLinkSuffix} (the path of the file) with \code{newLinkSuffix} (the new path).
+Searches for and replaces old link suffixes with new link suffixes in files
+located in a specified directory tree. Optionally replaces specific strings
+within the same files. Recursively processes subdirectories while excluding
+specific paths.
+}
+\details{
+The function normalizes the input directory path and identifies the ORG directory.
+It generates a list of files to be processed, excluding specific directories
+such as the configuration and volume directories. For each file, it reads
+the contents, identifies occurrences of \code{oldLinkSuffix}, replaces them
+with \code{newLinkSuffix}, and optionally replaces \code{oldLinkString} with
+\code{newLinkString}.
+
+The directory tree is traversed recursively, but only down to the project note
+parent directory level. Any file changes are saved, and the relative paths
+of modified files are logged to the console.
+}
+\note{
+\itemize{
+\item Ensure that the \code{settings} list contains a valid \code{"VolumesDir"} key.
+\item Files are modified in place. It is recommended to back up your directory before using this function.
+}
+}
+\examples{
+# Update links in Rmd files within the given directory
+update_links(
+  oldLinkSuffix = "_old",
+  newLinkSuffix = "_new",
+  dirTree = "/path/to/directory",
+  settings = list(VolumesDir = "volumes"),
+  fileExtensions = list("Rmd")
+)
+
+# Replace specific strings in addition to link suffixes
+update_links(
+  oldLinkSuffix = "_v1",
+  newLinkSuffix = "_v2",
+  dirTree = "/path/to/directory",
+  settings = list(VolumesDir = "volumes"),
+  oldLinkString = "http://old.link",
+  newLinkString = "http://new.link",
+  fileExtensions = list("Rmd", "txt")
+)
+
+}
+\seealso{
+\itemize{
+\item \code{\link{find_org_directory}} for locating the ORG directory.
+\item \code{\link{get_file_list_to_project_notes}} for recursive file traversal.
+\item \code{\link{read_file}} and \code{\link{write_file}} for file I/O operations.
+}
 }

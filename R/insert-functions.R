@@ -1,4 +1,6 @@
 
+#### ________________________________ ####
+
 #' Append a Goal Section to Project Doc
 #'
 #' Appends a new Goal Section to a Project Doc.  Searches through the Project
@@ -100,7 +102,7 @@ insert_doc_goal_section <- function(selection,
 
   cat(  "    Added Goal Section to Project Doc: ", basename(projDocPath), "\n" )
 
-}
+} #### ________________________________ ####
 
 
 
@@ -201,7 +203,7 @@ insert_doc_deliverable_section <- function(selection,
 
   cat(  "    Added Deliverable Section to Project Doc: ", basename(projDocPath), "\n" )
 
-}
+} #### ________________________________ ####
 
 
 #' Append a Task Section in Project Doc
@@ -296,7 +298,7 @@ insert_doc_task_section <- function(selection,
   # return insert_position
   deliverableFooterLine
 
-}
+} #### ________________________________ ####
 
 
 
@@ -424,108 +426,6 @@ insert_content <- function(selectionSource, selectionDestination) {
 
   cat( "  Inserted Content into Project Note: ", destNoteRmdPath, "\n" )
 
-}
+} #### ________________________________ ####
 
 
-#' Insert lines into a Project Note
-#'
-#' This Function adds `lines` to a Project Note.
-#'
-#' @param selection Selection object from Project Note.
-#' @param lines character vector of lines to insert.
-#'
-#' @export
-insert_lines <- function(selection, lines) {
-
-  cat( "\nprojectmanagr::insert_lines():\n" )
-
-
-  #### Set Instance Variables ####
-
-  sourceNoteRmdPath <- selection[["filePath"]] # presumed to be project note Rmd
-  sourceNoteLineIndex <- selection[["originalLineNumber"]]
-
-  # get orgPath
-  orgPath <- find_org_directory(sourceNoteRmdPath)
-
-  if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  Cannot identify organisation directory: ", sourceNoteRmdPath) )
-  }
-  # orgPath is root dir of the organisation - same for both source and destination
-
-  # get config templates settings yml
-  confPath <- get_config_dir(orgPath)
-  tempPath <- get_template_dir(orgPath)
-  settings <- get_settings_yml(orgPath)
-
-
-  #### Read Source Rmd ####
-
-  sourceNoteRmdContents <- read_file(sourceNoteRmdPath)
-
-
-  #### Add lines to Project Note ####
-
-  sourceNoteRmdContents <- insert_at_indices(sourceNoteRmdContents,
-                                             sourceNoteLineIndex, lines)
-
-
-  #### write Project Note ####
-
-  write_file(sourceNoteRmdContents, sourceNoteRmdPath)
-
-  cat( "  Inserted lines into Project Note: ", sourceNoteRmdPath, "\n" )
-
-}
-
-
-
-#' Insert header link into subnote
-#'
-insert_header_link_subnote <- function(subNoteContents, headerNoteFileName,
-                                       headerNoteRmdPath, subNoteRmdPath,
-                                       headerNoteContentLinkContents,
-                                       settings, orgPath) {
-
-
-  #### Insert header link content into subnote ####
-
-  headerNoteContentLink <- create_hyperlink( headerNoteFileName, headerNoteRmdPath, subNoteRmdPath)
-  headerNoteContentLinkContents <- sub_template_param(headerNoteContentLinkContents,
-                                                      "{{SUB_NOTE_CONTENT_LINK}}",
-                                                      headerNoteContentLink, orgPath)
-
-  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["SubNoteContentsHeader"]], orgPath),
-                                             subNoteContents)
-  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["SubNoteContentsFooter"]], orgPath),
-                                                 subNoteContents, noteContentsHeadIndex, orgPath)
-
-  subNoteContents <- insert_at_indices(subNoteContents, noteContentsFootIndex, headerNoteContentLinkContents)
-
-  subNoteContents # return
-
-}
-
-#' Insert header link into subnote
-#'
-
-insert_subnote_link_header <- function(headerNoteRmdContents, subNoteFileName,
-                           subNoteRmdPath, headerNoteRmdPath,
-                           subNoteContentLinkContents,
-                           settings, orgPath) {
-
-  subNoteContentLink <- create_hyperlink( subNoteFileName, subNoteRmdPath, headerNoteRmdPath)
-  subNoteContentLinkContents <- sub_template_param(subNoteContentLinkContents,
-                                                   "{{HEADER_NOTE_CONTENT_LINK}}",
-                                                   subNoteContentLink, orgPath)
-
-  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["HeaderNoteContentsHeader"]], orgPath),
-                                             headerNoteRmdContents)
-  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["HeaderNoteContentsFooter"]], orgPath),
-                                                 headerNoteRmdContents, noteContentsHeadIndex, orgPath)
-
-  headerNoteRmdContents <- insert_at_indices(headerNoteRmdContents, noteContentsFootIndex, subNoteContentLinkContents)
-
-  headerNoteRmdContents # return
-
-}

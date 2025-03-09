@@ -21,6 +21,17 @@ notes, or a single project note.}
 
 \item{date}{The date of extraction, default is today's date. Should be in
 char format as 'YYYY-MM-DD' - added to header of Todo Collection.}
+
+\item{todoGDTExtractionTemplate}{Rmd template for todo GDT extraction}
+
+\item{todoExtractionTemplate}{Rmd template for todo Extraction}
+
+\item{todoProgCollectionTemplate}{Rmd template for todo Prog Collection}
+
+\item{todoCollectionTemplate}{Rmd template for todo Collection}
+}
+\value{
+Character Vector of Todo Collection.
 }
 \description{
 Extracted to Todo-Extraction-Template.Rmd that provides a template to
@@ -34,8 +45,5 @@ Project Notes, listing notes by PROGRAMME in organisation directory tree.
 incompleted TODOs can then be reviewed, and prioritised by re-ordering &
 deleting the project note / doc GDT / TODOs.
 
-The filled Todo-Extraction-Template.Rmd is saved to the todo directory,
-defined in settings.  The TODO extraction is saved using a naming convention
-of the date & scope (location directory name or project-note title) :
-\code{YYYMMDD_SCOPE.Rmd}
+The filled Todo-Extraction-Template.Rmd is returned as character vector.
 }

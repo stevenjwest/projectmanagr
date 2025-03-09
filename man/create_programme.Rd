@@ -37,8 +37,8 @@ Character. The file path of the created programme index Rmd file.
 }
 \description{
 Generates a new programme within an existing organisation directory, creating
-the necessary directory structure, R Markdown files, and updating the status
-YAML file.
+the necessary directory structure, R Markdown files, and linking to the
+organisation index file.
 }
 \details{
 This function performs the following steps:
@@ -48,7 +48,7 @@ This function performs the following steps:
 \item Creates a new programme directory within the organisation.
 \item Generates a new programme index Rmd file from a template.
 \item Updates the organisation's status YAML file with programme details.
-\item Inserts the programme summary into the organisation's index file.
+\item Links & inserts the programme summary into the organisation's index file.
 }
 
 The function ensures that all directories and files are properly created and

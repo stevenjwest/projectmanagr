@@ -1,6 +1,4 @@
 
-
-
 {{PROJECT_NOTE_TITLE}}
 
 
@@ -8,5 +6,3 @@
 
 
 {{GDT_TODO_SUMMARY}}
-
-

@@ -178,7 +178,7 @@ get_rstudio_open_doc_IDs <- function() {
 #'
 get_rstudio_doc_list_filtered_reordered <- function(filePath, settings) {
 
-  orgPath <- normalizePath(find_org_directory(filePath))
+  orgPath <- fs::path_expand(find_org_directory(filePath))
 
   # get all open RStudio Doc paths:
   fileList <- get_rstudio_open_doc_IDs()

@@ -13,7 +13,7 @@
 #' @export
 find_org_directory <- function( path = getwd() ) {
 
-  origPath <- normalizePath(path)
+  origPath <- fs::path_expand(path)
   # Check path is at the root of an ORGANISATION:
 
   # look for the .config/ and templates/ dirs:
@@ -53,6 +53,20 @@ find_org_directory <- function( path = getwd() ) {
   }
 
   path
+}
+
+#' confirm the found org
+#'
+#' Confirms by checking returned value is not blank.
+confirm_find_org <- function(organisationPath) {
+  orgPath <- find_org_directory(organisationPath)
+
+  if(orgPath == "" ) { # only if orgPath not identified
+    stop( paste0("  organisationPath is not in an Organisation: ", organisationPath) )
+  }
+  # now, orgPath should be the root dir of the organisation
+
+  return(orgPath)
 }
 
 #' Check Dirs for Organisations
@@ -95,7 +109,7 @@ confirm_rmd_path <- function(rmd_path) {
   rmd_type <- get_file_type(rmd_path, settings)
 
   # normalize path - remove HOME REF ~
-  rmd_path <- normalizePath(rmd_path)
+  rmd_path <- fs::path_expand(rmd_path)
 
   # return
   rmd_path
@@ -113,17 +127,73 @@ get_prefix <- function(filePath, settings) {
          regexpr(settings[["ProjectPrefixSep"]], basename(filePath), fixed=TRUE)-1 )
 }
 
-#' Get File Type
+
+#' Determine File Type
 #'
-#' Determine if the current file is a PROJECT DOC (it is inside the PROJECTS/ Directory),
-#' a HEADER GROUP NOTE (contains the string "-00~_"), or a SIMPLE or SUB Project Note (any
-#' other file).
+#' Identifies the type of file based on its file path, naming conventions,
+#' and organizational settings. The function distinguishes between project
+#' documents, notes, and their subtypes.
 #'
-#' Returns the relevant String:  DOC, HEAD, SUB, NOTE, or UNKNOWN for unidentified file.
+#' @param filePath Character string. The full path to the file whose type needs
+#'   to be determined. This should be a file within the structured project directory.
+#' @param settings List. A named list containing project-specific configuration
+#'   settings.
+#'   The following settings are expected:
+#'   - \code{ProjectPrefixSep}: Separator string between the prefix and the file name.
+#'   - \code{ProjectIndexSep}: Separator string between prefix characters and numbers.
+#'   - \code{GroupNotePrefixSep}: Separator string for major and minor numbering in notes.
+#'   - \code{HeaderNotePrefix}: String indicating the header note's minor numbering.
 #'
-#' @param filePath the Absolute path to the file.
+#' @details
+#' The function parses the \code{filePath} and compares its naming and location
+#' against expected patterns based on \code{settings}. It evaluates the prefix
+#' and other components to classify the file into one of the following types:
+#' - \code{"DOC"}: A project document.
+#' - \code{"NOTE"}: A simple note.
+#' - \code{"HEAD"}: A header note.
+#' - \code{"SUB"}: A sub-note.
+#' - \code{"UNKNOWN"}: A file that does not match any known project file type.
 #'
-#' @param settings List from `.config/settings.yml` file.
+#' The function uses the following logic:
+#' - Project documents are identified by mismatches between the prefix and the
+#'   parent directory name.
+#' - Header notes are identified by specific substrings in the prefix
+#'   (e.g., \code{"-00~_"}).
+#' - Sub-notes are identified by additional separators in their prefixes and the
+#'   naming of their parent directories.
+#' - Simple notes are identified by the presence of a single separator in their
+#'   prefixes.
+#'
+#' @return
+#' A character string indicating the file type. Possible values:
+#' - \code{"DOC"}
+#' - \code{"NOTE"}
+#' - \code{"HEAD"}
+#' - \code{"SUB"}
+#' - \code{"UNKNOWN"}
+#'
+#' @examples
+#' # Example settings
+#' settings <- list(
+#'   ProjectPrefixSep = "~_",
+#'   ProjectIndexSep = "~",
+#'   GroupNotePrefixSep = "-",
+#'   HeaderNotePrefix = "00"
+#' )
+#'
+#' # Example file path
+#' filePath <- "/project/directory/ABC~001~_file.Rmd"
+#'
+#' # Determine file type
+#' get_file_type(filePath, settings)
+#'
+#' @note
+#' This function assumes that the project directory structure adheres to the naming conventions
+#' defined in the \code{settings} parameter. Misconfigured settings or unconventional file names
+#' may lead to incorrect classifications.
+#'
+#' @seealso
+#' - \code{\link{basename}} and \code{\link{dirname}} for extracting components of file paths.
 #'
 get_file_type <- function( filePath, settings ) {
 
@@ -531,7 +601,7 @@ get_next_subnote_prefix <- function(headerNoteDir, settings) {
 
   subNotePrefix
 
-}
+} #### ________________________________ ####
 
 
 
@@ -567,20 +637,58 @@ write_file <- function(contents, filePath) {
 
 create_directory <- function(path, log, error) {
   fs::dir_create(path)
-  if( fs::dir_exists(path) == FALSE ) {
-    stop( paste0(error, path) )
-  }
+  confirm_dir(path, error)
   cat( log, path, "\n" )
 }
 
 
 create_file <- function(path, log, error) {
   fs::file_create(path)
-  if( fs::file_exists(path) == FALSE ) {
-    stop( paste0(error, path) )
-  }
+  confirm_file(path, error)
   cat( log, path, "\n" )
 }
+
+#' Confirm Directories Exist
+#'
+#' Checks if all directories in the given list exist. If any are missing, the
+#' organisation directory is deleted and an error is raised.
+#'
+#' @param dirPaths Character vector. A list of directory paths to check.
+#' @param errMsg Character. Error message to display if a directory does not exist.
+#' @param orgPath Character. The root path of the organisation, which will be
+#'  removed if any check fails.
+confirm_dirs <- function(dirPaths, errMsg, orgPath) {
+  if( any(fs::dir_exists(dirPaths) == FALSE) ) {
+    dp <- dirPaths[fs::dir_exists(dirPaths) == FALSE]
+    fs::dir_delete(orgPath) # remove org
+    stop( paste0(errMsg, paste(dp, collapse='\n  ')) )
+  }
+}
+
+#' Confirm a Single Directory Exists
+#'
+#' Checks if a given directory exists. If not, raises an error.
+#'
+#' @param dirPath Character. Path to the directory to check.
+#' @param errMsg Character. Error message to display if the directory does not
+#' exist.
+confirm_dir <- function(dirPath, errMsg) {
+  if( fs::dir_exists(dirPath) == FALSE ) {
+    stop( paste0(errMsg, dirPath) )
+  }
+}
+
+#' Confirm a File Exists
+#'
+#' Checks if a given file exists. If not, raises an error.
+#'
+#' @param filePath Character. Path to the file to check.
+#' @param errMsg Character. Error message to display if the file does not exist.
+confirm_file <- function(filePath, errMsg) {
+  if( fs::file_exists(filePath) == FALSE ) {
+    stop( paste0(errMsg, filePath) )
+  }
+} #### ________________________________ ####
 
 
 #' Check a path is the org root dir
@@ -645,9 +753,6 @@ check_prog_dir <- function( fileSystemPath, settings ) {
 #' directory, so this method establishes this is the case by recursively checking
 #' the parent Dir to fileSystemPath, to see if '.config/' and
 #' '.config/templates/' exist.
-#'
-#' Secondly, it checks the 'PROJECTS/' directory exists in this
-#' putative Programme Directory.
 #'
 #' If a Programme path is confirmed, it is returned, otherwise
 #' the function returns a BLANK string "".
@@ -828,7 +933,7 @@ check_prog_sub_dir <- function( fileSystemPath ) {
 find_prog_dir <- function(fileSystemPaths) {
 
   # ensure path is absolute
-  fileSystemPaths <- normalizePath(fileSystemPaths)
+  fileSystemPaths <- fs::path_expand(fileSystemPaths)
 
   root <- "/" # use to identify the root
 
@@ -904,7 +1009,7 @@ find_prog_dirs <- function( orgPath, settings ) {
 #'
 find_header_Rmd_path <- function( subNoteRmdPath, settings ) {
 
-  subNoteRmdPath <- normalizePath( subNoteRmdPath) # expand tilde
+  subNoteRmdPath <- fs::path_expand( subNoteRmdPath) # expand tilde
 
   # header note prefix will be dir base name
   headerNotePrefix <- basename( dirname(subNoteRmdPath))
@@ -1242,7 +1347,7 @@ get_project_note_paths <- function(parentDirectory, settings) {
   i <- 1
 
   # # get all files matching FileType used in Rmd
-  # pd <- normalizePath(parentDirectory)
+  # pd <- fs::path_expand(parentDirectory)
   # ft <- paste0("*.", settings[["FileType"]])
   # fl <- list.files(pd, pattern = ft, recursive=TRUE, full.names=TRUE)
   orgPath <- find_org_directory(parentDirectory)
@@ -1270,7 +1375,7 @@ get_project_note_paths <- function(parentDirectory, settings) {
     if( get_file_type(f, settings) == "HEAD" |
         get_file_type(f, settings) == "SUB" |
         get_file_type(f, settings) == "NOTE" ) {
-      pnv[i] <- normalizePath(f)
+      pnv[i] <- fs::path_expand(f)
       i <- i+1
     }
   }
@@ -1304,6 +1409,14 @@ get_file_list_to_project_notes <- function(fileList, dl, settings,
                                            pathExclusions = c(),
                                            retrievalDateTimeCutoff = NULL ) {
 
+
+  # testing:
+  #fileList
+  #dl <- orgPath
+  #settings
+  #fileExtensions = list("Rmd")
+  #pathExclusions = c(confPath, volPath, sitePath, weeklyjournalPath)
+  #retrievalDateTimeCutoff = dt
 
   #### Set Instance Variables ####
 

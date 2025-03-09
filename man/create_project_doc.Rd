@@ -19,7 +19,8 @@ create_project_doc(
 
 \item{projectName}{Character. The name of the new project. Must not contain spaces.}
 
-\item{projectParentPath}{Character. The file path to an existing programme directory.}
+\item{projectParentPath}{Character. The file path to an existing directory
+below a programme.}
 
 \item{authorValue}{Character. The author of the project document. Defaults to
 the system username.}
@@ -38,8 +39,8 @@ Character. The file path of the created project document Rmd file.
 }
 \description{
 Generates a new project document within an existing programme directory,
-creating the necessary directory structure, R Markdown files, and updating
-the programme's summary.
+creating the necessary directory structure, R Markdown files, and linking
+the new project document to the programme or section index file.
 }
 \details{
 This function performs the following steps:
@@ -49,7 +50,10 @@ This function performs the following steps:
 \item Validates that \code{projectParentPath} is inside a programme directory.
 \item Creates a new project directory and project document Rmd file.
 \item Populates the project document with metadata such as prefix, title, and author.
-\item Updates the programme's index file to include a summary of the new project.
+\item Updates the programme or section index file to link to the new project.
+A section index file defines a programme section, and is created to bridge
+the summary of new project documents in a programme section with the main
+programme index.
 }
 
 The function ensures that all directories and files are properly created and

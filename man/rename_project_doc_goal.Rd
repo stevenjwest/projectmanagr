@@ -2,16 +2,69 @@
 % Please edit documentation in R/rename-functions.R
 \name{rename_project_doc_goal}
 \alias{rename_project_doc_goal}
-\title{Rename a Project Doc Goal}
+\title{Rename a Goal in a Project Document and Update References}
 \usage{
 rename_project_doc_goal(goalSelection, newGoalName)
 }
 \arguments{
-\item{goalSelection}{Selection from projectmanagr Project Doc file, made on
-the Goal to be renamed.}
+\item{goalSelection}{List. Contains information about the selected goal line
+in the project document.
+\itemize{
+\item \code{goalSelection$filePath}: The file path of the project document.
+\item \code{goalSelection$goal}: The current header text of the goal.
+\item \code{goalSelection$originalLine}: The original text of the selected line.
+\item \code{goalSelection$originalLineNumber}: The line number of the goal in
+the project document.
+}}
 
-\item{newGoalName}{The new name to use for the selected Goal.}
+\item{newGoalName}{Character string. The new name for the goal header.}
+}
+\value{
+This function does not return a value. It modifies files in place by:
+\itemize{
+\item Updating the goal header in the project document.
+\item Updating references to the renamed goal in other files across the organization.
+}
 }
 \description{
-Rename a Project Doc Goal
+Renames a specific goal within a project document to a new name and updates
+all references to the goal across the organization.
+}
+\details{
+This function performs the following steps:
+\enumerate{
+\item Validates the provided goal selection to ensure it is within a valid project
+document and corresponds to a goal header.
+\item Updates the goal header in the specified project document.
+\item Updates all references to the renamed goal across files within the organisation.
+}
+
+The function relies on a structured organizational directory and configuration
+settings to locate and update references effectively.
+}
+\note{
+\itemize{
+\item The \code{goalSelection} parameter must correspond to a valid goal in a
+project document.
+\item This function modifies files directly on disk. Ensure backups are created
+before running.
+}
+}
+\examples{
+# Rename a goal in a project document and update references
+goalSelection <- list(
+  filePath = "/path/to/project_doc.Rmd",
+  goal = "### Goal: Improve User Experience",
+  originalLine = "### Goal: Improve User Experience",
+  originalLineNumber = 15
+)
+rename_project_doc_goal(goalSelection, "Enhance Accessibility")
+
+}
+\seealso{
+\itemize{
+\item \code{\link{update_links}} for updating references to goals.
+\item \code{\link{get_goal_title}} for extracting goal titles.
+\item \code{\link{trim_goal_hash}} for processing goal headers.
+}
 }

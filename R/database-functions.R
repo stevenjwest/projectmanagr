@@ -51,7 +51,7 @@ database_create <- function(filename, columns) {
   }
 
   # getRmd's DIR:
-  DATA_DIR <- normalizePath(dirname(context$path) )
+  DATA_DIR <- fs::path_expand(dirname(context$path) )
 
   # if filename already exists at relative path to current Rmd, STOP!
   path <- paste0(DATA_DIR, .Platform$file.sep, filename, ".csv")
@@ -102,8 +102,8 @@ database_load <- function(relativepath) {
   }
 
   # getRmd's DIR:
-  DATA_DIR <- normalizePath(dirname(context$path) )
-  path <- normalizePath( paste0(DATA_DIR, .Platform$file.sep, relativepath, ".csv") )
+  DATA_DIR <- fs::path_expand(dirname(context$path) )
+  path <- fs::path_expand( paste0(DATA_DIR, .Platform$file.sep, relativepath, ".csv") )
    # normalisePath will remove any ../ references from relativepath
 
   if( file.exists(path) == FALSE ) {
@@ -143,7 +143,7 @@ database_save <- function(database) {
   }
 
   # getRmd's DIR:
-  DATA_DIR <- normalizePath(dirname(context$path) )
+  DATA_DIR <- fs::path_expand(dirname(context$path) )
 
   # get the relative path:
   relativepath <- attr(database, "path")
@@ -152,7 +152,7 @@ database_save <- function(database) {
     stop( paste0("  database does not contain a `path`` attribute: ", database) )
   }
 
-  path <- normalizePath( paste0(DATA_DIR, .Platform$file.sep, relativepath, ".csv") )
+  path <- fs::path_expand( paste0(DATA_DIR, .Platform$file.sep, relativepath, ".csv") )
 
   # Write to CSV:
   readr::write_csv(database, path )

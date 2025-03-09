@@ -1,7 +1,4 @@
 
-
 {{GDT_SUMMARY}}
 
-
 {{GDT_TODO_LIST}}
-

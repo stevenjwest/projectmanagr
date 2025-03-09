@@ -91,7 +91,7 @@ navigate_markdown_link <- function() {
   line <- get_context_row()
   contents <- get_context_contents()
   # context <- rstudioapi::getSourceEditorContext()
-  # path <- normalizePath(context$path)
+  # path <- fs::path_expand(context$path)
   #
   # cursor <- rstudioapi::primary_selection(context)
   # line <- (cursor$range[[1]])[1] # get the line number of cursor

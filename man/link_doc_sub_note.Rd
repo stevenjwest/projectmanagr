@@ -39,3 +39,8 @@ Add a cross-reference between a Project Doc at the Goal-Del-Task as shown in
 \code{selection} with the project subnote at \code{subNoteRmdPath}, using the
 provided templates.
 }
+\details{
+NB : using \code{link_project_note_doc()} to link the subnote - still have kept
+\code{link_sub_note_doc()} but moved to create-functions.R as this function is used
+in \code{create_sub_note()}
+}
