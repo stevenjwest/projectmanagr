@@ -1947,7 +1947,7 @@ split_path_header <- function(kPath) {
 create_hyperlink <- function(toFileName, toFilePath, fromFilePath) {
   NoteLink <- R.utils::getRelativePath(toFilePath, relativeTo=fromFilePath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  HyperLink <- paste("[", toFileName, "](", NoteLink, ")",  sep="")
+  HyperLink <- paste0("[", toFileName, "](", NoteLink, ")")
   return(HyperLink)
 }
 
@@ -1955,8 +1955,13 @@ create_hyperlink <- function(toFileName, toFilePath, fromFilePath) {
 #' generate a hyperlink between two files, using `toFilePath` name without
 #' extension as the link text.
 create_hyperlink_no_ext <- function(toFilePath, fromFilePath) {
-  create_hyperlink(substring(basename(toFilePath),
-                             first=1, last=nchar(basename(toFilePath))-4),
+
+  toFileName <- basename(toFilePath)
+  toFileNameNoExt <- substring(toFileName,
+                               first=1,
+                               last=regexpr("\\.[^\\.]*$", toFileName)-1 )
+
+  create_hyperlink(toFileNameNoExt,
                    toFilePath,
                    fromFilePath)
 }

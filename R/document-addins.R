@@ -101,16 +101,35 @@ navigate_markdown_link <- function() {
   lineContent <- contents[line]
 
   # check if lineContent contains a link
-  linkStart <- regexpr("[", lineContent, fixed=TRUE)
   linkMiddle <- regexpr("](", lineContent, fixed=TRUE)
-  linkEnd <- regexpr(")", lineContent, fixed=TRUE)
+  if( linkMiddle > -1 ) {
+    # get start of link - from start of string to linkMiddle
+    linkStart <- regexpr("\\[[^\\[]*$", substr(lineContent, 1, linkMiddle))
+      # find the last instance of '[' in lineContent up to middle part of link
+
+    # get end of link - from linkMiddle to end of string
+    linkEnd <- (regexpr("\\)", substr(lineContent, linkMiddle,
+                                                nchar(lineContent))) +
+                  linkMiddle - 1 )
+     # find first instance of ')' in lineContent from linkMiddle
+     # NB this means the path & header portion of a link CANNOT contain parentheses!
+     # will REMOVE parentheses from path portion when forming a link in function
+     # create_hyperlink_section()
+
+  } else {
+    stop( paste0("  Selected line does not contain a link: ", lineContent))
+  }
+  #linkStart <- regexpr("[", lineContent, fixed=TRUE)
+  #linkMiddle <- regexpr("](", lineContent, fixed=TRUE)
+  #linkEnd <- regexpr(")", lineContent, fixed=TRUE)
+  #linkEnd <- regexpr(")", substr(lineContent, linkMiddle, nchar(lineContent)), fixed=TRUE)
 
   if( linkStart>linkMiddle) {
     stop( paste0("  Selected line does not contain a link: ", lineContent))
   }
 
-  if(linkMiddle>linkEnd) {
-    # try to identify the remainder of the link on subsequent lines
+  if(linkEnd == -1 ) {
+    # linkEnd not found : try to identify the remainder of the link on subsequent lines
     line2 <- line
     rP <- ""
     while(TRUE) {
@@ -168,7 +187,7 @@ navigate_markdown_link <- function() {
     headerTitle <- contentHeaders[Reduce(intersect, wordIndices)[1]]
 
     # finally grep the known header in contents_orig
-    navLine <- grep(headerTitle, contents_orig)[1]
+    navLine <- grep(headerTitle, contents_orig, fixed=TRUE)[1]
 
     # navigate to line in file
     Sys.sleep(0.1) # ensure first position is set

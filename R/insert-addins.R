@@ -105,7 +105,7 @@ addin_insert_datetime <- function() {
   #rstudioapi::insertText( paste0('"', datetime_colon, '"' ) )
   rstudioapi::insertText( datetime )
 
-}
+} #### ________________________________ ####
 
 
 
@@ -127,7 +127,8 @@ addin_insert_doc_goal_section <- function() {
 
   # reload file
   id <- rstudioapi::navigateToFile(selection[["filePath"]])
-}
+
+} #### ________________________________ ####
 
 
 #' Insert Deliverable Section to end of Project Doc GDT
@@ -149,7 +150,8 @@ addin_insert_doc_deliverable_section <- function() {
 
   # reload file
   id <- rstudioapi::navigateToFile(selection[["filePath"]])
-}
+
+} #### ________________________________ ####
 
 
 #' Insert Task Section to end of Project Doc GDT
@@ -177,7 +179,8 @@ addin_insert_doc_task_section <- function() {
 
   # set files pane
   #rstudioapi::filesPaneNavigate( dirname(selection[["filePath"]]) )
-}
+
+} #### ________________________________ ####
 
 
 #' Insert a Hyperlink
@@ -319,35 +322,17 @@ addin_insert_hyperlink <- function() {
       #### done : insert hyperlink ####
 
       # form new hyperlink:
-      DocLink <- R.utils::getRelativePath(reorderedFileList[[as.integer(input$select)]], relativeTo=context$path)
-      DocLink <- substring(DocLink, first=4, last=nchar(DocLink))
+      DocTitleLink <- create_hyperlink_no_ext(
+                              reorderedFileList[[as.integer(input$select)]],
+                              context$path)
 
-      DocName <- basename(reorderedFileList[[as.integer(input$select)]])
-      DocName <- substring(DocName, first=1, last=regexpr("\\.[^\\.]*$", DocName)-1 )
-
-      DocTitleLink <- paste( "[", DocName, "](", DocLink, ")", sep="" )
-
-      # insert into contents and save:
-      #openDocContents[line] <- paste0(
-      #  substr(openDocContents[line], 1, column-1),
-      #  DocTitleLink,
-      #  substr(openDocContents[line], column, nchar(openDocContents[line]) ) )
-
-      #fileConn <- file(context$path)
-      #writeLines(openDocContents, fileConn)
-      #close(fileConn)
-
-      #rstudioapi::navigateToFile(context$path, line=line, column=column)
-
-      #rstudioapi::setDocumentContents(openDocContents, id = context$id)
+      # insert into contents
       rstudioapi::insertText(cursor$range, DocTitleLink, id = context$id)
 
       # Close Gadget after computations are complete:
       stopApp()
 
-
     })
-
   }
 
 
@@ -364,7 +349,7 @@ addin_insert_hyperlink <- function() {
 
   runGadget(ui, server, viewer = viewer)
 
-}
+} #### ________________________________ ####
 
 
 #' Select & Insert Content
@@ -707,7 +692,7 @@ addin_insert_content <- function() {
 
   runGadget(ui, server, viewer = viewer)
 
-}
+} #### ________________________________ ####
 
 
 #' Insert Section Sep 1 Addin
@@ -795,6 +780,6 @@ addin_insert_section_sep <- function(index) {
 
   rstudioapi::insertText(SEP)
 
-}
+} #### ________________________________ ####
 
 
