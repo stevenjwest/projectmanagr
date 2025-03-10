@@ -90,6 +90,10 @@ extract_todos <- function(location, date=get_date(split='-'),
   todoProgCollectionContents <- read_file( fs::path( tempPath, todoProgCollectionTemplate) )
   todoCollectionContents <- read_file( fs::path( tempPath, todoCollectionTemplate) )
 
+  # replace collection sep
+  todoCollectionContents <- sub_template_param(todoCollectionContents, "{{TODO_COLLECTION_SEP}}",
+                                                   settings[["TodoCollectionSep"]], orgPath)
+
   # replace programme sep
   todoProgCollectionContents <- sub_template_param(todoProgCollectionContents, "{{TODO_PROGRAMME_SEP}}",
                                                    settings[["TodoProgrammeSep"]], orgPath)
@@ -132,6 +136,11 @@ extract_todos <- function(location, date=get_date(split='-'),
       todoExtract <- sub_template_param(todoExtractionContents, "{{PROJECT_NOTE_TITLE}}",
                                         paste0("## ", basename(pn)), orgPath)
 
+      # replace programme sep
+      todoExtract <- sub_template_param(todoExtract, "{{TODO_PROJECT_NOTE_SEP}}",
+                                        settings[["TodoProjectNoteSep"]], orgPath)
+
+
       # form absolute link to project note
       pnl <- paste0("[", basename(pn), "](", pn, ")")
 
@@ -150,6 +159,11 @@ extract_todos <- function(location, date=get_date(split='-'),
 
           incompleteTodoFound <- TRUE # mark the fact Todos were found!
 
+          # form task header
+          task_header <- paste0(
+            settings[["TodoTaskHeader"]],
+            get_task_title(dGDT[["task"]], settings)
+          )
           # form GDT summary & incompleted TODOs vector
           gdt_summ <- paste0(#basename(dGDT[["projectDocFilePath"]]),
                              #" :  ",
@@ -162,7 +176,13 @@ extract_todos <- function(location, date=get_date(split='-'),
           todoGDTExtract <- sub_template_param(todoGDTExtractionContents, "{{GDT_SUMMARY}}",
                                                gdt_summ, orgPath)
 
-          todoGDTExtract <- sub_template_param(todoGDTExtract, "{{GDT_TODO_LIST}}",
+          todoGDTExtract <- sub_template_param(todoGDTExtract, "{{GDT_SEP}}",
+                                               settings[["TodoGDTSep"]], orgPath)
+
+          todoGDTExtract <- sub_template_param(todoGDTExtract, "{{TASK_HEADER}}",
+                                               task_header, orgPath)
+
+                    todoGDTExtract <- sub_template_param(todoGDTExtract, "{{GDT_TODO_LIST}}",
                                                todoList, orgPath)
 
           # APPEND to todoExtract

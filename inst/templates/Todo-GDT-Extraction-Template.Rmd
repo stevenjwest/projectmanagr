@@ -1,4 +1,12 @@
 
+{{GDT_SEP}}
+
+
+
+{{TASK_HEADER}}
+
+
 {{GDT_SUMMARY}}
+
 
 {{GDT_TODO_LIST}}

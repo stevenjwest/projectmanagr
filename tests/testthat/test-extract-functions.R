@@ -106,6 +106,16 @@ test_that("test extract functions", {
   local_add_todos_to_sub_note2(subNoteRmd2)
   local_add_todos_to_sub_note3(subNoteRmd3)
 
+  # mock the function that returns the date
+  local_mocked_bindings(
+    get_date = function (timezone = "UTC", split="-") { "2024-02-22" } )
+
+  # function variables - for interactive testing
+  date="2024-02-22"
+  todoGDTExtractionTemplate="Todo-GDT-Extraction-Template.Rmd"
+  todoExtractionTemplate="Todo-Extraction-Template.Rmd"
+  todoProgCollectionTemplate="Todo-Programme-Collection-Template.Rmd"
+  todoCollectionTemplate="Todo-Collection-Template.Rmd"
   # extract todo items
   todoItems <- extract_todos(projectNotePath)
 
