@@ -2,7 +2,7 @@
 % Please edit documentation in R/filesystem-functions.R
 \name{find_org_directory}
 \alias{find_org_directory}
-\title{Find Organisation Dir}
+\title{Find Organisation Root Directory}
 \usage{
 find_org_directory(path = getwd())
 }
@@ -11,11 +11,15 @@ find_org_directory(path = getwd())
 Organisation.}
 }
 \description{
-Searches fileSystemPath's parent directories to identify
-a Project Organisation directory.  This is identified by
-finding a '.config/' directory and a '.config/templates/' directory.
+First searches for an Organisation Root Directory in the \code{path} parameter,
+by recursively attempting to identify the \verb{.config/} and
+\verb{.config/templates/} directories - via \code{find_org_path()}.
 }
 \details{
+If this fails, and an RStudio session is available, the filesystem path of
+the currently active document in the Source Editor is also searched - via
+\code{find_org_rstudio_editor()}
+
 If an Organisation path is identified, it is returned, otherwise
 the function returns a BLANK string "".
 }

@@ -13,7 +13,7 @@
     "projectmanagr::addin_datatable_add_data": "Ctrl+M Ctrl+T Ctrl+A",
     "projectmanagr::addin_datatable_add_groups": "Ctrl+M Ctrl+T Ctrl+G",
     "projectmanagr::addin_datatable_create": "Ctrl+M Ctrl+T Ctrl+C",
-    "projectmanagr::addin_datatable_import": "Ctrl+M Ctrl+T Ctrl+I",
+    "projectmanagr::addin_datatable_import_export": "Ctrl+M Ctrl+T Ctrl+I",
     "projectmanagr::addin_datatable_resample": "Ctrl+M Ctrl+T Ctrl+R",
 
 

@@ -165,7 +165,7 @@ check_table_name <- function(table_name, datatables, i, table_start_line) {
   # FIRST check that table_name ALREADY EXISTS in datatables
   if( any(names(datatables) == table_name) == FALSE ) {
     # no datatable of name table_name to add data to - STOP
-    stop( paste0("  No datatable exists to add data to: ", table_name, " table index: ", i, "\n rmd line: ", table_start_lines) )
+    stop( paste0("  No datatable exists to add data to: ", table_name, " table index: ", i, "\n rmd line: ", table_start_line) )
   }
   table_name # return
 }

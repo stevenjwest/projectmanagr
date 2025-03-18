@@ -80,14 +80,15 @@ create_test_settings_yaml <- function(orgParentPath) {
                               .Platform$file.sep, "config",
                               .Platform$file.sep, "settings.yml")
 
-  settings <- yaml::read_yaml(settingsYamlFile)
+  settings <- yaml::yaml.load(yaml::read_yaml(settingsYamlFile))
 
   # modify separators containing '~' character
    # as not allowed in filenames tested in R packages for CRAN submission
   settings$ProjectPrefixSep <- "_--_" # from ~_
   settings$ProjectIndexSep <- "___" # from ~
 
-  yaml::write_yaml(settings, fs::path(orgParentPath, "settings.yml"))
+  yaml::write_yaml(yaml::as.yaml(settings),
+                   fs::path(orgParentPath, "settings.yml"))
 
   fs::path_real(fs::path(orgParentPath, "settings.yml"))
 
@@ -888,6 +889,39 @@ add_template_create_datatables <- function(rmd_path, ins_line) {
     "",
     "",
     "    TEMPLATE  :  CREATE  :  fix-solution-wts",
+    "",
+    "",
+    "        ID          wt_g_formulation       ",
+    "    =============  ==================      ",
+    "",
+    "     <<IDS>>-CTL        24.4818            ",
+    "                                           ",
+    "     <<IDS>>-CNS        22.2222            ",
+    "                                           ",
+    ">>>>                                                                       ",
+    ">>>> Fill Datatable Template column values with appropriate defaults       ",
+    ">>>>                                                                       ",
+    ">>>> Place CURSOR on this line ...                                         ",
+    ">>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          ",
+    ">>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       ",
+    ">>>>                                                                       ",
+    "",
+    "+===============================================================================",
+    "")
+  local_insert_lines(rmd_path, contents, ins_line)
+
+}
+
+
+add_template_create_datatables_ids <- function(rmd_path, ins_line) {
+
+  # insert datatables : samples_CNS CREATE & CREATE TEMPLATE (fix-solutions-wts)
+  contents <- c(
+    "",
+    "+===============================================================================",
+    "",
+    "",
+    "    TEMPLATE  :  CREATE  :  fix-sol-wts",
     "",
     "",
     "        ID          wt_g_formulation       ",

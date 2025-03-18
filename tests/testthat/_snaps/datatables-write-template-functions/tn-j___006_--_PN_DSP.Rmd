@@ -1,5 +1,5 @@
 ---
-title: 'tn-t___007~ PN RSP'
+title: 'tn-j___006~ PN DSP'
 author: 'sjwest'
 output:
   html_document:
@@ -34,24 +34,26 @@ output:
 
 
 
-**SUMMARY**
-
+### _summary_point_01_
 
 >>>>
 >>>> Summarise key insights from work in this note that fulfil the Task
 >>>>
 
 
-*__SUMMARY_POINT_01__*
 
-
-
-**TODO**
+--------------------- todo ---------------------
+------------------------------------------------
 
 
 ### TODO_HEADER
 
+
 * _details_of_todo_
+
+
+
+#### [] _todo_item_description_
 
 
 
@@ -72,12 +74,10 @@ output:
 
 
 
-
-
 +===============================================================================
 
 
-    samples  :  CREATE
+    samples_CNS  :  CREATE
 
 
       ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    
@@ -94,21 +94,16 @@ output:
 
 +===============================================================================
 
-
 +===============================================================================
 
 
-    TEMPLATE  :  RESAMPLE  :  samples
+    TEMPLATE  :  DISPOSE  :  samples_CNS
 
 
-        ID          rsample       reps    
-    ============  =============  ========  
+        ID               dspose            
+    =============  ==================      
 
-     <<IDS>>       CNS              1     
-                   SC-LUM           1     
-                   SC-THOR          1     
-                   DRG-L4-LT        1     
-                   DRG-L4-RT        1     
+     <<IDS>>        2024-10-02:1500B       
                                            
 >>>>                                                                       
 >>>> Fill Datatable Template column values with appropriate defaults       
@@ -124,17 +119,14 @@ output:
 +===============================================================================
 
 
-    TEMPLATE  :  RESAMPLE  :  samples
+    TEMPLATE  :  DISPOSE  :  samples_CNS
 
 
-        ID          resample       reps    
-    ============  =============  ========  
+        ID               dispose           
+    =============  ==================      
 
-     <<IDS>>       CNS              1     
-                   SC-LUM           1     
-                   SC-THOR          1     
-                   DRG-L4-LT        1     
-                   DRG-L4-RT              
+     <<IDS>>        2024-10-02:1500B       
+                    2024-10-02:1500B       
                                            
 >>>>                                                                       
 >>>> Fill Datatable Template column values with appropriate defaults       
@@ -150,38 +142,25 @@ output:
 +===============================================================================
 
 
-    samples  :  RESAMPLE
+    samples_CNS  :  DISPOSE
 
 
-      ID       resample      reps    
-    ======  =============  ========  
+      ID           dispose        
+    ======  ====================  
 
-     1001        CNS           1     
-                SC-LUM         1     
-               SC-THOR         1     
-              DRG-L4-LT        1     
-              DRG-L4-RT        1     
-                                     
-     1002        CNS           1     
-                SC-LUM         1     
-               SC-THOR         1     
-              DRG-L4-LT        1     
-              DRG-L4-RT        1     
-                                     
-     1003        CNS           1     
-                SC-LUM         1     
-               SC-THOR         1     
-              DRG-L4-LT        1     
-              DRG-L4-RT        1     
-                                     
-     1004        CNS           1     
-                SC-LUM         1     
-               SC-THOR         1     
-              DRG-L4-LT        1     
-              DRG-L4-RT        1     
-                                     
+     1001     2024-10-02:1500B    
+                                  
+     1002     2024-10-02:1500B    
+                                  
+     1003     2024-10-02:1500B    
+                                  
+     1004     2024-10-02:1500B    
+                                  
 
 +===============================================================================
+
+
+
 
 
 

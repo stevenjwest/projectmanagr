@@ -1,5 +1,5 @@
 ---
-title: 'tn-t___002~ PN ADS'
+title: 'tn-j___002~ PN ADS'
 author: 'sjwest'
 output:
   html_document:
@@ -34,24 +34,26 @@ output:
 
 
 
-**SUMMARY**
-
+### _summary_point_01_
 
 >>>>
 >>>> Summarise key insights from work in this note that fulfil the Task
 >>>>
 
 
-*__SUMMARY_POINT_01__*
 
-
-
-**TODO**
+--------------------- todo ---------------------
+------------------------------------------------
 
 
 ### TODO_HEADER
 
+
 * _details_of_todo_
+
+
+
+#### [] _todo_item_description_
 
 
 
@@ -69,8 +71,6 @@ output:
 
 
 # Introduction
-
-
 
 
 
@@ -122,6 +122,8 @@ output:
                                                                              
 
 +===============================================================================
+
+
 
 
 

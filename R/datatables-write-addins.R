@@ -88,7 +88,7 @@ dt_create_ui <- function(path, row) {
         fillRow( p("Create a datatable in the active Rmd at the cursor from input params.") ),
 
         fillRow(
-          helpText('Rmd: ', path, align='center'),
+          helpText('Rmd: ', get_relative_path_org(path), align='center'),
           helpText('cursor position (line): ', row, align='center' ) ),
 
         fillRow(  textInput("name", "Datatable name:",
@@ -240,7 +240,7 @@ dt_create_template_ui <- function(path, startrow, endrow, lt, template_datatable
         fillRow( p("Create new datatable from the selected Template using <<IDS>> from existing datatable.") ),
 
         fillRow(
-          helpText( p('Rmd: ', path, align="center") ),
+          helpText( p('Rmd: ', get_relative_path_org(path), align="center") ),
           helpText( p('Template - Start line: ',
                       startrow, align="center") ),
           helpText( p('End line: ',
@@ -470,7 +470,7 @@ dt_create_file_ui <- function(path, row, dtT) {
         fillRow( p("Create a datatable in the active Rmd at the cursor from a CSV (or other data) file.") ),
 
         fillRow(
-          helpText('Rmd: ', path, align='center'),
+          helpText('Rmd: ', get_relative_path_org(path), align='center'),
           helpText('cursor position (line): ', row, align='center' ) ),
 
         fillRow(  textInput("dt_name", "Datatable name:", value="samples", width="50%"),
@@ -654,7 +654,7 @@ dt_add_data_ui <- function(path, row, lt, type, ltid) {
         fillRow( p("Add Data to a datatable in the active Rmd at the cursor position.") ),
 
         fillRow(
-          helpText('Rmd: ', path, align='center'),
+          helpText('Rmd: ', get_relative_path_org(path), align='center'),
           helpText('cursor position (line): ', row, align='center' ) ),
 
         fillRow( h4("Choose datatable:", align="center") ),
@@ -1070,7 +1070,7 @@ dt_add_data_template_ui <- function(path, row, lt) {
         fillRow( p("Add IDs from existing an datatable to the datatable template in the active Rmd.") ),
 
         fillRow(
-          helpText('Rmd: ', path, align='center'),
+          helpText('Rmd: ', get_relative_path_org(path), align='center'),
           helpText('cursor position (line): ', row, align='center' ) ),
 
         fillRow( h4("Choose datatable:") ),
@@ -1263,7 +1263,7 @@ dt_add_group_ui <- function(path, row, lt, group_declaration) {
         fillRow( p("Add Group Data to a datatable in the active Rmd at the cursor from input params.") ),
 
         fillRow(
-          helpText('Rmd: ', path, align='center'),
+          helpText('Rmd: ', get_relative_path_org(path), align='center'),
           helpText('cursor position (line): ', row, align='center' ) ),
 
         fillRow( p("Choose which datatable the new group data columns will be added to.") ),
@@ -1506,7 +1506,7 @@ dt_resample_ui <- function(path, row, lt) {
         fillRow( p("Resample a datatable in the active Rmd at the cursor from input params.") ),
 
         fillRow(
-          helpText('Rmd: ', path, align='center'),
+          helpText('Rmd: ', get_relative_path_org(path), align='center'),
           helpText('cursor position (line): ', row, align='center' ) ),
 
         fillRow( p("Choose which datatable to resample.") ),
@@ -1673,7 +1673,7 @@ dt_resample_template_ui <- function(path, row, lt) {
         fillRow( p("Resample a datatable in the active Rmd at the cursor from input params.") ),
 
         fillRow(
-          helpText('Rmd: ', path, align='center'),
+          helpText('Rmd: ', get_relative_path_org(path), align='center'),
           helpText('cursor position (line): ', row, align='center' ) ),
 
         fillRow( p("Choose which datatable to resample.") ),
@@ -1819,7 +1819,7 @@ dt_dispose_ui <- function(path, row, lt, cdt) {
         fillRow( p("Dispose Samples from a datatable in the active Rmd at the cursor position.") ),
 
         fillRow(
-          helpText('Rmd: ', path, align='center'),
+          helpText('Rmd: ', get_relative_path_org(path), align='center'),
           helpText('cursor position (line): ', row, align='center' ) ),
 
         fillRow( h4("Choose datatable:", align="center") ),
@@ -1963,7 +1963,7 @@ dt_dispose_template_ui <- function(path, row, lt) {
         fillRow( p("Dispose Samples from a datatable in the active Rmd at the cursor position.") ),
 
         fillRow(
-          helpText('Rmd: ', path, align='center'),
+          helpText('Rmd: ', get_relative_path_org(path), align='center'),
           helpText('cursor position (line): ', row, align='center' ) ),
 
         fillRow( p("Choose which datatable to dispose samples") ),
@@ -2019,10 +2019,11 @@ dt_dispose_template_server <- function(input, output, session) {
 #### _______________________________________________ ####
 
 
-#' Import Existing Samples and Reps from Datatables in Source Project Notes
+#' Import/Export Existing Samples and Reps from Datatables in Source Project Notes
 #'
 #' Generates a Shiny Gadget for importing existing samples and reps from datatables
-#' that exist in source Project Note(s) into the currently active destination Project Note.
+#' that exist in source Project Note(s) into the currently active destination
+#' Project Note, and exports these samples from the source Project Note(s).
 #'
 #' @details
 #' This function allows the user to:
@@ -2108,7 +2109,7 @@ dt_import_export_ui <- function(path, row) {
                         p("Import/Export samples & reps from datatables in Source Project Notes") ),
 
                fillRow(
-                 helpText('Rmd: ', path, align='center'),
+                 helpText('Rmd: ', get_relative_path_org(path), align='center'),
                  helpText('cursor position (line): ', row, align='center' ) ),
 
                fillRow( flex = c(7, 1, 1),

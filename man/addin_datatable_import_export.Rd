@@ -2,7 +2,7 @@
 % Please edit documentation in R/datatables-write-addins.R
 \name{addin_datatable_import_export}
 \alias{addin_datatable_import_export}
-\title{Import Existing Samples and Reps from Datatables in Source Project Notes}
+\title{Import/Export Existing Samples and Reps from Datatables in Source Project Notes}
 \usage{
 addin_datatable_import_export()
 }
@@ -12,7 +12,8 @@ by creating or updating import/export datatables.
 }
 \description{
 Generates a Shiny Gadget for importing existing samples and reps from datatables
-that exist in source Project Note(s) into the currently active destination Project Note.
+that exist in source Project Note(s) into the currently active destination
+Project Note, and exports these samples from the source Project Note(s).
 }
 \details{
 This function allows the user to:

@@ -49,9 +49,9 @@ Description: Create a datatable from a data file (such as CSV).
 Binding: addin_datatable_create_from_file
 Interactive: true
 
-Name: ProjectManagr: Datatable Import
-Description: Import samples from srouce note(s) via addin: select samples & reps from source DIR tree, export from source notes, import to destination note
-Binding: addin_datatable_import
+Name: ProjectManagr: Datatable Import/Export
+Description: Import/Export Existing Samples and Reps from Datatables in Source Project Notes
+Binding: addin_datatable_import_export
 Interactive: true
 
 Name: ProjectManagr: Datatable Resample

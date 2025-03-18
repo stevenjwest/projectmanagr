@@ -2,7 +2,7 @@
 % Please edit documentation in R/datatables-write-template-functions.R
 \name{datatable_create_template_rmd}
 \alias{datatable_create_template_rmd}
-\title{Create new Sample DataTable from TEMPLATE and insert into Rmd}
+\title{Create a New DataTable from a Template in an Rmd File}
 \usage{
 datatable_create_template_rmd(
   rmd_path,
@@ -15,41 +15,60 @@ datatable_create_template_rmd(
 )
 }
 \arguments{
-\item{rmd_path}{path to Rmd file}
+\item{rmd_path}{Character. Path to the Rmd file containing the DataTable template.}
 
-\item{rmd_line}{Selected line in Rmd file within TEMPLATE datatable.}
+\item{rmd_line}{Integer. Line number within the Rmd file that falls inside the template DataTable delimiters.}
 
-\item{datatable_name}{Name of an EXISTING datatable to source IDs from: these
-will replace the \verb{<<IDS>>} String in the TEMPLATE datatable with all IDs.}
+\item{datatable_name}{Character. Name of an existing DataTable to source sample IDs from; if \code{NULL}, the \code{IDs} vector is used.}
 
-\item{template_datatable_name}{Name the template dtaatable will take when created.}
+\item{template_datatable_name}{Character. Name to assign to the newly created DataTable.}
 
-\item{all_ids}{Boolean to indicate whether all IDs from \code{source_daatable_name}
-should be returned: ignoring any that are DISPOSED EXPORTED or RESAMPLED.
-FALSE by default - only returning IDs that are NOT DISPOSED EXPORTED or RESAMPLED.}
+\item{IDs}{Character vector. Sample IDs to use if \code{datatable_name} is \code{NULL}.}
 
-\item{dt_length}{Int of data table max length in characters - default 100.
+\item{all_ids}{Logical. If \code{TRUE}, includes all sample IDs from the source DataTable, ignoring those marked as DISPOSED EXPORTED or RESAMPLED. Defaults to \code{FALSE}.}
 
-Missing param \code{expand} not required - never want to expand the values in the
-template datatable, as purpose of template is to specify all values from one
-line indicated by \verb{<<IDS>>} variable!
-Variable \code{expand} : Whether to expand any values in vectors set to \code{default_data_vals},
-default is FALSE, meaning custom values can be set in \code{default_data_vals} for
-each ID. If TRUE, teh vector is expanded by the length of IDs, meaning ALL
-values in each vector are set to EACH ID, added as a multi-obs set of rows
-for each ID.}
+\item{dt_length}{Integer. Maximum length (in characters) allowed for the generated DataTable. Defaults to 100.}
+}
+\value{
+Invisibly returns the modified Rmd file contents after inserting the new DataTable.
 }
 \description{
-Creates a Sample DataTable in specified Rmd file from the template that
-should be present between specified start & end line.
+This function streamlines the creation of derivative DataTables for logging further
+processing and data collection. It reads an Rmd file, locates a specially formatted
+template DataTable, marked with the header \code{TEMPLATE  :  CREATE}, and generates a new,
+concrete DataTable by replacing placeholder tokens \verb{<<IDS>>} with actual sample IDs.
 }
 \details{
+The process works as follows:
 \enumerate{
-\item The template Sample DataTable will contain an initial ID column containing
-the default \verb{<<IDS>>} vector - which will be replaced with IDs from selected
-existing datatable.  Can use this syntax to create a new Datatable using IDS
-defined in existing table, with different PREFIX or SUFFIX strings.
-\item All other columns will have their initial data value replicated along the
-length of the datatable - length of IDs.
+\item The Rmd file is validated and read from the provided \code{rmd_path}.
+\item The function identifies the template DataTable using the \code{rmd_line}
+parameter, which must fall within the template’s delimiter block.
+\item It extracts the template’s data structure, including the default data
+columns and values, as well as the \verb{<<IDS>>} placeholder in the ID
+column.
+\item Sample IDs are sourced from an existing DataTable
+(if \code{datatable_name} is provided) or directly from the supplied
+\code{IDs} vector. In the case of an existing DataTable, only those
+IDs not marked as DISPOSED EXPORTED or RESAMPLED are selected by
+default, unless \code{all_ids} is set to \code{TRUE}.
+\item A new DataTable is created using these sample IDs, replicating the
+default values defined in the template. Suffixes or prefixes defined
+in the template are applied accordingly.
+\item Finally, the generated DataTable is inserted back into the Rmd file,
+replacing the original template.
 }
+
+This approach is especially useful when working with a large number of samples,
+as it allows rapid derivation of new DataTables with consistent default
+settings and customized sample identifiers, thereby simplifying subsequent
+data processing and record keeping.
+
+The template DataTable must be formatted with a header starting with
+\code{TEMPLATE  :  CREATE} (optionally followed by a default table name),
+and it should include the \code{<<IDS>>} placeholder in the ID column. This
+placeholder is replaced by actual sample IDs derived from an existing DataTable
+or provided via \code{IDs}. The function maintains the default data values
+from the template, ensuring that any custom values remain unchanged unless
+the template is modified.
 }

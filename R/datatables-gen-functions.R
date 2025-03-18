@@ -62,7 +62,7 @@ define_default_ids <- function(IDs) {
     IDs <- "DATA_VAL"
   }
   IDs
-}
+} #### ________________________________ ####
 
 #' Generate ADD_DATA Samples Datatable
 #'
@@ -165,7 +165,7 @@ datatable_add_data_samples <- function(contents, data_cols, datatable_name,
   # return
   data_tables
 
-}
+} #### ________________________________ ####
 
 
 #' Generate ADD_DATA Variables Datatable
@@ -271,6 +271,65 @@ correct_data_vals <- function(default_data_vals, data_cols) {
   ddl
 }
 
+
+#' Validate & define group names - from datatable, var_names & group_names.
+#'
+#' @return group_names vector
+define_groups <- function(dt, var_names, group_names) {
+
+  gdt <- get_group_cols(dt)
+
+  # Set IDs (values to go in first col) to var_names
+  IDs <- var_names
+
+  # converts group_names to vector same length as dt[["ID"]]
+  group_names_comp_ids <- rep(sort(group_names), ((length(dt[["ID"]]) / length(sort(group_names)))+1) )[1:length(dt[["ID"]])]
+
+  # CHECK the group_names exist in the datatable
+  # either they are sample IDs, in which case they are from the $ID col
+  # or it is the special group `ALL` - so just check this
+  # or the group names are the names from a group declared in samples datatable
+  if( length(group_names)==1 && group_names[1] == "ALL" ) {
+
+    cat( "  group_names is 'ALL'\n" )
+
+  } else if( length(group_names) == length(dt$ID) && all( group_names_comp_ids ==  sort(dt$ID) ) ) {
+
+    # SHOULD NOT ALLOW THIS
+    # gets complicated to handle if IDs have reps
+    # so can only add ALL or groups to this kind of datatable..
+    stop( paste0("  group names  CANNOT be IDs for var-first layout - use sample-first layout: datatables_add_data_samples"))
+
+    #cat( "  group_names are IDs\n" )
+
+  } else {
+
+    # check all group cols
+    group_names_match_group_cols <- c()
+    for( i in 1:length(gdt) ) {
+      group_names_match_group_cols[i] <- all( unique(gdt[[i]]) %in% group_names )
+    }
+
+    if( any(group_names_match_group_cols) == TRUE ) {
+      # group_names represent a group
+      cat( "  group_names is a group: ", names(gdt)[group_names_match_group_cols], "\n" )
+    }
+    else {
+      # group_names is INVALID
+      stop( paste0("  group_names is invalid: Must be ALL or names from EXISTING GROUP: ", group_names))
+    }
+
+  }
+
+  # remove any NA from group_names
+  group_names <- group_names[!is.na(group_names)]
+
+  g_list <- list(IDs, "", group_names, FALSE, FALSE, FALSE)
+  names(g_list) <- c("IDs", "REPs", "data_cols", "summarise_reps", "rep_exists", "all_reps")
+
+  # return
+  g_list
+} #### ________________________________ ####
 
 
 #' Generate ADD_DATA Timetable Datatable
@@ -430,7 +489,7 @@ datatable_add_data_timetable <- function(contents, step_names, datatable_name,
   # return
   data_tables
 
-}
+} #### ________________________________ ####
 
 
 #' Generate Dedicated GROUP Datatable
@@ -553,9 +612,7 @@ datatable_add_group <- function(contents, group_names, datatable_name,
   # return
   data_tables
 
-}
-
-
+} #### ________________________________ ####
 
 
 #' Generate RESAMPLE Datatable
@@ -697,7 +754,7 @@ resample_error_check <- function(resample_vector, rep_vector) {
   if( !(length(rep_vector) == length(resample_vector)) ) {
     rep_vector <- rep(rep_vector, length(resample_vector) )
   }
-}
+} #### ________________________________ ####
 
 
 #' Generate DISPOSE Datatable
@@ -803,9 +860,7 @@ datatable_dispose <- function(contents, datatable_name, dt_length = 100,
   # return
   data_tables
 
-
-}
-
+} #### ________________________________ ####
 
 
 #' Generate EXPORT Datatable
@@ -927,11 +982,7 @@ datatable_export <- function(contents, datatable_name, destination_rel_path_link
   # return
   data_tables
 
-
-}
-
-
-
+} #### ________________________________ ####
 
 
 #' Generate IMPORT Datatable
@@ -1154,7 +1205,7 @@ concat_ids_ext <- function(dest_datatables, datatable_name, dc_list,
     dc_list$IDs[( dc_list$IDs %in% dest_datatables[[datatable_name]]$ID )] <- IDm
     return(dc_list$IDs)
   }
-}
+} #### ________________________________ ####
 
 
 #' Define IDs and REPs - based on current datatable contents
@@ -1491,64 +1542,6 @@ define_ids_reps_explicit <- function(ids_vector, reps_vector, datatable, summari
 }
 
 
-#' Validate & define group names - from datatable, var_names & group_names.
-#'
-#' @return group_names vector
-define_groups <- function(dt, var_names, group_names) {
-
-  gdt <- get_group_cols(dt)
-
-  # Set IDs (values to go in first col) to var_names
-  IDs <- var_names
-
-  # converts group_names to vector same length as dt[["ID"]]
-  group_names_comp_ids <- rep(sort(group_names), ((length(dt[["ID"]]) / length(sort(group_names)))+1) )[1:length(dt[["ID"]])]
-
-  # CHECK the group_names exist in the datatable
-  # either they are sample IDs, in which case they are from the $ID col
-  # or it is the special group `ALL` - so just check this
-  # or the group names are the names from a group declared in samples datatable
-  if( length(group_names)==1 && group_names[1] == "ALL" ) {
-
-    cat( "  group_names is 'ALL'\n" )
-
-  } else if( length(group_names) == length(dt$ID) && all( group_names_comp_ids ==  sort(dt$ID) ) ) {
-
-    # SHOULD NOT ALLOW THIS
-    # gets complicated to handle if IDs have reps
-    # so can only add ALL or groups to this kind of datatable..
-    stop( paste0("  group names  CANNOT be IDs for var-first layout - use sample-first layout: datatables_add_data_samples"))
-
-    #cat( "  group_names are IDs\n" )
-
-  } else {
-
-    # check all group cols
-    group_names_match_group_cols <- c()
-    for( i in 1:length(gdt) ) {
-      group_names_match_group_cols[i] <- all( unique(gdt[[i]]) %in% group_names )
-    }
-
-    if( any(group_names_match_group_cols) == TRUE ) {
-      # group_names represent a group
-      cat( "  group_names is a group: ", names(gdt)[group_names_match_group_cols], "\n" )
-    }
-    else {
-      # group_names is INVALID
-      stop( paste0("  group_names is invalid: Must be ALL or names from EXISTING GROUP: ", group_names))
-    }
-
-  }
-
-  # remove any NA from group_names
-  group_names <- group_names[!is.na(group_names)]
-
-  g_list <- list(IDs, "", group_names, FALSE, FALSE, FALSE)
-  names(g_list) <- c("IDs", "REPs", "data_cols", "summarise_reps", "rep_exists", "all_reps")
-
-  # return
-  g_list
-}
 
 
 #' Define IDs and REPs - trimmed based on current datatable data_cols contents
@@ -1876,7 +1869,7 @@ define_data_vals_groups <- function(datatable, groups, data_cols, IDs, REPs, rep
   # return
   dv_list
 
-}
+} #### ________________________________ ####
 
 
 #' Build Datatable
@@ -2610,7 +2603,7 @@ check_dt_name_id <- function(datatables, datatable_name) {
   if( any( names( datatables[[ datatable_name ]] ) == "ID" ) == FALSE ) {
     stop( paste0("  Column ID missing from datatable: ", datatable_name ) )
   }
-}
+} #### ________________________________ ####
 
 
 

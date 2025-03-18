@@ -2,12 +2,12 @@
 
 test_that("test create functions", {
 
-  #### generate test organisation temp directory ####
+  ################ generate test organisation temp directory ###################
 
   tmpdir <- create_tmpdir_rsess()
 
 
-  ################ create_project_org creates Org ####################
+  ################ create_project_org creates Org ##############################
 
   orgName <- "_T_O"
   authorValue="sjwest"
@@ -55,7 +55,7 @@ test_that("test create functions", {
   #expect_snapshot_file( statusYml2 )
 
 
-  ################ create_programme creates programme ################
+  ################ create_programme creates programme ##########################
 
   progName <- "0-PR"
   # mock the function that returns the programme creation datetime
@@ -70,7 +70,7 @@ test_that("test create functions", {
   progIndex <- fs::path(progDir, paste0("_index_", progName, ".Rmd"))
 
 
-  ################ create_programme_section creates ps1 in prog ##########
+  ################ create_programme_section creates ps1 in prog ################
 
   # create test Programme Section
   sectionName <- "ps1"
@@ -79,7 +79,7 @@ test_that("test create functions", {
   sectIndex <- fs::path(sectDir, paste0("_index_", sectionName, ".Rmd"))
 
 
-  ################ create_programme_section creates ps2 in section ##########
+  ################ create_programme_section creates ps2 in section #############
 
   # create test Programme Section nested in section
   sectionName <- "ps2"
@@ -88,7 +88,7 @@ test_that("test create functions", {
   sect2Index <- fs::path(sect2Dir, paste0("_index_", sectionName, ".Rmd"))
 
 
-  ################ create_project_doc creates doc in prog ############
+  ################ create_project_doc creates doc in prog ######################
 
   # create test Project Doc
   projectDocPrefix <- "PDo"
@@ -109,7 +109,7 @@ test_that("test create functions", {
   expect_snapshot_file( projectDocRmd )
 
 
-  ################ create_project_doc creates doc in section ############
+  ################ create_project_doc creates doc in section ###################
 
   # create test Project Doc
   projectDocPrefix <- "PDs"
@@ -130,7 +130,31 @@ test_that("test create functions", {
   expect_snapshot_file( projectDocRmd )
 
 
-  ################ create_project_note creates simple Project Note ####
+  ################ create_project_doc creates section and doc ##################
+
+  # create new section directory
+  sect3Dir <- fs::path(sectDir, "psd")
+  fs::dir_create(sect3Dir)
+
+  # create test Project Doc
+  projectDocPrefix <- "Pas"
+  projectDocName <- "P_DaS"
+  projectParentPath <- sect3Dir
+  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName,
+                                        projectParentPath, authorValue)
+  projectDocDir <- fs::path(projectParentPath, projectDocPrefix)
+
+
+  ## TESTS ##
+
+  # check project Doc Rmd & Dir generated
+  expect_true(  fs::file_exists( projectDocRmd )  )
+  expect_true(  fs::dir_exists( projectDocDir )  )
+
+  # check Project Doc Rmd file contents are correctly filled
+  expect_snapshot_file( projectDocRmd )
+
+  ################ create_project_note creates simple Project Note #############
 
   # create test Project Doc
   projectDocPrefix <- "PrDoS"
@@ -169,7 +193,7 @@ test_that("test create functions", {
   expect_snapshot_file( projectNoteRmd )
 
 
-  ################ create_group_note creates group Project Note ####
+  ################ create_group_note creates group Project Note ################
 
   # create test Project Doc
   projectDocPrefix <- "PrDoG"
@@ -222,7 +246,7 @@ test_that("test create functions", {
   expect_snapshot_file( subNoteRmd )
 
 
-  ################ create_sub_note creates sub Project Note ####
+  ################ create_sub_note creates sub Project Note ####################
 
   # create test Project Doc
   projectDocPrefix <- "PrDoSu"
@@ -308,7 +332,7 @@ test_that("test create functions", {
   # [x] can navigate groupNoteRmd link under GROUP CONTENTS
 
 
-  ################ create_content creates insertable content in Proj Note ####
+  ################ create_content creates insertable content in Proj Note ######
 
   # create test Project Doc for content
   projectDocPrefix <- "PDCon"
@@ -410,7 +434,7 @@ test_that("test create functions", {
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file( journalRmd )
 
-  #### INDEX TESTS ####
+  ################ INDEX TESTS #################################################
 
   # placing all INDEX tests after creation of all artefacts in the Organisation
   # so these tests check all the links & contents are correctly written at this point

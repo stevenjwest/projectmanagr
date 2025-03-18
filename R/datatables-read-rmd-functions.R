@@ -687,22 +687,19 @@ datatable_find <- function(datapath, settings, updateProgress=NULL) {
 
 gen_summary_dt <- function() {
   # generate a blank table to initialise addin with
-  #PREFIX <- ""     # EXP: Fill with the Experiment Prefix ID
-  #TITLE <- ""   # TITLE: Fill with Experiment Title - will contain the LAB_TREATMENT
-  FILENAME <- "" # filename where datatables are read from
   ID <- ""      # ID: Each Sample ID
   SAMPLE <- ""  # SAMPLE: COMPOSITE of all subsampling columns: CNS-RT-MB etc.
-  #PATH <- ""    # PATH: Put the absolute PATH to the Project Note Rmd to Navigate to
+  COUNT <- integer()  # COUNT: How many REPS are there of this sample?
+  IMPORT <- integer()  # IMPORT: How many REPS to import from this sample?
   LOCATION <- "" # LOCATION of the sample - where is it?
   CONDITION <- "" # CONDITION of sample - what is it in?
   DATETIME <- "" # DATETIME sample was moved to current CONDITION/LOCATION
-  COUNT <- integer()  # COUNT: How many REPS are there of this sample?
-  IMPORT <- integer()  # IMPORT: How many REPS to import from this sample?
+  FILENAME <- "" # filename where datatables are read from
   PATH <- "" # relative path to project note from the datapath
 
   #samples_summary <- tibble::tibble(ID, SAMPLE, COUNT, PREFIX, TITLE, LOCATION, CONDITION)
   # tibble::tibble(PREFIX, TITLE, ID, SAMPLE, LOCATION, CONDITION, DATETIME, COUNT, IMPORT)
-  tibble::tibble(FILENAME, ID, SAMPLE, LOCATION, CONDITION, DATETIME, COUNT, IMPORT, PATH)
+  tibble::tibble(ID, SAMPLE, COUNT, IMPORT, LOCATION, CONDITION, DATETIME, FILENAME, PATH)
 }
 
 

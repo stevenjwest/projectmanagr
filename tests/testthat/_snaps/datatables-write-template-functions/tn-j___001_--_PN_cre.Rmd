@@ -1,5 +1,5 @@
 ---
-title: 'tn-t___002~ PN ADS'
+title: 'tn-j___001~ PN cre'
 author: 'sjwest'
 output:
   html_document:
@@ -34,24 +34,26 @@ output:
 
 
 
-**SUMMARY**
-
+### _summary_point_01_
 
 >>>>
 >>>> Summarise key insights from work in this note that fulfil the Task
 >>>>
 
 
-*__SUMMARY_POINT_01__*
 
-
-
-**TODO**
+--------------------- todo ---------------------
+------------------------------------------------
 
 
 ### TODO_HEADER
 
+
 * _details_of_todo_
+
+
+
+#### [] _todo_item_description_
 
 
 
@@ -72,8 +74,6 @@ output:
 
 
 
-
-
 +===============================================================================
 
 
@@ -87,9 +87,9 @@ output:
                                                                                      
      1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
                                                                                      
-     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     
                                                                                      
-     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_4C     
                                                                                      
 
 +===============================================================================
@@ -98,30 +98,62 @@ output:
 +===============================================================================
 
 
-    samples_CNS  :  ADD_DATA
+    lipid-extracts  :  CREATE
 
 
-      ID        store_wash_dt       store_wash_con        store_wash_loc     
-    ======  ====================  ==================  =====================  
+        ID        wt_g_formulation    
+    ==========  ====================  
 
-     1001     INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-                                                                             
-     1002     INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-                                                                             
-     1003     INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-                                                                             
-     1004     INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-              INSERT__DATETIME          PBS_RT          L160:BENCH:shaker    
-                                                                             
+     1001-CTL          24.4818        
+                                      
+     1001-CNS          22.2222        
+                                      
+     1002-CTL          24.4818        
+                                      
+     1002-CNS          22.2222        
+                                      
+     1003-CTL          24.4818        
+                                      
+     1003-CNS          22.2222        
+                                      
+     1004-CTL          24.4818        
+                                      
+     1004-CNS          22.2222        
+                                      
 
 +===============================================================================
+
+
+
++===============================================================================
+
+
+    fix-sol-wts  :  CREATE
+
+
+        ID        wt_g_formulation    
+    ==========  ====================  
+
+     1011-CTL          24.4818        
+                                      
+     1011-CNS          22.2222        
+                                      
+     1012-CTL          24.4818        
+                                      
+     1012-CNS          22.2222        
+                                      
+     1013-CTL          24.4818        
+                                      
+     1013-CNS          22.2222        
+                                      
+     1014-CTL          24.4818        
+                                      
+     1014-CNS          22.2222        
+                                      
+
++===============================================================================
+
+
 
 
 

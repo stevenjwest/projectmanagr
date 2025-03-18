@@ -1,20 +1,32 @@
 
 
-test_that("datatable write Rmd & write template Rmd", {
+test_that("datatable write Rmd", {
 
-  #### generate test organisation temp directory ####
+  ############## generate test organisation temp directory #####################
 
   tmpdir <- create_tmpdir_rsess()
 
-  ##### create test Org with Project Notes for datatable insertion ####
+
+  ############## create test Org with Project Notes for datatable insertion ####
 
   orgName <- "_T_O_DT"
+  authorValue="sjwest"
   # mock the function that returns the update datetime
+  # and function the generates status yaml content - write fixed org paths
   local_mocked_bindings(
-    get_datetime = function (timezone = "UTC", split="-", splitTime=":") { "2024-02-22:09:56" } )
+    get_datetime = function (timezone = "UTC", split="-", splitTime=":") {
+      "2024-02-22:09:56" },
+    create_status_yaml_content = function(orgPaths, orgPath, orgName, orgTitle, updateTime, sitePath) {
+
+      org <- list(c("/tmp/Rsess/_T_O", "/tmp/Rsess/_T_O2"),
+                  "/tmp/Rsess/_T_O", orgName, orgTitle, updateTime, "/tmp/Rsess/_T_O/site" )
+      # orgPaths contains all EXISTING ORGs and THIS ORG path at end
+      names(org) <- c("orgPaths", "orgPath", "orgName", "orgTitle", "updateTime", "sitePath")
+      return(org)
+    } )
 
   # create test Organisation - using local helper function and withr package
-  orgDir <- local_create_org(orgName, orgParentPath=tmpdir, syp=tmpdir)
+  orgDir <- local_create_org(orgName, authorValue, orgParentPath=tmpdir, syp=tmpdir)
 
   orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
   settingsYml <- fs::path(orgDir, ".config", "settings.yml")
@@ -30,13 +42,14 @@ test_that("datatable write Rmd & write template Rmd", {
   local_mocked_bindings(
     get_datetime = function (timezone = "UTC", split="-", splitTime=":") { "2024-02-22:09:58" } )
 
-  progDir <- local_create_prog(progName, orgDir)
+  progDir <- local_create_prog(progName, orgDir, authorValue)
   progIndex <- fs::path(progDir, paste0("_index_", progName, ".Rmd"))
 
   # create test Project Doc for initial project note link
   projectDocPrefix <- "PD"
   projectDocName <- "Proj_Do"
-  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName, progDir)
+  projectDocRmd <- local_create_project(projectDocPrefix, projectDocName,
+                                        progDir, authorValue)
   projectDocDir <- fs::path(progDir, projectDocPrefix)
 
   # modify gdt titles for unique headers
@@ -50,49 +63,55 @@ test_that("datatable write Rmd & write template Rmd", {
   # create test Project Note for datatables : CREATE
   projectNoteNameCre <- "PN_cre"
   projectNoteRmdCre <- local_create_project_note_simple(projectNoteNameCre, projectNotePath,
-                                                        projectDocRmd, taskLine)
+                                                        projectDocRmd, taskLine, authorValue)
   projectNoteDirCre <- get_project_note_dir_path(projectNoteRmdCre, settings)
 
 
   # create test Project Note for datatables : ADD DATA SAMPLES
   projectNoteNameADS <- "PN_ADS"
   projectNoteRmdADS <- local_create_project_note_simple(projectNoteNameADS, projectNotePath,
-                                                        projectDocRmd, taskLine,noteIndex="___002")
+                                                        projectDocRmd, taskLine, authorValue,
+                                                        noteIndex="___002")
   projectNoteDirADS <- get_project_note_dir_path(projectNoteRmdADS, settings)
 
 
   # create test Project Note for datatables : ADD DATA VARIABLES
   projectNoteNameADV <- "PN_ADV"
   projectNoteRmdADV <- local_create_project_note_simple(projectNoteNameADV, projectNotePath,
-                                                        projectDocRmd, taskLine,noteIndex="___003")
+                                                        projectDocRmd, taskLine, authorValue,
+                                                        noteIndex="___003")
   projectNoteDirADV <- get_project_note_dir_path(projectNoteRmdADV, settings)
 
 
   # create test Project Note for datatables : ADD DATA TIMETABLE
   projectNoteNameADT <- "PN_ADT"
   projectNoteRmdADT <- local_create_project_note_simple(projectNoteNameADT, projectNotePath,
-                                                        projectDocRmd, taskLine,noteIndex="___004")
+                                                        projectDocRmd, taskLine, authorValue,
+                                                        noteIndex="___004")
   projectNoteDirADT <- get_project_note_dir_path(projectNoteRmdADT, settings)
 
 
   # create test Project Note for datatables : ADD GROUP
   projectNoteNameADG <- "PN_ADG"
   projectNoteRmdADG <- local_create_project_note_simple(projectNoteNameADG, projectNotePath,
-                                                        projectDocRmd, taskLine,noteIndex="___005")
+                                                        projectDocRmd, taskLine, authorValue,
+                                                        noteIndex="___005")
   projectNoteDirADG <- get_project_note_dir_path(projectNoteRmdADG, settings)
 
 
   # create test Project Note for datatables : DISPOSE
   projectNoteNameDSP <- "PN_DSP"
   projectNoteRmdDSP <- local_create_project_note_simple(projectNoteNameDSP, projectNotePath,
-                                                        projectDocRmd, taskLine,noteIndex="___006")
+                                                        projectDocRmd, taskLine, authorValue,
+                                                        noteIndex="___006")
   projectNoteDirDSP <- get_project_note_dir_path(projectNoteRmdDSP, settings)
 
 
   # create test Project Note for datatables : RESAMPLE
   projectNoteNameRSP <- "PN_RSP"
   projectNoteRmdRSP <- local_create_project_note_simple(projectNoteNameRSP, projectNotePath,
-                                                        projectDocRmd, taskLine,noteIndex="___007")
+                                                        projectDocRmd, taskLine, authorValue,
+                                                        noteIndex="___007")
   projectNoteDirRSP <- get_project_note_dir_path(projectNoteRmdRSP, settings)
 
 
@@ -100,20 +119,23 @@ test_that("datatable write Rmd & write template Rmd", {
   # create test Project Note for datatables : source
   projectNoteName <- "PN_src"
   projectNoteRmd <- local_create_project_note_simple(projectNoteName, projectNotePath,
-                                                     projectDocRmd, taskLine,noteIndex="___008")
+                                                     projectDocRmd, taskLine, authorValue,
+                                                     noteIndex="___008")
   projectNoteDir <- get_project_note_dir_path(projectNoteRmd, settings)
 
 
   # create test Project Note for datatables : destination (export/import testing)
   projectNoteNameDest <- "PN_des"
   projectNoteRmdDest <- local_create_project_note_simple(projectNoteNameDest, projectNotePath,
-                                                         projectDocRmd, taskLine,noteIndex="___009")
+                                                         projectDocRmd, taskLine, authorValue,
+                                                         noteIndex="___009")
   projectNoteDirDest <- get_project_note_dir_path(projectNoteRmdDest, settings)
 
   # create test Project Note for datatables : source
   projectNoteNameSrc <- "PN_src2"
   projectNoteRmdSrc <- local_create_project_note_simple(projectNoteNameSrc, projectNotePath,
-                                                     projectDocRmd, taskLine,noteIndex="___010")
+                                                     projectDocRmd, taskLine, authorValue,
+                                                     noteIndex="___010")
   projectNoteDirSrc <- get_project_note_dir_path(projectNoteRmdSrc, settings)
 
 
@@ -121,7 +143,8 @@ test_that("datatable write Rmd & write template Rmd", {
   # create test Project Note for datatables : INSERT TIBBLE
   projectNoteNameINT <- "PN_INT"
   projectNoteRmdINT <- local_create_project_note_simple(projectNoteNameINT, projectNotePath,
-                                                        projectDocRmd, taskLine,noteIndex="___011")
+                                                        projectDocRmd, taskLine, authorValue,
+                                                        noteIndex="___011")
   projectNoteDirINT <- get_project_note_dir_path(projectNoteRmdINT, settings)
 
 
@@ -184,6 +207,7 @@ test_that("datatable write Rmd & write template Rmd", {
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file(rmd_path)
 
+  #### ________________ ####
 
   #### datatable_insert_from_tibble() function calls ####
 
@@ -203,6 +227,8 @@ test_that("datatable write Rmd & write template Rmd", {
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file(rmd_path)
 
+
+  #### ________________ ####
 
   #### datatable_dispose_rmd() function calls ####
 
@@ -290,6 +316,8 @@ test_that("datatable write Rmd & write template Rmd", {
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file(rmd_path)
 
+
+  #### ________________ ####
 
   #### datatable_resample_rmd() function calls ####
 
@@ -396,6 +424,8 @@ test_that("datatable write Rmd & write template Rmd", {
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file(rmd_path)
 
+
+  #### ________________ ####
 
   #### datatable_add_group_rmd() function calls ####
 
@@ -520,6 +550,8 @@ test_that("datatable write Rmd & write template Rmd", {
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file(rmd_path)
 
+
+  #### ________________ ####
 
   #### datatable_add_data_samples_rmd() function calls ####
 
@@ -741,6 +773,8 @@ test_that("datatable write Rmd & write template Rmd", {
   expect_snapshot_file(rmd_path)
 
 
+  #### ________________ ####
+
   #### datatable_import_export_rmd() function calls ####
 
   # as datatable_import_rmd() & datatable_export_rmd() ultimately work together
@@ -753,9 +787,12 @@ test_that("datatable write Rmd & write template Rmd", {
   # first add CREATE DATATABLES to the source note
   add_create_datatables(source_rmd_path)
 
-  # add blank lines to end of file - to test export/import works with source line set AFTER where EXPORT table is written!
-  # actually DO NOT DO THIS : causes weird bug in devtools::test_coverage_active_file() call
-   # does not run the code!  So OMIT THIs - the tests run fine wihtout it now anyway :D
+  # add blank lines to end of file
+   # to test export/import works with source line set AFTER where EXPORT table is written!
+  # actually DO NOT DO THIS :
+   # causes weird bug in devtools::test_coverage_active_file() call
+    # does not run the code!
+   # So OMIT THIS - the tests run fine without it now anyway :D
   #insert_lines(source_rmd_path, rep("", 10), 175)
   #insert_lines(source_rmd_path, rep("", 10), 175)
   #insert_lines(source_rmd_path, rep("", 10), 175)
@@ -771,9 +808,10 @@ test_that("datatable write Rmd & write template Rmd", {
   summarise_reps=FALSE
   exportTemplate="Datatables-Export-Template.Rmd"
   # test function
-  drl <- datatable_import_export_rmd(source_rmd_path, source_rmd_line, destination_rmd_path,
-                              destination_rmd_line, settings, datatable_name, ids_vector,
-                              reps_vector, dt_length, summarise_reps, exportTemplate)
+  drl <- datatable_import_export_rmd(
+          source_rmd_path, source_rmd_line, destination_rmd_path,
+          destination_rmd_line, settings, datatable_name, ids_vector,
+          reps_vector, dt_length, summarise_reps, exportTemplate)
 
   # test function : second export of subset of sample IDs
   source_rmd_line=210 # blank line after CREATE Datatables
@@ -785,9 +823,10 @@ test_that("datatable write Rmd & write template Rmd", {
   summarise_reps=FALSE
   exportTemplate="Datatables-Export-Template.Rmd"
   # test function
-  drl <- datatable_import_export_rmd(source_rmd_path, source_rmd_line, destination_rmd_path,
-                              destination_rmd_line, settings, datatable_name, ids_vector,
-                              reps_vector, dt_length, summarise_reps, exportTemplate)
+  drl <- datatable_import_export_rmd(
+          source_rmd_path, source_rmd_line, destination_rmd_path,
+          destination_rmd_line, settings, datatable_name, ids_vector,
+          reps_vector, dt_length, summarise_reps, exportTemplate)
 
 
   # test function : third export of subset of sample IDs
@@ -800,12 +839,14 @@ test_that("datatable write Rmd & write template Rmd", {
   summarise_reps=FALSE
   exportTemplate="Datatables-Export-Template.Rmd"
   # test function
-  drl <- datatable_import_export_rmd(source_rmd_path, source_rmd_line, destination_rmd_path,
-                              destination_rmd_line, settings, datatable_name, ids_vector,
-                              reps_vector, dt_length, summarise_reps, exportTemplate)
+  drl <- datatable_import_export_rmd(
+          source_rmd_path, source_rmd_line, destination_rmd_path,
+          destination_rmd_line, settings, datatable_name, ids_vector,
+          reps_vector, dt_length, summarise_reps, exportTemplate)
 
 
-  # test import export : import from second note with same IDs correctly alters import sample IDs
+  # test import export : import from second note with same IDs correctly alters
+   # import sample IDs
   source_rmd_path=projectNoteRmdSrc # SECOND SOURCE project note
   destination_rmd_path=projectNoteRmdDest
 
@@ -822,9 +863,10 @@ test_that("datatable write Rmd & write template Rmd", {
   summarise_reps=FALSE
   exportTemplate="Datatables-Export-Template.Rmd"
   # test function
-  drl <- datatable_import_export_rmd(source_rmd_path, source_rmd_line, destination_rmd_path,
-                              destination_rmd_line, settings, datatable_name, ids_vector,
-                              reps_vector, dt_length, summarise_reps, exportTemplate)
+  drl <- datatable_import_export_rmd(
+          source_rmd_path, source_rmd_line, destination_rmd_path,
+          destination_rmd_line, settings, datatable_name, ids_vector,
+          reps_vector, dt_length, summarise_reps, exportTemplate)
   # correctly writes the import datatable IDs with a suffix of second src filename:
    # IDs : 1001.tnj - 1004.tnj
 
@@ -835,6 +877,7 @@ test_that("datatable write Rmd & write template Rmd", {
   expect_snapshot_file(projectNoteRmd) # src 1
   expect_snapshot_file(projectNoteRmdSrc) # src 2
 
+  #### ________________ ####
 
 })
 
