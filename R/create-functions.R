@@ -256,14 +256,15 @@ load_yml_settings_default <- function(settingsYamlPath, projectmanagrPath) {
                                 .Platform$file.sep, "config",
                                 .Platform$file.sep, "settings.yml")
 
-    settings <- yaml::read_yaml( settingsYamlFile ) # assumes encoding is UTF-8
-    # to load other files - run yaml::yaml.load( yaml::read_yaml(path))
+    settings <- yaml::yaml.load(yaml::read_yaml( settingsYamlFile ) )
+     # assumes encoding is UTF-8
+     # to load other files - run yaml::yaml.load( yaml::read_yaml(path))
 
   } else {
 
     # settingsYamlFile supplied - load this and CHECK its valid
     settingsYamlFile <- settingsYamlPath
-    settings <- yaml::read_yaml( settingsYamlFile )# assumes encoding is UTF-8
+    settings <- yaml::yaml.load(yaml::read_yaml( settingsYamlFile ) )
 
     # CHECK YAML is valid - must contain all named elements
     extraSettings <- setdiff(names(settings), yaml_keys())
@@ -711,7 +712,7 @@ cleanup_created <- function(createdFilesVector) {
   cat("    cleanup - removed path(s): ",
         paste(createdFilesVector[fvex], sep=' '))
 
-}#### ________________________________ ####
+} #### ________________________________ ####
 
 
 #' Create a New Programme within an Organisation
@@ -1146,7 +1147,9 @@ create_programme_section <- function(sectionName, sectionParentPath,
   }, error = function(e) {
     cat("  ====================  \n")
     cat("  Error encountered:", e$message, "\n")
-    cleanup_created(sectPath)
+    #cleanup_created(sectPath) # do not delete programme sections with error!
+     # as they may contain data and files
+     # as sections can be dynamically formed when a project doc is created in any dir
     stop(e)  # Rethrow the error after cleanup
   })
 
@@ -1785,11 +1788,19 @@ check_prog_section <- function(projectParentPath, authorValue, settings) {
 
   if( fs::file_exists(sectIndex) == FALSE ) { # create programme section!
 
-    cat( "  Programme Section Index not detected - generating Programme Section: ",
-         projectParentPath, "\n" )
+    coloured_print( paste0("\n######  Programme Section Index not detected:\n generating Programme Section: ",
+                           projectParentPath),
+                    colour = "red")
+    #cat( "\n######  Programme Section Index not detected:\n generating Programme Section: ",
+    #     projectParentPath)
+    sectionName <- fs::path_file(projectParentPath)
+    sectionParentPath <- fs::path_dir(projectParentPath)
+    sectionTitle=""
     create_programme_section(fs::path_file(projectParentPath),
                              fs::path_dir(projectParentPath),
                              authorValue)
+    coloured_print( paste0( "\n######  Programme Section generated\n" ), colour = "green")
+
   } else {
     cat( "  Programme Section Index detected: ", sectIndex, "\n" )
   }

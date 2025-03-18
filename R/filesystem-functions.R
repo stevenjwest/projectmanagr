@@ -1,8 +1,12 @@
-#' Find Organisation Dir
+#' Find Organisation Root Directory
 #'
-#' Searches fileSystemPath's parent directories to identify
-#' a Project Organisation directory.  This is identified by
-#' finding a '.config/' directory and a '.config/templates/' directory.
+#' First searches for an Organisation Root Directory in the `path` parameter,
+#' by recursively attempting to identify the `.config/` and
+#' `.config/templates/` directories - via `find_org_path()`.
+#'
+#' If this fails, and an RStudio session is available, the filesystem path of
+#' the currently active document in the Source Editor is also searched - via
+#' `find_org_rstudio_editor()`
 #'
 #' If an Organisation path is identified, it is returned, otherwise
 #' the function returns a BLANK string "".
@@ -13,14 +17,28 @@
 #' @export
 find_org_directory <- function( path = getwd() ) {
 
-  origPath <- fs::path_expand(path)
-  # Check path is at the root of an ORGANISATION:
+  orgPath <- find_org_path(fs::path_expand(path))
+  if( orgPath != "") {
+    return(orgPath)
+  }
+
+  # else check rstudio editor path if available
+  orgPath <- find_org_rstudio_editor()
+  return(orgPath)
+}
+
+
+#' find organisation root directory from passed path
+#'
+#' Used by `find_org_directory()` as first pass attempt to identify an
+#' organisation root directory.
+find_org_path <- function(path) {
 
   # look for the .config/ and templates/ dirs:
   confPath <- get_config_dir(path)
   tempPath <- get_template_dir(path)
 
-  # get the root of currently suuplied path - to exist recursive search
+  # get the root of current path - to exist recursive search
   path2 <- unlist(fs::path_split(path))[1]
 
   #### recursive search for org directory ####
@@ -34,26 +52,16 @@ find_org_directory <- function( path = getwd() ) {
     confPath <- get_config_dir(path)
     tempPath <- get_template_dir(path)
   }
-
-  if( path == "" ) {
-    if( rstudioapi::isAvailable() ) {
-      # try to find orgPath from active document path
-      path <- rstudioapi::getSourceEditorContext()$path
-      while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
-        path2 <- path # save in placeholder
-        path <- dirname(path)
-        if( path2 == path ) {
-          path <- ""
-          break
-        }
-        confPath <- get_config_dir(path)
-        tempPath <- get_template_dir(path)
-      }
-    }
-  }
-
-  path
+  return(fs::path(path))
 }
+
+#' From an absolute path compute the relative path from the Organisation Root.
+#'
+get_relative_path_org <- function(path) {
+  orgPath <- find_org_path(path)
+  fs::path_rel(path, start = fs::path_dir(orgPath) )
+}
+
 
 #' confirm the found org
 #'
@@ -1027,7 +1035,6 @@ find_header_Rmd_path <- function( subNoteRmdPath, settings ) {
   paste0(headerNotePath, .Platform$file.sep, files) # return headerRmdPath
 
 }
-
 
 
 #' Compute Project Indices
