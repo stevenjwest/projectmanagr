@@ -9,7 +9,7 @@ create_group_note(
   groupNotePath,
   selection,
   subNoteName,
-  authorValue = Sys.info()["user"],
+  authorValue = get_username(),
   addObjToHeader = TRUE,
   groupNoteTitle = "",
   subNoteTitle = "",

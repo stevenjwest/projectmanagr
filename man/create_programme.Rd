@@ -7,7 +7,7 @@
 create_programme(
   programmeName,
   organisationPath,
-  authorValue = Sys.info()["user"],
+  authorValue = get_username(),
   programmeTitle = "",
   progTemplate = "Programme-Template.Rmd",
   progSummaryTemplate = "Programme-Summary-Template.Rmd"

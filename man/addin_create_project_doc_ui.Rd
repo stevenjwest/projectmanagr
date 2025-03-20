@@ -4,7 +4,7 @@
 \alias{addin_create_project_doc_ui}
 \title{User Interface for Creat Project Doc shiny gadget}
 \usage{
-addin_create_project_doc_ui(orgPath, settings, programmeDirPaths, progSelected)
+addin_create_project_doc_ui(orgPath, settings)
 }
 \arguments{
 \item{orgPath}{The Organisation Path - derived from the current working directory.}

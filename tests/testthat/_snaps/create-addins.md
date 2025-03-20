@@ -4,6 +4,7 @@
       addin_create_project_org_ui()
     Output
       <div class="gadget-container">
+        <style></style>
         <div class="gadget-title">
           <h1>Create New Project Org</h1>
           <button class="btn btn-default btn-sm action-button pull-left" id="cancel" type="button">Cancel</button>
@@ -112,9 +113,10 @@
 ---
 
     Code
-      addin_create_programme_ui(orgDir)
+      addin_create_programme_ui(orgName)
     Output
       <div class="gadget-container">
+        <style></style>
         <div class="gadget-title">
           <h1>Create a Programme</h1>
           <button class="btn btn-default btn-sm action-button pull-left" id="cancel" type="button">Cancel</button>
@@ -142,7 +144,7 @@
                         <div class="flexfill-item-inner" style="position:absolute;top:0;left:0;right:0;bottom:0;">
                           <div class="form-group shiny-input-container" style="width:100%;">
                             <label class="control-label" id="orgPath-label" for="orgPath">Organisation Path:</label>
-                            <input id="orgPath" type="text" class="shiny-input-text form-control" value="/tmp/Rsess/_T_Ots"/>
+                            <input id="orgPath" type="text" class="shiny-input-text form-control" value="_T_Ots"/>
                           </div>
                         </div>
                       </div>
@@ -203,14 +205,15 @@
     Output
       
       projectmanagr::addin_create_programme():
-      [1] "CREATE PROGRAMME ADDIN: ui - orgPath: /tmp/Rsess/_T_Ots server"
+      [1] "CREATE PROGRAMME ADDIN: ui - orgName: _T_Ots server"
 
 ---
 
     Code
-      addin_create_project_doc_ui(orgDir, get_settings_yml(orgDir), progPath, 1)
+      addin_create_project_doc_ui(orgName, get_settings_yml(orgDir))
     Output
       <div class="gadget-container">
+        <style></style>
         <div class="gadget-title">
           <h1>Create a Project Document</h1>
           <button class="btn btn-default btn-sm action-button pull-left" id="cancel" type="button">Cancel</button>
@@ -238,7 +241,7 @@
                         <div class="flexfill-item-inner" style="position:absolute;top:0;left:0;right:0;bottom:0;">
                           <div class="form-group shiny-input-container" style="width:100%;">
                             <label class="control-label" id="orgPath-label" for="orgPath">Organisation Path:</label>
-                            <input id="orgPath" type="text" class="shiny-input-text form-control" value="/tmp/Rsess/_T_Ots"/>
+                            <input id="orgPath" type="text" class="shiny-input-text form-control" value="_T_Ots"/>
                           </div>
                         </div>
                       </div>
@@ -349,7 +352,7 @@
     Output
       
       projectmanagr::addin_create_project_doc():
-      [1] "CREATE PROJECT DOC ADDIN: ui - orgPath: /tmp/Rsess/_T_Ots settings-names: SiteDir FileType VolumesDir VolumesFile ConfigStatusYamlFile OrgIndexFileNamePrefix OrgProgrammeHeader OrgProgrammeFooter OrgProgrammeSummarySep ProgrammeProjectsDir ProgIndexFileNamePrefix ProgSummaryHeader ProgSummaryTitle ProgSummaryFooter ProgProjectsHeader ProgProjectsFooter ProgProjectSummarySep ProjectPrefixSep ProjectIdentifierSep ProjectIndexSep ProjectSummaryHeader ProjectSummaryTitle ProjectSummaryFooter ProjectGoalHeader ProjectGoalTitle ProjectGoalDivider ProjectGoalSep ProjectDeliverableHeader ProjectDeliverableTitle ProjectDeliverableDivider ProjectDeliverableSep ProjectTaskHeader ProjectTaskTitle ProjectTaskDivider ProjectTaskSep ProjectTaskFooter ProjectLinkFormat ProjectTaskLogHeader ProjectTaskLogSep NoteObjectivesTodoSectionHeader NoteObjectivesHeader NoteObjectivesSep NoteObjectivesFooter NoteStorageHeader NoteStorageFooter NoteLinkFormat GroupNotePrefixSep HeaderNotePrefix HeaderNoteContentsHeader HeaderNoteContentsFooter HeaderLinkFormat SubNotePrefixSep SubNoteContentsHeader SubNoteContentsFooter SubNoteLinkFormat NoteSummaryTitle NoteGoalLinkLine NoteDeliverableLinkLine NoteTaskLinkLine ContentTitleField ContentDescriptionField ContentSourceField ContentSep ContentInsertionTitle ContentInsertionSep ContentLinkFormat ContentSummaryHeader ContentSummaryFooter ContentGraphicalAbstractHeader ContentGraphicalAbstractSvg ContentGraphicalAbstractFooter ContentBackgroundHeader ContentBackgroundFooter ContentMaterialsHeader ContentMaterialsFooter ContentEquipmentSvg ContentProcedureTemplateSvg ContentResultsLogHeader ContentResultsLogFooter ContentTroubleshootingHeader ContentTroubleshootingFooter ContentSopHeader ContentLogHeader ContentLogSep ContentFooter TodoHeader TodoHeaderTemplate TodoItem TodoItemTemplate TodoItemComplete TodoProgrammeSep DateTimeZone DateSplit DateTimeSplit DatatableExportHeader RunUpdateOnStartup RunCompileWithUpdate FileTypeSuffix WeeklyJournalDir GadgetWidth GadgetHeight rstudioInternalStateDir programmeDirPaths: /tmp/Rsess/_T_Ots/0-PR-ts progSelected: 1 server"
+      [1] "CREATE PROJECT DOC ADDIN: ui - orgName: _T_Ots settings-names: SiteDir FileType VolumesDir VolumesFile ConfigStatusYamlFile OrgIndexFileNamePrefix OrgProgrammeHeader OrgProgrammeFooter OrgProgrammeSummarySep ProgIndexFileNamePrefix ProgSummaryHeader ProgSummaryTitle ProgSummaryFooter ProgProjectsHeader ProgProjectsFooter ProgProjectSummarySep SectionIndexFileNamePrefix SectionSummaryHeader SectionSummaryTitle SectionSummaryFooter SectionProjectsHeader SectionProjectsFooter SectionProjectSummarySep ProjectPrefixSep ProjectIdentifierSep ProjectIndexSep ProjectSummaryHeader ProjectSummaryTitle ProjectSummaryFooter ProjectGoalHeader ProjectGoalTitle ProjectGoalDivider ProjectGoalSep ProjectDeliverableHeader ProjectDeliverableTitle ProjectDeliverableDivider ProjectDeliverableSep ProjectTaskHeader ProjectTaskTitle ProjectTaskDivider ProjectTaskSep ProjectTaskFooter ProjectLinkFormat ProjectTaskLogHeader ProjectTaskLogSep NoteObjectivesTodoSectionHeader NoteObjectivesHeader NoteObjectivesSep NoteObjectivesFooter NoteStorageHeader NoteStorageFooter NoteLinkFormat GroupNotePrefixSep HeaderNotePrefix HeaderNoteContentsHeader HeaderNoteContentsFooter HeaderLinkFormat SubNotePrefixSep SubNoteContentsHeader SubNoteContentsFooter SubNoteLinkFormat NoteSummaryTitle NoteGoalLinkLine NoteDeliverableLinkLine NoteTaskLinkLine ContentTitleField ContentDescriptionField ContentSourceField ContentSep ContentInsertionTitle ContentInsertionSep ContentLinkFormat ContentSummaryHeader ContentSummaryFooter ContentGraphicalAbstractHeader ContentGraphicalAbstractSvg ContentGraphicalAbstractFooter ContentBackgroundHeader ContentBackgroundFooter ContentMaterialsHeader ContentMaterialsFooter ContentEquipmentSvg ContentProcedureTemplateSvg ContentResultsLogHeader ContentResultsLogFooter ContentTroubleshootingHeader ContentTroubleshootingFooter ContentSopHeader ContentLogHeader ContentLogSep ContentFooter TodoHeader TodoHeaderTemplate TodoItem TodoItemTemplate TodoItemComplete TodoCollectionSep TodoProgrammeSep TodoProjectNoteSep TodoTaskHeader TodoGDTSep DateTimeZone DateSplit DateTimeSplit DatatableExportHeader RunUpdateOnStartup RunCompileWithUpdate FileTypeSuffix WeeklyJournalDir GadgetWidth GadgetHeight rstudioInternalStateDir programmeDirPaths: 0-PR-ts progSelected: 1 server"
 
 ---
 
@@ -357,6 +360,7 @@
       addin_create_prn_doc_gdt_ui(goalTitle, delTitle, taskTitle)
     Output
       <div class="gadget-container">
+        <style></style>
         <div class="gadget-title">
           <h1>Add New Project Note</h1>
           <button class="btn btn-default btn-sm action-button pull-left" id="cancel" type="button">Cancel</button>
@@ -611,16 +615,17 @@
 ---
 
     Code
-      addin_open_weekly_journal_ui(orgDir, calDate = calDate, calendar_function = mock_calendar_input)
+      addin_open_weekly_journal_ui(orgName, calDate = calDate, calendar_function = mock_calendar_input)
     Output
       <div class="gadget-container">
+        <style></style>
         <script>
-            $(document).on('keydown', function(e) {
-              if (e.key === 'Enter') {
-                $('#done').click(); // Trigger the Done button
-              }
-            });
-          </script>
+              $(document).on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                  $('#done').click(); // Trigger the Done button
+                }
+              });
+            </script>
         <div class="gadget-title">
           <h1>Open Weekly Journal: Select a Week</h1>
           <button class="btn btn-default btn-sm action-button pull-left" id="cancel" type="button">Cancel</button>
@@ -629,7 +634,7 @@
         <div class="gadget-scroll">
           <div class="gadget-content">
             <div class="gadget-absfill" style="position: absolute; top:15px;right:15px;bottom:15px;left:15px;;">
-              <h4 align="center">Organisation Path:  /tmp/Rsess/_T_Ots</h4>
+              <h4 align="center">Organisation Path:  _T_Ots</h4>
               <div style="padding: 20px;" align="center">
                 <div class="mock-calendar">Mock Calendar Input: calendar, Value: 2024-12-02</div>
               </div>
@@ -647,5 +652,5 @@
     Output
       
       projectmanagr::addin_open_weekly_journal():
-      [1] "OPEN WEEKLY JOURNAL ADDIN: ui - orgPath: /tmp/Rsess/_T_Ots server"
+      [1] "OPEN WEEKLY JOURNAL ADDIN: ui - orgName: _T_Ots server"
 

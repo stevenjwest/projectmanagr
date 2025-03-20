@@ -8,12 +8,18 @@ test_that("create addins testing", {
 
   #### setup : mocked bindings and get WD ####
 
+  print( paste0('testthat edition: ', testthat::edition_get()) )
+
   WD <- getwd()
 
   # mock rstudio navigation functions
   local_mocked_bindings(
     addin_rstudio_nav = function(orgIndexPath) { stopApp() }, # just stop the shiny gadget
-    set_wd_active_doc = function() { } # make a blank function - do not change working directory!
+    set_wd_active_doc = function() { }, # make a blank function - do not change working directory!
+    get_css_theme = function() { NULL },
+    get_username = function() { "sjwest" } # for consistent author name in Rmd files!
+    # this adjusts addin look based on RStudio theme
+    # want to this return the default theme for consistent testing
     )
 
   #### generate test organisation temp directory ####
@@ -66,7 +72,7 @@ test_that("create addins testing", {
     session$setInputs(done=1)
     Sys.sleep(0.2)
 
-    # # can check reactive input setting values
+    # can check reactive input setting values
     print( paste0("dir: ", input$dir))
     # print(input$dir)
     # print(input$organisationName)
@@ -108,6 +114,7 @@ test_that("create addins testing", {
   })
 
 
+
   ##### addin_create_project_org() logic #####
 
   # mock ui and server functions to test higher infrastructure
@@ -142,6 +149,7 @@ test_that("create addins testing", {
   setwd(orgDir)
 
 
+
   #### ________________ ####
 
   #### test addin : CREATE PROGRAMME ####
@@ -149,7 +157,9 @@ test_that("create addins testing", {
 
   ##### addin_create_programme_ui creates expected HTML #####
 
-  expect_snapshot(addin_create_programme_ui(orgDir))
+  expect_snapshot(addin_create_programme_ui(orgName))
+  # using orgName to avoid current system full path - that can vary across systems!
+   # so using orgName to render the UI makes for reproducible testing
 
   ##### addin_create_programme_server creates Prog  #####
 
@@ -200,8 +210,8 @@ test_that("create addins testing", {
   # return strings for checking args
   local_mocked_bindings(
     addin_create_programme_ui = function(orgPath) {
-      paste0("ui - orgPath: ", orgPath)
-    },
+      paste0("ui - orgName: ", fs::path_file(orgPath) )
+    }, # org file name for reproducible return across systems
     addin_create_programme_server = function(input, output, session) {
       paste0(" server")
     },
@@ -227,7 +237,10 @@ test_that("create addins testing", {
 
   ##### addin_create_project_doc_ui creates expected HTML #####
 
-  expect_snapshot(addin_create_project_doc_ui(orgDir, get_settings_yml(orgDir), progPath, 1 ) )
+  #expect_snapshot(addin_create_project_doc_ui(orgName, get_settings_yml(orgDir), progPath, 1 ) )
+  expect_snapshot(addin_create_project_doc_ui(orgName, get_settings_yml(orgDir)))
+  # using orgName to avoid current system full path - that can vary across systems!
+  # so using orgName to render the UI makes for reproducible testing
 
 
   ##### addin_create_project_doc_server creates ProjDoc  #####
@@ -240,22 +253,9 @@ test_that("create addins testing", {
 
   setwd(progPathCh)
 
-  cat("\n\n  programme path: ", progPathCh, "\n\n")
+  cat("\n\n  programme path: ", progPath, "\n\n")
 
   shiny::testServer(addin_create_project_doc_server, {
-
-    # # set name to blank string - check error
-    session$setInputs(
-      dir = list(root=progPathCh, path=""),
-      projectPrefix=projectDocPrefix,
-      projectName="",
-      projectTitle=projectDocTitle)
-
-    Sys.sleep(0.2)
-    session$setInputs(done=1)
-    Sys.sleep(0.2)
-
-    expect_equal(output$warningName, "*** PROVIDE PROJECT NAME ***")
 
     # set name to string with space - check error
     session$setInputs(
@@ -264,11 +264,37 @@ test_that("create addins testing", {
       projectName="Project Doc_Test",
       projectTitle=projectDocTitle)
 
+    # can check reactive input setting values
+    # print( paste0("dir: ", input$dir))
+    # print( paste0("dirROOT: ", input$dir$root))
+    # print( paste0("dirPATH: ", input$dir$path))
+    # print( paste0("projectPrefix: ", input$projectPrefix))
+    # print( paste0("projectName: ", input$projectName))
+    # print( paste0("projectTitle: ", input$projectTitle))
+    # print( paste0("listCH: ", list(root=progPathCh, path="")))
+    # print( paste0("list: ", list(root=progPath, path="")))
+    # print( paste0("OUTPUT WARNING: ", output$warning))
+    # print( paste0("OUTPUT WARNING2: ", output$warning2))
+
     Sys.sleep(0.2)
     session$setInputs(done=1)
     Sys.sleep(0.2)
 
     expect_equal(output$warningName, "*** PROJECT NAME CANNOT CONTAIN SPACES ***")
+
+    # set name to blank string - check error
+    session$setInputs(
+      dir = list(root=progPathCh, path=""),
+      projectPrefix=projectDocPrefix,
+      projectName="",
+      projectTitle=projectDocTitle)
+
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.5)
+
+    expect_equal(output$warningName, "*** PROVIDE PROJECT NAME ***")
+
 
     # set prefix to blank string - check error
     session$setInputs(
@@ -330,15 +356,16 @@ test_that("create addins testing", {
 
   })
 
+
   ##### addin_create_project_doc() logic #####
 
   # mock ui and server functions to test higher infrastructure
   # return strings for checking args
   local_mocked_bindings(
     addin_create_project_doc_ui = function(orgPath, settings, programmeDirPaths, progSelected) {
-      paste0("ui - orgPath: ", orgPath, " settings-names: ", paste(names(settings), collapse=' '),
-             " programmeDirPaths: ",paste(programmeDirPaths, collapse=' '), " progSelected: ", progSelected)
-    },
+      paste0("ui - orgName: ", fs::path_file(orgPath), " settings-names: ", paste(names(settings), collapse=' '),
+             " programmeDirPaths: ",paste( fs::path_file(programmeDirPaths), collapse=' '), " progSelected: ", progSelected)
+    }, # org & prog file names for reproducible return across systems
     addin_create_project_doc_server = function(input, output, session) {
       paste0(" server")
     },
@@ -491,7 +518,10 @@ test_that("create addins testing", {
   }
 
   # Snapshot test for addin_open_weekly_journal_ui()
-  expect_snapshot(addin_open_weekly_journal_ui(orgDir, calDate = calDate, calendar_function = mock_calendar_input))
+  expect_snapshot(addin_open_weekly_journal_ui(orgName, calDate = calDate,
+                                               calendar_function = mock_calendar_input))
+  # using orgName to avoid current system full path - that can vary across systems!
+   # so using orgName to render the UI makes for reproducible testing
   # must parameterise the calendar function call to shiny.fluent package to mock the function for reproducible testing..
   # below does not work! if calendar function is directly called in ui function..
   # expect_snapshot(addin_open_weekly_journal_ui(orgDir))
@@ -531,8 +561,8 @@ test_that("create addins testing", {
   # return strings for checking args
   local_mocked_bindings(
     addin_open_weekly_journal_ui = function(orgPath) {
-      paste0("ui - orgPath: ", orgPath)
-    },
+      paste0("ui - orgName: ", fs::path_file(orgPath) )
+    }, # org file name for reproducible return across systems
     addin_open_weekly_journal_server = function(input, output, session) {
       paste0(" server")
     },

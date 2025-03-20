@@ -2072,6 +2072,7 @@ addin_datatable_import_export <- function() {
 
   # from indices determine if the cursor is sitting IN or OUT of a datatable
   if( (length(indices_row) %% 2) == 1 ) { ##### If Cursor Inside Datatable : TEMPLATE ####
+    # currently not implemented!
     ad_dt_import_export_template(path, contents, row, indices, indices_row)
 
   } else { ##### Else Cursor Outside Datatable : Import Export Datatable ####

@@ -977,7 +977,26 @@ find_prog_dir <- function(fileSystemPaths) {
 
 #' Find Programme Dirs from Organisation path
 #'
-#' Searches the orgPath to identify all programmes. Programme paths are returned
+#' Searches the orgPath to identify all programmes. Identified as child directories
+#' in the organisation root directory named `<<PROG_DIR>>`, which contain an index
+#' Rmd titled `_index_<<PROG_DIR>>.Rmd` (based on settings$ProgIndexFileNamePrefix,
+#' and settings$FileType).
+#'
+#' The following directories are automatically excluded from this search:
+#'
+#' * `.config` : place where config information is stored, this cannot be
+#'   modified
+#'
+#' * settings$VolumesDir : place where external data volumes are mounted,
+#'   `volumes/` by default
+#'
+#' * settings$SiteDir : place where html site is rendered, `site/` by default
+#'
+#' * settings$WeeklyJournalDir : place where weekly journal files are stored,
+#'   `weekly-journal/` by default.
+#'
+#'
+#' Programme paths are returned
 #' after extracting the names from the status.yml file under PROGRAMMES section.
 #'
 #' @param orgPath Path to a projectmanagr organisation.
@@ -990,19 +1009,33 @@ find_prog_dir <- function(fileSystemPaths) {
 #'
 find_prog_dirs <- function( orgPath, settings ) {
 
-  # get all Programme DIRs from status.yml
+  # get DIRS in orgPath
+  DIRS <- fs::dir_ls(orgPath)
+  DIRS <- DIRS[fs::is_dir(DIRS)]
 
-  # load status file for projectmanagr org status
-  # contains information on contents DIRs && index of contents in those files with retrieval datetime
-  status <- get_status_yml(orgPath, settings)
+  # exclude known org DIRs:
+  # .config (excluded as hidden!), VolumesDir, SiteDir, WeeklyJournalDir
+  DIRS <- DIRS[ (fs::path_file(DIRS) != settings$SiteDir &
+                 fs::path_file(DIRS) != settings$VolumesDir &
+                 fs::path_file(DIRS) != settings$WeeklyJournalDir) ]
 
-  progNames <- lapply(status['PROGRAMMES'], names)
+  # only return DIR which contains well formed prog index
+  INDEXES <- fs::path(DIRS,paste0(settings$ProgIndexFileNamePrefix,
+                                  fs::path_file(DIRS), ".", settings$FileType))
 
-  progPaths <- fs::path(orgPath, progNames$PROGRAMMES)
+  progPaths <- DIRS[fs::file_exists(INDEXES)]
 
-  progPaths <- progPaths[fs::dir_exists(progPaths)]
+  # # load status file for projectmanagr org status
+  # # contains information on contents DIRs && index of contents in those files with retrieval datetime
+  # status <- get_status_yml(orgPath, settings)
+  #
+  # progNames <- lapply(status['PROGRAMMES'], names)
+  #
+  # progPaths <- fs::path(orgPath, progNames$PROGRAMMES)
+  #
+  # progPaths <- progPaths[fs::dir_exists(progPaths)]
 
-  progPaths
+  return(progPaths)
 
 }
 
@@ -1096,6 +1129,12 @@ compute_project_index <- function(projsPath, programmePrefix) {
   }
 }
 
+#' return current username
+#'
+#' Required as separate function for mocking during testing.
+get_username <- function() {
+  Sys.info()["user"]
+}
 
 
 #' Get config dir

@@ -63,7 +63,7 @@
 #' settings must include all required keys for the organisation layout.
 #'
 #' @export
-create_project_org <- function( orgParentPath, orgName, authorValue=Sys.info()["user"],
+create_project_org <- function( orgParentPath, orgName, authorValue=get_username(),
                                 orgTitle="", settingsYamlPath="",
                               orgTemplate="Org-Template.Rmd") {
 
@@ -664,7 +664,7 @@ create_templates_path <- function(projectmanagrPath, orgPath, settings) {
 #'
 #' @return Character. The path to the created organisation index file.
 create_org_index <- function(orgName, tempPath, orgTemplate, orgPath, settings,
-                             orgTitle, authorValue=Sys.info()["user"]) {
+                             orgTitle, authorValue=get_username()) {
 
   orgIndex <- get_index_org(orgPath, settings)
 
@@ -775,7 +775,7 @@ cleanup_created <- function(createdFilesVector) {
 #'
 #' @export
 create_programme <- function(programmeName, organisationPath,
-                             authorValue=Sys.info()["user"], programmeTitle="",
+                             authorValue=get_username(), programmeTitle="",
                              progTemplate="Programme-Template.Rmd",
                              progSummaryTemplate = "Programme-Summary-Template.Rmd") {
 
@@ -1106,7 +1106,7 @@ insert_prog_summ_org <- function(progSummContents, orgIndex, orgPath, settings) 
 #'
 #' @export
 create_programme_section <- function(sectionName, sectionParentPath,
-                             authorValue=Sys.info()["user"], sectionTitle="",
+                             authorValue=get_username(), sectionTitle="",
                              sectTemplate="Programme-Section-Template.Rmd",
                              sectSummaryTemplate = "Programme-Section-Summary-Template.Rmd") {
 
@@ -1481,7 +1481,7 @@ insert_sect_summ_parent <- function(sectSummContents, parentIndex, orgPath,
 #'
 #' @export
 create_project_doc <- function(projectPrefix, projectName, projectParentPath,
-                               authorValue=Sys.info()["user"], projectTitle="",
+                               authorValue=get_username(), projectTitle="",
                                projDocTemplate="Project-Doc-Template.Rmd",
                                projDocSummaryTemplate="Project-Doc-Summary-Template.Rmd") {
 
@@ -2019,7 +2019,7 @@ link_doc_to_sect_index <- function(sectPath, tempPath, projDocSummaryTemplate,
 #'
 #' @export
 create_project_note <- function( projectNoteName, projectNotePath,
-                                 selection, authorValue=Sys.info()["user"],
+                                 selection, authorValue=get_username(),
                                  projectNoteTitle="",
                                  projNoteTemplate="Project-Note-Template.Rmd",
                                  projNoteLinkTemplate="Project-Note-Link-Template.Rmd",
@@ -2285,7 +2285,7 @@ create_project_note <- function( projectNoteName, projectNotePath,
 #'
 #' @export
 create_group_note  <- function( groupNoteName, groupNotePath,
-                                selection, subNoteName, authorValue=Sys.info()["user"],
+                                selection, subNoteName, authorValue=get_username(),
                                 addObjToHeader=TRUE,
                                 groupNoteTitle="", subNoteTitle="",
                                 projNoteTemplate="Project-Header-Note-Template.Rmd",
@@ -2741,7 +2741,7 @@ insert_header_link_subnote <- function(subNoteContents, headerNoteFileName,
 #' @export
 
 create_sub_note <- function( subNoteName, subNotePath,
-                             selection, authorValue=Sys.info()["user"],
+                             selection, authorValue=get_username(),
                              subNoteTitle="",
                              subNoteTemplate="Project-Sub-Note-Template.Rmd",
                              headerNoteContentLinkTemplate="Project-Header-Note-Content-Link-Template.Rmd",
@@ -3521,7 +3521,7 @@ create_content <- function(selection, contentName, contentDescription,
 #' @export
 create_weekly_journal <- function(date=lubridate::today(),
                                   organisationPath=getwd(),
-                                  authorValue=Sys.info()["user"],
+                                  authorValue=get_username(),
                                   journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
                                   journalTemplate="Weekly-Work-Journal-Template.Rmd") {
 

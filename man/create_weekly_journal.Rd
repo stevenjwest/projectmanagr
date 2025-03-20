@@ -7,7 +7,7 @@
 create_weekly_journal(
   date = lubridate::today(),
   organisationPath = getwd(),
-  authorValue = Sys.info()["user"],
+  authorValue = get_username(),
   journalFileNameTemplate = "{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
   journalTemplate = "Weekly-Work-Journal-Template.Rmd"
 )

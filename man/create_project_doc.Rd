@@ -8,7 +8,7 @@ create_project_doc(
   projectPrefix,
   projectName,
   projectParentPath,
-  authorValue = Sys.info()["user"],
+  authorValue = get_username(),
   projectTitle = "",
   projDocTemplate = "Project-Doc-Template.Rmd",
   projDocSummaryTemplate = "Project-Doc-Summary-Template.Rmd"

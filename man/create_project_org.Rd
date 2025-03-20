@@ -7,7 +7,7 @@
 create_project_org(
   orgParentPath,
   orgName,
-  authorValue = Sys.info()["user"],
+  authorValue = get_username(),
   orgTitle = "",
   settingsYamlPath = "",
   orgTemplate = "Org-Template.Rmd"

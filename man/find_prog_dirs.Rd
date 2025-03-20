@@ -17,6 +17,23 @@ programmePaths character vector containing all identified programme
 absolute paths.
 }
 \description{
-Searches the orgPath to identify all programmes. Programme paths are returned
+Searches the orgPath to identify all programmes. Identified as child directories
+in the organisation root directory named \verb{<<PROG_DIR>>}, which contain an index
+Rmd titled \verb{_index_<<PROG_DIR>>.Rmd} (based on settings$ProgIndexFileNamePrefix,
+and settings$FileType).
+}
+\details{
+The following directories are automatically excluded from this search:
+\itemize{
+\item \code{.config} : place where config information is stored, this cannot be
+modified
+\item settings$VolumesDir : place where external data volumes are mounted,
+\verb{volumes/} by default
+\item settings$SiteDir : place where html site is rendered, \verb{site/} by default
+\item settings$WeeklyJournalDir : place where weekly journal files are stored,
+\verb{weekly-journal/} by default.
+}
+
+Programme paths are returned
 after extracting the names from the status.yml file under PROGRAMMES section.
 }

@@ -7,7 +7,7 @@
 create_programme_section(
   sectionName,
   sectionParentPath,
-  authorValue = Sys.info()["user"],
+  authorValue = get_username(),
   sectionTitle = "",
   sectTemplate = "Programme-Section-Template.Rmd",
   sectSummaryTemplate = "Programme-Section-Summary-Template.Rmd"

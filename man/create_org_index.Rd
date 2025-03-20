@@ -11,7 +11,7 @@ create_org_index(
   orgPath,
   settings,
   orgTitle,
-  authorValue = Sys.info()["user"]
+  authorValue = get_username()
 )
 }
 \arguments{

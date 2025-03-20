@@ -287,13 +287,14 @@ get_prog_selected <- function(programmeDirPaths) {
 #'
 #' @param settings
 #'
-addin_create_project_doc_ui <- function(orgPath, settings, programmeDirPaths, progSelected) {
+addin_create_project_doc_ui <- function(orgPath, settings) {
 
+  #addin_create_project_doc_ui <- function(orgPath, settings, programmeDirPaths, progSelected) {
   miniPage(
 
     tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
 
-    shinyjs::useShinyjs(), # to enable & disable subNote input
+    shinyjs::useShinyjs(), # to enable & disable programme selection
 
     gadgetTitleBar("Create a Project Document"),
 
@@ -359,8 +360,10 @@ addin_create_project_doc_server <- function(input, output, session) {
   # check whether the current working directory is inside a programme
   # if so determine the INDEX of this in programmeDirNames
   currentProgDir <- find_prog_dir(getwd()) # returns blank string if no prog dirs identified
-  if( currentProgDir == "" ) { progSelected <- 1
-  } else { progSelected <- grep(currentProgDir, programmeDirPaths)
+  if( currentProgDir == "" ) {
+    progSelected <- 1
+  } else {
+    progSelected <- grep(currentProgDir, programmeDirPaths)
   }
 
   # create vector of possible roots for dir selection in server()

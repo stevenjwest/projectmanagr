@@ -8,7 +8,7 @@ create_project_note(
   projectNoteName,
   projectNotePath,
   selection,
-  authorValue = Sys.info()["user"],
+  authorValue = get_username(),
   projectNoteTitle = "",
   projNoteTemplate = "Project-Note-Template.Rmd",
   projNoteLinkTemplate = "Project-Note-Link-Template.Rmd",

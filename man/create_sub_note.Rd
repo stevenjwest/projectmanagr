@@ -8,7 +8,7 @@ create_sub_note(
   subNoteName,
   subNotePath,
   selection,
-  authorValue = Sys.info()["user"],
+  authorValue = get_username(),
   subNoteTitle = "",
   subNoteTemplate = "Project-Sub-Note-Template.Rmd",
   headerNoteContentLinkTemplate = "Project-Header-Note-Content-Link-Template.Rmd",
