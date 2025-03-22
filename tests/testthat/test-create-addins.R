@@ -232,6 +232,86 @@ test_that("create addins testing", {
 
   #### ________________ ####
 
+  #### test addin : CREATE PROGRAMME SECTION ####
+
+
+  ##### addin_create_programme_section_ui creates expected HTML #####
+
+  expect_snapshot(addin_create_programme_section_ui(orgName))
+  # using orgName to avoid current system full path - that can vary across systems!
+  # so using orgName to render the UI makes for reproducible testing
+
+  ##### addin_create_programme_section_server creates Prog Sect  #####
+
+  # define args
+  sectName <- "pr-st"
+
+  shiny::testServer(addin_create_programme_section_server, {
+
+    ### Test server inputs
+
+    # set name to blank string - check error
+    session$setInputs(orgPath=orgDir, sectionName="")
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.2)
+
+    expect_equal(output$warningName, "*** PROVIDE PROGRAMME SECTION NAME ***")
+
+    # set name to string with space - check error
+    session$setInputs(orgPath=orgDir, sectionName="123-test prog")
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.2)
+
+    expect_equal(output$warningName, "*** PROGRAMME SECTION NAME CANNOT CONTAIN SPACES ***")
+
+    # set name and title to acceptable values - check programme created correctly
+    session$setInputs(orgPath=orgDir, sectionName=sectName, sectionTitle="pr st")
+    Sys.sleep(0.2)
+    session$setInputs(done=1)
+    Sys.sleep(0.2)
+
+    # define outputs to check
+    sectIndex <- fs::path(orgDir, progName, sectName, paste0("_index_", sectName, ".Rmd"))
+
+    # check programme section name correctly generates index Rmd
+    expect_true( fs::file_exists(sectIndex) )
+
+    # check index Rmd file contents are correctly filled
+    expect_snapshot_file( sectIndex )
+
+  })
+
+
+  ##### addin_create_programme_section() logic #####
+
+  # mock ui and server functions to test higher infrastructure
+  # return strings for checking args
+  local_mocked_bindings(
+    addin_create_programme_section_ui = function(orgPath) {
+      paste0("ui - orgName: ", fs::path_file(orgPath) )
+    }, # org file name for reproducible return across systems
+    addin_create_programme_section_server = function(input, output, session) {
+      paste0(" server")
+    },
+    runGadget = function(UI, SERVER, viewer) {
+      paste0(UI, SERVER())
+    }
+  )
+
+  expect_snapshot( paste0("CREATE PROGRAMME SECTION ADDIN: ", addin_create_programme_section() ) )
+
+
+
+  ##### define programme variables #####
+
+  sectPath <- fs::path(orgDir, progName, sectName)
+  progIndex <- fs::path(sectPath, paste0("_index_", sectName, ".Rmd"))
+
+
+  #### ________________ ####
+
   #### test addin : CREATE PROJECT DOC ####
 
 

@@ -9,6 +9,11 @@ Description: Create a New Programme in a Project Organisation.
 Binding: addin_create_programme
 Interactive: true
 
+Name: ProjectManagr: Create Programme section
+Description: Create a New Programme Section in a Project Organisation.
+Binding: addin_create_programme_section
+Interactive: true
+
 Name: ProjectManagr: Create Project Document
 Description: Create a New Project Document in a Programme.
 Binding: addin_create_project_doc

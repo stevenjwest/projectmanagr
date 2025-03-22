@@ -10,6 +10,5 @@ addin_create_programme()
 Generates a Shiny Gadget for creating a new Programme inside
 a Project Organisation.  User selects a destination in
 the file system, Programme name (for the directory),
-Programme prefix (used to identify Projects with this
-Programme), and Programme title (for the html page).
+and Programme title (for the html page).
 }

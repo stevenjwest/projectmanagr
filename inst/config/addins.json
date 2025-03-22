@@ -2,6 +2,7 @@
 
     "projectmanagr::addin_create_project_org": "Ctrl+M Ctrl+C Ctrl+R",
     "projectmanagr::addin_create_programme": "Ctrl+M Ctrl+C Ctrl+P",
+    "projectmanagr::addin_create_programme_section": "Ctrl+M Ctrl+C Ctrl+S",
     "projectmanagr::addin_create_project_doc": "Ctrl+M Ctrl+C Ctrl+D",
     "projectmanagr::addin_create_project_note": "Ctrl+M Ctrl+C Ctrl+N",
 

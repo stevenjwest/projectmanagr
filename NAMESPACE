@@ -2,6 +2,7 @@
 
 export(addin_create_content)
 export(addin_create_programme)
+export(addin_create_programme_section)
 export(addin_create_project_doc)
 export(addin_create_project_note)
 export(addin_create_project_org)

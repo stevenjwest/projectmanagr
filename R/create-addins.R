@@ -134,8 +134,7 @@ addin_create_project_org_server <- function(input, output, session) {
 #' Generates a Shiny Gadget for creating a new Programme inside
 #' a Project Organisation.  User selects a destination in
 #' the file system, Programme name (for the directory),
-#' Programme prefix (used to identify Projects with this
-#' Programme), and Programme title (for the html page).
+#' and Programme title (for the html page).
 #'
 #' @export
 addin_create_programme <- function() {
@@ -236,6 +235,204 @@ addin_create_programme_server <- function(input, output, session) {
 }#### ________________________________ ####
 
 
+#' Create a New Programme Section Addin
+#'
+#' Generates a Shiny Gadget for creating a new Programme Section inside
+#' a Programme.  User selects a destination in
+#' the file system, Programme Section name (for the directory),
+#' and Programme Section title (for the html page).
+#'
+#' @export
+addin_create_programme_section <- function() {
+
+  cat( "\nprojectmanagr::addin_create_programme_section():\n" )
+
+
+  #### instance variables ####
+
+  # identify the orgPath from current working directory - to retrieve the settings yaml file
+  orgPath <- find_org_directory( getwd() )
+
+  # if orgPath not identified present error interface and then stop this function
+  if(orgPath=="") { addin_error_org("Create Programme Section") }
+
+  settings <- get_settings_yml(orgPath) # for gadget width & height
+
+  #### RUN GADGET ####
+
+  runGadget(addin_create_programme_section_ui(orgPath),
+            addin_create_programme_section_server,
+            viewer = addin_create_dialog_viewer("Create a Programme Section", settings))
+
+}
+
+
+addin_create_programme_section_ui <- function(orgPath) {
+
+  miniPage(
+
+    tags$style(HTML( get_css_theme() )),  # Apply the theme-specific CSS: dark or light
+
+    shinyjs::useShinyjs(), # to enable & disable subNote input
+
+    gadgetTitleBar("Create a Programme Section"),
+
+    miniContentPanel(
+
+      fillCol(
+
+        fillRow( h3("Create a new Programme Section inside the Project Organisation") ),
+
+        fillRow( textInput("orgPath",
+                           "Organisation Path:",
+                           value=orgPath, width="100%")),
+
+        fillRow( flex = c(5, 1),
+                 verbatimTextOutput("dir", placeholder = TRUE),
+                 shinyDirButton("dir", "Select Directory", "Doc Parent Directory")  ),
+
+        fillRow( span( textOutput("warningDirectory"), style="color:red")  ),
+
+        fillRow(  textInput("sectionName",
+                            "Programme Section Directory Name:",
+                            value = "programme-section", width="100%")  ),
+
+        fillRow(  span( textOutput("warningName"), style="color:red")  ),
+
+        fillRow(  textInput("sectionTitle",
+                            "Programme Section Title:",
+                            value = "programme section", width="100%")  )
+        #fillRow( flex = c(7, 1),  verbatimTextOutput("dir", placeholder = TRUE), shinyDirButton("dir", "Select Directory", "Programme Parent Directory")  ),
+        #fillRow(   span( textOutput("warningDirectory"), style="color:red")  )
+      )
+    )
+  )
+}
+
+
+addin_create_programme_section_server <- function(input, output, session) {
+
+  orgPath <- find_org_directory( getwd() )
+  settings <- get_settings_yml(orgPath)
+  programmeDirPaths <- find_prog_dirs(orgPath, settings)
+  programmeDirNames <- basename(programmeDirPaths)
+
+  # create named list of programmeDirNames
+  programmeDirNamesChoices <- as.list(seq(length(programmeDirNames)))
+  names(programmeDirNamesChoices) <- programmeDirNames
+
+  # check whether the current working directory is inside a programme
+  # if so determine the INDEX of this in programmeDirNames
+  currentProgDir <- find_prog_dir(getwd()) # returns blank string if no prog dirs identified
+  if( currentProgDir == "" ) {
+    progSelected <- 1
+  } else {
+    progSelected <- grep(currentProgDir, programmeDirPaths)
+  }
+
+  # create vector of possible roots for dir selection in server()
+  roots <- programmeDirPaths # can use any of the programmePaths as root
+  names(roots) <- programmeDirNames
+
+  observe({
+    shinyjs::disable("orgPath") # never allow orgPath be edited
+  })
+
+  # update sectionTitle when sectionName is changed:
+  observe({
+
+    updateTextInput(session, "sectionTitle",
+                    value = gsub("-", " ", gsub("_", " ", input$sectionName) )  )
+
+  })
+
+  # compute Dir selection:
+  global <- reactiveValues(datapath = roots[progSelected] )
+  # this sets initial value of global$datapath to the currently selected programme
+
+  # allows selection of Dir, with roots set to all progDirs
+  shinyDirChoose(
+    input, 'dir',
+    defaultRoot = names(roots)[progSelected], # set default to identified progPath root
+    roots=roots, # can use any of the identified progPaths as roots
+    filetypes = c('', 'txt', 'Rmd', "tsv", "csv", "bw") # show text files
+  )
+
+  dir <- reactive(input$dir)
+  # observe({ cat('\n  input$dir: _', input$dir[[1]], '_\n') }) this causes an error when input$dir becomes a list
+  # so check in the observeEvent() function below
+
+
+  # update global$datapath
+  observeEvent(ignoreNULL = TRUE,
+               eventExpr = { # if input$dir is changed
+                 input$dir
+               },
+               handlerExpr = { # update datapath with dir() list
+                 if (!"path" %in% names(dir())) return() # check the path element exists in dir
+                 #cat("\n dir() names: ", names(dir())) # contains : root, path
+                 #cat("\n  dir$root: ", dir()$root) # name of the root selected in shinyDirChoose
+                 #cat("\n  dir$path: _", unlist( dir()$path ), "_" ) # list of each dir in dirTree, separated by space?
+                 #cat("\n  dir$path pasted with fileSep: _", paste( unlist( dir()$path ), collapse = .Platform$file.sep ), "_" )
+                 # list of each dir in dirTree created into a path
+                 #cat("\n  dir$path[-1]: _", unlist( dir()$path[-1] ), "_" ) # list of each dir in dirTree, separated by space?
+                 #cat("\n  dir$path[-1] pasted with fileSep: _", paste( unlist( dir()$path[-1] ), collapse = .Platform$file.sep ), "_" )
+                 # list of each dir in dirTree created into a path
+                 global$datapath <- fs::path(
+                   roots[[basename(dir()$root)]],
+                   paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep) )
+                 # basename of dir()$root can be used to selected the path in named list roots
+                 # selected by its NAME found in dir()$root)
+                 # shinyDirChoose selected PATH with file.sep added
+               })
+
+  observe({ cat('\n  global$datapath: _', global$datapath, '_\n') })
+
+
+
+  observe({
+    if( endsWith(global$datapath, .Platform$file.sep) ) {
+      global$datapath <- substr(global$datapath, 1, nchar(global$datapath)-1) # remove final file.sep!
+    }
+  })
+
+  # show the global$datapath computed from input$dir in output$dir (next to shinyDirButton!)
+  output$dir <- renderText({
+    global$datapath
+  })
+
+
+  # perform computations to create new Programme Section:
+  observeEvent(input$done, {
+
+    if(input$sectionName == "") {
+      output$warningName <- renderText({"*** PROVIDE PROGRAMME SECTION NAME ***"})
+    } else if( grepl("\\s", input$sectionName)  ) {
+      output$warningName <- renderText({"*** PROGRAMME SECTION NAME CANNOT CONTAIN SPACES ***"})
+    } else {
+
+      # FIRST - save all open documents in RStudio:
+      save_all_doc()
+
+      #### create programme section ####
+
+      cat('\n  sectionName: _', input$sectionName, '_\n')
+      cat('\n  sectionParentPath: _', global$datapath, '_\n')
+      cat('\n  sectionTitle: _', input$sectionTitle, '_\n')
+
+      # call projectmanagr::create_programme_section:
+      sectIndexPath <- projectmanagr::create_programme_section(
+        sectionName = input$sectionName,
+        sectionParentPath = global$datapath,
+        sectionTitle = input$sectionTitle
+      )
+
+      # navigate to org index file & close addin:
+      addin_rstudio_nav(sectIndexPath)
+    }
+  })
+}#### ________________________________ ####
+
 #' Create a New Project Document Addin
 #'
 #' Generates a Shiny Gadget for creating a new Project Doc inside
@@ -266,8 +463,10 @@ addin_create_project_doc <- function() {
 
   #### RUN GADGET ####
 
-  runGadget(addin_create_project_doc_ui(orgPath, settings, find_prog_dirs(orgPath, settings), get_prog_selected(find_prog_dirs(orgPath, settings))),
-            addin_create_project_doc_server, viewer = addin_create_dialog_viewer("Create Project Document", settings))
+  #addin_create_project_doc_ui(orgPath, settings, find_prog_dirs(orgPath, settings), get_prog_selected(find_prog_dirs(orgPath, settings)))
+  runGadget(addin_create_project_doc_ui(orgPath, settings),
+            addin_create_project_doc_server,
+            viewer = addin_create_dialog_viewer("Create Project Document", settings))
 }
 
 
@@ -330,15 +529,6 @@ addin_create_project_doc_ui <- function(orgPath, settings) {
                             value = "", width="100%")  ),
 
         fillRow(   h3(textOutput("projectPathOutput"))  )#,
-
-        #fillRow( shinyjs::hidden( textInput("progSelected",
-        #                                    "",
-        #                                    value=progSelected, width="10%") ),
-        #         shinyjs::hidden( selectInput("programmeDirPaths", "",
-        #                                      choices=programmeDirPaths,
-        #                                      selected=programmeDirPaths,
-        #                                      multiple=TRUE, width="10%") ) )
-
       )
     )
   )
@@ -372,12 +562,15 @@ addin_create_project_doc_server <- function(input, output, session) {
 
   # update projectTitle when projectName is changed:
   observe({
-    updateTextInput(session, "projectTitle", value = gsub("-", " ", gsub("_", " ", input$projectName) )  )
+    updateTextInput(session, "projectTitle",
+                    value = gsub("-", " ", gsub("_", " ", input$projectName) )  )
   })
 
   # compute Dir selection:
-  global <- reactiveValues(datapath = roots[progSelected] )
+  #global <- reactiveValues(datapath = roots[progSelected] )
   # this sets initial value of global$datapath to the currently selected programme
+  global <- reactiveValues(datapath = getwd() )
+  # this sets initial value of global$datapath to the current wd - active doc wd
 
   # allows selection of Dir, with roots set to all progDirs
   shinyDirChoose(
@@ -513,7 +706,6 @@ addin_create_project_doc_server <- function(input, output, session) {
 
       # FIRST - save all open documents in RStudio:
       save_all_doc()
-
 
       #### create project doc ####
 
