@@ -107,7 +107,7 @@
   RunUpdateOnStartup: yes
   RunCompileWithUpdate: yes
   FileTypeSuffix: Rmd
-  WeeklyJournalDir: weekly-journal
+  JournalDir: journal
   GadgetWidth: 1200
   GadgetHeight: 1200
   rstudioInternalStateDir: ~/.local/share/rstudio

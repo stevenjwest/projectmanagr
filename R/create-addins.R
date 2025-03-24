@@ -1843,16 +1843,16 @@ addin_create_content <- function() {
 
   runGadget(ui, server, viewer = viewer)
 
-}
+}#### ________________________________ ####
 
 
-#' Addin to Open Weekly Journal
+#' Addin to Open Daily Journal
 #'
 #' A Shiny gadget that displays the current ORG directory path and a calendar
-#' interface. The user can select a date, which determines the week for the
-#' weekly journal. If a journal for the selected week already exists, it will
+#' interface. The user can select a date, which determines the day for the
+#' journal. If a journal for the selected day already exists, it will
 #' be opened. Otherwise, a new journal is created using the
-#' `create_weekly_journal()` function.
+#' `create_daily_journal()` function.
 #'
 #' @details
 #' The function uses the current working directory of the active document to
@@ -1867,22 +1867,22 @@ addin_create_content <- function() {
 #' - Displays a Shiny gadget with the appropriate UI and server components.
 #'
 #' @seealso
-#' - \code{\link{create_weekly_journal}} for creating weekly journal files.
+#' - \code{\link{create_daily_journal}} for creating journal files.
 #' - \code{\link{find_org_directory}} for locating the ORG directory.
 #' - \code{\link{get_settings_yml}} for retrieving settings from a YAML file.
 #' - \code{\link{addin_error_org}} for handling ORG-related errors.
 #'
 #' @examples
-#' # Open the weekly journal gadget:
-#' projectmanagr::addin_open_weekly_journal()
+#' # Open the daily journal gadget:
+#' projectmanagr::addin_open_daily_journal()
 #'
 #' @note
 #' This function is intended to be used interactively as an RStudio Addin.
 #'
 #' @export
-addin_open_weekly_journal <- function() {
+addin_open_daily_journal <- function() {
 
-  cat("\nprojectmanagr::addin_open_weekly_journal():\n")
+  cat("\nprojectmanagr::addin_open_daily_journal():\n")
 
   # Set working directory to the active document's path
   set_wd_active_doc()
@@ -1894,7 +1894,7 @@ addin_open_weekly_journal <- function() {
 
   # Handle error if ORG directory is not found
   if (orgPath == "") {
-    addin_error_org("Open Weekly Journal")
+    addin_error_org("Open Daily Journal")
   }
 
   # Retrieve settings from the YAML file in the ORG directory
@@ -1903,17 +1903,17 @@ addin_open_weekly_journal <- function() {
   #### Run Shiny Gadget ####
 
   runGadget(
-    addin_open_weekly_journal_ui(orgPath), addin_open_weekly_journal_server, viewer = addin_create_dialog_viewer("Open Weekly Journal", settings)
+    addin_open_daily_journal_ui(orgPath), addin_open_daily_journal_server, viewer = addin_create_dialog_viewer("Open Daily Journal", settings)
   )
 }
 
 
 
-#' UI for Addin: Open Weekly Journal
+#' UI for Addin: Open Daily Journal
 #'
-#' Constructs the UI for the "Open Weekly Journal" Shiny gadget.
+#' Constructs the UI for the "Open Daily Journal" Shiny gadget.
 #' Displays the organisation path, a calendar for selecting a date, and
-#' highlights the week corresponding to the selected date.
+#' highlights the day corresponding to the selected date.
 #'
 #' @param orgPath Character string. The path to the ORG directory where journal files are stored.
 #' @param calDate Date object. The default date to display in the calendar. Defaults to the current system date (\code{Sys.Date()}).
@@ -1921,13 +1921,13 @@ addin_open_weekly_journal <- function() {
 #'
 #' @details
 #' This function creates a user interface for selecting a date using a calendar
-#' component. The selected date determines the weekly journal to open or create.
+#' component. The selected date determines the journal to open or create.
 #' The organisation path is displayed prominently for user context.
 #'
 #' Features:
 #' - Automatically listens for the "Enter" key to trigger the Done button.
 #' - Highlights the current and selected months in the calendar.
-#' - Displays the selected week dynamically.
+#' - Displays the selected day dynamically.
 #'
 #' The function uses \code{miniUI} to create a compact, user-friendly layout
 #' suitable for Shiny gadgets.
@@ -1937,7 +1937,7 @@ addin_open_weekly_journal <- function() {
 #'
 #' @examples
 #' # Example usage:
-#' ui <- addin_open_weekly_journal_ui(
+#' ui <- addin_open_daily_journal_ui(
 #'   orgPath = "/path/to/org",
 #'   calDate = as.Date("2024-01-01"),
 #'   calendar_function = shiny.fluent::Calendar.shinyInput
@@ -1948,10 +1948,10 @@ addin_open_weekly_journal <- function() {
 #' - \code{\link[shiny.fluent]{Calendar.shinyInput}} for the calendar component.
 #'
 #' @note
-#' This UI is designed for use with the server logic defined in \code{addin_open_weekly_journal_server}.
+#' This UI is designed for use with the server logic defined in \code{addin_open_daily_journal_server}.
 #'
-addin_open_weekly_journal_ui <- function(orgPath, calDate = Sys.Date(),
-                                         calendar_function = shiny.fluent::Calendar.shinyInput) {
+addin_open_daily_journal_ui <- function(orgPath, calDate = Sys.Date(),
+                                        calendar_function = shiny.fluent::Calendar.shinyInput) {
 
     miniUI::miniPage(
 
@@ -1965,7 +1965,7 @@ addin_open_weekly_journal_ui <- function(orgPath, calDate = Sys.Date(),
           }
         });
       ")),
-      miniUI::gadgetTitleBar("Open Weekly Journal: Select a Week"),
+      miniUI::gadgetTitleBar("Open Daily Journal: Select a Day"),
       miniUI::miniContentPanel(
         h4(paste0("Organisation Path:  ", orgPath), align = "center"),
         div(
@@ -1977,30 +1977,30 @@ addin_open_weekly_journal_ui <- function(orgPath, calDate = Sys.Date(),
           align = "center"
         ),
         br(),
-        verbatimTextOutput("selected_week_text")
+        verbatimTextOutput("selected_day_text")
     )
   )
 }
 
 
-#' Server Logic for Addin: Open Weekly Journal
+#' Server Logic for Addin: Open Daily Journal
 #'
-#' Implements the server logic for the "Open Weekly Journal" Shiny gadget.
-#' Handles date selection from the calendar, determines the corresponding week's
-#' Monday, and creates or navigates to the weekly journal file as needed.
+#' Implements the server logic for the "Open Daily Journal" Shiny gadget.
+#' Handles date selection from the calendar, determines the selected day,
+#' and creates or navigates to the journal file as needed.
 #'
 #' @param input Reactive input object. Contains inputs from the Shiny gadget UI, including the selected date from the calendar (\code{input$calendar}) and the "Done" button action (\code{input$done}).
-#' @param output Reactive output object. Used to render outputs in the UI, such as the text displaying the Monday of the selected week (\code{output$selected_week_text}).
+#' @param output Reactive output object. Used to render outputs in the UI, such as the text displaying the selected day (\code{output$selected_day_text}).
 #' @param session Reactive session object. Used to manage the Shiny gadget's session.
 #'
 #' @details
-#' This function processes user interactions with the "Open Weekly Journal" gadget:
+#' This function processes user interactions with the "Open Daily Journal" gadget:
 #' - Monitors the calendar input for date selection.
-#' - Calculates the Monday of the selected week using \code{lubridate::floor_date}.
-#' - Displays the calculated Monday date in the UI.
+#' - Calculates the date selected.
+#' - Displays the calculated date in the UI.
 #' - Responds to the "Done" button click:
-#'   - If a week is selected, it creates the journal for that week (if necessary) and navigates to the journal file in RStudio.
-#'   - If no week is selected, the gadget is closed without any action.
+#'   - If a day is selected, it creates the journal for that day (if necessary) and navigates to the journal file in RStudio.
+#'   - If no day is selected, the gadget is closed without any action.
 #'
 #' @return
 #' This function does not return a value. It is invoked as part of the Shiny server logic for the gadget.
@@ -2008,44 +2008,43 @@ addin_open_weekly_journal_ui <- function(orgPath, calDate = Sys.Date(),
 #' @examples
 #' # Example usage within a Shiny gadget:
 #' server <- function(input, output, session) {
-#'   addin_open_weekly_journal_server(input, output, session)
+#'   addin_open_daily_journal_server(input, output, session)
 #' }
 #'
 #' @seealso
-#' - \code{\link{addin_open_weekly_journal_ui}} for the corresponding UI function.
-#' - \code{\link{create_weekly_journal}} for creating weekly journal files.
+#' - \code{\link{addin_open_daily_journal_ui}} for the corresponding UI function.
+#' - \code{\link{create_daily_journal}} for creating daily journal files.
 #' - \code{\link{addin_rstudio_nav}} for navigating to files in RStudio.
 #'
 #' @note
-#' This function is designed to be used exclusively within a Shiny gadget as part of the "Open Weekly Journal" add-in.
+#' This function is designed to be used exclusively within a Shiny gadget as part of the "Open Daily Journal" add-in.
 #'
-addin_open_weekly_journal_server <- function(input, output, session) {
-  # Reactive value to store the Monday of the selected week
-  selected_week <- reactiveVal(NULL)
+addin_open_daily_journal_server <- function(input, output, session) {
+  # Reactive value to store the selected day
+  selected_date <- reactiveVal(NULL)
 
   # Observe date selection
   observeEvent(input$calendar, {
     if (!is.null(input$calendar)) {
-      selected_date <- as.Date(input$calendar)
-      monday_of_week <- lubridate::floor_date(selected_date, "week", week_start = 1)
-      selected_week(monday_of_week)
+      date <- as.Date(input$calendar)
+      selected_date(date)
     }
   })
 
   # Display the Monday of the selected week
-  output$selected_week_text <- renderText({
-    if (!is.null(selected_week())) {
-      paste("Selected week beginning:", selected_week())
+  output$selected_day_text <- renderText({
+    if (!is.null(selected_date())) {
+      paste("Selected day:", selected_date())
     } else {
-      "No week selected yet."
+      "No day selected yet."
     }
   })
 
   # Handle "Done" button click
   observeEvent(input$done, {
-    if (!is.null(selected_week())) {
+    if (!is.null(selected_date())) {
       # Create journal if necessary
-      journalPath <- create_weekly_journal(selected_week())
+      journalPath <- create_daily_journal(date = selected_date())
 
       # Navigate to journal file & close add-in
       addin_rstudio_nav(journalPath)
@@ -2053,7 +2052,7 @@ addin_open_weekly_journal_server <- function(input, output, session) {
       stopApp(NULL)
     }
   })
-}
+}#### ________________________________ ####
 
 
 

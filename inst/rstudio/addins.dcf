@@ -144,9 +144,9 @@ Description: Create a New Link from a Project Document Goal Del Task to a Projec
 Binding: addin_link_doc_to_note
 Interactive: true
 
-Name: ProjectManagr: Open Weekly Journal
-Description: Open the Weekly Journal in Organisation for the selected week.
-Binding: addin_open_weekly_journal
+Name: ProjectManagr: Open Daily Journal
+Description: Open the Daily Journal in Organisation for the selected day.
+Binding: addin_open_daily_journal
 Interactive: true
 
 Name: ProjectManagr: Search Project Organisation
