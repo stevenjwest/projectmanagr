@@ -58,17 +58,44 @@ datatable_create_rmd <- function( rmd_path, rmd_line, datatable_name="samples",
 
 }
 
-#' Insert data_tables vector into rmd_contents, between rmd_startline & rmd_endline
-#'
-#' Removes content between `rmd_startline` and `rmd_endline`
-insert_dt_to_contents <- function(data_tables, rmd_contents, rmd_startline, rmd_endline) {
-  # write these to the file:
-  cat( "\n  write data table(s) to Rmd at line: ", rmd_startline )
-  rmd_contents <- c(rmd_contents[1:(rmd_startline-1)], data_tables,
-                    rmd_contents[(rmd_endline+1):length(rmd_contents)])
-  # rmd_line-1 to REMOVE CURRENT LINE
 
-  rmd_contents # return contents
+
+
+#' Insert a datatable from a dataframe
+#'
+#' Will insert the passed dataframe, using the variable's NAME as the datatable
+#' NAME.  Will CREATE the datatable first, then subsequent cols that dont fit in
+#' the first datatable will be in subsequent ADD_DATA datatables.
+#'
+#' Inserts the datatable where the CURSOR IS in the Active Rmd.
+#'
+#' @param df a dataframe/tibble with data to insert into Rmd
+#'
+#' @param dt_function String to declare type of table: MUST be CREATE ADD_DATA
+#' RESAMPLE GROUP EXPORT or IMPORT. Default is CREATE.
+#'
+#' @param dt_length Int that dictates the maximum length of any one inserted datatable.
+#'
+#' @export
+datatable_insert_from_tibble <- function(rmd_path, rmd_line, tb, dt_name,
+                                         dt_function = "CREATE", dt_length = 100) {
+
+  cat( "\nprojectmanagr::datatable_insert_from_tibble():\n" )
+
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  rmd_path <- confirm_rmd_path(rmd_path)
+
+  cat( "  Reading Rmd...\n" )
+  rmd_contents <- read_file(rmd_path)
+
+  data_tables <- build_datatable_from_tibble(tb, dt_name, dt_function, dt_length)
+
+  # write these to the file:
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
+  rmd_contents <- insert_dt_to_contents(data_tables, rmd_contents, rmd_line, rmd_line)
+
+  write_file(rmd_contents, rmd_path)
+
 }
 
 
@@ -597,7 +624,7 @@ datatable_import_export_rmd <- function(source_rmd_path, source_rmd_line, destin
 
   return(drl) # return the new destination_rmd_line - located after the newly inserted datatable
 
-}
+} #### ________________________________ ####
 
 
 #' Generate EXPORT Data Table and insert into Rmd
@@ -657,7 +684,6 @@ datatable_import_export_rmd <- function(source_rmd_path, source_rmd_line, destin
 #' Default is "Datatables-Export--Template.Rmd" from projectmanagr templates, and the
 #' content of this file can be modified to suit the users needs.
 #'
-#' @export
 datatable_export_rmd <- function(source_rmd_path, source_rmd_line, destination_rmd_path,
                                  settings, datatable_name, ids_vector="", reps_vector="",
                                  dt_length=100, summarise_reps=FALSE,
@@ -708,6 +734,120 @@ datatable_export_rmd <- function(source_rmd_path, source_rmd_line, destination_r
 
   return( list(sRL=sRL, exportHeader=eFT$exportHeader) ) # return the NEW source_rmd_line & exportHeader!
 
+}
+
+
+
+#' Generate IMPORT Data Table and insert into Rmd
+#'
+#' This function generates an IMPORT datatable based on contents of `source_rmd_path`
+#' up to `source_rmd_line`, & datatable contents with `datatable_name`. The IMPORT
+#' datatable is inserted into `destination_rmd_path` at `destination_rmd_line`.
+#'
+#' Both `source_rmd_path` and `destination_rmd_path` are confirmed to be
+#' Project Notes or Docs with the `settings` yml list.
+#'
+#' @param source_rmd_path path to Source Rmd file: the file that contains the
+#' datatables with `datatable_name` that is read to extract the IDs (& REPs).
+#'
+#' @param source_rmd_line line in Rmd file to read datatables up to.
+#'
+#' @param destination_rmd_path path to Destination Rmd file: the file where the
+#' new IMPORT datatable is written to.
+#'
+#' @param destination_rmd_line line in Rmd file to insert the new IMPORT table.
+#'
+#' @param settings projectmanagr settings yml data - to define prefix in links.
+#'
+#' @param datatable_name String of data table name - MUST exist in rmd_path!
+#'
+#' @param destination_rel_path The relative path to the Destination Note where
+#' these samples are EXPORT/IMPORTED to.
+#'
+#' @param ids_vector A vector containing the IDs to add: Must be a set of EXISTING
+#' IDs from the selected `datatable_name` - cannot be ALL or a set of Group IDs.
+#' Default blank string "" indicates to add data to ALL EXISTING IDs.  Existing
+#' IDs are all IDs that have not been resampled, exported, or disposed.
+#'
+#' @param reps_vector A vector containing the REPs to add: This is combined with
+#' the `ids_vector` to specify ID-REP pairs.  Each ID-REP pair must exist (not
+#' be resampled, exported, or disposed) from the selected `datatable_name`.
+#' Default blank string "" indicates to add data to ALL EXISTING ID-REPs.
+#'
+#' @param dt_length Int of data table max length in characters - default 100.
+#'
+#' @param summarise_reps Boolean to indicate whether reps should be summarised in
+#' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
+#' otherwise if TRUE, all reps are summarised using r vector index syntax on
+#' one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
+#' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.
+#'
+#' @param exportHeader String of markdown header written to source note where the export
+#' datatable was written. This is used to link directly to this section from the import
+#' datatable IMPORT col values - the source_re_path_link - using html link syntax.
+#' Can navigate this link in R markdown using the `navigate_markdown_link()` function
+#' in `projectmanagr`
+#'
+datatable_import_rmd <- function(source_rmd_path, source_rmd_line, destination_rmd_path,
+                                 destination_rmd_line, settings, datatable_name,
+                                 ids_vector="", reps_vector="", dt_length=100,
+                                 summarise_reps=FALSE, exportHeader) {
+
+  cat( "\nprojectmanagr::datatable_import_rmd():\n" )
+
+  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
+  source_rmd_path <- confirm_rmd_path(source_rmd_path)
+  destination_rmd_path <- confirm_rmd_path(destination_rmd_path)
+
+  # define the relative path link from source and destination
+  source_rel_path <- fs::path_rel(source_rmd_path, start=fs::path_dir(destination_rmd_path))
+  source_rel_path <- link_add_section(source_rel_path, exportHeader)
+  source_rel_path_link <- paste0("[", get_prefix(source_rel_path, settings),
+                                 "](", source_rel_path, ")")
+
+  cat( "  Reading Files...\n" )
+  source_rmd_contents <- read_file(source_rmd_path)
+  destination_rmd_contents <- read_file(destination_rmd_path)
+
+  #### datatable import ####
+
+  data_tables <- datatable_import(
+    source_contents = source_rmd_contents[1:source_rmd_line],
+    destination_contents = destination_rmd_contents,
+    datatable_name = datatable_name,
+    source_rel_path_link = source_rel_path_link,
+    ids_vector = ids_vector,
+    reps_vector = reps_vector,
+    dt_length = dt_length,
+    summarise_reps = summarise_reps  )
+
+  # insert into destination!
+  destination_rmd_contents <- insert_dt_to_contents(
+                                  data_tables, destination_rmd_contents,
+                                  destination_rmd_line, destination_rmd_line) # start & end are same line
+
+  write_file(destination_rmd_contents, destination_rmd_path)
+
+  # return the line index AFTER insertion of data_tables
+  return( (destination_rmd_line + length(data_tables)) )
+
+} #### ________________________________ ####
+
+
+
+
+
+#' Insert data_tables vector into rmd_contents, between rmd_startline & rmd_endline
+#'
+#' Removes content between `rmd_startline` and `rmd_endline`
+insert_dt_to_contents <- function(data_tables, rmd_contents, rmd_startline, rmd_endline) {
+  # write these to the file:
+  cat( "\n  write data table(s) to Rmd at line: ", rmd_startline )
+  rmd_contents <- c(rmd_contents[1:(rmd_startline-1)], data_tables,
+                    rmd_contents[(rmd_endline+1):length(rmd_contents)])
+  # rmd_line-1 to REMOVE CURRENT LINE
+
+  rmd_contents # return contents
 }
 
 
@@ -778,140 +918,6 @@ recurse_export_head <- function(exportContents, settings, datatable_name, sr_con
     # return the export contents with a valid header
     list(eC=eC, exportHeader=exportHeader)
   }
-}
-
-#' Generate IMPORT Data Table and insert into Rmd
-#'
-#' This function generates an IMPORT datatable based on contents of `source_rmd_path`
-#' up to `source_rmd_line`, & datatable contents with `datatable_name`. The IMPORT
-#' datatable is inserted into `destination_rmd_path` at `destination_rmd_line`.
-#'
-#' Both `source_rmd_path` and `destination_rmd_path` are confirmed to be
-#' Project Notes or Docs with the `settings` yml list.
-#'
-#' @param source_rmd_path path to Source Rmd file: the file that contains the
-#' datatables with `datatable_name` that is read to extract the IDs (& REPs).
-#'
-#' @param source_rmd_line line in Rmd file to read datatables up to.
-#'
-#' @param destination_rmd_path path to Destination Rmd file: the file where the
-#' new IMPORT datatable is written to.
-#'
-#' @param destination_rmd_line line in Rmd file to insert the new IMPORT table.
-#'
-#' @param settings projectmanagr settings yml data - to define prefix in links.
-#'
-#' @param datatable_name String of data table name - MUST exist in rmd_path!
-#'
-#' @param destination_rel_path The relative path to the Destination Note where
-#' these samples are EXPORT/IMPORTED to.
-#'
-#' @param ids_vector A vector containing the IDs to add: Must be a set of EXISTING
-#' IDs from the selected `datatable_name` - cannot be ALL or a set of Group IDs.
-#' Default blank string "" indicates to add data to ALL EXISTING IDs.  Existing
-#' IDs are all IDs that have not been resampled, exported, or disposed.
-#'
-#' @param reps_vector A vector containing the REPs to add: This is combined with
-#' the `ids_vector` to specify ID-REP pairs.  Each ID-REP pair must exist (not
-#' be resampled, exported, or disposed) from the selected `datatable_name`.
-#' Default blank string "" indicates to add data to ALL EXISTING ID-REPs.
-#'
-#' @param dt_length Int of data table max length in characters - default 100.
-#'
-#' @param summarise_reps Boolean to indicate whether reps should be summarised in
-#' the datatable.  If FALSE each ID/rep is on a separate line in the new datatable,
-#' otherwise if TRUE, all reps are summarised using r vector index syntax on
-#' one line in the new datatable.  i.e. each ID is listed ONCE and the reps are
-#' indicated as: 1:3,5,6:10,12,14:25 etc.  Default to FALSE.
-#'
-#' @param exportHeader String of markdown header written to source note where the export
-#' datatable was written. This is used to link directly to this section from the import
-#' datatable IMPORT col values - the source_re_path_link - using html link syntax.
-#' Can navigate this link in R markdown using the `navigate_markdown_link()` function
-#' in `projectmanagr`
-#'
-#' @export
-datatable_import_rmd <- function(source_rmd_path, source_rmd_line, destination_rmd_path,
-                                 destination_rmd_line, settings, datatable_name,
-                                 ids_vector="", reps_vector="", dt_length=100,
-                                 summarise_reps=FALSE, exportHeader) {
-
-  cat( "\nprojectmanagr::datatable_import_rmd():\n" )
-
-  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  source_rmd_path <- confirm_rmd_path(source_rmd_path)
-  destination_rmd_path <- confirm_rmd_path(destination_rmd_path)
-
-  # define the relative path link from source and destination
-  source_rel_path <- fs::path_rel(source_rmd_path, start=fs::path_dir(destination_rmd_path))
-  source_rel_path <- link_add_section(source_rel_path, exportHeader)
-  source_rel_path_link <- paste0("[", get_prefix(source_rel_path, settings),
-                                 "](", source_rel_path, ")")
-
-  cat( "  Reading Files...\n" )
-  source_rmd_contents <- read_file(source_rmd_path)
-  destination_rmd_contents <- read_file(destination_rmd_path)
-
-  #### datatable import ####
-
-  data_tables <- datatable_import(
-    source_contents = source_rmd_contents[1:source_rmd_line],
-    destination_contents = destination_rmd_contents,
-    datatable_name = datatable_name,
-    source_rel_path_link = source_rel_path_link,
-    ids_vector = ids_vector,
-    reps_vector = reps_vector,
-    dt_length = dt_length,
-    summarise_reps = summarise_reps  )
-
-  # insert into destination!
-  destination_rmd_contents <- insert_dt_to_contents(
-                                  data_tables, destination_rmd_contents,
-                                  destination_rmd_line, destination_rmd_line) # start & end are same line
-
-  write_file(destination_rmd_contents, destination_rmd_path)
-
-  # return the line index AFTER insertion of data_tables
-  return( (destination_rmd_line + length(data_tables)) )
-
-}
-
-
-#' Insert a datatable from a dataframe
-#'
-#' Will insert the passed dataframe, using the variable's NAME as the datatable
-#' NAME.  Will CREATE the datatable first, then subsequent cols that dont fit in
-#' the first datatable will be in subsequent ADD_DATA datatables.
-#'
-#' Inserts the datatable where the CURSOR IS in the Active Rmd.
-#'
-#' @param df a dataframe/tibble with data to insert into Rmd
-#'
-#' @param dt_function String to declare type of table: MUST be CREATE ADD_DATA
-#' RESAMPLE GROUP EXPORT or IMPORT. Default is CREATE.
-#'
-#' @param dt_length Int that dictates the maximum length of any one inserted datatable.
-#'
-#' @export
-datatable_insert_from_tibble <- function(rmd_path, rmd_line, tb, dt_name,
-                                         dt_function = "CREATE", dt_length = 100) {
-
-  cat( "\nprojectmanagr::datatable_insert_from_tibble():\n" )
-
-  # confirm rmd_path : in org && Project Doc or Note (subdir of programme) && absolute + normalised
-  rmd_path <- confirm_rmd_path(rmd_path)
-
-  cat( "  Reading Rmd...\n" )
-  rmd_contents <- read_file(rmd_path)
-
-  data_tables <- build_datatable_from_tibble(tb, dt_name, dt_function, dt_length)
-
-  # write these to the file:
-  cat( "\n  write data table(s) to Rmd at line: ", rmd_line )
-  rmd_contents <- insert_dt_to_contents(data_tables, rmd_contents, rmd_line, rmd_line)
-
-  write_file(rmd_contents, rmd_path)
-
 }
 
 

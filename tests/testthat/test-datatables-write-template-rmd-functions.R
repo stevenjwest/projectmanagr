@@ -2,6 +2,8 @@
 
 test_that("datatable write template Rmd", {
 
+  ############## ________________ ##############################################
+
   ############## generate test organisation temp directory #####################
 
   tmpdir <- create_tmpdir_rsess()
@@ -132,7 +134,7 @@ test_that("datatable write template Rmd", {
   projectNoteDirDest <- get_project_note_dir_path(projectNoteRmdDest, settings)
 
 
-  #### ________________ ####
+  ############## ________________ ##############################################
 
 
   ############## datatable_create_template_rmd() function calls ################
@@ -180,13 +182,13 @@ test_that("datatable write template Rmd", {
   # [x] correctly adds <<ID>>-CNS & <<ID>>-CTL ID values
 
 
-  ##### datatable_create_template_rmd() run tests ####
+  ############## datatable_create_template_rmd() run tests #####################
 
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file(rmd_path)
 
 
-  ##### datatable_dispose_template_rmd() function calls ####
+  ############## datatable_dispose_template_rmd() function calls ###############
 
   # test standard dt generation
   rmd_path=projectNoteRmdDSP
@@ -218,13 +220,13 @@ test_that("datatable write template Rmd", {
                                  summarise_reps, all_reps)
 
 
-  ##### datatable_dispose_template_rmd() run tests ####
+  ############## datatable_dispose_template_rmd() run tests ####################
 
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file(rmd_path)
 
 
-  ##### datatable_resample_template_rmd() function calls ####
+  ############## datatable_resample_template_rmd() function calls ##############
 
   # test standard dt generation
   rmd_path=projectNoteRmdRSP
@@ -255,13 +257,13 @@ test_that("datatable write template Rmd", {
                                  summarise_reps, all_reps)
 
 
-  ##### datatable_resample_template_rmd() run tests ####
+  ############## datatable_resample_template_rmd() run tests ###################
 
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file(rmd_path)
 
 
-  ##### datatable_add_data_samples_template_rmd() function calls ####
+  ############## datatable_add_data_samples_template_rmd() function calls ######
 
   # test standard dt generation
   rmd_path=projectNoteRmdADS
@@ -280,13 +282,13 @@ test_that("datatable write template Rmd", {
                                           summarise_reps, all_reps)
 
 
-  ##### datatable_add_data_samples_template_rmd() run tests ####
+  ############## datatable_add_data_samples_template_rmd() run tests ###########
 
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file(rmd_path)
 
 
-  ##### datatable_add_group_template_rmd() function calls ####
+  ############## datatable_add_group_template_rmd() function calls #############
 
   # test standard dt generation
   rmd_path=projectNoteRmdADG
@@ -305,7 +307,7 @@ test_that("datatable write template Rmd", {
                                   summarise_reps, all_reps)
 
 
-  ##### datatable_add_group_template_rmd() run tests ####
+  ############## datatable_add_group_template_rmd() run tests ##################
 
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file(rmd_path)

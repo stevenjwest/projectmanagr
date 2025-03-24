@@ -1,0 +1,272 @@
+---
+title: 'tn-j___003~ PN ADV'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PD : EXAMPLE TASK TITLE
+
+
+[PD_--_Proj_Do](../../PD_--_Proj_Do.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PD_--_Proj_Do.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD_--_Proj_Do.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PD_--_Proj_Do.Rmd#task-example-task-title)
+
+
+
+### _summary_point_01_
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+
+--------------------- todo ---------------------
+------------------------------------------------
+
+
+### TODO_HEADER
+
+
+* _details_of_todo_
+
+
+
+#### [] _todo_item_description_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID       c        cage      genotype      strain_breed_type           dob_dt         
+    ======  =======  =========  ============  =====================  ====================  
+
+     1001     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+     1002     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+     1003     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+     1004     VAL      VALUE      DATA_VAL         DATA__VALUE         INSERT__DATETIME    
+                                                                                           
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID      c       cage       genotype      strain_breed_type           dob_dt         
+    ======  =====  ==========  ============  =====================  ====================  
+
+     2001     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     2002     F      CID102       vgat:wt            c57bl2           2024-08-21:12:12    
+                                                                                          
+     2003     M      CID103       vgat:wt            c57bl3           2024-08-21:12:13    
+                                                                                          
+     2004     M      CID104       vgat:wt            c57bl4           2024-08-21:12:14    
+                                                                                          
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID      c       cage       genotype      strain_breed_type           dob_dt         
+    ======  =====  ==========  ============  =====================  ====================  
+
+     3001     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     3002     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     3003     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+     3004     F      CID101       vgat:wt            c57bl1           2024-08-21:12:11    
+                                                                                          
+
++===============================================================================
+
++===============================================================================
+
+
+    samples2  :  CREATE
+
+
+      ID       x        wt-g         perfuse_dt         perfusion_con       group-fix     
+    ======  =======  =========  ====================  =================  ===============  
+
+     4001     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     4002     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     4003     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+     4004     VAL      VALUE      INSERT__DATETIME       DATA__VALUE       DATA__VALUE    
+                                                                                          
+
++===============================================================================
+
++===============================================================================
+
+
+    samples2  :  ADD_DATA
+
+
+      ID         postfix_dt         postfix_con      group-postfix    
+    ======  ====================  ===============  =================  
+
+     4001     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+     4002     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+     4003     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+     4004     INSERT__DATETIME      DATA__VALUE       DATA__VALUE     
+                                                                      
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  ADD_DATA
+
+
+         variables               ALL          
+    ==================  ====================  
+
+      perfuse_wash_dt     INSERT__DATETIME    
+                                              
+     perfuse_wash_con        DATA__VALUE      
+                                              
+             p                   VAL          
+                                              
+           perf                 VALUE         
+                                              
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  GROUP
+
+
+      ID      group-solvent-inc      group-ab-conc    
+    ======  =====================  =================  
+
+     1001            1Hr                 1mg/mL       
+                                                      
+     1002            2Hr                0.5mg/mL      
+                                                      
+     1003            4Hr                 1mg/mL       
+                                                      
+     1004            1Hr                0.5mg/mL      
+                                                      
+     2001            2Hr                 1mg/mL       
+                                                      
+     2002            4Hr                0.5mg/mL      
+                                                      
+     2003            1Hr                 1mg/mL       
+                                                      
+     2004            2Hr                0.5mg/mL      
+                                                      
+     3001            4Hr                 1mg/mL       
+                                                      
+     3002            1Hr                0.5mg/mL      
+                                                      
+     3003            2Hr                 1mg/mL       
+                                                      
+     3004            4Hr                0.5mg/mL      
+                                                      
+
++===============================================================================
+
++===============================================================================
+
+
+    samples  :  ADD_DATA
+
+
+         variables               1Hr                   2Hr                   4Hr          
+    ==================  ====================  ====================  ====================  
+
+      rerfuse_wash_dt     INSERT__DATETIME      INSERT__DATETIME      INSERT__DATETIME    
+                                                                                          
+     rerfuse_wash_con        DATA__VALUE           DATA__VALUE           DATA__VALUE      
+                                                                                          
+             r                   VAL                   VAL                   VAL          
+                                                                                          
+           rerf                 VALUE                 VALUE                 VALUE         
+                                                                                          
+
++===============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

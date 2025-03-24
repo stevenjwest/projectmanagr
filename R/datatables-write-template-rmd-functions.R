@@ -461,7 +461,7 @@ datatable_add_data_samples_template_rmd <- function( rmd_path, rmd_line,
 
   write_file(rmd_contents, rmd_path)
 
-}
+} #### ________________________________ ####
 
 
 

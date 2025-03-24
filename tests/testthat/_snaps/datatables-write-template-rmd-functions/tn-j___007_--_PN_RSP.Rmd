@@ -1,0 +1,214 @@
+---
+title: 'tn-j___007~ PN RSP'
+author: 'sjwest'
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+
+
+# OBJECTIVES
+
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+## PD : EXAMPLE TASK TITLE
+
+
+[PD_--_Proj_Do](../../PD_--_Proj_Do.Rmd)
+
+
+* [GOAL: EXAMPLE GOAL TITLE](../../PD_--_Proj_Do.Rmd#goal-example-goal-title)
+
+    + [DELIVERABLE: EXAMPLE DEL TITLE](../../PD_--_Proj_Do.Rmd#deliverable-example-del-title)
+
+        - [TASK: EXAMPLE TASK TITLE](../../PD_--_Proj_Do.Rmd#task-example-task-title)
+
+
+
+### _summary_point_01_
+
+>>>>
+>>>> Summarise key insights from work in this note that fulfil the Task
+>>>>
+
+
+
+--------------------- todo ---------------------
+------------------------------------------------
+
+
+### TODO_HEADER
+
+
+* _details_of_todo_
+
+
+
+#### [] _todo_item_description_
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# DATA STORAGE
+
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+
+
+# Introduction
+
+
+
++===============================================================================
+
+
+    samples  :  CREATE
+
+
+      ID      x      wt_g         perfuse_dt         perfusion_con      group_fix    
+    ======  =====  ========  ====================  =================  =============  
+
+     1001     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1002     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1003     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+     1004     F      30.0      2020-01-01:12:01        F4M1PB_RT          fix_RT     
+                                                                                     
+
++===============================================================================
+
+
++===============================================================================
+
+
+    TEMPLATE  :  RESAMPLE  :  samples
+
+
+        ID          rsample       reps    
+    ============  =============  ========  
+
+     <<IDS>>       CNS              1     
+                   SC-LUM           1     
+                   SC-THOR          1     
+                   DRG-L4-LT        1     
+                   DRG-L4-RT        1     
+                                           
+>>>>                                                                       
+>>>> Fill Datatable Template column values with appropriate defaults       
+>>>>                                                                       
+>>>> Place CURSOR on this line ...                                         
+>>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          
+>>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       
+>>>>                                                                       
+
++===============================================================================
+
+
++===============================================================================
+
+
+    TEMPLATE  :  RESAMPLE  :  samples
+
+
+        ID          resample       reps    
+    ============  =============  ========  
+
+     <<IDS>>       CNS              1     
+                   SC-LUM           1     
+                   SC-THOR          1     
+                   DRG-L4-LT        1     
+                   DRG-L4-RT              
+                                           
+>>>>                                                                       
+>>>> Fill Datatable Template column values with appropriate defaults       
+>>>>                                                                       
+>>>> Place CURSOR on this line ...                                         
+>>>>   run projectmanagr::addin_datatable_create() - CTRL + M,T,C          
+>>>>     NAMED TEMPLATE Datatables assume all-IDs should be inserted       
+>>>>                                                                       
+
++===============================================================================
+
+
++===============================================================================
+
+
+    samples  :  RESAMPLE
+
+
+      ID       resample      reps    
+    ======  =============  ========  
+
+     1001        CNS           1     
+                SC-LUM         1     
+               SC-THOR         1     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+     1002        CNS           1     
+                SC-LUM         1     
+               SC-THOR         1     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+     1003        CNS           1     
+                SC-LUM         1     
+               SC-THOR         1     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+     1004        CNS           1     
+                SC-LUM         1     
+               SC-THOR         1     
+              DRG-L4-LT        1     
+              DRG-L4-RT        1     
+                                     
+
++===============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
