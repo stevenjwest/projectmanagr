@@ -299,7 +299,7 @@ test_that("datatable_read_vector() : CREATE Datatables", {
     "")
   expect_error(datatable_read_vector(contents))
 
-})
+}) #### ________________________________ ####
 
 
 test_that("datatable_read_vector() : RESAMPLE Datatables", {
@@ -1535,7 +1535,7 @@ test_that("datatable_read_vector() : RESAMPLE Datatables", {
   expect_error(datatable_read_vector(contents))
 
 
-})
+}) #### ________________________________ ####
 
 
 test_that("datatable_read_vector() : ADD_DATA Datatables", {
@@ -6026,7 +6026,7 @@ test_that("datatable_read_vector() : ADD_DATA Datatables", {
   # [x] SUCCESS
   # reads ADD_DATA timetable plaintext datatable correctly
 
-})
+}) #### ________________________________ ####
 
 
 test_that("datatable_read_vector() : GROUP Datatables", {
@@ -6311,7 +6311,7 @@ test_that("datatable_read_vector() : GROUP Datatables", {
   # [x] SUCCESS
   # reads GROUP plaintext datatable
 
-})
+}) #### ________________________________ ####
 
 
 
@@ -6702,7 +6702,7 @@ test_that("datatable_read_vector() : EXPORT Datatables", {
   # [x] SUCCESS
   # reads EXPORT plaintext datatable
 
-})
+}) #### ________________________________ ####
 
 
 test_that("datatable_read_vector() : IMPORT Datatables", {
@@ -6840,6 +6840,4 @@ test_that("datatable_read_vector() : IMPORT Datatables", {
   # [x] SUCCESS
   # reads IMPORT plaintext datatable
 
-
-
-})
+}) #### ________________________________ ####

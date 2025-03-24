@@ -168,7 +168,7 @@ check_table_name <- function(table_name, datatables, i, table_start_line) {
     stop( paste0("  No datatable exists to add data to: ", table_name, " table index: ", i, "\n rmd line: ", table_start_line) )
   }
   table_name # return
-}
+} #### ________________________________ ####
 
 
 #' CREATE a tibble from a datatable Rmd vector
@@ -473,6 +473,74 @@ parse_datatable_resample <- function(dt_vector, datatables, table_name, table_st
 }
 
 
+#' Parse a Resample datatable with single SOURCE sample IDs
+#'
+#' This will generate the new datatables from a resample dt_vector that contains
+#' single SOURCE sample IDS - it may still generate multiple REPS of subsamples!
+#'
+#'
+parse_datatable_resample_single <- function(dt_vector, datatables, table_name,
+                                            table_start_line) {
+
+  dt <- datatables[[table_name]]
+
+  data <- datatable_extract(dt_vector)
+  id_names <- data[[1]][2:length(data[[1]])] # get the ID data
+  resample_names <- data[[2]][2:length(data[[1]])] # get the resample strings
+  reps_names <- data[[3]][2:length(data[[2]])] # get the resample reps
+
+  datatables <- resample_id(datatables, id_names, resample_names, reps_names,
+                            table_name, table_start_line)
+
+}
+
+
+
+#' Parse a Resample datatable with reps SOURCE sample IDs
+#'
+#' This will generate the new datatables from a resample dt_vector that contains
+#' set of REPS SOURCE sample IDS.  This means the SOURCE SAMPLES consist of two or more
+#' REPLICATES.  To uniquely identify the replicates, a second `rep` column is presented
+#' next to the `ID` column to denote each REP within each ID.
+#'
+#' When resampling samples which contain REPS, each ID/REP will be given as a new entry,
+#' and `resample` and `reps` columns will be added.  The resample vector is given in
+#' each ID/REP row - with each resample code given in adjoining rows for a given ID/REP.
+#'
+#' Further reps can be made of each ID/REP from the parent sample!  And these reps are
+#' entered into the `reps` column.
+#'
+#' Importantly, when the subsample datatable/tibbles are made they are named according to
+#' the parent resample CODE PLUS the parent resample rep, separated by a dash.
+#'
+#' eg. From `samples_SC-CER` datatable, if these samples were resampled with code
+#' `100µm`, and ID `1001` had 4 reps created, if this was further resampled with
+#' a new vector (eg. it was split into `LT` and `RT` sections), then in
+#' `samples_SC-CER_100µm` each ID/REP would have its own line (1001/1 1001/2 1001/3
+#' 1001/4), and each entry would have a resample column with `LT` and `RT` in it.
+#'
+#' THEN when this resample table is read, new datatable tibbles will be created, with
+#' names: `samples_SC-CER_100µm-1_LT` `samples_SC-CER_100µm-1_RT`
+#' `samples_SC-CER_100µm-2_LT` `samples_SC-CER_100µm-2_RT` etc.  These will
+#' contain ID `1001` and represent each new subsample of each 100µm rep!
+#'
+parse_datatable_resample_reps <- function(dt_vector, datatables, table_name,
+                                          table_start_line) {
+
+  dt <- datatables[[table_name]]
+
+  data <- datatable_extract(dt_vector)
+  id_names <- data[[1]][2:length(data[[1]])] # get the ID data
+  rep_names <- data[[2]][2:length(data[[2]])] # get the rep data
+  resample_names <- data[[3]][2:length(data[[1]])] # get the resample strings
+  reps_names <- data[[4]][2:length(data[[2]])] # get the resample reps
+
+  datatables <- resample_id_rep(datatables, id_names, rep_names, resample_names,
+                                reps_names, table_name, table_start_line)
+
+} #### ________________________________ ####
+
+
 resample_check_headers_id <- function(headers, table_name, table_start_line) {
   if((headers[[1]] != "ID")  ) {
     stop( paste0("  Resample datatable first col MUST be ID - current cols: ", paste(headers, collapse=" "),
@@ -517,70 +585,6 @@ resample_check_headers_id_rep <- function(headers, table_name, table_start_line)
   }
 }
 
-#' Parse a Resample datatable with single SOURCE sample IDs
-#'
-#' This will generate the new datatables from a resample dt_vector that contains
-#' single SOURCE sample IDS - it may still generate multiple REPS of subsamples!
-#'
-#'
-parse_datatable_resample_single <- function(dt_vector, datatables, table_name, table_start_line) {
-
-  dt <- datatables[[table_name]]
-
-  data <- datatable_extract(dt_vector)
-  id_names <- data[[1]][2:length(data[[1]])] # get the ID data
-  resample_names <- data[[2]][2:length(data[[1]])] # get the resample strings
-  reps_names <- data[[3]][2:length(data[[2]])] # get the resample reps
-
-  datatables <- resample_id(datatables, id_names, resample_names, reps_names,
-                            table_name, table_start_line)
-
-}
-
-
-
-#' Parse a Resample datatable with reps SOURCE sample IDs
-#'
-#' This will generate the new datatables from a resample dt_vector that contains
-#' set of REPS SOURCE sample IDS.  This means the SOURCE SAMPLES consist of two or more
-#' REPLICATES.  To uniquely identify the replicates, a second `rep` column is presented
-#' next to the `ID` column to denote each REP within each ID.
-#'
-#' When resampling samples which contain REPS, each ID/REP will be given as a new entry,
-#' and `resample` and `reps` columns will be added.  The resample vector is given in
-#' each ID/REP row - with each resample code given in adjoining rows for a given ID/REP.
-#'
-#' Further reps can be made of each ID/REP from the parent sample!  And these reps are
-#' entered into the `reps` column.
-#'
-#' Importantly, when the subsample datatable/tibbles are made they are named according to
-#' the parent resample CODE PLUS the parent resample rep, separated by a dash.
-#'
-#' eg. From `samples_SC-CER` datatable, if these samples were resampled with code
-#' `100µm`, and ID `1001` had 4 reps created, if this was further resampled with
-#' a new vector (eg. it was split into `LT` and `RT` sections), then in
-#' `samples_SC-CER_100µm` each ID/REP would have its own line (1001/1 1001/2 1001/3
-#' 1001/4), and each entry would have a resample column with `LT` and `RT` in it.
-#'
-#' THEN when this resample table is read, new datatable tibbles will be created, with
-#' names: `samples_SC-CER_100µm-1_LT` `samples_SC-CER_100µm-1_RT`
-#' `samples_SC-CER_100µm-2_LT` `samples_SC-CER_100µm-2_RT` etc.  These will
-#' contain ID `1001` and represent each new subsample of each 100µm rep!
-#'
-parse_datatable_resample_reps <- function(dt_vector, datatables, table_name, table_start_line) {
-
-  dt <- datatables[[table_name]]
-
-  data <- datatable_extract(dt_vector)
-  id_names <- data[[1]][2:length(data[[1]])] # get the ID data
-  rep_names <- data[[2]][2:length(data[[2]])] # get the rep data
-  resample_names <- data[[3]][2:length(data[[1]])] # get the resample strings
-  reps_names <- data[[4]][2:length(data[[2]])] # get the resample reps
-
-  datatables <- resample_id_rep(datatables, id_names, rep_names, resample_names,
-                                reps_names, table_name, table_start_line)
-
-}
 
 #' extract headers from plaintext datatable
 extract_headers <- function(dt_vector) {
@@ -1445,7 +1449,7 @@ find_group_col <- function(group_names, gdt, table_name, table_start_line) {
                  "\n  table name: ", table_name, " RMD line: ", table_start_line) )
   }
   names(gdt)[gnindex] # return group col names
-}
+} #### ________________________________ ####
 
 
 
@@ -1626,5 +1630,5 @@ get_delim_indices <- function(delim) {
 
   delim_indices
 
-}
+} #### ________________________________ ####
 
