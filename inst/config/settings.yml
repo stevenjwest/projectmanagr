@@ -12,6 +12,8 @@
   ProgSummaryHeader: '# PROGRAMME OVERVIEW'
   ProgSummaryTitle: '# '
   ProgSummaryFooter: ::template::SEP01.txt
+  ProgStrategicObjectivesHeader: '# Strategic Objectives'
+  ProgStrategicObjectivesFooter: ::template::SEP01.txt
   ProgProjectsHeader: '# SUB-SECTIONS AND PROJECTS'
   ProgProjectsFooter: ::template::SEP01.txt
   ProgProjectSummarySep: ::template::SEP02.txt

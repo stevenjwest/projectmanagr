@@ -30,7 +30,7 @@ modified
 \item settings$VolumesDir : place where external data volumes are mounted,
 \verb{volumes/} by default
 \item settings$SiteDir : place where html site is rendered, \verb{site/} by default
-\item settings$WeeklyJournalDir : place where weekly journal files are stored,
+\item settings$JournalDir : place where weekly journal files are stored,
 \verb{weekly-journal/} by default.
 }
 

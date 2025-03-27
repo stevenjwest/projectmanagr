@@ -8,51 +8,43 @@ generate_today_metadata(
   year,
   month,
   day,
-  city = "London",
-  country = "England",
+  orgPath,
+  settings,
+  locale = Sys.timezone(location = TRUE),
   calendar_header = "# DAILY LOG :"
 )
 }
 \arguments{
-\item{year}{A string or numeric value representing the year in YYYY format.}
+\item{year}{A string or numeric year (YYYY).}
 
-\item{month}{A string or numeric value representing the month in MM format.}
+\item{month}{A string or numeric month (MM).}
 
-\item{day}{A string or numeric value representing the day in DD format.}
+\item{day}{A string or numeric day (DD).}
 
-\item{city}{A string specifying the city (e.g. "London").}
+\item{orgPath}{Path to the organization folder.}
 
-\item{country}{A string specifying the country (e.g. "England").}
+\item{settings}{Settings object for status.}
 
-\item{calendar_header}{(Optional) A string to be used as the header prefix. Default is "# DAILY LOG :".}
+\item{locale}{Locale string (default Sys.timezone(location = TRUE)).}
+
+\item{calendar_header}{(Optional) Header prefix (default "# DAILY LOG :").}
 }
 \value{
-A string containing a markdown header and dashboard summary with sun and moon metadata.
+A character string containing the daily log dashboard.
 }
 \description{
-Generates a markdown-formatted dashboard that displays sun and moon metadata for a specified
-date and location. The function geocodes the provided city and country to obtain latitude and
-longitude, retrieves sun times (sunrise, solar noon, sunset, civil dawn, and civil dusk) and moon
-times (moonrise and moonset) using the \strong{suncalc} package, and obtains lunar phase and illumination
-using the \strong{lunar} package. The output is formatted with centered text and prepended spaces so that
-it renders as a plaintext block in R Markdown.
-}
-\details{
-The function performs the following steps:
-\enumerate{
-\item Geocodes the provided city and country using \code{tidygeocoder::geo()} to obtain latitude and longitude.
-\item Constructs a date object from the provided \code{year}, \code{month}, and \code{day}.
-\item Retrieves sun times (sunrise, sunset, solar noon, civil dawn, and civil dusk) using \code{suncalc::getSunlightTimes()}.
-\item Retrieves moon times (moonrise and moonset) using \code{suncalc::getMoonTimes()}, and obtains the moon phase
-and illumination via \code{lunar::lunar.phase()} and \code{lunar::lunar.illumination()}.
-\item Formats the output by centering text under dashed-line separators and prepending four spaces to each line,
-making the output render as a plaintext code block in R Markdown.
+Generates a markdown-formatted daily log that includes:
+\itemize{
+\item A header with the date.
+\item Two centered header lines showing the current locale (Olson zone) and the effective timezone.
+\item A timeline graphic showing moon and sun event positions.
+\item An integrated info block with event times.
 }
 }
 \examples{
 \dontrun{
-  # Example usage: Generate metadata dashboard for 1st April 2023 for London, England.
-  dashboard <- generate_today_metadata("2023", "04", "01", city = "London", country = "England")
+  dashboard <- generate_today_metadata("2025", "04", "12", orgPath, settings,
+                             locale = Sys.timezone(location = TRUE))
   cat(dashboard)
 }
 

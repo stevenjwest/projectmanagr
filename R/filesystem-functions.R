@@ -571,7 +571,7 @@ get_next_subnote_prefix <- function(headerNoteDir, settings) {
   # look in headerNoteDir for any files - if so, compute Prefix from these, otherwise generate new Prefix for file:
   #subNoteDirs <- list.dirs( headerNoteDir, full.names=FALSE, recursive=FALSE )
   subNoteFiles <- list.files(headerNoteDir)
-  subNoteFiles <- subNoteFiles[endsWith(subNoteFiles, ".Rmd")]
+  subNoteFiles <- subNoteFiles[endsWith(subNoteFiles, paste0(".", settings[["FileType"]]) )]
   # now CREATE subNoteDirs from subNoteFiles - substring at index of "~_"
   subNoteDirs <- substr(subNoteFiles, 1, regexpr(projPrefixSep, subNoteFiles)-1 )
 
@@ -721,6 +721,12 @@ check_org_dir <- function(fileSystemPath) {
 }
 
 
+get_index_org <- function(orgPath, settings) {
+  fs::path(orgPath,
+           paste0(settings[["OrgIndexFileNamePrefix"]],
+                  fs::path_file(orgPath), ".", settings[["FileType"]]))
+}
+
 
 #' Check Programme Dir
 #'
@@ -751,6 +757,13 @@ check_prog_dir <- function( fileSystemPath, settings ) {
   }
 
   fileSystemPath
+}
+
+
+get_index_prog <- function(progPath, settings) {
+  fs::path(progPath,
+           paste0(settings[["ProgIndexFileNamePrefix"]],
+                  fs::path_file(progPath), ".", settings[["FileType"]]))
 }
 
 
@@ -992,7 +1005,7 @@ find_prog_dir <- function(fileSystemPaths) {
 #'
 #' * settings$SiteDir : place where html site is rendered, `site/` by default
 #'
-#' * settings$WeeklyJournalDir : place where weekly journal files are stored,
+#' * settings$JournalDir : place where weekly journal files are stored,
 #'   `weekly-journal/` by default.
 #'
 #'
@@ -1014,10 +1027,10 @@ find_prog_dirs <- function( orgPath, settings ) {
   DIRS <- DIRS[fs::is_dir(DIRS)]
 
   # exclude known org DIRs:
-  # .config (excluded as hidden!), VolumesDir, SiteDir, WeeklyJournalDir
+  # .config (excluded as hidden!), VolumesDir, SiteDir, JournalDir
   DIRS <- DIRS[ (fs::path_file(DIRS) != settings$SiteDir &
                  fs::path_file(DIRS) != settings$VolumesDir &
-                 fs::path_file(DIRS) != settings$WeeklyJournalDir) ]
+                 fs::path_file(DIRS) != settings$JournalDir) ]
 
   # only return DIR which contains well formed prog index
   INDEXES <- fs::path(DIRS,paste0(settings$ProgIndexFileNamePrefix,
@@ -1037,6 +1050,15 @@ find_prog_dirs <- function( orgPath, settings ) {
 
   return(progPaths)
 
+}
+
+
+get_prog_index_files <- function(orgPath, settings) {
+  DIRS <- find_prog_dirs(orgPath, settings)
+  INDEXES <- get_index_prog(DIRS, settings)
+  # only return programme index paths which contain existing index file
+  progIndexes <- INDEXES[fs::file_exists(INDEXES)]
+  return(progIndexes)
 }
 
 
@@ -1063,7 +1085,7 @@ find_header_Rmd_path <- function( subNoteRmdPath, settings ) {
   files <- list.files(headerNotePath)
   files <- grep(settings[["ProjectPrefixSep"]], files, fixed=TRUE, value=TRUE)
   files <- grep(headerNotePrefix, files, fixed=TRUE, value=TRUE)
-  files <- grep(".Rmd", files, fixed=TRUE, value=TRUE)
+  files <- grep(paste0(".", settings[["FileType"]]), files, fixed=TRUE, value=TRUE)
 
   paste0(headerNotePath, .Platform$file.sep, files) # return headerRmdPath
 
@@ -1228,7 +1250,7 @@ get_site_dir <- function(orgPath, settings) {
 #' stored in settings.
 #'
 get_weekly_journal_dir <- function(orgPath, settings) {
-  weeklyjournalPath <- fs::path(orgPath, settings[["WeeklyJournalDir"]])
+  weeklyjournalPath <- fs::path(orgPath, settings[["JournalDir"]])
   return(weeklyjournalPath)
 }
 
@@ -1278,7 +1300,7 @@ get_project_note_path <- function( fileSystemPath, projectNoteName, settings ) {
   # NB take care of both SIMPLE and GROUP directories (Prefix~NUMBER for simple, Prefix~NUMBER-00 for GROUP)
   prefix <- get_next_simple_prefix(fileSystemPath, settings)
 
-  paste0(fileSystemPath, .Platform$file.sep, prefix, settings[["ProjectPrefixSep"]], projectNoteName, ".Rmd")
+  paste0(fileSystemPath, .Platform$file.sep, prefix, settings[["ProjectPrefixSep"]], projectNoteName, ".", settings[["FileType"]])
 
 }
 
@@ -1293,7 +1315,7 @@ get_project_note_pathFromDir <- function( projectNoteDir ) {
 
     fileList <- list.files( dirname(projectNoteDir[i]) )
 
-    proj_note_path <- fileList[startsWith(fileList, basename(projectNoteDir[i])) & endsWith(fileList, ".Rmd")]
+    proj_note_path <- fileList[startsWith(fileList, basename(projectNoteDir[i])) & endsWith(fileList, paste0(".", settings[["FileType"]]) )]
 
     project_note_paths <- c(project_note_paths, paste0(dirname(projectNoteDir[i]), .Platform$file.sep, proj_note_path) )
 
@@ -1320,7 +1342,7 @@ get_project_note_pathFromDir <- function( projectNoteDir ) {
 get_header_note_path <- function( fileSystemPath, projectHeaderNoteName, settings ) {
 
   prefix <- get_next_header_prefix(fileSystemPath, settings)
-  paste0(fileSystemPath, .Platform$file.sep, prefix, settings[["ProjectPrefixSep"]], projectHeaderNoteName, ".Rmd")
+  paste0(fileSystemPath, .Platform$file.sep, prefix, settings[["ProjectPrefixSep"]], projectHeaderNoteName, ".", settings[["FileType"]])
 
 }
 
@@ -1377,7 +1399,7 @@ get_header_note_dir_path <- function( headerNoteFilePath, settings ) {
 get_sub_note_path <- function( headerNoteDir, projectSubNoteName, projectHeaderNoteName, settings ) {
 
   prefix <- get_next_subnote_prefix(headerNoteDir, settings)
-  paste0(headerNoteDir, .Platform$file.sep, prefix, settings[["ProjectPrefixSep"]], projectSubNoteName, ".Rmd")
+  paste0(headerNoteDir, .Platform$file.sep, prefix, settings[["ProjectPrefixSep"]], projectSubNoteName, ".", settings[["FileType"]])
 
 }
 

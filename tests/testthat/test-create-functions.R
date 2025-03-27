@@ -60,7 +60,8 @@ test_that("test create functions", {
   progName <- "0-PR"
   # mock the function that returns the programme creation datetime
   local_mocked_bindings(
-    get_datetime = function (timezone = "UTC", split="-", splitTime=":") { "2024-02-22:09:58" } )
+    get_datetime = function (timezone = "UTC", split="-", splitTime=":") {
+      "2024-02-22:09:58" })
 
 
   # create test programme - using local helper function and withr package
@@ -385,8 +386,13 @@ test_that("test create functions", {
   expect_snapshot_file( contentRmd )
 
 
-  ################ create_weekly_journal creates a journal Rmd #################
+  ################ create_daily_journal creates a journal Rmd #################
 
+  # mock the
+  local_mocked_bindings(
+    get_loc = function(location_str) {
+      return( list(lat=51.52, long=-0.14) )
+    })
   # create test Project Doc for content
   projectDocPrefix <- "PDJou"
   projectDocName <- "Proj_Do_jou"
@@ -406,10 +412,20 @@ test_that("test create functions", {
   projectNoteDir <- get_project_note_dir_path(projectNoteRmd, settings)
 
   # create journal in Org
-  date=lubridate::ymd("2024-05-10")
+  date=lubridate::ymd("2024-05-10") #  this date is interesting as it has no moonset time!
   organisationPath=orgDir
 
   journalRmd <- local_create_journal(date, organisationPath, authorValue)
+
+  # generate second journal
+  # this time with get_loc() returning failure to test tryCatch() error handling
+  date=lubridate::ymd("2024-05-11")
+
+  local_mocked_bindings(
+    get_loc = function(location_str) {
+      stop()
+    })
+  journalRmd2 <- local_create_journal2(date, organisationPath, authorValue)
 
 
   ## TESTS ##
@@ -431,8 +447,10 @@ test_that("test create functions", {
   # check content Rmd generated (Rmd is inside Dir, so do not need to separately check contentDir)
   expect_true(  fs::file_exists( journalRmd )  )
 
-  # check Project Note Rmd file contents are correctly filled
+  # check Journsl Rmd files are correctly filled
   expect_snapshot_file( journalRmd )
+  expect_snapshot_file( journalRmd2 )
+
 
   ################ INDEX TESTS #################################################
 

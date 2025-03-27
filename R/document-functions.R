@@ -3115,17 +3115,13 @@ update <- function(dirTree="") {
   #### find all projectManagr files in dirTree for updating ####
 
   # ORG index
+  #get_index_prog()
+  orgIndex <- get_index_org(orgPath, settings)
   orgFiles <- list.files(orgPath)
   orgIndex <- orgFiles[ startsWith(orgFiles, settings[["OrgIndexFileNamePrefix"]])]
 
   # PROG index
-  progDirs <- names(status$PROGRAMMES)
-  progIndexes <- c()
-  for(pd in progDirs) {
-    progFiles <- list.files( paste0(orgPath, .Platform$file.sep, pd) )
-    progIndexes <- c(progIndexes, paste0(orgPath, .Platform$file.sep, pd, .Platform$file.sep,
-                                         progFiles[ startsWith(progFiles, settings[["ProgIndexFileNamePrefix"]])]) )
-  }
+  progIndexes <- get_prog_index_files(orgPath, settings)
 
   # ProjDocs
   progProjects <- paste0(progDirs, .Platform$file.sep, settings[["ProgrammeProjectsDir"]])

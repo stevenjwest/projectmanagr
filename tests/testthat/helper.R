@@ -670,17 +670,44 @@ local_create_journal <- function(date, organisationPath, authorValue,
 
   # other ARGS
   journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}"
-  journalTemplate="Weekly-Work-Journal-Template.Rmd"
+  journalTemplate="Work-Journal-Template.Rmd"
 
   # create weekly journal
-  journalRmd <- create_weekly_journal(date, organisationPath, authorValue,
-                                      journalFileNameTemplate, journalTemplate)
+  journalRmd <- create_daily_journal(date, organisationPath, authorValue,
+                                     journalFileNameTemplate, journalTemplate)
 
   # define path to Rmd
   journalDir <- fs::path_dir(journalRmd)
 
   # ensure Rmd & Dir are deleted when out of context
   withr::defer(fs::dir_delete(journalDir), envir = env)
+
+  # return the journal Rmd
+  journalRmd
+
+
+}
+
+
+local_create_journal2 <- function(date, organisationPath, authorValue,
+                                 env = parent.frame() ) {
+
+  # record current state
+  olddir <- getwd()
+
+  # other ARGS
+  journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}"
+  journalTemplate="Work-Journal-Template.Rmd"
+
+  # create weekly journal
+  journalRmd <- create_daily_journal(date, organisationPath, authorValue,
+                                     journalFileNameTemplate, journalTemplate)
+
+  # define path to Rmd
+  journalDir <- fs::path_dir(journalRmd)
+
+  # ensure Rmd & Dir are deleted when out of context
+  #withr::defer(fs::dir_delete(journalDir), envir = env)
 
   # return the journal Rmd
   journalRmd

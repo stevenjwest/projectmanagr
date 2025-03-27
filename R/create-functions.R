@@ -310,9 +310,18 @@ yaml_keys <- function() {
     "ProgSummaryHeader",
     "ProgSummaryTitle",
     "ProgSummaryFooter",
+    "ProgStrategicObjectivesHeader",
+    "ProgStrategicObjectivesFooter",
     "ProgProjectsHeader",
     "ProgProjectsFooter",
     "ProgProjectSummarySep",
+    "SectionIndexFileNamePrefix",
+    "SectionSummaryHeader",
+    "SectionSummaryTitle",
+    "SectionSummaryFooter",
+    "SectionProjectsHeader",
+    "SectionProjectsFooter",
+    "SectionProjectSummarySep",
     "ProjectPrefixSep",
     "ProjectIdentifierSep",
     "ProjectIndexSep",
@@ -386,6 +395,7 @@ yaml_keys <- function() {
     "TodoItem",
     "TodoItemTemplate",
     "TodoItemComplete",
+    "TodoCollectionSep",
     "TodoProgrammeSep",
     "TodoProjectNoteSep",
     "TodoTaskHeader",
@@ -397,7 +407,7 @@ yaml_keys <- function() {
     "RunUpdateOnStartup",
     "RunCompileWithUpdate",
     "FileTypeSuffix",
-    "WeeklyJournalDir",
+    "JournalDir",
     "GadgetWidth",
     "GadgetHeight",
     "rstudioInternalStateDir")
@@ -698,12 +708,6 @@ create_org_index <- function(orgName, tempPath, orgTemplate, orgPath, settings,
 }
 
 
-get_index_org <- function(orgPath, settings) {
-  fs::path(orgPath,
-           paste0(settings[["OrgIndexFileNamePrefix"]],
-                  fs::path_file(orgPath), ".Rmd"))
-}
-
 # Helper function to remove a vector of directories and files for cleanup
 cleanup_created <- function(createdFilesVector) {
   # delete all files in vector that exist
@@ -885,13 +889,6 @@ create_prog_index <- function(progPath, programmeTitle,
 }
 
 
-get_index_prog <- function(progPath, settings) {
-  fs::path(progPath,
-           paste0(settings[["ProgIndexFileNamePrefix"]],
-                  fs::path_file(progPath), ".Rmd"))
-}
-
-
 init_template_prog <- function(progContents, programmeTitle, authorValue,
                                orgIndex, progIndex, orgPath, settings) {
 
@@ -908,6 +905,12 @@ init_template_prog <- function(progContents, programmeTitle, authorValue,
   # modify progContents to include relative link to org index Rmd
   orgLink <- create_hyperlink_no_ext(orgIndex, progIndex)
   progContents <- gsub("{{ORGLINK}}", orgLink, progContents, fixed=TRUE)
+
+  # modify programme strategic objectives header/footer
+  progContents <- sub_template_param(progContents, "{{STRATEGIC_OBJECTIVES_HEADER}}",
+                                     settings[["ProgStrategicObjectivesHeader"]], orgPath)
+  progContents <- sub_template_param(progContents, "{{STRATEGIC_OBJECTIVES_FOOTER}}",
+                                     settings[["ProgStrategicObjectivesFooter"]], orgPath)
 
   # modify programme projects header/footer
   progContents <- sub_template_param(progContents, "{{PROJECTS_HEADER}}",
@@ -3467,14 +3470,14 @@ create_content <- function(selection, contentName, contentDescription,
 #' This function creates a weekly journal file for an organisation if it does
 #' not already exist. If the journal file exists, it returns the path to the
 #' existing file. The journal is stored in the directory specified in the
-#' settings under "WeeklyJournalDir". Optionally, TODOs can be extracted to
+#' settings under "JournalDir". Optionally, TODOs can be extracted to
 #' this file using the extract_todos() function.
 #'
 #' @param date A string or Date object representing the start date for the
 #'   Weekly Journal. It is converted to the Monday of the current week. The date
 #'   should be in 'YYYY-MM-DD' format.
 #'
-#' @param organisationPath A string representing the path to the Organisation
+#' @param organisationPath A string representing a path within an Organisation
 #'   where the journal is created and saved.
 #'
 #' @param authorValue A string representing the author name for the Programme
@@ -3519,11 +3522,11 @@ create_content <- function(selection, contentName, contentDescription,
 #' organisation directory structure is correctly set up.
 #'
 #' @export
-create_weekly_journal <- function(date=lubridate::today(),
-                                  organisationPath=getwd(),
-                                  authorValue=get_username(),
-                                  journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
-                                  journalTemplate="Weekly-Work-Journal-Template.Rmd") {
+create_daily_journal <- function(date=lubridate::today(),
+                                 organisationPath=getwd(),
+                                 authorValue=get_username(),
+                                 journalFileNameTemplate="{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
+                                 journalTemplate="Work-Journal-Template.Rmd") {
 
 
   #### Instance Variables ####
@@ -3533,7 +3536,7 @@ create_weekly_journal <- function(date=lubridate::today(),
   }
 
   # convert the date to the Monday of current week if needed
-  date <- lubridate::floor_date(date, unit="week", week_start=1)
+  #date <- lubridate::floor_date(date, unit="week", week_start=1)
 
   year <- format(date, "%Y")
   month <- format(date, "%m")
@@ -3542,17 +3545,11 @@ create_weekly_journal <- function(date=lubridate::today(),
 
   #### Identify root of ORGANISATION ####
 
-  #check_org_dir()
-
   # get the orgPath from organisationPath
-  orgPath <- find_org_directory(organisationPath)
+  orgPath <- confirm_find_org(organisationPath)
 
   # get the organisation name
   orgName <- basename(orgPath)
-
-  if(orgPath == "" ) { # only blank if orgPath not identified
-    stop( paste0("  organisationPath is not in an Organisation: ", organisationPath) )
-  } # now, orgPath should be the root dir of the organisation
 
   # get config templates settings yml
   confPath <- get_config_dir(orgPath)
@@ -3563,18 +3560,22 @@ create_weekly_journal <- function(date=lubridate::today(),
   #### Create Journal Dirs ####
 
   # create journal root Dir:
-  journalPath <- fs::path(orgPath, settings[["WeeklyJournalDir"]])
-
+  journalPath <- fs::path(orgPath, settings[["JournalDir"]])
   create_directory(journalPath,
                    "  Made Journal dir: ",
                    "  Journal directory could not be created: ")
 
   # create journal year Dir:
   journalYearPath <- fs::path(journalPath, year)
-
   create_directory(journalYearPath,
                    "  Made Journal Year dir: ",
                    "  Journal Year directory could not be created: ")
+
+  # create journal month Dir:
+  journalMonthPath <- fs::path(journalYearPath, month)
+  create_directory(journalMonthPath,
+                   "  Made Journal Month dir: ",
+                   "  Journal Month directory could not be created: ")
 
 
   #### create Journal Rmd file ####
@@ -3586,7 +3587,8 @@ create_weekly_journal <- function(date=lubridate::today(),
 
   journalFileNameTemplate <- gsub('{{ORGNAME}}', orgName, journalFileNameTemplate, fixed = TRUE)
 
-  journalRmdPath <- fs::path(journalYearPath, paste0(journalFileNameTemplate, ".Rmd"))
+  # place in journal/year/month
+  journalRmdPath <- fs::path(journalMonthPath, paste0(journalFileNameTemplate, ".Rmd"))
 
   # deal with possibility file may already exists
   if( fs::file_exists(journalRmdPath) ) {
@@ -3615,14 +3617,15 @@ create_weekly_journal <- function(date=lubridate::today(),
 
     # add plaintext calendar
     journalContents <- sub_template_param(journalContents,
-                                          "{{WEEKLY_JOURNAL_PLAINTEXT_CALENDAR}}",
-                                          generate_plaintext_calendar(year, month, day),
+                                          "{{DAILY_JOURNAL_TODAY_METADATA}}",
+                                          generate_today_metadata(year, month, day,
+                                                                  orgPath, settings),
                                           orgPath)
 
     # add weekly rmarkdown daily journal
     journalContents <- sub_template_param(journalContents,
-                                          "{{WEEKLY_JOURNAL_DAILY_JOURNAL}}",
-                                          generate_weekly_rmarkdown(year, month, day),
+                                          "{{DAILY_JOURNAL_CONTENT}}",
+                                          generate_journal_content(year, month, day, orgPath),
                                           orgPath)
 
     # modify journalContents with rmarkdown-html-header content
@@ -3643,203 +3646,461 @@ create_weekly_journal <- function(date=lubridate::today(),
 }
 
 
-#' Generate Plaintext Calendar
+
+#### ____ ####
+
+
+# Helper: Center a string in a field of given width.
+center_string <- function(str, width = 72) {
+  pad <- floor((width - nchar(str)) / 2)
+  paste0(strrep(" ", pad), str)
+}
+
+
+get_tz_info <- function(date, tz = "Europe/London") {
+  # Convert the input date to POSIXct using the specified time zone
+  pos <- as.POSIXct(date, tz = tz)
+
+  # Extract the time zone abbreviation (e.g. "GMT" or "BST")
+  abbr <- format(pos, "%Z")
+
+  # Extract the numeric offset in format +0100 or -0600
+  offset_str <- format(pos, "%z")
+
+  # Get the hour part of the offset (e.g. "01" or "06")
+  hour_offset <- as.integer(substr(offset_str, 2, 3))
+
+  # The first character is the sign (+ or -)
+  sign <- substr(offset_str, 1, 1)
+
+  # Build the GMT offset string (e.g. "GMT+1")
+  offset_formatted <- paste0("GMT", sign, hour_offset)
+
+  # Return the combined string
+  paste0(abbr, " (", offset_formatted, ")")
+}
+
+
+# Helper: Map a POSIXct time to a position (1 to 72) on the timeline.
+# Each bin represents 20 minutes (1200 seconds).
+get_symbol_pos <- function(time, total = 72) {
+  if (is.na(time)) return(NA)
+  h <- as.numeric(format(time, "%H"))
+  m <- as.numeric(format(time, "%M"))
+  s <- as.numeric(format(time, "%S"))
+  secs <- h * 3600 + m * 60 + s
+  pos <- floor(secs / 1200) + 1
+  if (pos < 1) pos <- 1
+  if (pos > total) pos <- total
+  pos
+}
+
+
+#' Fill the Moon Line for a Timeline Plot
 #'
-#' This internal function generates a plaintext calendar for insertion
-#' into a weekly journal. The calendar is arranged as a matrix with columns
-#' for each day of the week (starting with Sunday) and includes dates from
-#' the first day of the month to the Saturday after the month's end.
+#' Computes positions along a timeline where a moon symbol should be placed
+#' based on the provided moonrise and moonset times.
 #'
-#' @param year A string or numeric value representing the year (YYYY).
-#' @param month A string or numeric value representing the month (MM).
-#' @param day A string or numeric value representing the day (DD). This is used
-#'   only for header display purposes.
-#' @param calendar_header (Optional) A string used as the header for the
-#'   calendar. Default is "# DAILY LOG :".
+#' The timeline is divided into \code{total} character positions. For each full
+#' hour during which the moon is up, a candidate position is computed.
+#' If the \code{moonset} time is \code{NA} (indicating that the moonset occurs
+#' after midnight on the following day), the function plots the moon symbol
+#' from the computed start hour (rounded based on the moonrise minute) until the
+#' end of the timeline (hour 23).
 #'
-#' @return A string containing the formatted plaintext calendar.
+#' @param moonrise A POSIXct or Date object representing the moonrise time.
+#' @param moonset A POSIXct or Date object representing the moonset time. Can
+#'   be \code{NA} if the moonset occurs after midnight.
+#' @param total An integer specifying the total number of character positions in
+#'   the timeline (default is 72).
+#' @param moon_symbol A character string representing the symbol used to denote
+#'   the moon (e.g., \code{"☾"}).
+#'
+#' @return A character string of length \code{total} where positions
+#'   corresponding to the moon being up are replaced with \code{moon_symbol},
+#'   and all other positions contain a space.
 #'
 #' @details
-#' The function constructs a date object for the first day of the given
-#' month and year, and determines the last day of the month. It then
-#' extends the date range to fill the calendar grid up to the following
-#' Saturday. A 7x7 matrix is built with the day names as column headers and
-#' date numbers filled in appropriately. Blank spaces are inserted where
-#' no date exists, and the matrix is converted into a formatted string.
+#' \code{fill_moon_line()} calculates the starting hour for plotting based on
+#' the moonrise time. When \code{moonset} is not \code{NA}, candidate positions
+#' are computed between the rounded moonrise hour and the moonset hour,
+#' correctly handling cases where the moonset time occurs after midnight. When
+#' \code{moonset} is \code{NA}, it plots from the moonrise hour until the end of
+#' the day (hour 23).
 #'
 #' @examples
 #' \dontrun{
-#'   # Generate a calendar for April 2023 with a custom header.
-#'   cal <- generate_plaintext_calendar("2023", "04", "01",
-#'                                        calendar_header="# WEEKLY LOG :")
-#'   cat(cal)
+#'   # With both moonrise and moonset times:
+#'   moonrise <- as.POSIXct("2024-05-09 05:36:04")
+#'   moonset  <- as.POSIXct("2024-05-09 23:16:50")
+#'   fill_moon_line(moonrise, moonset, total = 72, moon_symbol = "☾")
+#'
+#'   # With NA moonset (moonset occurs after midnight):
+#'   moonrise <- as.POSIXct("2024-05-10 06:10:20")
+#'   moonset  <- NA
+#'   fill_moon_line(moonrise, moonset, total = 72, moon_symbol = "☾")
 #' }
 #'
-#' @seealso
-#' \code{\link[lubridate]{floor_date}}, \code{\link{as.Date}},
-#' \code{\link{seq.Date}}, \code{\link{format}}
+fill_moon_line <- function(moonrise, moonset, total = 72, moon_symbol) {
+  # If moonrise is NA, nothing to plot.
+  if (is.na(moonrise))
+    return(paste(rep(" ", total), collapse = ""))
+
+  pos_mr <- get_symbol_pos(moonrise, total)
+  mr_hour <- as.numeric(format(moonrise, "%H"))
+  mr_min  <- as.numeric(format(moonrise, "%M"))
+  start_hour <- if (mr_min < 30) mr_hour else mr_hour + 1
+
+  if (is.na(moonset)) {
+    # When moonset is NA, plot from moonrise until the end of the day (hour 23)
+    candidate_hours <- seq(start_hour, 23)
+    candidate_positions <- sapply(candidate_hours, function(h) { 3 * h + 2 })
+    candidate_positions <- candidate_positions[candidate_positions >= 1 & candidate_positions <= total]
+    extra <- pos_mr
+    additional <- candidate_positions[ abs(candidate_positions - pos_mr) >= 2 ]
+    final_positions <- sort(unique(c(extra, additional)))
+
+    line <- rep(" ", total)
+    for (p in final_positions) {
+      line[p] <- moon_symbol
+    }
+    return(paste0(line, collapse = ""))
+  }
+
+  # Normal case when both moonrise and moonset are available:
+  pos_ms <- get_symbol_pos(moonset, total)
+  ms_hour <- as.numeric(format(moonset, "%H"))
+
+  candidate_hours <- if (ms_hour >= mr_hour) {
+    seq(start_hour, ms_hour)
+  } else {
+    c(seq(start_hour, 23), seq(0, ms_hour))
+  }
+
+  candidate_positions <- sapply(candidate_hours, function(h) { 3 * h + 2 })
+  candidate_positions <- candidate_positions[candidate_positions >= 1 & candidate_positions <= total]
+  extra <- c(pos_mr, pos_ms)
+  additional <- candidate_positions[ abs(candidate_positions - pos_mr) >= 2 &
+                                       abs(candidate_positions - pos_ms) >= 2 ]
+  final_positions <- sort(unique(c(extra, additional)))
+
+  line <- rep(" ", total)
+  for (p in final_positions) {
+    line[p] <- moon_symbol
+  }
+  paste0(line, collapse = "")
+}
+
+
+# Helper: Build the sun line.
+# Place the sun symbol ("☀") at the exact bins for sunrise, solar noon, and sunset.
+build_sun_line <- function(sunrise, solarNoon, sunset, total = 72) {
+  blank <- rep(" ", total)
+  pos_sr <- get_symbol_pos(sunrise, total)
+  pos_sn <- get_symbol_pos(solarNoon, total)
+  pos_ss <- get_symbol_pos(sunset, total)
+  if (!is.na(pos_sr)) blank[pos_sr] <- "☀"
+  if (!is.na(pos_sn)) blank[pos_sn] <- "☀"
+  if (!is.na(pos_ss)) blank[pos_ss] <- "☀"
+  paste0(blank, collapse = "")
+}
+
+# Helper: Build the timeline graphic.
+# Returns a vector of 6 lines (unindented); the caller will later add a 4-space indent.
+#   Line 0: Leading dashed line.
+#   Line 1: Blank.
+#   Line 2: Moon line (from fill_moon_line()).
+#   Line 3: Sun line (from build_sun_line()).
+#   Line 4: Timeline labels from 00 to 23 (each in a 3-char block).
+#   Line 5: Trailing dashed line.
+build_timeline_graphic <- function(solarNoon, sunrise, sunset, moonrise, moonset,
+                                   moon_phase_symbol = "☾") {
+  total_width <- 72
+  line0 <- paste(rep("-", total_width), collapse = "")
+  line1 <- paste(rep(" ", total_width), collapse = "")
+  line2 <- fill_moon_line(moonrise, moonset, total_width, moon_phase_symbol)
+  line3 <- build_sun_line(sunrise, solarNoon, sunset, total_width)
+  timeline_line <- paste0(sprintf("%02d ", 0:23), collapse = "")
+  line4 <- timeline_line
+  line5 <- paste(rep("-", total_width), collapse = "")
+  c(line0, line1, line2, line3, line4, line5)
+}
+
+# Helper: Format an integrated info line.
+format_info_line <- function(sun_text, moon_text = "") {
+  sun_field <- sprintf("%-20s", sun_text)
+  moon_field <- sprintf("%-20s", moon_text)
+  paste0(strrep(" ", 12), sun_field, strrep(" ", 16), moon_field)
+}
+
+# Main function: Generate Today's Metadata Dashboard.
+#' Generate Today's Metadata Dashboard
 #'
-#' @note
-#' This function assumes that the input year, month, and day are provided in
-#' valid 'YYYY', 'MM', and 'DD' formats. It is designed for internal use
-#' and may require further formatting for presentation in different contexts.
+#' @description
+#' Generates a markdown-formatted daily log that includes:
+#'   - A header with the date.
+#'   - Two centered header lines showing the current locale (Olson zone) and the effective timezone.
+#'   - A timeline graphic showing moon and sun event positions.
+#'   - An integrated info block with event times.
 #'
-generate_plaintext_calendar <- function(year, month, day,
-                                        calendar_header="# DAILY LOG :") {
-  # Create a date object for the first day of the specified month and year
-  first_date <- as.Date(paste(year, month, "01", sep = "-"))
+#' @param year A string or numeric year (YYYY).
+#' @param month A string or numeric month (MM).
+#' @param day A string or numeric day (DD).
+#' @param orgPath Path to the organization folder.
+#' @param settings Settings object for status.
+#' @param locale Locale string (default Sys.timezone(location = TRUE)).
+#' @param calendar_header (Optional) Header prefix (default "# DAILY LOG :").
+#'
+#' @return A character string containing the daily log dashboard.
+#'
+#' @examples
+#' \dontrun{
+#'   dashboard <- generate_today_metadata("2025", "04", "12", orgPath, settings,
+#'                              locale = Sys.timezone(location = TRUE))
+#'   cat(dashboard)
+#' }
+#'
+generate_today_metadata <- function(year, month, day, orgPath, settings,
+                                    locale = Sys.timezone(location = TRUE),
+                                    calendar_header = "# DAILY LOG :") {
+  # Retrieve cached status
+  statusFile <- get_status_yml_file(orgPath, settings)
+  status <- get_status_yml(orgPath, settings)
 
-  # Determine the last day of the specified month
-  last_date <- as.Date(seq.Date(from = first_date, by = "month", length.out = 2)[2]) - 1
+  # Use the locale as is (e.g., "Europe/London")
+  current_locale <- locale
 
-  # Initialize an empty string to store the calendar
-  calendar_text <- ""
+  # Create the date object.
+  date_obj <- as.Date(sprintf("%04d-%02d-%02d", as.numeric(year),
+                              as.numeric(month), as.numeric(day)))
 
-  # Add the month and year as the title
-  calendar_text <- paste(calendar_header, calendar_text, paste(day, month.name[as.integer(month)], year), "\n\n")
+  # Build header_date (the date header).
+  header_date <- sprintf("%s %s", calendar_header, format(date_obj, "%d %B %Y"))
 
-  # Create a matrix to represent the calendar grid
-  calendar_matrix <- matrix("", nrow = 7, ncol = 7)
+  # Get effective timezone using current_locale and date_obj.
+  #effective_tz <- get_effective_timezone(current_locale, date_obj)
+  effective_tz <- get_tz_info(date_obj, current_locale)
 
-  # Fill in the day numbers in the matrix
-  current_date <- first_date
+  # Build centered header lines (72-character width).
+  header_locale <- center_string(current_locale, 72)
+  header_tz <- center_string(effective_tz, 72)
 
-  # define day names vector
-  day_names <- c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+  # 1. Geocode using the locale
+  lat <- 51.00
+  lon <- -0.14
+  tryCatch({
+    geo_res <- get_loc(current_locale)
+    lat <- round(as.numeric(geo_res$lat[1]), 2)
+    lon <- round(as.numeric(geo_res$long[1]), 2)
+    write_loc_to_status(lat, lon, status, statusFile)
+  }, error = function(e) {
+    cat("\ncannot get latitude or longitude from tidygeocoder\n\n")
+    if (!is.na(status[["LOCATION"]][["latitude"]])) {
+      cat("\n  reading cached latitude and longitude from status.yml \n\n")
+      # use super-assignment operator so variables are updated in parent env
+      lat <<- status[["LOCATION"]][["latitude"]]
+      lon <<- status[["LOCATION"]][["longitude"]]
+    } else {
+      cat("\n  using default latitude and longitude (London, UK) \n\n")
+      # use super-assignment operator so variables are updated in parent env
+      lat <<- 51.52
+      lon <<- -0.14
+    }
+  })
 
-  # get the first of month as day
-  day <- format(current_date, "%a")
-  day_index <- which(day_names == day)
 
-  # boolean to check when first date added
-  add_first_date <- FALSE
+  # 2. Get Sun Metadata using suncalc.
+  sun_times <- suncalc::getSunlightTimes(date = date_obj, lat = lat, lon = lon, tz = current_locale)
+  sunrise   <- sun_times$sunrise
+  sunset    <- sun_times$sunset
+  solarNoon <- sun_times$solarNoon
+  civilDawn <- sun_times$dawn
+  civilDusk <- sun_times$dusk
 
-  # add extra dates for NEXT month - to complete each week
-  # calculate number of extra days over last day of month to add to complete calendar
-  # how many extra days over a week (modulus 7)
-  extra_days_week <- as.integer(format(last_date, "%d"))%%7
-  # how many extra days over a month
-  extra_days_month <- 7 - ( (day_index + extra_days_week - 1)%%7 )
-  # need to fill (7 + 1 - day_index) but minus the extra days
-  #extra_days_month <- (7 + 1 - day_index) - extra_days_week
+  # 3. Get Moon Metadata using lunar and suncalc.
+  moon_phase <- lunar::lunar.phase(date_obj, name = TRUE)
+  moon_illum <- lunar::lunar.illumination(date_obj)
+  moon_times <- suncalc::getMoonTimes(date = date_obj, lat = lat, lon = lon, tz = current_locale)
+  moonrise <- if (!is.na(moon_times$rise[1])) moon_times$rise[1] else as.POSIXct(NA)
+  moonset  <- if (!is.na(moon_times$set[1])) moon_times$set[1] else as.POSIXct(NA)
 
-  # add these extra days to last_date
-  last_date <- last_date + extra_days_month
+  # Determine custom moon symbol based on phase.
+  moon_symbol <- switch(as.character(moon_phase),
+                        "New" = "○",
+                        "Waxing" = "◐",
+                        "Full" = "●",
+                        "Waning" = "◑",
+                        "☾")
 
-  num_dates <- as.integer(format(last_date, "%d")) + (7 + 1 - day_index)
+  # 4. Build the timeline graphic.
+  timeline_lines <- build_timeline_graphic(solarNoon, sunrise, sunset, moonrise, moonset,
+                                           moon_phase_symbol = moon_symbol)
+  # Add 4-space indent to each timeline line.
+  timeline_graphic <- paste0("    ", timeline_lines)
 
-  for (row in 1:7) {
-    for (col in 1:7) {
-      if(add_first_date == FALSE) {
-        if(col == day_index) {
-          # then add the first date and proceed
-          day_number <- format(current_date, "%d")
-          calendar_matrix[row, col] <- day_number
-          current_date <- current_date + 1
-          add_first_date <- TRUE
-        } else {
-          calendar_matrix[row, col] <- "  " # add two blank lines for spacing
-        }
+  # 5. Build integrated info lines.
+  fmt_time <- function(t) ifelse(is.na(t), "N/A", format(t, "%H:%M"))
+  sun_info <- c(
+    paste("Sunrise      :", fmt_time(sunrise)),
+    paste("Solar Noon   :", fmt_time(solarNoon)),
+    paste("Sunset       :", fmt_time(sunset)),
+    paste("Civil Dawn   :", fmt_time(civilDawn)),
+    paste("Civil Dusk   :", fmt_time(civilDusk))
+  )
+  moon_info <- c(
+    paste("Moonrise    :", fmt_time(moonrise)),
+    paste("Moonset     :", fmt_time(moonset)),
+    paste("Phase       :", moon_phase),
+    paste("Illuminated :", paste0(round(moon_illum * 100, 1), "%"))
+  )
+  info_lines <- sapply(1:5, function(i) {
+    format_info_line(sun_info[i], if(i <= length(moon_info)) moon_info[i] else "")
+  })
+
+  # 6. Build delimiter for the info block.
+  info_delim <- paste0("    ", paste(rep("-", 72), collapse = ""))
+
+  # 7. Combine all parts.
+  overall <- paste0(
+    header_date, "\n\n",
+    header_locale, "\n",
+    header_tz, "\n",
+    paste(timeline_graphic, collapse = "\n"), "\n\n",
+    paste(info_lines, collapse = "\n"), "\n\n",
+    info_delim
+  )
+
+  overall
+}
+
+# Dummy stubs for get_loc, write_loc_to_status, get_status_yml_file, and get_status_yml.
+get_loc <- function(location_str) {
+  suppressMessages(tidygeocoder::geo(address = location_str, method = 'osm', full_results = TRUE)
+  )
+}
+
+write_loc_to_status <- function(lat, lon, status, statusFile) {
+  attrs <- list(latitude = lat, longitude = lon)
+  status[["LOCATION"]] <- attrs
+  yaml::write_yaml(yaml::as.yaml(status), statusFile)
+  cat("  Written LOCATION to Status.yml file: ", statusFile, "\n")
+}
+
+
+
+
+
+
+
+#' Generate Journal Content for a Daily Log
+#'
+#' This function generates markdown content for a daily journal log. The log is
+#' divided into three sections:
+#' \itemize{
+#'   \item \strong{Programme Strategic Objectives} – extracts objectives from
+#'   programme index R Markdown files.
+#'   \item \strong{Today's Events} – creates a placeholder section for events
+#'   from Google Calendar.
+#'   \item \strong{TODO Items} – adds a section for TODO items.
+#' }
+#'
+#' @param year A character or numeric value representing the year (YYYY) for the
+#'   log date.
+#' @param month A character or numeric value representing the month (MM) for the
+#'   log date.
+#' @param day A character or numeric value representing the day (DD) for the log
+#'   date.
+#' @param separator_lines A character string used to insert separator lines in
+#'   the markdown output. Default is "\{\{SEP01\}\}".
+#'
+#' @return A character vector containing the generated markdown lines for the
+#'   daily journal.
+#'
+#' @details
+#' The function performs the following tasks:
+#' \itemize{
+#'   \item It creates a Date object using the provided year, month, and day.
+#'   \item In \strong{Section 1}, it lists all R Markdown files in the
+#'     "programmes" folder, searches for the "# Strategic Objectives" header,
+#'     and extracts the subsequent lines until the next header is encountered.
+#'     The file name is included as a subheading.
+#'   \item In \strong{Section 2}, a placeholder section for "Today's Events" is
+#'     added. Currently, it outputs a message indicating no events are scheduled.
+#'   \item In \strong{Section 3}, a section for "TODO Items" is appended. The
+#'     function calls an (assumed) `extract_todos()` function (here replaced
+#'     with a placeholder) and outputs its result or a message if none are found.
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' # Generate journal content for March 24, 2025 and print to the console:
+#' journal_lines <- generate_journal_content("2025", "03", "24")
+#' cat(journal_lines, sep = "\n")
+#' }
+#'
+generate_journal_content <- function(year, month, day, orgPath,
+                                     separator_lines = "{{SEP01}}") {
+
+  settings <- get_settings_yml(orgPath)
+
+  # Create a Date object for today's log date
+  todays_date <- as.Date(paste(year, month, day, sep = "-"))
+
+  # Initialize an empty character vector to store the markdown lines
+  markdown_lines <- character(0)
+
+  ## Section 1: Programme Strategic Objectives
+  markdown_lines <- c(markdown_lines, "","","", separator_lines,
+                      "","","", "# Programme Strategic Objectives")
+
+
+  # List all programme index Rmd files (adjust directory and pattern as needed)
+  programme_files <- get_prog_index_files(orgPath, settings)
+
+  for (file in programme_files) {
+    file_lines <- readLines(file, warn = FALSE)
+
+    # Find the line with the header "# Strategic Objectives"
+    header_idx <- grep("^# Strategic Objectives", file_lines)
+    if (length(header_idx) > 0) {
+      # Assume the objectives are the lines after the header until the next header
+      start_line <- header_idx[1] + 1
+
+      # Look for the next header (line starting with '#') after the objectives header
+      subsequent_headers <- grep("^----", file_lines[start_line:length(file_lines)])
+      if (length(subsequent_headers) > 0) {
+        end_line <- start_line + min(subsequent_headers) - 2
       } else {
-        if (current_date >= first_date && current_date <= last_date) {
-          day_number <- format(current_date, "%d")
-          calendar_matrix[row, col] <- day_number
-          current_date <- current_date + 1
-        } else {
-          calendar_matrix[row, col] <- "  " # add two blank lines for spacing
-        }
+        end_line <- length(file_lines)
       }
+
+      objectives <- file_lines[start_line:end_line]
+      # Optionally, add the file name as a subheading for clarity
+      markdown_lines <- c(markdown_lines,"","","",
+                          paste("##", basename(file)), objectives, "")
     }
   }
 
-  # Add the column headers (day names)
-  calendar_text <- paste(calendar_text, paste(day_names, collapse = "  "), "\n")
+  ## Section 2: Today's Events from Google Calendar
+  markdown_lines <- c(markdown_lines, "","","", separator_lines,
+                      "","","", "# Today's Events")
 
-  # Add the calendar grid to the text
-  for (row in 1:6) {
-    calendar_text <- paste(calendar_text, paste(calendar_matrix[row, ], collapse = "   "), "\n")
+
+  markdown_lines <- c(markdown_lines, "No events scheduled for today.", "")
+
+  ## Section 3: Extracting all TODO items
+  markdown_lines <- c(markdown_lines, "","","", separator_lines,
+                      "","","", "# TODO Items")
+
+  # Call your existing function to extract all TODO items.
+  #todos <- extract_todos()  # Assumes extract_todos() returns a character vector
+  todos <- c("")
+  if (length(todos) > 0) {
+    markdown_lines <- c(markdown_lines, todos)
+  } else {
+    markdown_lines <- c(markdown_lines, "No TODO items found.")
   }
-
-  # add blank line at end of calendar
-  calendar_text <- paste(calendar_text, "\n")
-
-  return(calendar_text)
-}
-
-#' Generate Weekly RMarkdown Daily Log
-#'
-#' Creates RMarkdown content for 7 days starting from the provided year-
-#' month-day date. It returns a character vector with RMarkdown headers
-#' and separator lines for each day.
-#'
-#' @param year A string or numeric value representing the year (YYYY).
-#' @param month A string or numeric value representing the month (MM).
-#' @param day A string or numeric value representing the day (DD) from which
-#'   the log begins.
-#' @param separator_lines A string specifying the separator lines to insert
-#'   before each day's header. Default is "{{SEP02}}".
-#'
-#' @details
-#' This function creates a weekly daily log in RMarkdown format. It computes
-#' the date range by adding 6 days to the starting date. For each day in the
-#' range, it generates an uppercase header that includes the weekday, day,
-#' month, and year. Separator lines are added before each header. The result
-#' is returned as a character vector of RMarkdown text lines.
-#'
-#' @return A character vector containing the RMarkdown lines for the weekly
-#' daily log.
-#'
-#' @examples
-#' \dontrun{
-#'   # Generate a weekly log for April 10, 2023.
-#'   md_lines <- generate_weekly_rmarkdown("2023", "04", "10")
-#'   cat(md_lines, sep = "\n")
-#' }
-#'
-#' @seealso
-#' \code{\link{as.Date}}, \code{\link{format}}, \code{\link{toupper}},
-#' \code{\link{paste}}, \code{\link{while}}
-#'
-#' @note
-#' Ensure the year, month, and day are provided in valid formats. The function
-#' assumes the input date is valid and performs minimal error checking.
-#'
-generate_weekly_rmarkdown <- function(year, month, day, separator_lines="{{SEP02}}") {
-
-  # Create a Date object for the date provided to this function
-  first_date <- as.Date(paste(year, month, day, sep = "-"))
-
-  # get the last date: + 6 from first_date
-  last_date <- first_date + 6
-
-  # Determine the last day of the month
-  #last_day <- as.Date(paste(year, month + 1, "01", sep = "-")) - 1
-
-  # Initialize an empty string to store the R Markdown lines
-  markdown_lines <- character(0)
-
-  # Loop through each day of the month
-  current_date <- first_date
-  while (current_date <= last_date) {
-    # Generate the R Markdown header for the current day
-    day_header <- toupper( format(current_date, "# %A %d %B %Y") )
-
-    # Add separator lines
-    markdown_lines <- c(markdown_lines, separator_lines, "","","","")
-
-    # then add day header
-    markdown_lines <- c(markdown_lines, day_header, "","","","")
-
-
-    # Move to the next day
-    current_date <- current_date + 1
-  }
-
-  # Combine the R Markdown lines into a single string
-  #markdown_text <- paste(markdown_lines, collapse = "")
 
   return(markdown_lines)
-
 } #### ________________________________ ####
-
 

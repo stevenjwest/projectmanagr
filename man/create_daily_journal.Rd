@@ -37,7 +37,7 @@ A string representing the path to the weekly journal Rmd file.
 This function creates a weekly journal file for an organisation if it does
 not already exist. If the journal file exists, it returns the path to the
 existing file. The journal is stored in the directory specified in the
-settings under "WeeklyJournalDir". Optionally, TODOs can be extracted to
+settings under "JournalDir". Optionally, TODOs can be extracted to
 this file using the extract_todos() function.
 }
 \details{

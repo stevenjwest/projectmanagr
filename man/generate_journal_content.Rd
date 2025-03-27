@@ -4,25 +4,39 @@
 \alias{generate_journal_content}
 \title{Generate Journal Content for a Daily Log}
 \usage{
-generate_journal_content(year, month, day, separator_lines = "{{SEP01}}")
+generate_journal_content(
+  year,
+  month,
+  day,
+  orgPath,
+  separator_lines = "{{SEP01}}"
+)
 }
 \arguments{
-\item{year}{A character or numeric value representing the year (YYYY) for the log date.}
+\item{year}{A character or numeric value representing the year (YYYY) for the
+log date.}
 
-\item{month}{A character or numeric value representing the month (MM) for the log date.}
+\item{month}{A character or numeric value representing the month (MM) for the
+log date.}
 
-\item{day}{A character or numeric value representing the day (DD) for the log date.}
+\item{day}{A character or numeric value representing the day (DD) for the log
+date.}
 
-\item{separator_lines}{A character string used to insert separator lines in the markdown output. Default is "\{\{SEP01\}\}".}
+\item{separator_lines}{A character string used to insert separator lines in
+the markdown output. Default is "\{\{SEP01\}\}".}
 }
 \value{
-A character vector containing the generated markdown lines for the daily journal.
+A character vector containing the generated markdown lines for the
+daily journal.
 }
 \description{
-This function generates markdown content for a daily journal log. The log is divided into three sections:
+This function generates markdown content for a daily journal log. The log is
+divided into three sections:
 \itemize{
-\item \strong{Programme Strategic Objectives} – extracts objectives from programme index R Markdown files.
-\item \strong{Today's Events} – creates a placeholder section for events from Google Calendar.
+\item \strong{Programme Strategic Objectives} – extracts objectives from
+programme index R Markdown files.
+\item \strong{Today's Events} – creates a placeholder section for events
+from Google Calendar.
 \item \strong{TODO Items} – adds a section for TODO items.
 }
 }
@@ -30,9 +44,15 @@ This function generates markdown content for a daily journal log. The log is div
 The function performs the following tasks:
 \itemize{
 \item It creates a Date object using the provided year, month, and day.
-\item In \strong{Section 1}, it lists all R Markdown files in the "programmes" folder, searches for the "# Strategic Objectives" header, and extracts the subsequent lines until the next header is encountered. The file name is included as a subheading.
-\item In \strong{Section 2}, a placeholder section for "Today's Events" is added. Currently, it outputs a message indicating no events are scheduled.
-\item In \strong{Section 3}, a section for "TODO Items" is appended. The function calls an (assumed) \code{extract_todos()} function (here replaced with a placeholder) and outputs its result or a message if none are found.
+\item In \strong{Section 1}, it lists all R Markdown files in the
+"programmes" folder, searches for the "# Strategic Objectives" header,
+and extracts the subsequent lines until the next header is encountered.
+The file name is included as a subheading.
+\item In \strong{Section 2}, a placeholder section for "Today's Events" is
+added. Currently, it outputs a message indicating no events are scheduled.
+\item In \strong{Section 3}, a section for "TODO Items" is appended. The
+function calls an (assumed) \code{extract_todos()} function (here replaced
+with a placeholder) and outputs its result or a message if none are found.
 }
 }
 \examples{
