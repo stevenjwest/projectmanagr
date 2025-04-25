@@ -8,7 +8,7 @@ test_that("create addins testing", {
 
   #### setup : mocked bindings and get WD ####
 
-  print( paste0('testthat edition: ', testthat::edition_get()) )
+  cat( paste0('\n\ntestthat edition: ', testthat::edition_get()) )
 
   WD <- getwd()
 
@@ -40,7 +40,7 @@ test_that("create addins testing", {
   ##### addin_create_project_org_server() creates Org ######
 
   orgName <- "_T_Ots"
-  orgDir <- fs::path(tmpdir, orgName)
+  orgPath <- fs::path(tmpdir, orgName)
 
   shiny::testServer(addin_create_project_org_server, {
 
@@ -87,14 +87,14 @@ test_that("create addins testing", {
     # print( paste0("OUTPUT WARNING2: ", output$warning2))
 
     # define outputs to check
-    orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
-    settingsYml <- fs::path(orgDir, ".config", "settings.yml")
-    statusYml <- fs::path(orgDir, ".config", "status.yml")
-    addinsJson <- fs::path(orgDir, ".config", "addins.json")
-    volumesRmd <- fs::path(orgDir, "volumes", "volumes.Rmd")
+    orgIndex <- fs::path(orgPath, paste0("_index_", orgName, ".Rmd"))
+    settingsYml <- fs::path(orgPath, ".config", "settings.yml")
+    statusYml <- fs::path(orgPath, ".config", "status.yml")
+    addinsJson <- fs::path(orgPath, ".config", "addins.json")
+    volumesRmd <- fs::path(orgPath, "volumes", "volumes.Rmd")
 
     # to use `-` and `_` only in proj prefix and index seps
-    modify_test_settings_yaml(orgDir)
+    modify_test_settings_yaml(orgPath)
 
     # check outputs
     # check org name correctly generates index Rmd
@@ -138,15 +138,15 @@ test_that("create addins testing", {
   #### define org variables ####
 
   # define test org variables in case useful:
-  orgIndex <- fs::path(orgDir, paste0("_index_", orgName, ".Rmd"))
-  settingsYml <- fs::path(orgDir, ".config", "settings.yml")
-  statusYml <- fs::path(orgDir, ".config", "status.yml")
-  addinsJson <- fs::path(orgDir, ".config", "addins.json")
-  volumesRmd <- fs::path(orgDir, "volumes", "volumes.Rmd")
-  settings <- get_settings_yml(orgDir)
+  orgIndex <- fs::path(orgPath, paste0("_index_", orgName, ".Rmd"))
+  settingsYml <- fs::path(orgPath, ".config", "settings.yml")
+  statusYml <- fs::path(orgPath, ".config", "status.yml")
+  addinsJson <- fs::path(orgPath, ".config", "addins.json")
+  volumesRmd <- fs::path(orgPath, "volumes", "volumes.Rmd")
+  settings <- get_settings_yml(orgPath)
 
   # set working directory to inside the newly created org
-  setwd(orgDir)
+  setwd(orgPath)
 
 
 
@@ -171,7 +171,7 @@ test_that("create addins testing", {
     ### Test server inputs
 
     # set name to blank string - check error
-    session$setInputs(orgPath=orgDir, programmeName="")
+    session$setInputs(orgPath=orgPath, programmeName="")
     Sys.sleep(0.2)
     session$setInputs(done=1)
     Sys.sleep(0.2)
@@ -179,7 +179,7 @@ test_that("create addins testing", {
     expect_equal(output$warningName, "*** PROVIDE PROGRAMME NAME ***")
 
     # set name to string with space - check error
-    session$setInputs(orgPath=orgDir, programmeName="123-test prog")
+    session$setInputs(orgPath=orgPath, programmeName="123-test prog")
     Sys.sleep(0.2)
     session$setInputs(done=1)
     Sys.sleep(0.2)
@@ -187,13 +187,13 @@ test_that("create addins testing", {
     expect_equal(output$warningName, "*** PROGRAMME NAME CANNOT CONTAIN SPACES ***")
 
     # set name and title to acceptable values - check programme created correctly
-    session$setInputs(orgPath=orgDir, programmeName=progName, programmeTitle="0 PR ts")
+    session$setInputs(orgPath=orgPath, programmeName=progName, programmeTitle="0 PR ts")
     Sys.sleep(0.2)
     session$setInputs(done=1)
     Sys.sleep(0.2)
 
     # define outputs to check
-    progIndex <- fs::path(orgDir, progName, paste0("_index_", progName, ".Rmd"))
+    progIndex <- fs::path(orgPath, progName, paste0("_index_", progName, ".Rmd"))
 
     # check programme name correctly generates index Rmd
     expect_true( fs::file_exists(progIndex) )
@@ -226,7 +226,7 @@ test_that("create addins testing", {
 
   ##### define programme variables #####
 
-  progPath <- fs::path(orgDir, progName)
+  progPath <- fs::path(orgPath, progName)
   progIndex <- fs::path(progPath, paste0("_index_", progName, ".Rmd"))
 
 
@@ -251,7 +251,7 @@ test_that("create addins testing", {
     ### Test server inputs
 
     # set name to blank string - check error
-    session$setInputs(orgPath=orgDir, sectionName="")
+    session$setInputs(orgPath=orgPath, sectionName="")
     Sys.sleep(0.2)
     session$setInputs(done=1)
     Sys.sleep(0.2)
@@ -259,7 +259,7 @@ test_that("create addins testing", {
     expect_equal(output$warningName, "*** PROVIDE PROGRAMME SECTION NAME ***")
 
     # set name to string with space - check error
-    session$setInputs(orgPath=orgDir, sectionName="123-test prog")
+    session$setInputs(orgPath=orgPath, sectionName="123-test prog")
     Sys.sleep(0.2)
     session$setInputs(done=1)
     Sys.sleep(0.2)
@@ -267,13 +267,13 @@ test_that("create addins testing", {
     expect_equal(output$warningName, "*** PROGRAMME SECTION NAME CANNOT CONTAIN SPACES ***")
 
     # set name and title to acceptable values - check programme created correctly
-    session$setInputs(orgPath=orgDir, sectionName=sectName, sectionTitle="pr st")
+    session$setInputs(orgPath=orgPath, sectionName=sectName, sectionTitle="pr st")
     Sys.sleep(0.2)
     session$setInputs(done=1)
     Sys.sleep(0.2)
 
     # define outputs to check
-    sectIndex <- fs::path(orgDir, progName, sectName, paste0("_index_", sectName, ".Rmd"))
+    sectIndex <- fs::path(orgPath, progName, sectName, paste0("_index_", sectName, ".Rmd"))
 
     # check programme section name correctly generates index Rmd
     expect_true( fs::file_exists(sectIndex) )
@@ -306,7 +306,7 @@ test_that("create addins testing", {
 
   ##### define programme variables #####
 
-  sectPath <- fs::path(orgDir, progName, sectName)
+  sectPath <- fs::path(orgPath, progName, sectName)
   progIndex <- fs::path(sectPath, paste0("_index_", sectName, ".Rmd"))
 
 
@@ -317,8 +317,8 @@ test_that("create addins testing", {
 
   ##### addin_create_project_doc_ui creates expected HTML #####
 
-  #expect_snapshot(addin_create_project_doc_ui(orgName, get_settings_yml(orgDir), progPath, 1 ) )
-  expect_snapshot(addin_create_project_doc_ui(orgName, get_settings_yml(orgDir)))
+  #expect_snapshot(addin_create_project_doc_ui(orgName, get_settings_yml(orgPath), progPath, 1 ) )
+  expect_snapshot(addin_create_project_doc_ui(orgName, get_settings_yml(orgPath)))
   # using orgName to avoid current system full path - that can vary across systems!
   # so using orgName to render the UI makes for reproducible testing
 
@@ -442,9 +442,8 @@ test_that("create addins testing", {
   # mock ui and server functions to test higher infrastructure
   # return strings for checking args
   local_mocked_bindings(
-    addin_create_project_doc_ui = function(orgPath, settings, programmeDirPaths, progSelected) {
-      paste0("ui - orgName: ", fs::path_file(orgPath), " settings-names: ", paste(names(settings), collapse=' '),
-             " programmeDirPaths: ",paste( fs::path_file(programmeDirPaths), collapse=' '), " progSelected: ", progSelected)
+    addin_create_project_doc_ui = function(orgPath, settings) {
+      paste0("ui - orgName: ", fs::path_file(orgPath), " settings-names: ", paste(names(settings), collapse=' '))
     }, # org & prog file names for reproducible return across systems
     addin_create_project_doc_server = function(input, output, session) {
       paste0(" server")
@@ -492,8 +491,8 @@ test_that("create addins testing", {
   projectNotePath <- fs::path(projectDocDir, 't-no')
   fs::dir_create(projectNotePath)
 
-  roots <- c(projectDocDir, progPath, orgDir) # can use projectDirPath, progPath, or orgPath as roots
-  names(roots) <- c(basename(projectDocDir), basename(progPath), basename(orgDir))
+  roots <- c(projectDocDir, progPath, orgPath) # can use projectDirPath, progPath, or orgPath as roots
+  names(roots) <- c(basename(projectDocDir), basename(progPath), basename(orgPath))
 
   projectDocDirCh <- as.character(projectDocDir)
 
@@ -582,12 +581,13 @@ test_that("create addins testing", {
 
   #### ________________ ####
 
-  #### test addin : OPEN WEEKLY JOURNAL ####
+  #### test addin : OPEN DAILY JOURNAL ####
 
-  ##### addin_open_weekly_journal_ui() creates expected HTML #####
+  ##### addin_open_daily_journal_ui() creates expected HTML #####
 
   # define args
   calDate <- as.Date("2024-12-02")
+  journalDir <- get_journal_dir(orgPath, settings)
 
   # Mock Calendar function
   mock_calendar_input <- function(inputId, value, ...) {
@@ -597,24 +597,77 @@ test_that("create addins testing", {
     )
   }
 
+
+  # mock geo location for fixed return - avoid using internet search!
+  local_mocked_bindings(
+    get_geo_loc = function(location_str) {
+      return( list(lat=51.52, long=-0.14) )
+    }, # for consistent latitude and longitude values
+    get_locale = function() {
+      return("Europe/London")
+    }, # for consistent locale string
+    get_sunlight_times = function(date, lat, lon, locale) {
+      list(
+        date = date,
+        lat = lat,
+        lon = lon,
+        solarNoon = as.POSIXct("2024-12-02 11:51:34", tz = "Europe/London"),
+        nadir = as.POSIXct("2024-12-01 23:51:34", tz = "Europe/London"),
+        sunrise = as.POSIXct("2024-12-02 07:47:09", tz = "Europe/London"),
+        sunset = as.POSIXct("2024-12-02 15:55:59", tz = "Europe/London"),
+        sunriseEnd = as.POSIXct("2024-12-02 07:51:24", tz = "Europe/London"),
+        sunsetStart = as.POSIXct("2024-12-02 15:51:45", tz = "Europe/London"),
+        dawn = as.POSIXct("2024-12-02 07:07:59", tz = "Europe/London"),
+        dusk = as.POSIXct("2024-12-02 16:35:10", tz = "Europe/London"),
+        nauticalDawn = as.POSIXct("2024-12-02 06:25:38", tz = "Europe/London"),
+        nauticalDusk = as.POSIXct("2024-12-02 17:17:31", tz = "Europe/London"),
+        nightEnd = as.POSIXct("2024-12-02 05:45:20", tz = "Europe/London"),
+        night = as.POSIXct("2024-12-02 17:57:48", tz = "Europe/London"),
+        goldenHourEnd = as.POSIXct("2024-12-02 08:45:58", tz = "Europe/London"),
+        goldenHour = as.POSIXct("2024-12-02 14:57:10", tz = "Europe/London"),
+        check = "CHECK"
+      )
+    }, # for consistent day metadata
+    get_moon_times = function(date, lat, lon, locale) {
+      list(
+        date = date,
+        lat = lat,
+        lon = lon,
+        rise = as.POSIXct("2024-12-02 09:30:27", tz = "Europe/London"),
+        set = as.POSIXct("2024-12-02 16:07:22", tz = "Europe/London"),
+        alwaysUp = FALSE,
+        alwaysDown = FALSE,
+        check = "CHECK" # to check mocked function is working
+      )
+    },
+    lunar_phase = function(date_obj) {
+      factor("New", levels = c("New", "Waxing", "Full", "Waning"))
+    },
+    lunar_illumination = function(date_obj) {
+      0.02454095
+    })
+
+
   # Snapshot test for addin_open_weekly_journal_ui()
-  expect_snapshot(addin_open_weekly_journal_ui(orgName, calDate = calDate,
+  expect_snapshot(addin_open_daily_journal_ui(orgName, calDate = calDate,
                                                calendar_function = mock_calendar_input))
   # using orgName to avoid current system full path - that can vary across systems!
    # so using orgName to render the UI makes for reproducible testing
-  # must parameterise the calendar function call to shiny.fluent package to mock the function for reproducible testing..
-  # below does not work! if calendar function is directly called in ui function..
-  # expect_snapshot(addin_open_weekly_journal_ui(orgDir))
+  # must parameterise the calendar function call to shiny.fluent package
+   # to mock the function for reproducible testing..
+  # below code does not work!
+   # if calendar function is directly called in ui function..
+  # expect_snapshot(addin_open_weekly_journal_ui(orgPath))
   # unable to reproducibly test the ui, as calendar produces unique id
    # under jsmodule findAndRenderReactData()
    # <div class="react-container" data-react-id="uxllcjkxgshwrtuptkuc">
    # <script>jsmodule['@/shiny.react'].findAndRenderReactData('uxllcjkxgshwrtuptkuc')</script>
 
 
-  ##### addin_open_weekly_journal_server() creates Prog  #####
+  ##### addin_open_daily_journal_server() creates Prog  #####
 
 
-  shiny::testServer(addin_open_weekly_journal_server, {
+  shiny::testServer(addin_open_daily_journal_server, {
 
     ### Test server inputs
 
@@ -624,7 +677,9 @@ test_that("create addins testing", {
     Sys.sleep(0.2)
 
     # define outputs to check
-    journalRmd <- fs::path(orgDir, "weekly-journal", "2024", paste0(calDate, "_", orgName, ".Rmd"))
+    journalRmd <- fs::path(journalDir, "2024", "12",
+                           paste0(calDate, "_", orgName, ".Rmd"))
+
 
     # check correctly generates journal Rmd
     expect_true( fs::file_exists(journalRmd) )
@@ -635,15 +690,15 @@ test_that("create addins testing", {
   })
 
 
-  ##### addin_open_weekly_journal() logic #####
+  ##### addin_open_daily_journal() logic #####
 
   # mock ui and server functions to test higher infrastructure
   # return strings for checking args
   local_mocked_bindings(
-    addin_open_weekly_journal_ui = function(orgPath) {
+    addin_open_daily_journal_ui = function(orgPath) {
       paste0("ui - orgName: ", fs::path_file(orgPath) )
     }, # org file name for reproducible return across systems
-    addin_open_weekly_journal_server = function(input, output, session) {
+    addin_open_daily_journal_server = function(input, output, session) {
       paste0(" server")
     },
     runGadget = function(UI, SERVER, viewer) {
@@ -651,7 +706,7 @@ test_that("create addins testing", {
     }
   )
 
-  expect_snapshot( paste0("OPEN WEEKLY JOURNAL ADDIN: ", addin_open_weekly_journal() ) )
+  expect_snapshot( paste0("OPEN DAILY JOURNAL ADDIN: ", addin_open_daily_journal() ) )
 
 
   #### ________________ ####

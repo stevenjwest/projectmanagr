@@ -12,7 +12,6 @@ link_group_note_doc(
   headerNoteLinkContents,
   projNoteLinkContents,
   projNoteLinkSummaryContents,
-  todoContents,
   projNoteSummaryContents,
   subNoteSummaryContents,
   projDocContents,

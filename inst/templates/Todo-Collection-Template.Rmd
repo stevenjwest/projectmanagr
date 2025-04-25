@@ -1,12 +1,8 @@
-# {{DATE}} : TODO SUMMARY
 
 
+Date: {{DATE}}
 
 
-{{PROGRAMME_TODO_SUMMARY}}
+Scope: {{SCOPE}}
 
-
-
-{{TODO_COLLECTION_SEP}}
-
-
+{{ALL_NOTES_SECTION}}

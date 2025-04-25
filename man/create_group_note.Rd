@@ -19,7 +19,6 @@ create_group_note(
   subNoteContentLinkTemplate = "Project-Sub-Note-Content-Link-Template.Rmd",
   projNoteLinkTemplate = "Project-Note-Link-Template.Rmd",
   projNoteLinkSummaryTemplate = "Project-Note-Link-Summary-Template.Rmd",
-  todoTemplate = "Todo-Template.Rmd",
   projNoteSummaryTemplate = "Project-Note-Summary-Template.Rmd",
   subNoteSummaryTemplate = "Project-Sub-Note-Summary-Template.Rmd"
 )
@@ -76,14 +75,14 @@ template. Default is \code{"Project-Note-Link-Template.Rmd"}.}
 \item{projNoteLinkSummaryTemplate}{Character. The filename of the project note
 link summary template. Default is \code{"Project-Note-Link-Summary-Template.Rmd"}.}
 
-\item{todoTemplate}{Character. The filename of the project note's To-Do
-template. Default is \code{"Todo-Template.Rmd"}.}
-
 \item{projNoteSummaryTemplate}{Character. The filename of the project note
 summary template. Default is \code{"Project-Note-Summary-Template.Rmd"}.}
 
 \item{subNoteSummaryTemplate}{Character. The filename of the sub-note summary
 template. Default is \code{"Project-Sub-Note-Summary-Template.Rmd"}.}
+
+\item{todoTemplate}{Character. The filename of the project note's To-Do
+template. Default is \code{"Todo-Template.Rmd"}.}
 }
 \value{
 None. The function creates files and modifies the project document.

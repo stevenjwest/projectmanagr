@@ -4,7 +4,16 @@
 \alias{find_org_rstudio_editor}
 \title{find organisation root directory from RStudio Editor active doc path}
 \usage{
-find_org_rstudio_editor()
+find_org_rstudio_editor(
+  isAvailable = rstudioapi::isAvailable(),
+  getSourceEditorContext = rstudioapi::getSourceEditorContext()
+)
+}
+\arguments{
+\item{isAvailable}{pointer to rstudioapi function - override for testing}
+
+\item{getSourceEditorContext}{pointer to rstudioapi function - override for
+testing}
 }
 \description{
 Used by \code{find_org_directory()} as second pass attempt to identify an

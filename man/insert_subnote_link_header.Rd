@@ -2,11 +2,10 @@
 % Please edit documentation in R/create-functions.R
 \name{insert_subnote_link_header}
 \alias{insert_subnote_link_header}
-\title{Insert Header Link into Subnote}
+\title{Insert Sub-Note Link into a Header Note}
 \usage{
 insert_subnote_link_header(
   headerNoteRmdContents,
-  subNoteFileName,
   subNoteRmdPath,
   headerNoteRmdPath,
   subNoteContentLinkContents,
@@ -17,8 +16,6 @@ insert_subnote_link_header(
 \arguments{
 \item{headerNoteRmdContents}{Character vector containing the contents of the
 header note Rmd file.}
-
-\item{subNoteFileName}{A string specifying the subnote file name.}
 
 \item{subNoteRmdPath}{A string with the full file path of the subnote Rmd.}
 

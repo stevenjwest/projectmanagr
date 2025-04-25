@@ -1915,9 +1915,12 @@ addin_open_daily_journal <- function() {
 #' Displays the organisation path, a calendar for selecting a date, and
 #' highlights the day corresponding to the selected date.
 #'
-#' @param orgPath Character string. The path to the ORG directory where journal files are stored.
-#' @param calDate Date object. The default date to display in the calendar. Defaults to the current system date (\code{Sys.Date()}).
-#' @param calendar_function Function. The calendar rendering function to use. Defaults to \code{shiny.fluent::Calendar.shinyInput}.
+#' @param orgPath Character string. The path to the ORG directory where journal
+#'   files are stored.
+#' @param calDate Date object. The default date to display in the calendar.
+#'   Defaults to the current system date (\code{Sys.Date()}).
+#' @param calendar_function Function. The calendar rendering function to use.
+#'   Defaults to \code{shiny.fluent::Calendar.shinyInput}.
 #'
 #' @details
 #' This function creates a user interface for selecting a date using a calendar
@@ -1944,14 +1947,18 @@ addin_open_daily_journal <- function() {
 #' )
 #'
 #' @seealso
-#' - \code{\link[miniUI]{miniPage}} for details on constructing UI components for Shiny gadgets.
+#' - \code{\link[miniUI]{miniPage}} for details on constructing UI components
+#'   for Shiny gadgets.
 #' - \code{\link[shiny.fluent]{Calendar.shinyInput}} for the calendar component.
 #'
 #' @note
-#' This UI is designed for use with the server logic defined in \code{addin_open_daily_journal_server}.
+#' This UI is designed for use with the server logic defined in
+#' \code{addin_open_daily_journal_server}.
 #'
-addin_open_daily_journal_ui <- function(orgPath, calDate = Sys.Date(),
-                                        calendar_function = shiny.fluent::Calendar.shinyInput) {
+addin_open_daily_journal_ui <- function(
+    orgPath,
+    calDate = Sys.Date(),
+    calendar_function = shiny.fluent::Calendar.shinyInput) {
 
     miniUI::miniPage(
 
@@ -2026,8 +2033,29 @@ addin_open_daily_journal_server <- function(input, output, session) {
   # Observe date selection
   observeEvent(input$calendar, {
     if (!is.null(input$calendar)) {
-      date <- as.Date(input$calendar)
-      selected_date(date)
+      #print("click")
+      # Convert the input to POSIXct using UTC to avoid local timezone conversion issues
+      #print( paste0("input$calendar: ", input$calendar) )
+      #print(  paste0("input$calendar typeof: ",typeof(input$calendar)) )
+      date <- as.POSIXct(input$calendar, tz = "UTC")
+      #print( paste0("date UTC: ", date) )
+      #selected_date(date)
+      # Try to parse the input as a date-time string in UTC.
+      dt_utc <- suppressWarnings(lubridate::ymd_hms(input$calendar, tz = "UTC"))
+      # If parsing fails (e.g. the string is simply "YYYY-MM-DD"), fall back to ymd()
+      #print( paste0("1dt_utc: ", dt_utc))
+      if (is.na(dt_utc)) {
+        dt_utc <- lubridate::ymd(input$calendar, tz = "UTC")
+      }
+      #print( paste0("dt_utc: ", dt_utc))
+      # Convert the UTC time to your local timezone
+      dt_local <- lubridate::with_tz(dt_utc, tzone = Sys.timezone())
+      #print(paste0("dt_local: ", dt_local))
+      #print(paste0("lubridate::as_date() dt_local: ", lubridate::as_date((dt_local) ) ))
+
+      # need to use lubridate as_date - as.Date() function returns incorrect date!
+      selected_date(lubridate::as_date((dt_local)))
+
     }
   })
 

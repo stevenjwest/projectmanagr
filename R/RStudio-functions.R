@@ -3,10 +3,17 @@
 #'
 #' Used by `find_org_directory()` as second pass attempt to identify an
 #' organisation root directory.
-find_org_rstudio_editor <- function() {
-    if( rstudioapi::isAvailable() ) {
+#'
+#' @param isAvailable pointer to rstudioapi function - override for testing
+#' @param getSourceEditorContext pointer to rstudioapi function - override for
+#'   testing
+find_org_rstudio_editor <- function(
+    isAvailable = rstudioapi::isAvailable(),
+    getSourceEditorContext = rstudioapi::getSourceEditorContext()
+    ) {
+    if( isAvailable() ) {
       # try to find orgPath from active document path
-      path <- rstudioapi::getSourceEditorContext()$path
+      path <- getSourceEditorContext()$path
       confPath <- get_config_dir(path)
       tempPath <- get_template_dir(path)
       while(  !( file.exists(confPath) && file.exists(tempPath) )  ) {
@@ -22,6 +29,31 @@ find_org_rstudio_editor <- function() {
     }
   return(fs::path(path))
 }
+
+#' Get RStudio Internal State Dir
+#'
+#' Returns this from the settings or the default depending on OS.type (unix or Windows)
+#'
+#' https://support.posit.co/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State
+#' 'Resetting RStudio Desktop's State'
+#'
+#' Accessing the RStudio-Desktop Directory (Internal State)
+#'
+#' RStudio Desktop stores its internal state in a hidden directory: includes
+#' information about open documents, log files, and other state information
+#'
+#' @export
+get_rstudio_internal_state_dir <- function() {
+
+  if( .Platform$OS.type == "unix") {
+    rstudioInternalStateDir <- fs::path("~/.local/share/rstudio") # path on LINUX/MAC OS
+  } else {
+    rstudioInternalStateDir <- fs::path("%localappdata%", "RStudio") # path on WINDOWS ???
+  }
+  # return
+  rstudioInternalStateDir
+}
+
 
 #' Get RStudio Open Document IDs
 #'
@@ -46,7 +78,7 @@ get_rstudio_open_doc_IDs <- function() {
   rstudioInternalStateDir <- get_rstudio_internal_state_dir()
 
   # first, check if ~/.local/share/rstudio/sources exists
-  if( file.exists( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources") ) ) {
+  if( file.exists( fs::path(rstudioInternalStateDir, "sources") ) ) {
 
     # check if a DIR exists which STARTS WITH "session-" (remainder is unique RStudio session ID)
     # first handle NEW rstudio session directory layout
@@ -165,22 +197,21 @@ get_rstudio_open_doc_IDs <- function() {
 
         }
 
-      }
-      else {
-
-        # no files match pattern : paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")
+      } else {
+        # no files match pattern : fs::path(rstudioInternalStateDir, "sources", "s-*")
         stop( paste0("No Active RStudio Session") )
 
       }
     } else {
-      stop( paste0("No RStudio Session identified in : ", paste0(rstudioInternalStateDir, .Platform$file.sep, "sources"), " update ORG/config/settings.yml rstudioInternalStateDir parameter \n  see https://support.rstudio.com/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State" ) )
+      stop( paste0("No RStudio Session identified in : ",
+                   paste0(rstudioInternalStateDir, .Platform$file.sep, "sources"),
+                   " update ORG/config/settings.yml rstudioInternalStateDir parameter \n  see https://support.rstudio.com/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State" ) )
     }
-  }
-  else {
-
+  } else {
     # no dir : paste0(rstudioInternalStateDir, .Platform$file.sep, "sources")
-    stop( paste0("RStudio Internal State Directory not found : update ORG/config/settings.yml rstudioInternalStateDir parameter \n  see https://support.rstudio.com/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State") )
-
+    stop( paste0("RStudio Internal State Directory not found :",
+                 " update ORG/.config/settings.yml rstudioInternalStateDir ",
+                 "parameter \n  see https://support.rstudio.com/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State") )
   }
 
   # finally, re-order list based on relVector:
@@ -442,29 +473,7 @@ get_rstudio_config_dir <- function() {
 }
 
 
-#' Get RStudio Internal State Dir
-#'
-#' Returns this from the settings or the default depending on OS.type (unix or Windows)
-#'
-#' https://support.posit.co/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State
-#' 'Resetting RStudio Desktop's State'
-#'
-#' Accessing the RStudio-Desktop Directory (Internal State)
-#'
-#' RStudio Desktop stores its internal state in a hidden directory: includes
-#' information about open documents, log files, and other state information
-#'
-#' @export
-get_rstudio_internal_state_dir <- function() {
 
-  if( .Platform$OS.type == "unix") {
-    rstudioInternalStateDir <- "~/.local/share/rstudio" # path on LINUX/MAC OS
-  } else {
-    rstudioInternalStateDir <- paste0("%localappdata%", .Platform$file.sep, "RStudio") # path on WINDOWS ???
-  }
-  # return
-  rstudioInternalStateDir
-}
 
 #' Get RStudio Internal State Dir
 #'

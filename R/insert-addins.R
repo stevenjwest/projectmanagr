@@ -19,9 +19,11 @@ addin_insert_date <- function() {
   orgPath <- find_org_directory(context$path)
 
   if(orgPath == "" ) { # only if orgPath not identified
-    timezone <- "UTC"
+    timezone <- get_locale()
     split <- "/"
-    cat( "\n  No projectmanagr Organisation identified - using UTC timezone & / split by default.\n" )
+    cat( paste0("\n  No projectmanagr Organisation identified\n
+         - using locale timezone & / split by default.\n
+         - locale: ", timezone ) )
 
   } else {
 
@@ -30,8 +32,9 @@ addin_insert_date <- function() {
     tempPath <- get_template_dir(orgPath)
     settings <- get_settings_yml(orgPath)
 
-    # get timezone and split char
-    timezone <- settings[['DateTimeZone']]
+    # get timezone/locale and split char
+    #timezone <- settings[['DateTimeZone']]
+    timezone <- get_locale() # using current system locale!
     split <- settings[['DateSplit']]
 
     cat( "\n  Date inserted based on timezone : ", timezone, "\n" )
@@ -49,7 +52,7 @@ addin_insert_date <- function() {
   #rstudioapi::insertText( paste0('"', datetime_colon, '"' ) )
   rstudioapi::insertText( date )
 
-}
+} #### ________________________________ ####
 
 
 #' Insert Datetime Addin
@@ -73,10 +76,12 @@ addin_insert_datetime <- function() {
   orgPath <- find_org_directory(context$path)
 
   if(orgPath == "" ) { # only if orgPath not identified
-    timezone <- "UTC"
+    timezone <- get_locale()
     split <- "/"
     splitTime <- ":"
-    cat( "\n  No projectmanagr Organisation identified - using UTC timezone by default.\n" )
+    cat( paste0("\n  No projectmanagr Organisation identified\n
+         - using locale timezone & / : split by default.\n
+         - locale: ", timezone ) )
 
   } else {
 
@@ -86,7 +91,8 @@ addin_insert_datetime <- function() {
     settings <- get_settings_yml(orgPath)
 
     # get timezone and split chars
-    timezone <- settings[['DateTimeZone']]
+    #timezone <- settings[['DateTimeZone']]
+    timezone <- get_locale() # using current system locale!
     split <- settings[['DateSplit']]
     splitTime <- settings[['DateTimeSplit']]
 
@@ -103,6 +109,31 @@ addin_insert_datetime <- function() {
   datetime <- get_datetime(timezone, split, splitTime)
 
   #rstudioapi::insertText( paste0('"', datetime_colon, '"' ) )
+  rstudioapi::insertText( datetime )
+
+} #### ________________________________ ####
+
+
+
+#' Insert Todo Addin
+#'
+#' Inserts a todo block into the current selection in RStudio Source
+#' Editor. Uses format specified in `config/templates/todo-block.txt`
+#'
+#' @export
+addin_insert_todo <- function() {
+
+  cat( "\nprojectmanagr::addin_insert_todo():\n" )
+
+  # get currently active doc in rstudio
+  context <- rstudioapi::getSourceEditorContext()
+
+  # get orgPath
+  orgPath <- confirm_find_org(context$path)
+
+  #### insert todo block ####
+  datetime <- get_todo_block(orgPath)
+
   rstudioapi::insertText( datetime )
 
 } #### ________________________________ ####
@@ -386,15 +417,8 @@ addin_insert_content <- function() {
   projNoteRmdPath <- selection[["filePath"]] # presumed to be project note Rmd
   noteInsertionIndex <- selection[["originalLineNumber"]]
 
-  # get orgPath
-  orgPath <- find_org_directory(projNoteRmdPath)
+  orgPath <- confirm_find_org(projNoteRmdPath)
 
-  if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  Cannot identify organisation directory: ", projNoteRmdPath) )
-
-  }
-
-  # get config templates settings yml
   confPath <- get_config_dir(orgPath)
   tempPath <- get_template_dir(orgPath)
   settings <- get_settings_yml(orgPath)
@@ -434,8 +458,8 @@ addin_insert_content <- function() {
     # update contents list: Check if any project Notes are updated since the contentRetrievalDateTime
     contents <- update_contents_org_tree(contentsCache, orgPath, settings) # faster as only search since laste retrieval dt
 
-    # latest retrieval datetime
-    contentRetrievalDateTime <- get_datetime()
+    # latest retrieval datetime - using UTC for consistent retrieval datetime logging
+    contentRetrievalDateTime <- get_datetime(timezone = "UTC")
 
     cat("    writing org insertable contents cache..\n")
     write_insertable_contents_cache(contentRetrievalDateTime, contents, orgPath, status, statusFile)

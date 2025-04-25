@@ -4,10 +4,11 @@
 \alias{get_datetime}
 \title{internal function to get datetime in YYYY/MM/DD:hh:mm format}
 \usage{
-get_datetime(timezone = "UTC", split = "-", splitTime = ":")
+get_datetime(timezone = get_locale(), split = "-", splitTime = ":")
 }
 \arguments{
-\item{timezone}{Timezone code to use. Default "UTC".}
+\item{timezone}{Timezone code to use. Default to \code{get_locale} (current system
+locale)}
 
 \item{split}{Chracter to split YYYY & MM & DD. Default "/".}
 

@@ -320,21 +320,20 @@ local_modify_project_doc_gdt_titles <- function(settingsYml, projectRmd,
 
 
 local_create_project_note_simple <- function(projectNoteName, projectNotePath,
-                                             projectDocPath, taskLine, authorValue,
+                                             projectDocRmd, taskLine, authorValue,
                                              noteIndex="___001",
                                              env = parent.frame() ) {
 
-  # interactive testing - set projectDocPath
-  #projectDocPath <- projectDocRmd
+  # interactive testing
   #noteIndex="___001"
 
   # record current state
   olddir <- getwd()
 
   # generate selection object via projectmanagr function
-  selection <- user_selection(projectDocPath, taskLine)
+  selection <- user_selection(projectDocRmd, taskLine)
 
-  # create project note
+  ### create project note ###
   create_project_note(projectNoteName, projectNotePath, selection, authorValue)
 
   # create paths to Rmd & dir
@@ -355,19 +354,19 @@ local_create_project_note_simple <- function(projectNoteName, projectNotePath,
 
 
 local_create_project_note_simple_rename <- function(projectNoteName, projectNotePath,
-                                             projectDocPath, taskLine,  authorValue,
+                                             projectDocRmd, taskLine,  authorValue,
                                              noteIndex="___001", renameNoteName="",
                                              env = parent.frame() ) {
 
-  # interactive testing - set projectDocPath
-  #projectDocPath <- projectDocRmd
+  # interactive testing - set projectDocRmd
+  #projectDocRmd <- projectDocRmd
   #noteIndex="___001"
 
   # record current state
   olddir <- getwd()
 
   # generate selection object via projectmanagr function
-  selection <- user_selection(projectDocPath, taskLine)
+  selection <- user_selection(projectDocRmd, taskLine)
 
   # create project note
   create_project_note(projectNoteName, projectNotePath, selection,  authorValue)
@@ -392,7 +391,7 @@ local_create_project_note_simple_rename <- function(projectNoteName, projectNote
 
 
 local_create_project_note_group <- function(groupNoteName, groupNotePath,
-                                            projectDocPath, taskLine,
+                                            projectDocRmd, taskLine,
                                             subNoteName, authorValue,
                                             env = parent.frame()) {
 
@@ -400,10 +399,11 @@ local_create_project_note_group <- function(groupNoteName, groupNotePath,
   olddir <- getwd()
 
   # generate selection object via projectmanagr function
-  selection <- user_selection(projectDocPath, taskLine)
+  selection <- user_selection(projectDocRmd, taskLine)
 
   # create group note
-  create_group_note(groupNoteName, groupNotePath, selection, subNoteName, authorValue)
+  create_group_note(groupNoteName, groupNotePath, selection,
+                    subNoteName, authorValue)
 
   # create paths to Rmd & dir
   groupNoteRmd <- fs::path(groupNotePath, paste0(basename(groupNotePath), "___001-00", "_--_", groupNoteName, ".Rmd") )
@@ -421,7 +421,7 @@ local_create_project_note_group <- function(groupNoteName, groupNotePath,
 
 
 local_create_project_note_group2 <- function(groupNoteName, groupNotePath,
-                                            projectDocPath, taskLine,
+                                            projectDocRmd, taskLine,
                                             subNoteName,  authorValue,
                                             env = parent.frame()) {
 
@@ -429,7 +429,7 @@ local_create_project_note_group2 <- function(groupNoteName, groupNotePath,
   olddir <- getwd()
 
   # generate selection object via projectmanagr function
-  selection <- user_selection(projectDocPath, taskLine)
+  selection <- user_selection(projectDocRmd, taskLine)
 
   # create group note
   create_group_note(groupNoteName, groupNotePath, selection, subNoteName,  authorValue)
@@ -1702,45 +1702,352 @@ local_add_todos_to_project_note <- function(projectNoteRmd) {
 
   rmd_contents <- read_file(projectNoteRmd)
 
-  # replace the template TODO content in rmd_contents[49:60]
-  # KJEEPING TEMPLATE - so can test it is effectively removed!
-  rmd_contents <- c( rmd_contents[1:59],
-    "",
-    "### Test Todo",
-    "",
-    "",
-    "* This is a Test Todo",
-    "",
-    "    + This is a Test Todo sub-comment",
-    "",
-    "    + This is another Test Todo sub-comment",
+  # Add todo items to rmd_contents
+  # todays date is 2025-02-22
+  rmd_contents <- c( rmd_contents[1:74],
     "",
     "",
     "",
-    "#### [] todo subtask 1",
+    "### Standard Todo Header",
     "",
     "",
-    "* Test Todo sub-task comments",
-    "",
-    "    + These stay in the project note TODO section",
-    "",
-    "    + and are NOT extracted with the todo subtask header",
+    "* This is a Standard Todo Section",
     "",
     "",
+    "<!-- {#todo}",
+    "this is a standard todo description",
+    "the standard todo description can go over multiple lines",
+    "And add more context & progress updates -->",
     "",
-    "#### [] todo subtask 2",
     "",
     "",
-    "Test Todo sub-task comments",
+    "### SECOND Todo Header",
     "",
-    "* These stay in the project note TODO section",
     "",
-    "* and are NOT extracted with the todo subtask header",
+    "* This is a Second Standard Todo Section",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a SECOND standard todo description",
+    "to check ordering of todo items",
+    "the standard todo description can go over multiple lines",
+    "And add more context & progress updates -->",
+    "",
+    "",
+    "--------",
+    "--------",
+    "",
+    "",
+    "",
+    "### Deadline Todo Header",
+    "",
+    "",
+    "* This is a Todo Section with deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a deadline todo description",
+    "the standard todo description can go over multiple lines",
+    "It has a deadline specified in s deadline tag at the end",
+    "{#deadline 2025-02-27} -->",
+    "",
+    "",
+    "",
+    "### Second Deadline Todo Header",
+    "",
+    "",
+    "* This is a Todo Section with deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a 2nd deadline todo description",
+    "deadline is later than first -check ordering",
+    "the standard todo description can go over multiple lines",
+    "It has a deadline specified in s deadline tag at the end",
+    "{#deadline 2025-02-28} -->",
+    "",
+    "",
+    "### Third Deadline Todo Header",
+    "",
+    "",
+    "* This is a Todo Section with deadline",
+    "",
+    "",
+    "<!-- {#todo} Todo Title on Third Deadline Todo Header",
+    "this is a 3rd deadline todo description",
+    "deadline is later than first -check ordering",
+    "the standard todo description can go over multiple lines",
+    "It has a deadline specified in s deadline tag at the end",
+    "{#deadline 2025-02-26} -->",
+    "",
+    "",
+    "",
+    "### Deadline Todo Today Header",
+    "",
+    "",
+    "* This is a Todo Section with deadline set for today",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a deadline todo for today description",
+    "the standard todo description can go over multiple lines",
+    "It has a deadline specified in s deadline tag at the end",
+    "{#deadline 2025-02-22} -->",
+    "",
+    "",
+    "",
+    "### Deadline Todo Expired Header",
+    "",
+    "",
+    "* This is a Todo Section with deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is an EXPIRED deadline todo description",
+    "the standard todo description can go over multiple lines",
+    "It has a deadline specified in s deadline tag at the end",
+    "{#deadline 2025-02-20} -->",
+    "",
+    "",
+    "------------------------------------",
+    "------------------------------------",
+    "",
+    "",
+    "",
+    "### Scheduled Todo Header",
+    "",
+    "",
+    "* This is a Todo Section with scheduled time",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag at the end",
+    "{#schedule 2025-02-25:1400Z} -->",
+    "",
+    "",
+    "",
+    "### Scheduled Second Todo Header",
+    "",
+    "",
+    "* This is a Xecond Todo Section with scheduled time",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a 2nd scheduled todo description",
+    "check ordering - 2nd scheduled todo is after first!",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag at the end",
+    "{#schedule 2025-02-26:1400Z} -->",
+    "",
+    "",
+    "",
+    "### Scheduled Todo Today Header",
+    "",
+    "",
+    "* This is a Todo Section with scheduled time for today",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo for today description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag at the end",
+    "{#schedule 2025-02-22:1300Z} -->",
+    "",
+    "",
+    "",
+    "### Scheduled Todo Header",
+    "",
+    "",
+    "* This is a Todo Section with scheduled time",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag at the end",
+    "{#schedule 2025-02-25:1200Z} -->",
+    "",
+    "",
+    "",
+    "### Scheduled Todo Expired Header",
+    "",
+    "",
+    "* This is a Todo Section with scheduled time",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is an EXPIRED scheduled todo description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag at the end",
+    "{#schedule 2025-02-20:1300Z} -->",
+    "",
+    "",
+    "------------------------------------",
+    "------------------------------------",
+    ##                     SCH-TODAY DEAD-TODAY SCH-PASS DEAD-PASS
+    ## Sch-Dead                 o        o         o         o
+    ## Sch-Dead S-T             x        o         o         o
+    ## Sch-Dead D-T             o        x         o         o
+    ## Sch-Dead S-P             o        o         x         o
+    ## Sch-Dead D-P             o        o         o         x
+    ## S-T D-T                  x        x         o         o
+    ## S-T D-P                  x        o         o         x
+    ## D-T S-P                  o        x         x         o
+    ## S-P D-P                  o        x         o         x
+    "",
+    "",
+    "",
+    "### Sch-Dead Todo Header",
+    "",
+    "",
+    "* This is a Todo Section with a scheduled time & deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag",
+    "And a deadline specified in s deadline tag at the end",
+    "{#schedule 2025-02-28:1400Z}",
+    "{#deadline 2025-02-29} -->",
+    "",
+    "",
+    "",
+    "### Sch-Dead Todo ST Header",
+    "",
+    "",
+    "* This is a Todo Section for today with a scheduled time & deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo for today description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag",
+    "And a deadline specified in s deadline tag at the end",
+    "{#schedule 2025-02-22:0900Z}",
+    "{#deadline 2025-02-29} -->",
+    "",
+    "",
+    "",
+    "### Sch-Dead Todo DT Header",
+    "",
+    "",
+    "* This is a Todo Section for today with a scheduled time & deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo for today description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag",
+    "And a deadline specified in s deadline tag at the end",
+    "{#schedule 2025-02-29:1000Z}",
+    "{#deadline 2025-02-22} -->",
+    "",
+    "",
+    "",
+    "### Sch-Dead Todo SP Header",
+    "",
+    "",
+    "* This is a Todo Section for today with a scheduled time & deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo for today description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag",
+    "And a deadline specified in s deadline tag at the end",
+    "{#schedule 2025-02-20:1100Z}",
+    "{#deadline 2025-02-29} -->",
+    "",
+    "",
+    "",
+    "### Sch-Dead Todo DP Header",
+    "",
+    "",
+    "* This is a Todo Section for today with a scheduled time & deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo for today description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag",
+    "And a deadline specified in s deadline tag at the end",
+    "{#schedule 2025-02-29:1200Z}",
+    "{#deadline 2025-02-20} -->",
+    "",
+    "",
+    "",
+    "### Sch-Dead Todo ST DT Header",
+    "",
+    "",
+    "* This is a Todo Section for today with a scheduled time & deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo for today description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag",
+    "And a deadline specified in s deadline tag at the end",
+    "{#schedule 2025-02-22:1300Z}",
+    "{#deadline 2025-02-22} -->",
+    "",
+    "",
+    "",
+    "### Sch-Dead Todo ST DP Header",
+    "",
+    "",
+    "* This is a Todo Section for today with a scheduled time & deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo for today description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag",
+    "And a deadline specified in s deadline tag at the end",
+    "{#schedule 2025-02-22:1400Z}",
+    "{#deadline 2025-02-20} -->",
+    "",
+    "",
+    "",
+    "### Sch-Dead Todo DT SP Header",
+    "",
+    "",
+    "* This is a Todo Section for today with a scheduled time & deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo for today description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag",
+    "And a deadline specified in s deadline tag at the end",
+    "{#schedule 2025-02-20:1400Z}",
+    "{#deadline 2025-02-22} -->",
+    "",
+    "",
+    "",
+    "### Sch-Dead Todo SP DP Header",
+    "",
+    "",
+    "* This is a Todo Section for today with a scheduled time & deadline",
+    "",
+    "",
+    "<!-- {#todo}",
+    "this is a scheduled todo for today description",
+    "the standard todo description can go over multiple lines",
+    "It has a schedule datetime specified in a schedule tag",
+    "And a deadline specified in s deadline tag at the end",
+    "{#schedule 2025-02-20:1500Z}",
+    "{#deadline 2025-02-20} -->",
     "",
     "",
     "",
     "--------------------------------------------------------------------------------",
-    rmd_contents[61:length(rmd_contents)]
+    "--------------------------------------------------------------------------------",
+    "",
+    "",
+    rmd_contents[75:length(rmd_contents)]
   )
 
   write_file(rmd_contents, projectNoteRmd)
@@ -1751,7 +2058,8 @@ local_add_todos_to_sub_note1 <- function(subNoteRmd) {
 
   rmd_contents <- read_file(subNoteRmd)
 
-  # replace the template TODO content in rmd_contents[49:60]
+  # Add todo items to rmd_contents
+  # todays date is 2025-02-22
   rmd_contents <- c( rmd_contents[1:48],
                      "### Test Sub Todo1",
                      "",
@@ -1800,7 +2108,8 @@ local_add_todos_to_sub_note2 <- function(subNoteRmd) {
 
   rmd_contents <- read_file(subNoteRmd)
 
-  # replace the template TODO content in rmd_contents[49:60]
+  # Add todo items to rmd_contents
+  # todays date is 2025-02-22
   rmd_contents <- c( rmd_contents[1:48],
                      "### Test Sub Todo2",
                      "",
@@ -1849,7 +2158,8 @@ local_add_todos_to_sub_note3 <- function(subNoteRmd) {
 
   rmd_contents <- read_file(subNoteRmd)
 
-  # replace the template TODO content in rmd_contents[49:60]
+  # Add todo items to rmd_contents
+  # todays date is 2025-02-22
   rmd_contents <- c( rmd_contents[1:48],
                      "### Test Sub Todo3",
                      "",

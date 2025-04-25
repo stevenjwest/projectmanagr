@@ -1,0 +1,28 @@
+offset,code,description
+-12,N,(West of date line)
+-11,O,Bering standard time
+-10,P,Hawaii standard time
+-9,Q,Alaska standard time
+-8,R,Pacific standard time
+-7,S,Mountain standard time
+-6,T,Central standard time
+-5,U,Eastern standard time
+-4,V,Atlantic standard time
+-3,W,Greenland
+-2,X,Azores
+-1,Y,West Africa
+ 0,Z,Greenwich mean time (GMT)
+ 1,B,Central European time
+ 2,C,Eastern Europe
+ 3,D,Arabia
+ 4,E,Mauritius, United Arab Emirates
+ 5,F,Pakistan
+ 6,G,Bay of Bengal
+ 7,H,Thailand
+ 8,I,Philippines
+ 9,J,Japan
+10,K,Eastern Australia
+11,L,New Caledonia
+12,M,New Zealand (East of date line)
+13,m,Samoa, Tokelau, Tonga, Kiribati's Phoenix Islands
+14,n,Line Islands, Kiribati

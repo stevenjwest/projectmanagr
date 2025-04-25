@@ -10,7 +10,7 @@ generate_today_metadata(
   day,
   orgPath,
   settings,
-  locale = Sys.timezone(location = TRUE),
+  locale = get_locale(),
   calendar_header = "# DAILY LOG :"
 )
 }

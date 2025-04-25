@@ -965,7 +965,14 @@ match_vector_sub <- function(vector, parent, nomatch = 0L) {
   # of elements in parent beyond its length result in NA being returned
   sieved[!is.na(sieved)]
 
-  } #### ________________________________ ####
+  }
+
+
+#' returns true is string is identified anywhere in vector.  String must be a
+#' character vecgor of length 1.
+str_in_vec <- function(string, vector) {
+  length( grep(string, vector, fixed=TRUE) ) > 0
+} #### ________________________________ ####
 
 
 #' Document Cursor Selection
@@ -1540,7 +1547,7 @@ sub_subnote_params <- function(subNoteContents, subNotePrefix,
 
 #' Substitute Note Link Summary in Contents
 #'
-note_link_summ_params <- function(projNoteLinkSummaryContents, todoContents, settings, orgPath) {
+note_link_todo_params <- function(projNoteLinkSummaryContents, settings, orgPath) {
 
   # add TODO header
   noteLinkSummContents <- sub_template_param(projNoteLinkSummaryContents,
@@ -1568,22 +1575,29 @@ sub_note_link_params <- function(noteLinkContents, settings, DocGDTList,
                                  projNoteLinkSummaryContents, orgPath) {
 
   #### sub link in contents ####
-  noteLinkContents <- sub_template_param(noteLinkContents, "{{OBJECTIVES_SEP}}",
-                                         settings[["NoteObjectivesSep"]], orgPath)
-  noteLinkContents <- sub_template_param(noteLinkContents, "{{PROJECT_DOC_TITLE}}",
-                                         DocGDTList$title, orgPath)
-  noteLinkContents <- sub_template_param(noteLinkContents, "{{PROJECT_DOC_LINK}}",
-                                         DocGDTList$link, orgPath)
-  noteLinkContents <- sub_template_param(noteLinkContents, "{{PROJECT_DOC_LINK_GOAL}}",
-                                         DocGDTList$goal, orgPath)
-  noteLinkContents <- sub_template_param(noteLinkContents, "{{PROJECT_DOC_LINK_DEL}}",
-                                         DocGDTList$del, orgPath)
-  noteLinkContents <- sub_template_param(noteLinkContents, "{{PROJECT_DOC_LINK_TASK}}",
-                                         DocGDTList$task, orgPath)
+  noteLinkContents <- sub_template_param(
+                          noteLinkContents, "{{OBJECTIVES_SEP}}",
+                          settings[["NoteObjectivesSep"]], orgPath)
+  noteLinkContents <- sub_template_param(
+                          noteLinkContents, "{{PROJECT_DOC_TITLE}}",
+                          DocGDTList$title, orgPath)
+  noteLinkContents <- sub_template_param(
+                          noteLinkContents, "{{PROJECT_DOC_LINK}}",
+                          DocGDTList$link, orgPath)
+  noteLinkContents <- sub_template_param(
+                          noteLinkContents, "{{PROJECT_DOC_LINK_GOAL}}",
+                          DocGDTList$goal, orgPath)
+  noteLinkContents <- sub_template_param(
+                          noteLinkContents, "{{PROJECT_DOC_LINK_DEL}}",
+                          DocGDTList$del, orgPath)
+  noteLinkContents <- sub_template_param(
+                          noteLinkContents, "{{PROJECT_DOC_LINK_TASK}}",
+                          DocGDTList$task, orgPath)
 
   # insert the summaryBullet into SUMMARY_INFO field:
-  noteLinkContents <- sub_template_param(noteLinkContents, "{{SUMMARY_INFO}}",
-                                         projNoteLinkSummaryContents, orgPath)
+  noteLinkContents <- sub_template_param(
+                          noteLinkContents, "{{SUMMARY_INFO}}",
+                          projNoteLinkSummaryContents, orgPath)
 
   # return
   noteLinkContents
@@ -1935,9 +1949,45 @@ split_path_header <- function(kPath) {
     path = sPath,
     header = sHeader
   )
-
-
 }
+
+#' create link from Project Doc to Project Note
+#'
+#' For inserting into a Project Doc under a GDT to form a link between the Note
+#' and Doc GDT.
+doc_note_link <- function(projNoteRmdPath, projectDocPath, settings) {
+paste0(settings[["NoteLinkFormat"]],
+       create_hyperlink(
+              get_prefix_name_from_file_path(projNoteRmdPath, settings),
+              projNoteRmdPath, projectDocPath),
+       settings[["NoteLinkFormat"]])
+}
+
+
+#' create link from Project Doc to Project Sub Note
+#'
+#' For inserting into a Project Doc under a GDT to form a link between the Note
+#' and Doc GDT.
+doc_head_link <- function(headerNoteRmdPath, projectDocPath, settings) {
+  paste0(settings[["HeaderLinkFormat"]],
+         create_hyperlink(
+           get_prefix_name_from_file_path(headerNoteRmdPath, settings),
+           headerNoteRmdPath, projectDocPath),
+         settings[["HeaderLinkFormat"]])
+}
+
+#' create link from Project Doc to Project Sub Note
+#'
+#' For inserting into a Project Doc under a GDT to form a link between the Note
+#' and Doc GDT.
+doc_sub_link <- function(projSubRmdPath, projectDocPath, settings) {
+  paste0(settings[["SubNoteLinkFormat"]],
+         create_hyperlink(
+                get_prefix_name_from_file_path(projSubRmdPath, settings),
+                projSubRmdPath, projectDocPath),
+         settings[["SubNoteLinkFormat"]])
+}
+
 
 #' Create Hyperlink
 #'
@@ -1947,7 +1997,13 @@ split_path_header <- function(kPath) {
 create_hyperlink <- function(toFileName, toFilePath, fromFilePath) {
   NoteLink <- R.utils::getRelativePath(toFilePath, relativeTo=fromFilePath)
   NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
-  HyperLink <- paste0("[", toFileName, "](", NoteLink, ")")
+
+  HyperLink <- paste0(
+    "[",
+    toFileName,
+    "](",
+    NoteLink,
+    ")")
   return(HyperLink)
 }
 
@@ -1969,33 +2025,84 @@ create_hyperlink_no_ext <- function(toFilePath, fromFilePath) {
 
 #' Create Hyperlink Section
 #'
-#' creates string for hyperlink in Rmd, using `toFileName : toFileSection` as
-#' the hyperlink text, and generating a RELATIVE LINK to
-#' `toFilePath#toFileSection` from `fromFilePath`.
+#' Creates a string for hyperlink in Rmd, using \code{toFileName : toFileSection}
+#' as the hyperlink text, and generating a RELATIVE LINK to
+#' \code{toFilePath#toFileSection} from \code{fromFilePath}.
 #'
+#' Internally, the heading portion of the link (the anchor after `#`) is generated
+#' in a way similar to how pandoc creates HTML anchors for headings: all characters
+#' are lowercased, punctuation replaced with a dash, etc.
+#'
+#' @param toFileName Character. A short name for the file you're linking to.
+#' @param toFileSection Character. The Markdown header (section) in \code{toFilePath}.
+#' @param toFilePath Character. Path to the target Rmd file.
+#' @param fromFilePath Character. Path to the Rmd file from which the link is created.
+#'
+#' @return A character string containing the relative link suitable for R Markdown.
+#'
+#' @examples
+#' \dontrun{
+#'   create_hyperlink_section(
+#'     "myDoc.Rmd",
+#'     "Section Title!",
+#'     "path/to/myDoc.Rmd",
+#'     "path/to/currentDoc.Rmd"
+#'   )
+#' }
 create_hyperlink_section <- function(toFileName, toFileSection, toFilePath, fromFilePath) {
 
-  NoteLink <- R.utils::getRelativePath(toFilePath, relativeTo=fromFilePath)
-  NoteLink <- substring(NoteLink, first=4, last=nchar(NoteLink)) # remove first `../`
+  NoteLink <- R.utils::getRelativePath(toFilePath, relativeTo = fromFilePath)
+  NoteLink <- substring(NoteLink, first = 4, last = nchar(NoteLink)) # remove first ../
+
   NoteLink <- link_add_section(NoteLink, toFileSection)
-  HyperLink <- paste("[", toFileName, " : ", gsub('#', '', toFileSection, fixed=TRUE), "](", NoteLink, ")",  sep="")
-  HyperLink # return
+  HyperLink <- paste0(
+    "[",
+    toFileName,
+    " : ",
+    gsub('#', '', toFileSection, fixed = TRUE),
+    "](",
+    NoteLink,
+    ")"
+  )
+  HyperLink
 }
 
 
 #' Add Section to Link
 #'
-#' `NoteLink` is just a path to a file to link to.
-#' `toFileSection` is the Markdown Header of a section in NoteLink
+#' \code{NoteLink} is just a path to a file to link to.
+#' \code{toFileSection} is the Markdown header of a section in \code{NoteLink}.
 #'
-#' This function adds the Markdown Header to end of NoteLink, using html link
-#' syntax : using a `#` then all words from markdown header separate by `-`
+#' This function appends the header as an HTML-friendly anchor, using pandoc-like
+#' rules. For example, a heading `My Special--Section!` becomes `#my-special-section`.
 #'
-#' This link to a section of R markdown file can be navigaed in markdown using the
-#' `navigate_markdown_link()` function in projectmanagr
+#' @param NoteLink Character. A path to the file (without the section).
+#' @param toFileSection Character. The actual heading text in the Rmd file to link to.
+#'
+#' @return A character string with the section anchor appended (e.g. "#my-special-section").
+#'
+#' @examples
+#' \dontrun{
+#'   link_add_section("path/to/myDoc.Rmd", "My Special--Section!")
+#' }
 link_add_section <- function(NoteLink, toFileSection) {
-  paste0(NoteLink, '#', gsub("[ ]|[_]", "-", trimws( tolower( gsub("[^[:alnum:] ]", "", toFileSection) ) ) ) )
+  anchor <- sanitize_header_for_anchor(toFileSection)
+  paste0(NoteLink, "#", anchor)
 }
+
+#' @keywords internal
+sanitize_header_for_anchor <- function(txt) {
+  # Convert to lower case
+  txt <- tolower(txt)
+  # Replace any sequence of non-alphanumeric characters with a single dash
+  txt <- gsub("[^[:alnum:]]+", "-", txt)
+  # Remove leading or trailing dashes
+  txt <- gsub("^-+|-+$", "", txt)
+  # That's enough for standard pandoc-like anchor generation
+  txt
+}
+
+
 
 
 #' Update Filenames in Links in Files within a Directory Tree
@@ -2054,6 +2161,7 @@ link_add_section <- function(NoteLink, toFileSection) {
 update_links_filenames <- function( oldFileName, newName, dirTree, settings,
                           fileExtensions = list("Rmd") ) {
 
+  #### set and check  variables ####
   # check oldFileName contains NO SPACES:
   if( grepl("\\s+", oldFileName) ) {
     stop( paste0("  oldFileName contains a SPACE: ",oldFileName) )
@@ -2067,13 +2175,19 @@ update_links_filenames <- function( oldFileName, newName, dirTree, settings,
   # make dirTree full path
   dirTree <- fs::path_expand(dirTree)
 
+  # get orgPath from dirTree
+  orgPath <- confirm_find_org(dirTree)
+
+  # get config path to exclude files from (in case dirTree is orgPath!)
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+  volPath <- paste0(orgPath, .Platform$file.sep, settings[["VolumesDir"]])
+
   # split oldFileName into PREFIX, NAME, EXTENSION
-  oldPrefix <- get_prefix(oldFileName, settings)
-  oldFileNameExt <- tools::file_ext(oldFileName)
-  oldName <- substr(oldFileName,
-                    regexpr(settings[["ProjectPrefixSep"]],
-                            oldFileName, fixed=TRUE)+(nchar(settings[["ProjectPrefixSep"]])),
-                    regexpr(oldFileNameExt, oldFileName, fixed=TRUE)-2) # first letter AND extension .
+  result <- split_proj_file_prefix_name_ext(oldFileName, settings)
+  oldPrefix <- result$prefix
+  oldName   <- result$name
+  oldFileNameExt    <- result$ext
 
   # construct oldLink: prefix plus oldName (no extension) for replacing
   oldLink <- paste0(oldPrefix, settings[["ProjectPrefixSep"]], oldName)
@@ -2081,47 +2195,18 @@ update_links_filenames <- function( oldFileName, newName, dirTree, settings,
   # construct newLink: prefix plus newName (no extension) for replacing
   newLink <- paste0(oldPrefix, settings[["ProjectPrefixSep"]], newName)
 
-  # get orgPath from dirTree
-  orgPath <- find_org_directory(dirTree)
-  if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ",
-                    projectNotePath) )
-  }
-
-  # get config path to exclude files from (in case dirTree is orgPath!)
-  confPath <- get_config_dir(orgPath)
-  tempPath <- get_template_dir(orgPath)
-  volPath <- paste0(orgPath, .Platform$file.sep, settings[["VolumesDir"]])
-
 
   #### get file list ####
 
-  # first grab all files WITHOUT RECURSION - all files in dirTree directory
-  fileList <- c()
-  for(fe in fileExtensions) {
-    fileList <- c(fileList,
-                  paste0( dirTree, .Platform$file.sep,
-                          list.files(path = dirTree, pattern = paste0("*.",fe),
-                                     all.files = TRUE, include.dirs = TRUE) ) )
-  }
-
-  # now grab all dirs WITHOUT RECURSION
-  dirsList <- list.dirs(path = dirTree, recursive=FALSE)
-
-  # and exclude confPath and volPath if present
-  dirsList <- dirsList[ dirsList != confPath]
-  dirsList <- dirsList[ dirsList != volPath]
-
-  # next traverse each directory - but only down to project note level
-  for(dl in dirsList) {
-    # get fileList recursively but only down to project note parent dir level
-    fileList <- get_file_list_to_project_notes(fileList, dl, settings, fileExtensions)
-  }
+  files <- get_file_list_to_project_notes(
+                dirTree, settings,
+                fileExtensions = fileExtensions,
+                pathExclusions = c(confPath, volPath))
 
 
   #### replace oldLink with newLink ####
 
-  for(fl in fileList) {
+  for(fl in files) {
 
     # read file:
     contents <- read_file(fl)
@@ -2224,33 +2309,15 @@ update_links <- function( oldLinkSuffix, newLinkSuffix, dirTree, settings,
 
   #### get file list ####
 
-  # first grab all files WITHOUT RECURSION - all files in dirTree directory
-  fileList <- c()
-  for(fe in fileExtensions) {
-    fileList <- c(fileList,
-                  paste0( dirTree, .Platform$file.sep,
-                          list.files(path = dirTree, pattern = paste0("*.",fe),
-                                     all.files = TRUE, include.dirs = TRUE) ) )
-  }
-
-  # now grab all dirs WITHOUT RECURSION
-  dirsList <- list.dirs(path = dirTree, recursive=FALSE)
-
-  # and exclude confPath and volPath if present
-  dirsList <- dirsList[ dirsList != confPath]
-  dirsList <- dirsList[ dirsList != volPath]
-
-  # next traverse each directory - but only down to project note level
-  for(dl in dirsList) {
-    # get fileList recursively but only down to project note parent dir level
-    fileList <- get_file_list_to_project_notes(fileList, dl, settings,
-                                               fileExtensions)
-  }
+  files <- get_file_list_to_project_notes(
+    dirTree, settings,
+    fileExtensions = fileExtensions,
+    pathExclusions = c(confPath, volPath))
 
 
   #### replace oldLinkSuffix with newLinkSuffix ####
 
-  for(fl in fileList) {
+  for(fl in files) {
 
     contents <- read_file(fl)
     cL <- grepl(oldLinkSuffix, contents, fixed=TRUE )
@@ -2312,32 +2379,15 @@ update_headers <- function( oldHeader, newHeader, dirTree, settings,
 
   #### get file list ####
 
-  # first grab all files WITHOUT RECURSION - all files in dirTree directory
-  fileList <- c()
-  for(fe in fileExtensions) {
-    fileList <- c(fileList,
-                  paste0( dirTree, .Platform$file.sep,
-                          list.files(path = dirTree, pattern = paste0("*.",fe),
-                                     all.files = TRUE, include.dirs = TRUE) ) )
-  }
+  files <- get_file_list_to_project_notes(
+    dirTree, settings,
+    fileExtensions = fileExtensions,
+    pathExclusions = c(confPath, volPath))
 
-  # now grab all dirs WITHOUT RECURSION
-  dirsList <- list.dirs(path = dirTree, recursive=FALSE)
-
-  # and exclude confPath and volPath if present
-  dirsList <- dirsList[ dirsList != confPath]
-  dirsList <- dirsList[ dirsList != volPath]
-
-  # next traverse each directory - but only down to project note level
-  for(dl in dirsList) {
-    # get fileList recursively but only down to project note parent dir level
-    fileList <- get_file_list_to_project_notes(fileList, dl, settings,
-                                               fileExtensions)
-  }
 
   #### replace oldHeader with newHeader ####
 
-  for(fl in fileList) {
+  for(fl in files) {
 
     contents <- read_file(fl)
     cL <- startsWith(contents, oldHeader) # use starts with to remove blank space
@@ -2419,12 +2469,80 @@ get_name_from_file_name <- function(projectFileName, settings) {
 #'
 get_name_from_file_path <- function(projectFilePath, settings) {
 
-  substring( basename(projectFilePath),
-            first=regexpr(settings[["ProjectPrefixSep"]], projectFilePath, fixed=TRUE) + nchar(settings[["ProjectPrefixSep"]]),
-            last=regexpr( paste0(".", settings[["FileTypeSuffix"]]), projectFilePath, fixed=TRUE)-1  )
+  get_name_from_file_name( fs::path_file(projectFilePath), settings)
+  #substring( basename(projectFilePath),
+  #          first=regexpr(settings[["ProjectPrefixSep"]], projectFilePath, fixed=TRUE) + nchar(settings[["ProjectPrefixSep"]]),
+  #          last=regexpr( paste0(".", settings[["FileTypeSuffix"]]), projectFilePath, fixed=TRUE)-1  )
 }
 
 
+get_prefix_name_from_file_name <- function(projectFileName, settings) {
+  substring(projectFileName,
+            first=1,
+            last=regexpr( paste0(".", settings[["FileTypeSuffix"]]), projectFileName, fixed=TRUE)-1  )
+
+}
+
+
+get_prefix_name_from_file_path <- function(projectFilePath, settings) {
+  get_prefix_name_from_file_name(fs::path_file(projectFilePath), settings)
+}
+
+
+#' Get File Contents Headers
+#'
+#' Returns every Markdown header line from the text file (all lines that begin
+#' with \code{#}), while skipping over code blocks (anything between lines that
+#' start with triple backticks).
+#'
+#' If it detects an odd number of triple-backtick lines, it warns you that
+#' some fences may not be at the start of the line. This can happen if a code
+#' fence is preceded by spaces.
+#'
+#' @param contents Character vector containing the contents of the file.
+#'
+#' @return Character vector of every header line (lines starting with \code{#})
+#'   after code blocks have been removed.
+#'
+#' @examples
+#' \dontrun{
+#'   txt <- readLines("somefile.Rmd")
+#'   get_file_contents_headers(txt)
+#' }
+get_file_contents_headers <- function(contents) {
+
+  # Find all lines that start exactly with triple backticks
+  contentCodeIndices <- which(grepl("^```", contents))
+
+  # If an odd number of them is found, warn the user
+  if (length(contentCodeIndices) %% 2 != 0) {
+    warning(
+      "Odd number of code-fence lines detected. Possibly a code fence does not ",
+      "start in column 1. Search your Rmd for ' ```' (a space followed by three ",
+      "backticks) to find any mismatched fences."
+    )
+  }
+
+  # remove code blocks for every *complete pair* of backticks
+  if (length(contentCodeIndices) >= 2) {
+    # number of complete pairs
+    num_pairs <- floor(length(contentCodeIndices) / 2)
+    # remove from last pair down to first
+    for (i in seq(num_pairs, 1, by = -1)) {
+      start_line <- contentCodeIndices[2 * i - 1]
+      end_line   <- contentCodeIndices[2 * i]
+      # slice out the code-block portion
+      contents <- c(
+        contents[1:(start_line - 1)],
+        contents[(end_line + 1):length(contents)]
+      )
+    }
+  }
+
+  # keep only lines that begin with '#'
+  contentHeaders <- contents[grepl('^#{1,}', contents)]
+  contentHeaders
+}
 
 #' Get File Contents Headers
 #'
@@ -2435,7 +2553,7 @@ get_name_from_file_path <- function(projectFilePath, settings) {
 #' @param contents Character vector containing the contents of the file.
 #'
 #' @return Character vector of every header line.
-get_file_contents_headers <- function(contents) {
+Oget_file_contents_headers <- function(contents) {
 
   # trim contents to remove all code sections - lines starting with ```
   contentCodeIndices <- which(startsWith(contents, '```'))
@@ -2741,7 +2859,7 @@ find_contents_org_tree <- function(orgPath, settings) {
   # get dirs in root to EXCLUDE from search
   volPath <- get_volumes_dir(orgPath, settings)
   sitePath <- get_site_dir(orgPath, settings)
-  weeklyjournalPath <- get_weekly_journal_dir(orgPath, settings)
+  journalPath <- get_journal_dir(orgPath, settings)
 
   # get status yml
   #status <- get_status_yml(orgPath, settings)
@@ -2756,10 +2874,9 @@ find_contents_org_tree <- function(orgPath, settings) {
   #### loop through filePaths ####
 
   # get all project notes in orgPath RECURSIVELY
-  fileList <- list()
   filePaths <- get_file_list_to_project_notes(
-                  fileList, orgPath, settings,
-                  pathExclusions = c(confPath, volPath, sitePath, weeklyjournalPath) )
+                  orgPath, settings,
+                  pathExclusions = c(confPath, volPath, sitePath, journalPath) )
    # EXCLUDING confPath volPath and sitePath from search!!
   # get all project notes in orgPath
   #filePaths <- get_project_note_paths(orgPath, settings)
@@ -2836,7 +2953,7 @@ update_contents_org_tree <- function(contentsCache, orgPath, settings) {
 
   # get the retrieval datetime as string
   dtStr <- lapply(X = contentsCache, FUN = `[[`, "contentRetrievalDateTime")
-  dt <- lubridate::ymd_hm(dtStr) # convert to datetime
+  dt <- lubridate::ymd_hm(dtStr) # convert to datetime in UTC timezone
 
   #contents <- list() # to store all retrieved contents metadata in
 
@@ -2848,7 +2965,7 @@ update_contents_org_tree <- function(contentsCache, orgPath, settings) {
   # get dirs in root to EXCLUDE from search
   volPath <- get_volumes_dir(orgPath, settings)
   sitePath <- get_site_dir(orgPath, settings)
-  weeklyjournalPath <- get_weekly_journal_dir(orgPath, settings)
+  journalPath <- get_journal_dir(orgPath, settings)
 
   # get status yml
   #status <- get_status_yml(orgPath, settings)
@@ -2863,16 +2980,16 @@ update_contents_org_tree <- function(contentsCache, orgPath, settings) {
   #### loop through filePaths ####
 
   # get all project notes in orgPath RECURSIVELY
-  fileList <- list()
-  filePaths <- get_file_list_to_project_notes(
-    fileList, orgPath, settings,
-    pathExclusions = c(confPath, volPath, sitePath, weeklyjournalPath),
+  paths <- get_file_list_to_project_notes(
+    dirs = orgPath,
+    settings = settings,
+    pathExclusions = c(confPath, volPath, sitePath, journalPath),
     retrievalDateTimeCutoff = dt )
   # EXCLUDING confPath volPath and sitePath from search!!
   # AND applying the cutoff datetime from cache!
 
-  # get all project notes in orgPath
-  #filePaths <- get_project_note_paths(orgPath, settings)
+  # remove any dirs from retrieved paths
+  filePaths <- paths[fs::is_file(paths)]
 
   # for all identified project notes identify all insertable contents
   for( f in filePaths) {
@@ -2984,8 +3101,7 @@ find_contents_in_dir_tree <- function(dirTree, orgPath, settings) {
   #### loop through filePaths ####
 
   # get all project notes in dirTree RECURSIVELY
-  fileList <- list()
-  filePaths <- get_file_list_to_project_notes(fileList, dirTree, settings)
+  filePaths <- get_file_list_to_project_notes(dirTree, settings)
   # get all project notes in dirTree
   #filePaths <- get_project_note_paths(dirTree, settings)
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/create-functions.R
 \name{create_daily_journal}
 \alias{create_daily_journal}
-\title{Create Weekly Journal}
+\title{Create Daily Journal}
 \usage{
 create_daily_journal(
   date = lubridate::today(),
@@ -14,8 +14,7 @@ create_daily_journal(
 }
 \arguments{
 \item{date}{A string or Date object representing the start date for the
-Weekly Journal. It is converted to the Monday of the current week. The date
-should be in 'YYYY-MM-DD' format.}
+Daily Journal. The date should be in 'YYYY-MM-DD' format.}
 
 \item{organisationPath}{A string representing a path within an Organisation
 where the journal is created and saved.}
@@ -31,22 +30,22 @@ the corresponding values.}
 defines the layout for the weekly journal.}
 }
 \value{
-A string representing the path to the weekly journal Rmd file.
+A string representing the path to the daily journal Rmd file.
 }
 \description{
-This function creates a weekly journal file for an organisation if it does
+This function creates a daily journal file for an organisation if it does
 not already exist. If the journal file exists, it returns the path to the
 existing file. The journal is stored in the directory specified in the
 settings under "JournalDir". Optionally, TODOs can be extracted to
 this file using the extract_todos() function.
 }
 \details{
-The function first converts the input date to the Monday of the current week
-and extracts the year, month, and day. It then determines the organisation
-directory using the given organisationPath. Next, it creates the necessary
-directories (the journal root and a year subdirectory) and generates a journal
-Rmd file using the provided journal template. If the journal file already exists,
-the function does not overwrite it and returns its path instead.
+The function extracts the year, month, and day. It then determines the
+organisation directory using the given organisationPath. Next, it creates the
+necessary directories (the journal root, year & month subdirectories) and
+generates a journal Rmd file using the provided journal template. If the
+journal file already exists, the function does not overwrite it and returns
+its path instead.
 }
 \note{
 The function converts the date to a Date object if it is not already. It
@@ -55,12 +54,12 @@ organisation directory structure is correctly set up.
 }
 \examples{
 \dontrun{
-  create_weekly_journal(
+  create_daily_journal(
     date = "2023-04-10",
     organisationPath = "/path/to/organisation",
     authorValue = "John Doe",
     journalFileNameTemplate = "{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
-    journalTemplate = "Weekly-Work-Journal-Template.Rmd"
+    journalTemplate = "Work-Journal-Template.Rmd"
   )
 }
 

@@ -4,7 +4,7 @@
 \alias{confirm_find_org}
 \title{confirm the found org}
 \usage{
-confirm_find_org(organisationPath)
+confirm_find_org(path)
 }
 \description{
 Confirms by checking returned value is not blank.

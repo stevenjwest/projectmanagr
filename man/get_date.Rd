@@ -4,7 +4,7 @@
 \alias{get_date}
 \title{Get Date}
 \usage{
-get_date(timezone = "UTC", split = "/")
+get_date(timezone = get_locale(), split = "-")
 }
 \arguments{
 \item{timezone}{Timezone code to use. Default "UTC".}

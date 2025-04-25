@@ -66,11 +66,12 @@ get_relative_path_org <- function(path) {
 #' confirm the found org
 #'
 #' Confirms by checking returned value is not blank.
-confirm_find_org <- function(organisationPath) {
-  orgPath <- find_org_directory(organisationPath)
+confirm_find_org <- function(path) {
+
+  orgPath <- find_org_directory(path)
 
   if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  organisationPath is not in an Organisation: ", organisationPath) )
+    stop( paste0("  path is not in an Organisation: ", path) )
   }
   # now, orgPath should be the root dir of the organisation
 
@@ -336,69 +337,67 @@ get_file_types <- function( filePaths, settings ) {
 }
 
 
-
-#' Get Date
+#' Determine the type of a single projectmanagr file
 #'
-#' internal function to get date in YYYY MM DD format
+#' Checks whether a file is the Organisation index file, a Programme index file,
+#' or else defers to [get_file_type()] to classify it as "DOC", "NOTE", "HEAD",
+#' "SUB", or "UNKNOWN".
 #'
-#' @param timezone Timezone code to use. Default "UTC".
+#' Specifically:
+#' \enumerate{
+#'   \item If \code{filePath} is exactly the organisation index file (as returned
+#'         by [get_index_org()]), returns \code{"ORG"}.
+#'   \item If \code{filePath} is exactly a programme index file (as returned by
+#'         [get_index_prog()] for that directory), returns \code{"PROG"}.
+#'   \item Otherwise, calls [get_file_type()] to see if the file is a
+#'         project doc (\code{"DOC"}), a note (\code{"NOTE"}), a header note
+#'         (\code{"HEAD"}), a sub-note (\code{"SUB"}), or \code{"UNKNOWN"}.
+#' }
 #'
-#' @param split Chracter to split YYYY & MM & DD. Default "/".
+#' @param filePath Absolute path to a file within the organisation.
+#' @param orgPath Absolute path to the root of the projectmanagr organisation.
+#' @param settings A list of organisation settings, as loaded by
+#'   [get_settings_yml()]. Expected to include file naming keys such as
+#'   \code{"OrgIndexFileNamePrefix"}, \code{"ProgIndexFileNamePrefix"},
+#'   \code{"ProjectPrefixSep"}, \code{"ProjectIndexSep"}, etc.
 #'
-get_date <- function(timezone = "UTC", split="/") {
-  #### compute date with timezone param ####
-  datetime <- lubridate::now(timezone) #Sys.time()
+#' @return A character string among \code{"ORG"}, \code{"PROG"}, \code{"DOC"},
+#'   \code{"NOTE"}, \code{"HEAD"}, \code{"SUB"}, or \code{"UNKNOWN"}.
+#'
+#' @seealso [get_index_org()], [get_index_prog()], [get_file_type()]
+#'
+#' @examples
+#' \dontrun{
+#'   orgPath <- "/path/to/myOrg"
+#'   filePath <- "/path/to/myOrg/prog001~_Example.Rmd"
+#'   # Suppose 'settings' was loaded via get_settings_yml(orgPath)
+#'   check_projectmanagr_file(filePath, orgPath, settings)
+#'   # returns "DOC" or "NOTE", etc., if recognized
+#' }
+#'
+#' @export
+check_projectmanagr_file <- function(filePath, orgPath, settings) {
 
-  # round to nearest minute:
-  datetime <- round(datetime,"mins")
+  # 1) Check if exactly the organisation index file
+  orgIndexFile <- get_index_org(orgPath, settings)
+  if (fs::path_abs(filePath) == fs::path_abs(orgIndexFile)) {
+    return("ORG")
+  }
 
-  # convert to POSIXlt:
-  datetime <- as.POSIXlt(datetime)
+  # 2) Check if it's a programme index file
+  parentDir <- fs::path_dir(filePath)
+  progIndexCandidate <- get_index_prog(parentDir, settings)
+  if (fs::path_abs(filePath) == fs::path_abs(progIndexCandidate)) {
+    return("PROG")
+  }
 
-  # round to nearest 5 min - not using now keep round to nearest 1min!
-  #datetime$min <- (datetime$min + 5/2) %/% 5 * 5
-
-  # format datetime to use "/" and have a ":" between date and time
-  datetime_split <- strsplit(as.character(datetime), " ")
-  date <- gsub("-", split, datetime_split[[1]][1] )
-
-  date
+  # 3) Otherwise, check if doc/note/head/sub
+  type <- get_file_type(filePath, settings)
+  return(type)  # "DOC", "NOTE", "HEAD", "SUB", or "UNKNOWN"
 }
 
 
-#' internal function to get datetime in YYYY/MM/DD:hh:mm format
-#'
-#' @param timezone Timezone code to use. Default "UTC".
-#'
-#' @param split Chracter to split YYYY & MM & DD. Default "/".
-#'
-#' @param splitTime Chracter to split DD & hh & mm. Default ":".
-#'
-get_datetime <- function(timezone = "UTC", split="-", splitTime=":") {
 
-  datetime <- lubridate::now(timezone) #Sys.time()
-
-  # round to nearest minute:
-  datetime <- round(datetime,"mins")
-
-  # convert to POSIXlt:
-  datetime <- as.POSIXlt(datetime)
-
-  # round to nearest 5 min - not using now keep round to nearest 1min!
-  #datetime$min <- (datetime$min + 5/2) %/% 5 * 5
-
-  # format datetime to use "/" and have a ":" between date and time
-  datetime_split <- strsplit(as.character(datetime), " ")
-  datetime_split[[1]][1] <- gsub("-", split, datetime_split[[1]][1] )
-
-  datetime_colon <- paste0( datetime_split[[1]][1], splitTime, datetime_split[[1]][2] )
-
-  # remove seconds:
-  datetime_colon <- substr(datetime_colon, 1, nchar(datetime_colon)-3)
-
-  datetime_colon
-
-}
 
 
 
@@ -1159,6 +1158,201 @@ get_username <- function() {
 }
 
 
+#### ____ ####
+
+#' Get Date
+#'
+#' internal function to get date in YYYY MM DD format
+#'
+#' @param timezone Timezone code to use. Default "UTC".
+#'
+#' @param split Chracter to split YYYY & MM & DD. Default "/".
+#'
+get_date <- function(timezone = get_locale(), split = "-") {
+  # Get the current date-time in the specified timezone
+  datetime <- lubridate::now(tzone = timezone)
+
+  # Extract and format the date component
+  date <- format(datetime, paste0("%Y", split, "%m", split, "%d"))
+
+  return(date)
+}
+
+
+#' internal function to get datetime in YYYY/MM/DD:hh:mm format
+#'
+#' @param timezone Timezone code to use. Default to `get_locale` (current system
+#'   locale)
+#'
+#' @param split Chracter to split YYYY & MM & DD. Default "/".
+#'
+#' @param splitTime Chracter to split DD & hh & mm. Default ":".
+#'
+get_datetime <- function(timezone = get_locale(), split = "-", splitTime = ":") {
+  # Get current datetime in specified timezone
+  datetime <- lubridate::now(timezone)
+
+  # Round to nearest minute
+  datetime <- round(datetime, "mins")
+
+  # Format date and time
+  datetime_str <- format(datetime, paste0("%Y", split, "%m", split, "%d", splitTime, "%H%M"))
+
+  # Extract GMT offset in hours
+  offset_seconds <- as.numeric(format(datetime, "%z")) / 100 * 3600
+  offset_hours <- offset_seconds / 3600
+
+  # Retrieve the corresponding timezone code
+  tz_code <- get_timezone_code(offset_hours)
+
+  # Append the timezone code to the datetime string
+  return(paste0(datetime_str, tz_code))
+}
+
+
+#' Modify Timezone of a Datetime String
+#'
+#' Takes a datetime string in format 'YYYY-MM-DD:hhmmZ' and converts it to a
+#' new timezone using a single-letter timezone code.
+#'
+#' @param datetimeString Datetime string in format 'YYYY-MM-DD:hhmmZ'.
+#' @param newTimeZone Single-letter code of the new timezone.
+#'
+#' @return Modified datetime string with new timezone code.
+modify_timezone <- function(datetimeString, newTimeZone) {
+  # Extract datetime and timezone code
+  dt_part <- substr(datetimeString, 1, nchar(datetimeString) - 1)
+  old_code <- substr(datetimeString, nchar(datetimeString), nchar(datetimeString))
+
+  # Get GMT offsets from internal dataset
+  old_offset <- timezone_data$offset[timezone_data$code == old_code]
+  new_offset <- timezone_data$offset[timezone_data$code == newTimeZone]
+
+  if (length(old_offset) == 0 || length(new_offset) == 0) {
+    stop("Invalid timezone code provided.")
+  }
+
+  # Convert the string to a datetime object (in UTC)
+  datetime_utc <- as.POSIXct(dt_part, format = "%Y-%m-%d:%H%M", tz = "UTC")
+
+  # Adjust by difference in offsets (convert to seconds)
+  offset_diff_hours <- as.integer(new_offset) - as.integer(old_offset)
+  datetime_converted <- datetime_utc + offset_diff_hours * 3600
+
+  # Format the new datetime string
+  formatted <- format(datetime_converted, "%Y-%m-%d:%H%M")
+
+  # Append the new timezone letter
+  paste0(formatted, newTimeZone)
+}
+
+
+#' return current system locale ("timezone")
+#'
+#' Required as separate function for mocking during testing.
+get_locale <- function() {
+  Sys.timezone(location = TRUE)
+}
+
+#' get timezone info
+#'
+#' Using a `tz` (or locale, such as `Europe/London`), get the actual timezone
+#' info for a given date.  This will return the actual timezone, including
+#' taking into account any daylight savings time, for a given locale and date.
+#'
+#' `Sys.timezone()` can be used to retrieve the current system timezone/locale,
+#' an internal projectmanagr function returns this - so its can be mocked
+#' during testing!
+#'
+#' @return the timezone abbreviation plus offset from GMT. eg. BST (GMT+1)
+get_tz_info <- function(date, tz = get_locale()) {
+
+  # Convert the input date to POSIXct using the specified time zone
+  pos <- as.POSIXct(date, tz = tz)
+
+  # Extract the time zone abbreviation (e.g. "GMT" or "BST")
+  abbr <- format(pos, "%Z")
+
+  # Extract the numeric offset in format +0100 or -0600
+  offset_str <- format(pos, "%z")
+
+  # Get the hour part of the offset (e.g. "01" or "06")
+  hour_offset <- as.integer(substr(offset_str, 2, 3))
+
+  # The first character is the sign (+ or -)
+  sign <- substr(offset_str, 1, 1)
+
+  # Build the GMT offset string (e.g. "GMT+1")
+  offset_formatted <- paste0("GMT", sign, hour_offset)
+
+  # Return the combined string
+  paste0(abbr, " (", offset_formatted, ")")
+}
+
+
+#' get timezone offset from GMT
+#'
+#' @return timezone offset from GMT. eg. if in BST will return `+1`
+get_tz_gmt_offset <- function(tz = get_locale()) {
+
+  # Convert the input date to POSIXct using the specified time zone
+  pos <- as.POSIXct("2025-01-01", tz = tz) # using a default date
+
+  # Extract the numeric offset in format +0100 or -0600
+  offset_str <- format(pos, "%z")
+
+  # Get the hour part of the offset (e.g. "01" or "06")
+  hour_offset <- as.integer(substr(offset_str, 2, 3))
+
+  # The first character is the sign (+ or -)
+  sign <- substr(offset_str, 1, 1)
+
+  # Build the GMT offset string (e.g. "GMT+1")
+  offset_formatted <- paste0(sign, hour_offset)
+
+  return(offset_formatted)
+}
+
+
+get_timezone_code <- function(offset) {
+  # Access the internal timezone_data
+  code <- timezone_data$code[timezone_data$offset == as.integer(offset)]
+  if (length(code) == 0) {
+    stop("Offset not found in timezone codes.")
+  }
+  return(code)
+}
+
+get_sunlight_times <- function(date, lat, lon, locale) {
+  suncalc::getSunlightTimes(date = date, lat = lat, lon = lon, tz = locale)
+}
+
+get_moon_times <- function(date, lat, lon, locale) {
+  suncalc::getMoonTimes(date = date, lat = lat, lon = lon, tz = locale)
+}
+
+lunar_illumination <- function(date_obj) {
+  lunar::lunar.illumination(date_obj)
+}
+lunar_phase <- function(date_obj) {
+  lunar::lunar.phase(date_obj, name = TRUE)
+}
+
+#### ____ ####
+
+get_todo_block  <- function(orgPath, TodoBlockFilename="todo-block.txt") {
+
+  # get config templates settings yml
+  confPath <- get_config_dir(orgPath)
+  tempPath <- get_template_dir(orgPath)
+
+  # get all SEP files form tempPath
+  TodoBlock <- read_file( fs::path(tempPath, TodoBlockFilename) )
+
+  TodoBlock
+}
+
+
 #' Get config dir
 #'
 #' This is set as `.config` GLOBALLY - used to identify
@@ -1244,14 +1438,14 @@ get_site_dir <- function(orgPath, settings) {
 }
 
 
-#' Get weekly journal dir
+#' Get journal dir
 #'
-#' Stores weekly journal Rmd files.  This is set as `weekly-journal/` by default,
-#' stored in settings.
+#' Stores journal Rmd files.  This is set as `journal/` by default,
+#' actual dir name stored in settings.
 #'
-get_weekly_journal_dir <- function(orgPath, settings) {
-  weeklyjournalPath <- fs::path(orgPath, settings[["JournalDir"]])
-  return(weeklyjournalPath)
+get_journal_dir <- function(orgPath, settings) {
+  journalPath <- fs::path(orgPath, settings[["JournalDir"]])
+  return(journalPath)
 }
 
 
@@ -1428,12 +1622,12 @@ get_project_note_paths <- function(parentDirectory, settings) {
   # get dirs in root to EXCLUDE from search
   volPath <- get_volumes_dir(orgPath, settings)
   sitePath <- get_site_dir(orgPath, settings)
-  weeklyjournalPath <- get_weekly_journal_dir(orgPath, settings)
+  journalPath <- get_journal_dir(orgPath, settings)
 
   fileList <- list()
   filePaths <- get_file_list_to_project_notes(
-    fileList, parentDirectory, settings,
-    pathExclusions = c(confPath, volPath, sitePath, weeklyjournalPath) )
+    parentDirectory, settings,
+    pathExclusions = c(confPath, volPath, sitePath, journalPath) )
   # get all Project Docs/Notes inside path - they all contain "~_" in filename and end with .Rmd
   fl <- fs::path(unlist(filePaths))
 
@@ -1453,17 +1647,126 @@ get_project_note_paths <- function(parentDirectory, settings) {
 }
 
 
+#' Gather projectmanagr files from a given location (file or directory)
+#'
+#' If \code{location} is a single file, confirms it has the correct extension
+#' and checks its classification (ORG, PROG, DOC, NOTE, HEAD, SUB).
+#' If it is a directory, recursively gather all projectmanagr files in that
+#' directory tree. If \code{location} is exactly \code{orgPath}, then we exclude
+#' the config, volumes, site, and journal directories from the search.
+#'
+#' @param location A path to either a file or directory. Must be inside the
+#'   projectmanagr organisation specified by \code{orgPath}.
+#' @param orgPath Absolute path to the root of the organisation.
+#' @param settings A list of organisation settings, as loaded by
+#'   [get_settings_yml()]. Expected to include:
+#'   \itemize{
+#'     \item \code{"FileTypeSuffix"} (default \code{"Rmd"}) – the extension used.
+#'     \item \code{"ProjectPrefixSep"}, \code{"ProjectIndexSep"}, etc. for file naming.
+#'   }
+#'
+#' @return A character vector of absolute file paths to recognized projectmanagr
+#'   files (e.g. org index, programme index, project docs, notes).
+#'
+#' @seealso [check_projectmanagr_file()], [get_file_list_to_project_notes()],
+#'   [confirm_find_org()]
+#'
+#' @examples
+#' \dontrun{
+#'   # Suppose 'location' is either an Rmd file or a folder
+#'   orgPath <- "/path/to/myOrg"
+#'   settings <- get_settings_yml(orgPath)
+#'   myFiles <- get_projectmanagr_files(location = orgPath, orgPath, settings)
+#'   # 'myFiles' now has a list of valid projectmanagr Rmd files from the org root
+#' }
+#'
+#' @export
+get_projectmanagr_files <- function(location, orgPath, settings) {
+
+  desiredExt <- settings[["FileTypeSuffix"]]  # e.g. "Rmd"
+  # if location is a file, verify extension & classification
+  if (fs::is_file(location)) {
+    # 1) confirm extension matches settings$FileTypeSuffix
+    fileExt <- tools::file_ext(location)
+    if (!identical(tolower(fileExt), tolower(desiredExt))) {
+      stop("File must have extension .", desiredExt, " but got .", fileExt,
+           "\nFile: ", location)
+    }
+
+    # 2) confirm it's recognized by projectmanagr
+    fType <- check_projectmanagr_file(location, orgPath, settings)
+    if (identical(fType, "UNKNOWN")) {
+      stop("File is not recognized as a projectmanagr file:\n  ", location)
+    }
+
+    # all good => return single-file vector
+    return(fs::path_expand(location))
+
+  } else if (fs::is_dir(location)) {
+
+    pathExclusions <- character()
+    # if location is orgPath => exclude conf/vol/site/journal
+    if (fs::path_abs(location) == fs::path_abs(orgPath)) {
+      confPath <- get_config_dir(orgPath)
+      volPath  <- get_volumes_dir(orgPath, settings)
+      sitePath <- get_site_dir(orgPath, settings)
+      journalPath <- get_journal_dir(orgPath, settings)
+
+      pathExclusions <- c(confPath, volPath, sitePath, journalPath)
+    }
+
+    # gather all relevant projectmanagr Rmd files
+    files <- get_file_list_to_project_notes(
+      dirs           = location,
+      settings       = settings,
+      fileExtensions = list(desiredExt),
+      pathExclusions = pathExclusions
+    )
+    return(files[fs::is_file(files)]) # only return the files not dirs
+
+  } else {
+    stop("Location is neither a file nor a directory:\n  ", location)
+  }
+}
+
+
 #' get file list down to project notes
 #'
-#' Traverses all directory tree in `dl` but only get fileList recursively but
-#' only down to project note parent dir level.
+#' Traverses all directory trees in `dirs` but only get `files` recursively
+#' down to project note parent dir level.
 #'
-#' This method makes parsing all plaintext Project Notes across an Organisation
-#' much more efficient!
+#' This method makes identifying all plaintext files of given `fileExtensions`
+#' across an Organisation much more efficient.
 #'
-#' @param fileList List of files recursively retrieved by this function.
-#' @param dl DirsList - a list of directory paths.
+#' It is possible to avoid searching through unwanted directories by using the
+#' `pathExclusions` argument:
+#'
+#'  # get orgPath
+#'  orgPath <- confirm_find_org(location)
+#'
+#'  # get config templates settings yml
+#'  confPath <- get_config_dir(orgPath)
+#'  tempPath <- get_template_dir(orgPath)
+#'  settings <- get_settings_yml(orgPath)
+#'
+#'  # get dirs in root to EXCLUDE from search
+#'  volPath <- get_volumes_dir(orgPath, settings)
+#'  sitePath <- get_site_dir(orgPath, settings)
+#'  journalPath <- get_journal_dir(orgPath, settings)
+#'
+#'  rmdFiles <- get_file_list_to_project_notes(
+#'   dirs = dirPaths,
+#'   settings = settings,
+#'   files = c(),
+#'   fileExtensions = list("Rmd"),
+#'   pathExclusions = c(volPath, sitePath, journalPath))
+#'
+#'
+#' @param dirs a character vector of directory paths to identify files in.
 #' @param settings projectmanagr settings list.
+#' @param files a character vector of files recursively retrieved by this
+#'   function. Typically initialised as a blank vector, as recursive searches
+#'   use this argument to pass previously found files to return all at end.
 #' @param fileExtensions File extensions of files to list.
 #' @param pathExclusions Directory Paths which should be EXCLUDED from file
 #' search. Typically want to exclude the config and volumes directories in the
@@ -1472,65 +1775,36 @@ get_project_note_paths <- function(parentDirectory, settings) {
 #' cutoff time will not be returned. If NULL ignored. This is a lubridate datetime
 #' object, made by parsing a datetime string through `lubridate::ymd_hm()`
 #'
-get_file_list_to_project_notes <- function(fileList, dl, settings,
+#' @return a vector of paths to all files with `fileExtensions` && directories.
+#'
+get_file_list_to_project_notes <- function(dirs, settings,
+                                           files = c(),
                                            fileExtensions = list("Rmd"),
                                            pathExclusions = c(),
                                            retrievalDateTimeCutoff = NULL ) {
 
+  #### get all files from dirs ####
 
-  # testing:
-  #fileList
-  #dl <- orgPath
-  #settings
-  #fileExtensions = list("Rmd")
-  #pathExclusions = c(confPath, volPath, sitePath, weeklyjournalPath)
-  #retrievalDateTimeCutoff = dt
-
-  #### Set Instance Variables ####
-
-  # get important delimiters from settings
-  #projIdentifierSep <- load_param_vector(settings[["ProjectIdentifierSep"]]) # "_"
-  #projPrefixSep <- load_param_vector(settings[["ProjectPrefixSep"]]) #  "~_"
-  #projIndexSep <- load_param_vector(settings[["ProjectIndexSep"]]) # "~"
-  #groupIndexSep <- load_param_vector(settings[["GroupNotePrefixSep"]]) # "-"
-
-
-  #### get all files from dl ####
-
-  if( is.null(retrievalDateTimeCutoff) ) { # no cutoff filter
-
-    # get each file with extension from all dirs in dl
-    for(fe in fileExtensions) {
-      # get local copy of fl to check for project notes
-      fl <- paste0( dl, .Platform$file.sep,
-                    list.files(path = dl, pattern = paste0("*.",fe),
-                               all.files = TRUE) )
-      fl <- fl[fl!=paste0(dl, .Platform$file.sep)] # remove any instances of just dl/ - if no files found!
-      fileList <- c(fileList, fl )
+  # get each file with extension from all dirs
+  for(fe in fileExtensions) {
+    # get local copy of fl to check for project notes
+    fl <- fs::path(dirs, list.files(path = dirs,
+                                    pattern = paste0("*.",fe),
+                                    all.files = TRUE) )
+    # remove any instances of just dirs - if no files found!
+    fl <- fl[ !(fl %in% dirs) ]
+    if( is.null(retrievalDateTimeCutoff) ) { # do nothing
+    } else { # filter for datetime - only keep files last modified AFTER cutoff
+      fl <- fl[lubridate::as_datetime(file.info(fl)$ctime, tz='UTC') >
+                  retrievalDateTimeCutoff]
     }
-
-  } else { # filter for cutoff datetime
-
-    # get each file with extension from all dirs in dl
-    for(fe in fileExtensions) {
-      # get local copy of fl to check for project notes
-      fl <- paste0( dl, .Platform$file.sep,
-                    list.files(path = dl, pattern = paste0("*.",fe),
-                               all.files = TRUE) )
-      fl <- fl[fl!=paste0(dl, .Platform$file.sep)] # remove any instances of just dl/ - if no files found!
-
-      # filter for datetime - only keep files
-      flf <- fl[lubridate::as_datetime(file.info(fl)$ctime, tz='UTC') > retrievalDateTimeCutoff]
-
-      fileList <- c(fileList, flf )
-    }
-
+    files <- c(files, fl )
   }
 
 
-  #### get next level of sub-dirs from dl ####
+  #### get next level of sub-dirs from dirs ####
 
-  dls <- list.dirs(path = dl, recursive=FALSE)
+  dls <- list.dirs(path = dirs, recursive=FALSE)
 
   # remove any directories that match pathExclusions
   dls <- dls[ !dls %in% pathExclusions ]
@@ -1552,16 +1826,19 @@ get_file_list_to_project_notes <- function(fileList, dl, settings,
 
   # recurses with each set of dls retrieved!
   for(d in dls) {
-    fileList <- get_file_list_to_project_notes(
-      fileList, d, settings,
-      fileExtensions, pathExclusions, retrievalDateTimeCutoff)
+    files <- get_file_list_to_project_notes(
+      dirs = d,
+      settings = settings,
+      files = files,
+      fileExtensions = fileExtensions,
+      pathExclusions = pathExclusions,
+      retrievalDateTimeCutoff = retrievalDateTimeCutoff)
   }
 
   #### return list of files down to project note dirs ####
 
-  # return fileList
-  fileList
-
+  # return files
+  files
 
 }
 
@@ -1600,3 +1877,14 @@ get_absolute_path <- function(fullPath, relativePath) {
 }
 
 
+split_proj_file_prefix_name_ext <- function(oldFileName, settings) {
+  prefix <- get_prefix(oldFileName, settings)
+  ext <- tools::file_ext(oldFileName)
+  # ?? get_project_name_from_prefix_name()
+  name <- substr(oldFileName,
+                    regexpr(settings[["ProjectPrefixSep"]],
+                            oldFileName, fixed=TRUE)+(nchar(settings[["ProjectPrefixSep"]])),
+                    regexpr(ext, oldFileName, fixed=TRUE)-2)
+  # first letter AND extension .
+  return( list(prefix=prefix, name=name, ext=ext))
+}

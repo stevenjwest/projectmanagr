@@ -110,6 +110,13 @@
   RunCompileWithUpdate: yes
   FileTypeSuffix: Rmd
   JournalDir: journal
+  JournalMetadataFooter: ::template::SEP01.txt
+  JournalEventsHeader: "# TODAY'S EVENTS"
+  JournalEventsFooter: ::template::SEP01.txt
+  JournalEventsInsertion: "__insert_events_scheduled_for_today__"
+  JournalTodosHeader: "# TODAY'S AGENDA"
+  JournalTodosFooter: ::template::SEP01.txt
+  JournalTodosInsertion: "__insert_TODO_items__"
   GadgetWidth: 1200
   GadgetHeight: 1200
   rstudioInternalStateDir: ~/.local/share/rstudio

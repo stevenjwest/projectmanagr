@@ -34,28 +34,16 @@ output:
 
 
 
-
-
-
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 
 
-# Programme Strategic Objectives
+# TODAY'S EVENTS
 
 
 
-## _index_0-PR.Rmd
-
-
-__strategic_objectives_summary__
-
-
-__overview_of_current_broad_objectives_for_work_in_this_programme__
-
-
-
+__insert_events_scheduled_for_today__
 
 
 
@@ -65,30 +53,16 @@ __overview_of_current_broad_objectives_for_work_in_this_programme__
 
 
 
-# Today's Events
-No events scheduled for today.
+# TODAY'S AGENDA
+
+
+
+__insert_TODO_items__
 
 
 
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-
-
-
-# TODO Items
-
-
-
-
-
-
-__EXTRACT_TODOS_HERE__
-
-
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
 
 

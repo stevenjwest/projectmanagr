@@ -6,14 +6,24 @@
 \usage{
 link_add_section(NoteLink, toFileSection)
 }
+\arguments{
+\item{NoteLink}{Character. A path to the file (without the section).}
+
+\item{toFileSection}{Character. The actual heading text in the Rmd file to link to.}
+}
+\value{
+A character string with the section anchor appended (e.g. "#my-special-section").
+}
 \description{
 \code{NoteLink} is just a path to a file to link to.
-\code{toFileSection} is the Markdown Header of a section in NoteLink
+\code{toFileSection} is the Markdown header of a section in \code{NoteLink}.
 }
 \details{
-This function adds the Markdown Header to end of NoteLink, using html link
-syntax : using a \verb{#} then all words from markdown header separate by \code{-}
-
-This link to a section of R markdown file can be navigaed in markdown using the
-\code{navigate_markdown_link()} function in projectmanagr
+This function appends the header as an HTML-friendly anchor, using pandoc-like
+rules. For example, a heading \verb{My Special--Section!} becomes \verb{#my-special-section}.
+}
+\examples{
+\dontrun{
+  link_add_section("path/to/myDoc.Rmd", "My Special--Section!")
+}
 }

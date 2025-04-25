@@ -2,48 +2,89 @@
 % Please edit documentation in R/extract-functions.R
 \name{extract_todos}
 \alias{extract_todos}
-\title{Extract All TODO lists from a Collection of Project Notes}
+\title{Extract HTML-comment-based TODOs from Rmd files with custom ordering}
 \usage{
 extract_todos(
   location,
-  date = get_date(split = "-"),
-  todoGDTExtractionTemplate = "Todo-GDT-Extraction-Template.Rmd",
-  todoExtractionTemplate = "Todo-Extraction-Template.Rmd",
-  todoProgCollectionTemplate = "Todo-Programme-Collection-Template.Rmd",
-  todoCollectionTemplate = "Todo-Collection-Template.Rmd"
+  date = get_date(),
+  fromFilePath = NULL,
+  onlyFirstTodoPerFile = FALSE,
+  sortByFileModTimeDesc = TRUE,
+  priorities = list(DEADLINE_PASSED = 4, SCHEDULE_PASSED = 3, DUE_TODAY = 2,
+    SCHEDULED_TODAY = 1, OPEN_ITEMS = 0),
+  collectionTemplate = "Todo-Collection-Template.Rmd",
+  noteTemplate = "Todo-Note-Template.Rmd",
+  itemTemplate = "Todo-Item-Template.Rmd",
+  priorityTemplate = "Todo-Priority-Template.Rmd",
+  priorityFirst = FALSE
 )
 }
 \arguments{
-\item{location}{A path to a Directory or Project Note file inside an
-Organisation where TODO lists should be extracted from each GDT.  Can be
-Organisation root, a programme, any sub-directory that contains project
-notes, or a single project note.}
+\item{location}{A path to either a directory containing Rmd files (searched
+recursively), or a single Rmd file.}
 
-\item{date}{The date of extraction, default is today's date. Should be in
-char format as 'YYYY-MM-DD' - added to header of Todo Collection.}
+\item{date}{A string (e.g., "2025-04-01") representing "today." Used to
+interpret deadlines and schedules to see which are overdue or due today.}
 
-\item{todoGDTExtractionTemplate}{Rmd template for todo GDT extraction}
+\item{fromFilePath}{Optional, a path from which to calculate relative links
+back to each Rmd file. If \code{NULL}, defaults to \code{location}.}
 
-\item{todoExtractionTemplate}{Rmd template for todo Extraction}
+\item{onlyFirstTodoPerFile}{If \code{TRUE}, only the first \code{<!-- {#todo}} block
+per file is extracted (the rest are ignored).}
 
-\item{todoProgCollectionTemplate}{Rmd template for todo Prog Collection}
+\item{sortByFileModTimeDesc}{Logical; if \code{TRUE}, the note-first layout
+sorts files by descending modification time.}
 
-\item{todoCollectionTemplate}{Rmd template for todo Collection}
+\item{priorities}{A named list of length 5, e.g.
+\code{list(DEADLINE_PASSED=4, SCHEDULE_PASSED=3, DUE_TODAY=2, SCHEDULED_TODAY=1, OPEN_ITEMS=0)}.
+The \strong{order} of these five elements must match:
+\enumerate{
+\item \code{isDeadlinePassed} => \code{DEADLINE_PASSED}
+\item \code{isSchedulePassed} => \code{SCHEDULE_PASSED}
+\item \code{isDueToday} => \code{DUE_TODAY}
+\item \code{isScheduledToday} => \code{SCHEDULED_TODAY}
+\item \code{OPEN_ITEMS} => 0
+}
+A higher numeric priority means it appears first in the list.}
+
+\item{collectionTemplate}{Name of the Rmd template to be used for the overall
+collection. Should contain placeholders like \code{{ALL_NOTES_SECTION}},
+\code{{DATE}}, \code{{SCOPE}}, etc.}
+
+\item{noteTemplate}{Name of the template used to render each file's block. It
+should contain \code{{NOTE_BASENAME}}, \code{{NOTE_LINK}}, and
+\code{{NOTE_TODO_ITEMS}} placeholders.}
+
+\item{itemTemplate}{Name of the template used to render each individual TODO
+item. Should contain placeholders like \code{{TODO_ITEM_HEADER}},
+\code{{TODO_ITEM_LINK}}, \code{{TODO_TEXT}}, \code{{TODO_DEADLINE}},
+\code{{TODO_SCHEDULE}}, etc.}
+
+\item{priorityTemplate}{Name of the template used when \code{priorityFirst=TRUE}
+to render each priority section. Should contain placeholders like
+\code{{PRIORITY_HEADER}}, \code{{SEP2}}, and \code{{PRIORITY_ITEMS}}.}
+
+\item{priorityFirst}{Logical; if \code{TRUE}, we use a "priority-first" layout
+grouping items under top-level headers by priority. If \code{FALSE}, we use
+a "note-first" layout, grouping items by file.}
 }
 \value{
-Character Vector of Todo Collection.
+A character vector of R Markdown lines representing the final doc.
 }
 \description{
-Extracted to Todo-Extraction-Template.Rmd that provides a template to
-extract an absolute filesystem link to the project note, summarise each
-Doc GDT with link, and copy all incompleted TODOs under this Doc GDT.
+This function scans a file or directory of R Markdown documents, looking for
+specially-formatted TODO comments in HTML comment blocks. Each block is
+extracted, given a priority based on deadlines/schedules, and finally
+rendered into a single Rmd output using templates.
 }
 \details{
-Todo-Collection-Template.Rmd that provides a template for organising multiple
-Project Notes, listing notes by PROGRAMME in organisation directory tree.
-
-incompleted TODOs can then be reviewed, and prioritised by re-ordering &
-deleting the project note / doc GDT / TODOs.
-
-The filled Todo-Extraction-Template.Rmd is returned as character vector.
+A valid TODO block must begin at the very start of a line with
+\code{<!-- {#todo}}, with no leading spaces. For example:
+\preformatted{
+<!-- {#todo}
+  multiline body
+  {#deadline 2025-12-31}
+-->
+}
+If there are spaces before \code{<!--}, that block is ignored.
 }

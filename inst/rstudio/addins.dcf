@@ -134,9 +134,9 @@ Description: Insert a Level 6 Section Separator into the Active Document at curr
 Binding: addin_insert_section_sep_6
 Interactive: false
 
-Name: ProjectManagr: Insert ToDo
-Description: Insert ToDo at the cursor location.
-Binding: addin_insert_ToDo_string
+Name: ProjectManagr: Insert Todo
+Description: Insert Todo block at the cursor location.
+Binding: addin_insert_todo
 Interactive: false
 
 Name: ProjectManagr: Link Project Doc GDT To Note

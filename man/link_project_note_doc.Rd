@@ -11,7 +11,6 @@ link_project_note_doc(
   projNoteRmdContents,
   projNoteLinkContents,
   projNoteLinkSummaryContents,
-  todoContents,
   projNoteSummaryContents,
   projDocContents,
   orgPath

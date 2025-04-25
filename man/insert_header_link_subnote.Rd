@@ -6,7 +6,6 @@
 \usage{
 insert_header_link_subnote(
   subNoteContents,
-  headerNoteFileName,
   headerNoteRmdPath,
   subNoteRmdPath,
   headerNoteContentLinkContents,
@@ -17,8 +16,6 @@ insert_header_link_subnote(
 \arguments{
 \item{subNoteContents}{Character vector containing the contents of the
 subnote Rmd file.}
-
-\item{headerNoteFileName}{A string specifying the header note file name.}
 
 \item{headerNoteRmdPath}{A string specifying the full file path of the
 header note Rmd.}

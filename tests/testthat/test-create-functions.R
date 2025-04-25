@@ -357,7 +357,7 @@ test_that("test create functions", {
   contentName <- "ex-con"
   contentDescription <- "Example Content Description"
   contentSourcePath <- projectNoteDir
-  noteLine <- 90 # set to a line below the Introduction default header but within Rmd lines
+  noteLine <- 70 # set to a line below the Introduction default header but within Rmd lines
   contentTitle <- "Example Content"
 
   contentRmd <- local_create_content(contentName, contentDescription, contentSourcePath,
@@ -388,11 +388,55 @@ test_that("test create functions", {
 
   ################ create_daily_journal creates a journal Rmd #################
 
-  # mock the
+  # mock geo location for fixed return - avoid using internet search!
   local_mocked_bindings(
-    get_loc = function(location_str) {
+    get_geo_loc = function(location_str) {
       return( list(lat=51.52, long=-0.14) )
+    }, # for consistent latitude and longitude values
+    get_locale = function() {
+      return("Europe/London")
+    }, # for consistent locale string
+    get_sunlight_times = function(date, lat, lon, locale) {
+      list(
+        date = date,
+        lat = lat,
+        lon = lon,
+        solarNoon = as.POSIXct("2024-05-10 12:58:17", tz = "Europe/London"),
+        nadir = as.POSIXct("2024-05-10 00:58:17", tz = "Europe/London"),
+        sunrise = as.POSIXct("2024-05-10 05:17:19", tz = "Europe/London"),
+        sunset = as.POSIXct("2024-05-10 20:39:15", tz = "Europe/London"),
+        sunriseEnd = as.POSIXct("2024-05-10 05:21:16", tz = "Europe/London"),
+        sunsetStart = as.POSIXct("2024-05-10 20:35:17", tz = "Europe/London"),
+        dawn = as.POSIXct("2024-05-10 04:36:58", tz = "Europe/London"),
+        dusk = as.POSIXct("2024-05-10 21:19:35", tz = "Europe/London"),
+        nauticalDawn = as.POSIXct("2024-05-10 03:42:59", tz = "Europe/London"),
+        nauticalDusk = as.POSIXct("2024-05-10 22:13:34", tz = "Europe/London"),
+        nightEnd = as.POSIXct("2024-05-10 02:28:39", tz = "Europe/London"),
+        night = as.POSIXct("2024-05-10 23:27:54", tz = "Europe/London"),
+        goldenHourEnd = as.POSIXct("2024-05-10 06:06:08", tz = "Europe/London"),
+        goldenHour = as.POSIXct("2024-05-10 19:50:25", tz = "Europe/London"),
+        check = "CHECK" # to check mocked function is working
+      )
+    }, # for consistent day metadata
+    get_moon_times = function(date, lat, lon, locale) {
+      list(
+        date = date,
+        lat = lat,
+        lon = lon,
+        rise = as.POSIXct("2024-05-10 06:10:20", tz = "Europe/London"),
+        set = as.POSIXct(NA, tz = "Europe/London"),
+        alwaysUp = FALSE,
+        alwaysDown = FALSE,
+        check = "CHECK" # to check mocked function is working
+      )
+    },
+    lunar_phase = function(date_obj) {
+      factor("New", levels = c("New", "Waxing", "Full", "Waning"))
+    },
+    lunar_illumination = function(date_obj) {
+      0.05343722
     })
+
   # create test Project Doc for content
   projectDocPrefix <- "PDJou"
   projectDocName <- "Proj_Do_jou"
@@ -421,10 +465,51 @@ test_that("test create functions", {
   # this time with get_loc() returning failure to test tryCatch() error handling
   date=lubridate::ymd("2024-05-11")
 
+  # re-mock get_sunlight_times - for fixed data to use in testing
   local_mocked_bindings(
-    get_loc = function(location_str) {
+    get_sunlight_times = function(date, lat, lon, locale) {
+      list(
+        date = date,
+        lat = lat,
+        lon = lon,
+        solarNoon = as.POSIXct("2024-05-11 12:58:16", tz = "Europe/London"),
+        nadir = as.POSIXct("2024-05-11 00:58:16", tz = "Europe/London"),
+        sunrise = as.POSIXct("2024-05-11 05:15:42", tz = "Europe/London"),
+        sunset = as.POSIXct("2024-05-11 20:40:49", tz = "Europe/London"),
+        sunriseEnd = as.POSIXct("2024-05-11 05:19:41", tz = "Europe/London"),
+        sunsetStart = as.POSIXct("2024-05-11 20:36:50", tz = "Europe/London"),
+        dawn = as.POSIXct("2024-05-11 04:35:07", tz = "Europe/London"),
+        dusk = as.POSIXct("2024-05-11 21:21:24", tz = "Europe/London"),
+        nauticalDawn = as.POSIXct("2024-05-11 03:40:36", tz = "Europe/London"),
+        nauticalDusk = as.POSIXct("2024-05-11 22:15:55", tz = "Europe/London"),
+        nightEnd = as.POSIXct("2024-05-11 02:24:22", tz = "Europe/London"),
+        night = as.POSIXct("2024-05-11 23:32:09", tz = "Europe/London"),
+        goldenHourEnd = as.POSIXct("2024-05-11 06:04:43", tz = "Europe/London"),
+        goldenHour = as.POSIXct("2024-05-11 19:51:49", tz = "Europe/London")
+      )
+    }
+    ,# for consistent day metadata
+    get_moon_times = function(date, lat, lon, locale) {
+      list(
+        date = date,
+        lat = lat,
+        lon = lon,
+        rise = as.POSIXct("2024-05-11 06:58:07", tz = "Europe/London"),
+        set = as.POSIXct("2024-05-11 00:28:56", tz = "Europe/London"),
+        alwaysUp = FALSE,
+        alwaysDown = FALSE
+      )
+    },
+    lunar_phase = function(date_obj) {
+      factor("New", levels = c("New", "Waxing", "Full", "Waning"))
+    },
+    lunar_illumination = function(date_obj) {
+      0.1109994
+    },
+    get_geo_loc = function(location_str) {
       stop()
     })
+
   journalRmd2 <- local_create_journal2(date, organisationPath, authorValue)
 
 
@@ -444,10 +529,10 @@ test_that("test create functions", {
   # check Project Note Rmd file contents are correctly filled
   expect_snapshot_file( projectNoteRmd )
 
-  # check content Rmd generated (Rmd is inside Dir, so do not need to separately check contentDir)
+  # check Rmd generated (Rmd is inside Dir, so do not need to separately check Dir)
   expect_true(  fs::file_exists( journalRmd )  )
 
-  # check Journsl Rmd files are correctly filled
+  # check Journal Rmd files are correctly filled
   expect_snapshot_file( journalRmd )
   expect_snapshot_file( journalRmd2 )
 

@@ -13,7 +13,6 @@ create_project_note(
   projNoteTemplate = "Project-Note-Template.Rmd",
   projNoteLinkTemplate = "Project-Note-Link-Template.Rmd",
   projNoteLinkSummaryTemplate = "Project-Note-Link-Summary-Template.Rmd",
-  todoTemplate = "Todo-Template.Rmd",
   projNoteSummaryTemplate = "Project-Note-Summary-Template.Rmd"
 )
 }
@@ -51,11 +50,11 @@ template. Default is \code{"Project-Note-Link-Template.Rmd"}.}
 \item{projNoteLinkSummaryTemplate}{Character. The filename of the project note
 link summary template. Default is \code{"Project-Note-Link-Summary-Template.Rmd"}.}
 
-\item{todoTemplate}{Character. The filename of the project note's To-Do
-template. Default is \code{"Todo-Template.Rmd"}.}
-
 \item{projNoteSummaryTemplate}{Character. The filename of the project note
 summary template. Default is \code{"Project-Note-Summary-Template.Rmd"}.}
+
+\item{todoTemplate}{Character. The filename of the project note's To-Do
+template. Default is \code{"Todo-Template.Rmd"}.}
 }
 \value{
 None. The function creates files and modifies the project document.

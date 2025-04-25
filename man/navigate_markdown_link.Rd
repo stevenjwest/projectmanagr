@@ -7,8 +7,22 @@
 navigate_markdown_link()
 }
 \description{
-This deals with links that exist over multiple lines in the Markdown file: if
-the first line of the link is selected, that contains the NAME (in \verb{[]}) and
-the FIRST PART of the PATH (ie. the first \code{(}), then will search subsequent
-lines to identify the remaining path to navigate.
+This function looks for a Markdown link on the currently selected line in RStudio
+(or subsequent lines if the link is split) of the form \verb{[...](...)}. Once the path
+is identified, if there's a \verb{#header} portion, the function opens the file, searches
+for the matching header, and navigates there in RStudio. If it doesn't find such a
+header, it raises an informative error.
+}
+\details{
+To keep this function short and readable, much of the logic is moved to internal
+helper functions:
+
+\itemize{
+\item \code{parse_link_in_selected_line()} extracts the path (and anchor, if any)
+from the user’s selection, handling multi-line links.
+\item \code{navigate_file_with_anchor()} opens a file and navigates to the
+specified anchor.
+\item \code{navigate_file_no_anchor()} opens a file if one exists, or checks
+for an internal heading in the current file.
+}
 }

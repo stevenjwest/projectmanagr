@@ -11,11 +11,14 @@ addin_open_daily_journal_ui(
 )
 }
 \arguments{
-\item{orgPath}{Character string. The path to the ORG directory where journal files are stored.}
+\item{orgPath}{Character string. The path to the ORG directory where journal
+files are stored.}
 
-\item{calDate}{Date object. The default date to display in the calendar. Defaults to the current system date (\code{Sys.Date()}).}
+\item{calDate}{Date object. The default date to display in the calendar.
+Defaults to the current system date (\code{Sys.Date()}).}
 
-\item{calendar_function}{Function. The calendar rendering function to use. Defaults to \code{shiny.fluent::Calendar.shinyInput}.}
+\item{calendar_function}{Function. The calendar rendering function to use.
+Defaults to \code{shiny.fluent::Calendar.shinyInput}.}
 }
 \value{
 A \code{miniUI::miniPage} object representing the UI for the gadget.
@@ -41,7 +44,8 @@ The function uses \code{miniUI} to create a compact, user-friendly layout
 suitable for Shiny gadgets.
 }
 \note{
-This UI is designed for use with the server logic defined in \code{addin_open_daily_journal_server}.
+This UI is designed for use with the server logic defined in
+\code{addin_open_daily_journal_server}.
 }
 \examples{
 # Example usage:
@@ -54,7 +58,8 @@ ui <- addin_open_daily_journal_ui(
 }
 \seealso{
 \itemize{
-\item \code{\link[miniUI]{miniPage}} for details on constructing UI components for Shiny gadgets.
+\item \code{\link[miniUI]{miniPage}} for details on constructing UI components
+for Shiny gadgets.
 \item \code{\link[shiny.fluent]{Calendar.shinyInput}} for the calendar component.
 }
 }

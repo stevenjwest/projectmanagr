@@ -6,8 +6,3 @@
 
 
 
-{{OBJECTIVES_TODO_HEADER}}
-
-{{TODO_TEMPLATE}}
-
-

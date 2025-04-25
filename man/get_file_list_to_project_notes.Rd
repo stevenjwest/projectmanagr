@@ -5,20 +5,22 @@
 \title{get file list down to project notes}
 \usage{
 get_file_list_to_project_notes(
-  fileList,
-  dl,
+  dirs,
   settings,
+  files = c(),
   fileExtensions = list("Rmd"),
   pathExclusions = c(),
   retrievalDateTimeCutoff = NULL
 )
 }
 \arguments{
-\item{fileList}{List of files recursively retrieved by this function.}
-
-\item{dl}{DirsList - a list of directory paths.}
+\item{dirs}{a character vector of directory paths to identify files in.}
 
 \item{settings}{projectmanagr settings list.}
+
+\item{files}{a character vector of files recursively retrieved by this
+function. Typically initialised as a blank vector, as recursive searches
+use this argument to pass previously found files to return all at end.}
 
 \item{fileExtensions}{File extensions of files to list.}
 
@@ -30,11 +32,40 @@ root of an Organisation.}
 cutoff time will not be returned. If NULL ignored. This is a lubridate datetime
 object, made by parsing a datetime string through \code{lubridate::ymd_hm()}}
 }
+\value{
+a vector of paths to all files with \code{fileExtensions} && directories.
+}
 \description{
-Traverses all directory tree in \code{dl} but only get fileList recursively but
-only down to project note parent dir level.
+Traverses all directory trees in \code{dirs} but only get \code{files} recursively
+down to project note parent dir level.
 }
 \details{
-This method makes parsing all plaintext Project Notes across an Organisation
-much more efficient!
+This method makes identifying all plaintext files of given \code{fileExtensions}
+across an Organisation much more efficient.
+
+It is possible to avoid searching through unwanted directories by using the
+\code{pathExclusions} argument:
 }
+\section{get orgPath}{
+orgPath <- confirm_find_org(location)
+}
+
+\section{get config templates settings yml}{
+confPath <- get_config_dir(orgPath)
+tempPath <- get_template_dir(orgPath)
+settings <- get_settings_yml(orgPath)
+}
+
+\section{get dirs in root to EXCLUDE from search}{
+volPath <- get_volumes_dir(orgPath, settings)
+sitePath <- get_site_dir(orgPath, settings)
+journalPath <- get_journal_dir(orgPath, settings)
+
+rmdFiles <- get_file_list_to_project_notes(
+dirs = dirPaths,
+settings = settings,
+files = c(),
+fileExtensions = list("Rmd"),
+pathExclusions = c(volPath, sitePath, journalPath))
+}
+

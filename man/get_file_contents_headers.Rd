@@ -10,10 +10,22 @@ get_file_contents_headers(contents)
 \item{contents}{Character vector containing the contents of the file.}
 }
 \value{
-Character vector of every header line.
+Character vector of every header line (lines starting with \code{#})
+after code blocks have been removed.
 }
 \description{
-Get every Markdown header line from text file - every line that begins with
-\verb{#}.  Pre-filter contents to remove all code blocks, that may have lines
-beginning with \verb{#} but are not markdown headers.
+Returns every Markdown header line from the text file (all lines that begin
+with \code{#}), while skipping over code blocks (anything between lines that
+start with triple backticks).
+}
+\details{
+If it detects an odd number of triple-backtick lines, it warns you that
+some fences may not be at the start of the line. This can happen if a code
+fence is preceded by spaces.
+}
+\examples{
+\dontrun{
+  txt <- readLines("somefile.Rmd")
+  get_file_contents_headers(txt)
+}
 }

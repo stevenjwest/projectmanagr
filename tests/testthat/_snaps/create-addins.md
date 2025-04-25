@@ -336,7 +336,7 @@
 ---
 
     Code
-      addin_create_project_doc_ui(orgName, get_settings_yml(orgDir))
+      addin_create_project_doc_ui(orgName, get_settings_yml(orgPath))
     Output
       <div class="gadget-container">
         <style></style>
@@ -478,7 +478,7 @@
     Output
       
       projectmanagr::addin_create_project_doc():
-      [1] "CREATE PROJECT DOC ADDIN: ui - orgName: _T_Ots settings-names: SiteDir FileType VolumesDir VolumesFile ConfigStatusYamlFile OrgIndexFileNamePrefix OrgProgrammeHeader OrgProgrammeFooter OrgProgrammeSummarySep ProgIndexFileNamePrefix ProgSummaryHeader ProgSummaryTitle ProgSummaryFooter ProgProjectsHeader ProgProjectsFooter ProgProjectSummarySep SectionIndexFileNamePrefix SectionSummaryHeader SectionSummaryTitle SectionSummaryFooter SectionProjectsHeader SectionProjectsFooter SectionProjectSummarySep ProjectPrefixSep ProjectIdentifierSep ProjectIndexSep ProjectSummaryHeader ProjectSummaryTitle ProjectSummaryFooter ProjectGoalHeader ProjectGoalTitle ProjectGoalDivider ProjectGoalSep ProjectDeliverableHeader ProjectDeliverableTitle ProjectDeliverableDivider ProjectDeliverableSep ProjectTaskHeader ProjectTaskTitle ProjectTaskDivider ProjectTaskSep ProjectTaskFooter ProjectLinkFormat ProjectTaskLogHeader ProjectTaskLogSep NoteObjectivesTodoSectionHeader NoteObjectivesHeader NoteObjectivesSep NoteObjectivesFooter NoteStorageHeader NoteStorageFooter NoteLinkFormat GroupNotePrefixSep HeaderNotePrefix HeaderNoteContentsHeader HeaderNoteContentsFooter HeaderLinkFormat SubNotePrefixSep SubNoteContentsHeader SubNoteContentsFooter SubNoteLinkFormat NoteSummaryTitle NoteGoalLinkLine NoteDeliverableLinkLine NoteTaskLinkLine ContentTitleField ContentDescriptionField ContentSourceField ContentSep ContentInsertionTitle ContentInsertionSep ContentLinkFormat ContentSummaryHeader ContentSummaryFooter ContentGraphicalAbstractHeader ContentGraphicalAbstractSvg ContentGraphicalAbstractFooter ContentBackgroundHeader ContentBackgroundFooter ContentMaterialsHeader ContentMaterialsFooter ContentEquipmentSvg ContentProcedureTemplateSvg ContentResultsLogHeader ContentResultsLogFooter ContentTroubleshootingHeader ContentTroubleshootingFooter ContentSopHeader ContentLogHeader ContentLogSep ContentFooter TodoHeader TodoHeaderTemplate TodoItem TodoItemTemplate TodoItemComplete TodoCollectionSep TodoProgrammeSep TodoProjectNoteSep TodoTaskHeader TodoGDTSep DateTimeZone DateSplit DateTimeSplit DatatableExportHeader RunUpdateOnStartup RunCompileWithUpdate FileTypeSuffix WeeklyJournalDir GadgetWidth GadgetHeight rstudioInternalStateDir programmeDirPaths: 0-PR-ts progSelected: 1 server"
+      [1] "CREATE PROJECT DOC ADDIN: ui - orgName: _T_Ots settings-names: SiteDir FileType VolumesDir VolumesFile ConfigStatusYamlFile OrgIndexFileNamePrefix OrgProgrammeHeader OrgProgrammeFooter OrgProgrammeSummarySep ProgIndexFileNamePrefix ProgSummaryHeader ProgSummaryTitle ProgSummaryFooter ProgStrategicObjectivesHeader ProgStrategicObjectivesFooter ProgProjectsHeader ProgProjectsFooter ProgProjectSummarySep SectionIndexFileNamePrefix SectionSummaryHeader SectionSummaryTitle SectionSummaryFooter SectionProjectsHeader SectionProjectsFooter SectionProjectSummarySep ProjectPrefixSep ProjectIdentifierSep ProjectIndexSep ProjectSummaryHeader ProjectSummaryTitle ProjectSummaryFooter ProjectGoalHeader ProjectGoalTitle ProjectGoalDivider ProjectGoalSep ProjectDeliverableHeader ProjectDeliverableTitle ProjectDeliverableDivider ProjectDeliverableSep ProjectTaskHeader ProjectTaskTitle ProjectTaskDivider ProjectTaskSep ProjectTaskFooter ProjectLinkFormat ProjectTaskLogHeader ProjectTaskLogSep NoteObjectivesTodoSectionHeader NoteObjectivesHeader NoteObjectivesSep NoteObjectivesFooter NoteStorageHeader NoteStorageFooter NoteLinkFormat GroupNotePrefixSep HeaderNotePrefix HeaderNoteContentsHeader HeaderNoteContentsFooter HeaderLinkFormat SubNotePrefixSep SubNoteContentsHeader SubNoteContentsFooter SubNoteLinkFormat NoteSummaryTitle NoteGoalLinkLine NoteDeliverableLinkLine NoteTaskLinkLine ContentTitleField ContentDescriptionField ContentSourceField ContentSep ContentInsertionTitle ContentInsertionSep ContentLinkFormat ContentSummaryHeader ContentSummaryFooter ContentGraphicalAbstractHeader ContentGraphicalAbstractSvg ContentGraphicalAbstractFooter ContentBackgroundHeader ContentBackgroundFooter ContentMaterialsHeader ContentMaterialsFooter ContentEquipmentSvg ContentProcedureTemplateSvg ContentResultsLogHeader ContentResultsLogFooter ContentTroubleshootingHeader ContentTroubleshootingFooter ContentSopHeader ContentLogHeader ContentLogSep ContentFooter TodoHeader TodoHeaderTemplate TodoItem TodoItemTemplate TodoItemComplete TodoCollectionSep TodoProgrammeSep TodoProjectNoteSep TodoTaskHeader TodoGDTSep DateTimeZone DateSplit DateTimeSplit DatatableExportHeader RunUpdateOnStartup RunCompileWithUpdate FileTypeSuffix JournalDir JournalMetadataFooter JournalEventsHeader JournalEventsFooter JournalEventsInsertion JournalTodosHeader JournalTodosFooter JournalTodosInsertion GadgetWidth GadgetHeight rstudioInternalStateDir server"
 
 ---
 
@@ -741,7 +741,7 @@
 ---
 
     Code
-      addin_open_weekly_journal_ui(orgName, calDate = calDate, calendar_function = mock_calendar_input)
+      addin_open_daily_journal_ui(orgName, calDate = calDate, calendar_function = mock_calendar_input)
     Output
       <div class="gadget-container">
         <style></style>
@@ -753,7 +753,7 @@
               });
             </script>
         <div class="gadget-title">
-          <h1>Open Weekly Journal: Select a Week</h1>
+          <h1>Open Daily Journal: Select a Day</h1>
           <button class="btn btn-default btn-sm action-button pull-left" id="cancel" type="button">Cancel</button>
           <button class="btn btn-primary btn-sm action-button pull-right" id="done" type="button">Done</button>
         </div>
@@ -765,7 +765,7 @@
                 <div class="mock-calendar">Mock Calendar Input: calendar, Value: 2024-12-02</div>
               </div>
               <br/>
-              <pre class="shiny-text-output noplaceholder" id="selected_week_text"></pre>
+              <pre class="shiny-text-output noplaceholder" id="selected_day_text"></pre>
             </div>
           </div>
         </div>
@@ -774,9 +774,9 @@
 ---
 
     Code
-      paste0("OPEN WEEKLY JOURNAL ADDIN: ", addin_open_weekly_journal())
+      paste0("OPEN DAILY JOURNAL ADDIN: ", addin_open_daily_journal())
     Output
       
-      projectmanagr::addin_open_weekly_journal():
-      [1] "OPEN WEEKLY JOURNAL ADDIN: ui - orgName: _T_Ots server"
+      projectmanagr::addin_open_daily_journal():
+      [1] "OPEN DAILY JOURNAL ADDIN: ui - orgName: _T_Ots server"
 

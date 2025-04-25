@@ -408,6 +408,13 @@ yaml_keys <- function() {
     "RunCompileWithUpdate",
     "FileTypeSuffix",
     "JournalDir",
+    "JournalMetadataFooter",
+    "JournalEventsHeader",
+    "JournalEventsFooter",
+    "JournalEventsInsertion",
+    "JournalTodosHeader",
+    "JournalTodosFooter",
+    "JournalTodosInsertion",
     "GadgetWidth",
     "GadgetHeight",
     "rstudioInternalStateDir")
@@ -907,10 +914,11 @@ init_template_prog <- function(progContents, programmeTitle, authorValue,
   progContents <- gsub("{{ORGLINK}}", orgLink, progContents, fixed=TRUE)
 
   # modify programme strategic objectives header/footer
-  progContents <- sub_template_param(progContents, "{{STRATEGIC_OBJECTIVES_HEADER}}",
-                                     settings[["ProgStrategicObjectivesHeader"]], orgPath)
-  progContents <- sub_template_param(progContents, "{{STRATEGIC_OBJECTIVES_FOOTER}}",
-                                     settings[["ProgStrategicObjectivesFooter"]], orgPath)
+  # no longer using strategic summary!
+  #progContents <- sub_template_param(progContents, "{{STRATEGIC_OBJECTIVES_HEADER}}",
+  #                                   settings[["ProgStrategicObjectivesHeader"]], orgPath)
+  #progContents <- sub_template_param(progContents, "{{STRATEGIC_OBJECTIVES_FOOTER}}",
+  #                                   settings[["ProgStrategicObjectivesFooter"]], orgPath)
 
   # modify programme projects header/footer
   progContents <- sub_template_param(progContents, "{{PROJECTS_HEADER}}",
@@ -924,24 +932,6 @@ init_template_prog <- function(progContents, programmeTitle, authorValue,
   return(progContents)
 }
 
-#' Write Programme to Status yml file
-#'
-#' Fill with datetime of programme creation && programme title
-#'
-write_prog_to_status <- function(programmeTitle, programmeName, status, statusFile) {
-
-  progCreationTime <- get_datetime()
-  attrs <- list(programmeTitle, progCreationTime )
-  names(attrs) <- c("programmeTitle", "creationTime")
-  status[["PROGRAMMES"]][[programmeName]] <- attrs
-  # can retrieve the creationTime with call to:
-   #status[["PROGRAMMES"]][[programmeName]][["creationTime"]]
-
-  # Write status list to the statusFile:
-  yaml::write_yaml(yaml::as.yaml(status), statusFile)
-
-  cat( "  Written PROGRAMME to Status.yml file: ", statusFile, "\n" )
-}
 
 #' Link Programme Index to Project Org Index
 #'
@@ -1922,10 +1912,8 @@ link_doc_to_sect_index <- function(sectPath, tempPath, projDocSummaryTemplate,
 
   cat( "  Written Project Doc to Programme Section File: ", basename(sectFilePath), "\n" )
 
-}
+} #### ________________________________ ####
 
-
-#### ________________________________ ####
 
 
 
@@ -2021,150 +2009,216 @@ link_doc_to_sect_index <- function(sectPath, tempPath, projDocSummaryTemplate,
 #'   as they determine where the project note link will be inserted.
 #'
 #' @export
-create_project_note <- function( projectNoteName, projectNotePath,
-                                 selection, authorValue=get_username(),
-                                 projectNoteTitle="",
-                                 projNoteTemplate="Project-Note-Template.Rmd",
-                                 projNoteLinkTemplate="Project-Note-Link-Template.Rmd",
-                                 projNoteLinkSummaryTemplate="Project-Note-Link-Summary-Template.Rmd",
-                                 todoTemplate="Todo-Template.Rmd",
-                                 projNoteSummaryTemplate="Project-Note-Summary-Template.Rmd" ) {
+create_project_note <- function(
+    projectNoteName,
+    projectNotePath,
+    selection,
+    authorValue = get_username(),
+    projectNoteTitle = "",
+    projNoteTemplate = "Project-Note-Template.Rmd",
+    projNoteLinkTemplate = "Project-Note-Link-Template.Rmd",
+    projNoteLinkSummaryTemplate = "Project-Note-Link-Summary-Template.Rmd",
+    projNoteSummaryTemplate = "Project-Note-Summary-Template.Rmd"
+) {
 
+  cat("\nprojectmanagr::create_project_note():\n")
 
-  cat( "\nprojectmanagr::create_project_note():\n" )
+  # 1) Validate inputs and ensure the selection is from a project doc
+  validate_note_inputs(projectNoteName, selection)
+  stop_if_not_doc(selection)
 
+  # 2) Derive note title if not provided
+  projectNoteTitle <- derive_note_title_if_missing(projectNoteName, projectNoteTitle)
 
-  #### CHECK FOR ERRORS IN INPUT ####
-
-  # Check projectNoteName contains NO SPACES:
-  if( grepl("\\s+", projectNoteName) ) {
-    stop( paste0("  projectNoteName contains a SPACE: ", projectNoteName) )
-  }
-
-  # check selection is a project DOC
-  if( selection[["rmdType"]] != "DOC" ) {
-    stop( paste0("  selection is not a Project DOC: ", selection[["filePath"]]) )
-  }
-
-
-  #### Set Instance Variables ####
-
-  # Check projectNotePath is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  orgPath <- dirname( dirname(projectNotePath) ) # this should be the orgPath!
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  projectNotePath is not in a sub-dir of a PROGRAMME Directory: ", projectNotePath) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # get config templates settings yml
-  confPath <- get_config_dir(orgPath)
-  tempPath <- get_template_dir(orgPath)
+  # 3) Gather all the needed paths and settings
+  orgPath <- find_org_for_note_path(projectNotePath)
   settings <- get_settings_yml(orgPath)
+  tempPath <- get_template_dir(orgPath)
 
-  # If projectTitle blank, fill with projectName, replacing all "_" and "-" with spaces
-  if( nchar(projectNoteTitle)==0 ) {
-    projectNoteTitle = gsub("-", " ", gsub("_", " ", projectNoteName) )
-  }
-
-  projectDocPath <- selection[["filePath"]] # selection is a project DOC
-
-  projectNotePath <- fs::path_expand(projectNotePath)
-
+  # 4) Determine the next available prefix for this new note
   projectNotePrefix <- get_next_simple_prefix(projectNotePath, settings)
 
+  # 5) Read the required template files
+  templates <- read_project_note_templates(
+    tempPath,
+    projNoteTemplate,
+    projNoteLinkTemplate,
+    projNoteLinkSummaryTemplate,
+    projNoteSummaryTemplate
+  )
+
+  # 6) Create the note’s subdirectory (e.g., /SOMEPATH/ABC~001) and the main Rmd file
+  noteDirPath <- create_note_directory(projectNotePath, projectNotePrefix)
+  noteRmdPath <- create_note_rmd_file(
+    projectNotePath,
+    projectNotePrefix,
+    projectNoteName,
+    settings
+  )
+
+  tryCatch({
+    # 7) Populate the note Rmd with the user-supplied info plus template placeholders
+    noteRmdContents <- populate_note_rmd_contents(
+      templates$noteTemplate,
+      projectNotePrefix,
+      projectNoteTitle,
+      authorValue,
+      settings,
+      orgPath
+    )
+
+    # 8) Write out the new note Rmd
+    write_project_note_rmd(noteRmdPath, noteRmdContents)
+
+    # 9) Link the new project note into the associated project doc (goal/deliverable/task)
+    link_successful <- link_project_note_doc(
+      selection,
+      settings,
+      noteRmdPath,
+      noteRmdContents,
+      templates$linkTemplate,
+      templates$linkSummaryTemplate,
+      templates$noteSummaryTemplate,
+      read_file(selection[["filePath"]]),  # existing doc contents
+      orgPath
+    )
+
+    # 10) If for any reason the link fails, clean up the newly created note
+    if (!link_successful) {
+      cleanup_created( c(noteDirPath, noteRmdPath) )
+      stop("  Creating Project Note Failed – link already exists or another error occurred.")
+    }
+  }, error = function(e) {
+    cat("  ====================  \n")
+    cat("  Error encountered:", e$message, "\n")
+    cleanup_created( c(noteDirPath, noteRmdPath) )
+    stop(e)  # Rethrow the error after cleanup
+  })
 
 
-  #### Read Rmds ####
-
-  projNoteRmdContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteTemplate) )
-
-  projNoteLinkContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteLinkTemplate) )
-  projNoteLinkSummaryContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteLinkSummaryTemplate) )
-  todoContents <- read_file( paste0( tempPath, .Platform$file.sep, todoTemplate) )
-
-  projNoteSummaryContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteSummaryTemplate) )
-
-  projDocContents <- read_file(projectDocPath)
+}
 
 
-  #### Create Note Dir ####
 
-  projDirPath <- paste0( projectNotePath, .Platform$file.sep, projectNotePrefix)
-  done <- dir.create( projDirPath )
-
-  if(!done) {
-    stop( paste0("  DIR for Project Note could not be created: ", projDirPath) )
+# 1) Validate note inputs
+validate_note_inputs <- function(noteNames, selection) {
+  if ( any(grepl("\\s+", noteNames)) ) {
+    stop(paste0("  noteName contains a SPACE: ",
+                noteNames[any(grepl("\\s+", noteNames))]))
   }
-
-  cat( "  Made Project Note DIR: ", projDirPath, "\n" )
-
-
-  #### create Rmd file ####
-
-  # Create blank RMD DOCUMENT:
-  projNoteRmdPath <- paste0( projectNotePath, .Platform$file.sep, projectNotePrefix,
-                             settings[["ProjectPrefixSep"]], projectNoteName, ".Rmd")
-  done <- file.create( projNoteRmdPath )
-
-  if(!done) {
-    file.remove(projDirPath) # remove the project note dir
-    stop( paste0("  Project Note could not be created: ", projNoteRmdPath) )
+  if (is.null(selection) || !is.list(selection)) {
+    stop("  selection object is missing or invalid.")
   }
+}
 
-
-  #### Replace markup in Note with values ####
-
-  # modify projNoteRmdContents to include PREFIX and projectTitle
-  projNoteRmdContents <- sub_template_param(projNoteRmdContents, "{{PREFIX}}",
-                                         projectNotePrefix, orgPath)
-  projNoteRmdContents <- sub_template_param(projNoteRmdContents, "{{TITLE}}",
-                                         projectNoteTitle, orgPath)
-  projNoteRmdContents <- sub_template_param(projNoteRmdContents, "{{AUTHOR}}",
-                                         authorValue, orgPath)
-
-  projNoteRmdContents <- sub_template_param(projNoteRmdContents, "{{OBJECTIVES_HEADER}}",
-                                         settings[["NoteObjectivesHeader"]], orgPath)
-  projNoteRmdContents <- sub_template_param(projNoteRmdContents, "{{OBJECTIVES_FOOTER}}",
-                                         settings[["NoteObjectivesFooter"]], orgPath)
-
-  projNoteRmdContents <- sub_template_param(projNoteRmdContents, "{{DATA_STORAGE_HEADER}}",
-                                         settings[["NoteStorageHeader"]], orgPath)
-  projNoteRmdContents <- sub_template_param(projNoteRmdContents, "{{DATA_STORAGE_FOOTER}}",
-                                         settings[["NoteStorageFooter"]], orgPath)
-
-
-  # modify projNoteRmdContents with rmarkdown-html-header content
-  projNoteRmdContents <- replace_markdown_header(projNoteRmdContents, orgPath)
-
-  # modify projNoteRmdContents with SEP values
-  projNoteRmdContents <- replace_sep_values(projNoteRmdContents, orgPath)
-
-
-  #### write Project Note ####
-
-  write_file(projNoteRmdContents, projNoteRmdPath)
-
-  cat( "  Made Project Note: ", projNoteRmdPath, "\n" )
-
-
-  #### Link Project Note and Project Doc ####
-
-  linkFormed <- link_project_note_doc(selection, settings, projNoteRmdPath,
-                                      projNoteRmdContents, projNoteLinkContents,
-                                      projNoteLinkSummaryContents, todoContents,
-                                      projNoteSummaryContents, projDocContents, orgPath)
-
-  if( linkFormed == FALSE ) {
-    # remove the project note and directory
-    file.remove(projDirPath) # remove the project note dir
-    file.remove(projNoteRmdPath) # remove the project note Rmd
-    stop( paste0("  Creating Project Note Failed - link already exists."))
+# Ensure the selection is from a project DOC
+stop_if_not_doc <- function(selection) {
+  if (selection[["rmdType"]] != "DOC") {
+    stop(paste0("  selection is not a Project DOC: ", selection[["filePath"]]))
   }
+}
 
+# 2) Derive the note title if not provided
+derive_note_title_if_missing <- function(noteName, noteTitle) {
+  if (nchar(noteTitle) == 0) {
+    return(gsub("-", " ", gsub("_", " ", noteName)))
+  }
+  noteTitle
+}
+
+# 3) Find the org path for the note’s parent location
+find_org_for_note_path <- function(notePath) {
+  # Because a note typically sits within some subdirectory of the org,
+  # we find the org root. If blank, not part of an org:
+  candidate <- dirname(dirname(notePath)) # e.g., up 2 levels
+  orgPath   <- find_org_directory(candidate)
+  if (orgPath == "") {
+    stop(paste0(
+      "  Path is not in a sub-dir of a PROGRAMME Directory: ", notePath
+    ))
+  }
+  orgPath
+}
+
+
+# 5) Read all required templates and return them as a list
+read_project_note_templates <- function(
+    tempPath,
+    projNoteTemplate,
+    projNoteLinkTemplate,
+    projNoteLinkSummaryTemplate,
+    projNoteSummaryTemplate
+) {
+  list(
+    noteTemplate       = read_file(fs::path(tempPath, projNoteTemplate)),
+    linkTemplate       = read_file(fs::path(tempPath, projNoteLinkTemplate)),
+    linkSummaryTemplate= read_file(fs::path(tempPath, projNoteLinkSummaryTemplate)),
+    noteSummaryTemplate= read_file(fs::path(tempPath, projNoteSummaryTemplate))
+  )
+}
+
+# 6a) Create the subdirectory for the new note
+create_note_directory <- function(basePath, prefix) {
+  noteDirPath <- fs::path(basePath, prefix)
+  create_directory(
+    noteDirPath,
+    paste0("  Created note directory: "),
+    paste0("  Could not create note directory: ")
+  )
+  noteDirPath
+}
+
+# 6b) Create the new RMD file for the note
+create_note_rmd_file <- function(basePath, prefix, noteName, settings) {
+  # Use settings to get the ProjectPrefixSep
+  rmdFilePath <- fs::path(
+    basePath,
+    paste0(prefix, settings[["ProjectPrefixSep"]], noteName, ".Rmd")
+  )
+  create_file(
+    rmdFilePath,
+    paste0("  Created note Rmd file: "),
+    paste0("  Could not create note Rmd: ")
+  )
+  rmdFilePath
+}
+
+# 7) Fill in placeholders in the note’s Rmd template
+
+populate_note_rmd_contents <- function(
+    noteTemplate,
+    notePrefix,
+    noteTitle,
+    authorValue,
+    settings,
+    orgPath
+) {
+  contents <- noteTemplate
+  contents <- sub_template_param(contents, "{{PREFIX}}",          notePrefix,  orgPath)
+  contents <- sub_template_param(contents, "{{TITLE}}",           noteTitle,   orgPath)
+  contents <- sub_template_param(contents, "{{AUTHOR}}",          authorValue, orgPath)
+
+  contents <- sub_template_param(contents, "{{OBJECTIVES_HEADER}}",
+                                 settings[["NoteObjectivesHeader"]], orgPath)
+  contents <- sub_template_param(contents, "{{OBJECTIVES_FOOTER}}",
+                                 settings[["NoteObjectivesFooter"]], orgPath)
+  contents <- sub_template_param(contents, "{{DATA_STORAGE_HEADER}}",
+                                 settings[["NoteStorageHeader"]], orgPath)
+  contents <- sub_template_param(contents, "{{DATA_STORAGE_FOOTER}}",
+                                 settings[["NoteStorageFooter"]], orgPath)
+
+  # Insert standard doc header / SEP expansions
+  contents <- replace_markdown_header(contents, orgPath)
+  contents <- replace_sep_values(contents, orgPath)
+
+  contents
+}
+
+# 8) Actually write out the new note Rmd
+write_project_note_rmd <- function(noteRmdPath, noteRmdContents) {
+  write_file(noteRmdContents, noteRmdPath)
+  cat("  Made Project Note: ", noteRmdPath, "\n")
 } #### ________________________________ ####
-
 
 
 
@@ -2287,254 +2341,329 @@ create_project_note <- function( projectNoteName, projectNotePath,
 #'   header note; otherwise, it is added to the sub-note only.
 #'
 #' @export
-create_group_note  <- function( groupNoteName, groupNotePath,
-                                selection, subNoteName, authorValue=get_username(),
-                                addObjToHeader=TRUE,
-                                groupNoteTitle="", subNoteTitle="",
-                                projNoteTemplate="Project-Header-Note-Template.Rmd",
-                                subNoteTemplate="Project-Sub-Note-Template.Rmd",
-                                headerNoteContentLinkTemplate="Project-Header-Note-Content-Link-Template.Rmd",
-                                subNoteContentLinkTemplate="Project-Sub-Note-Content-Link-Template.Rmd",
-                                projNoteLinkTemplate="Project-Note-Link-Template.Rmd",
-                                projNoteLinkSummaryTemplate="Project-Note-Link-Summary-Template.Rmd",
-                                todoTemplate="Todo-Template.Rmd",
-                                projNoteSummaryTemplate="Project-Note-Summary-Template.Rmd",
-                                subNoteSummaryTemplate="Project-Sub-Note-Summary-Template.Rmd" ) {
+create_group_note <- function(
+    groupNoteName,
+    groupNotePath,
+    selection,
+    subNoteName,
+    authorValue = get_username(),
+    addObjToHeader = TRUE,
+    groupNoteTitle = "",
+    subNoteTitle = "",
+    projNoteTemplate = "Project-Header-Note-Template.Rmd",
+    subNoteTemplate  = "Project-Sub-Note-Template.Rmd",
+    headerNoteContentLinkTemplate = "Project-Header-Note-Content-Link-Template.Rmd",
+    subNoteContentLinkTemplate    = "Project-Sub-Note-Content-Link-Template.Rmd",
+    projNoteLinkTemplate          = "Project-Note-Link-Template.Rmd",
+    projNoteLinkSummaryTemplate   = "Project-Note-Link-Summary-Template.Rmd",
+    projNoteSummaryTemplate       = "Project-Note-Summary-Template.Rmd",
+    subNoteSummaryTemplate        = "Project-Sub-Note-Summary-Template.Rmd"
+) {
+
+  cat("\nprojectmanagr::create_group_note():\n")
+
+  # Step A: Validate inputs
+  validate_note_inputs(c(groupNoteName, subNoteName), selection)
+  stop_if_not_doc(selection)
+
+  # Step B: Derive note titles if they aren’t supplied
+  groupNoteTitle <- derive_note_title_if_missing(groupNoteName, groupNoteTitle)
+  subNoteTitle   <- derive_note_title_if_missing(subNoteName, subNoteTitle)
+
+  # Step C: Gather paths, settings, docContents
+  orgPath     <- find_org_for_note_path(groupNotePath)
+  settings    <- get_settings_yml(orgPath)
+  tempPath    <- get_template_dir(orgPath)
+  docPath     <- selection[["filePath"]]
+  docContents <- read_file(docPath)
+
+  # Step D: Create prefixes & directories for both header note & sub-note
+  headerPrefix <- get_next_header_prefix(groupNotePath, settings)
+  headerDir    <- create_note_directory(groupNotePath, headerPrefix)
+  headerRmd    <- create_note_rmd_file(
+    groupNotePath,
+    headerPrefix,
+    groupNoteName,
+    settings
+  )
+
+  subPrefix <- get_next_subnote_prefix(headerDir, settings)
+  subDir    <- create_note_directory(headerDir, subPrefix)
+  subRmd    <- create_note_rmd_file(
+    headerDir,
+    subPrefix,
+    subNoteName,
+    settings
+  )
+
+  # Step E: Read the required templates
+  templates <- read_group_note_templates(
+    tempPath,
+    projNoteTemplate,
+    subNoteTemplate,
+    headerNoteContentLinkTemplate,
+    subNoteContentLinkTemplate,
+    projNoteLinkTemplate,
+    projNoteLinkSummaryTemplate,
+    projNoteSummaryTemplate,
+    subNoteSummaryTemplate
+  )
+
+  # Step F: Populate each Rmd’s contents
+  #   (1) The “header” note gets its unique placeholders
+  headerContents <- populate_header_note_rmd_contents(
+    templates$headerNoteTemplate,
+    headerPrefix,
+    groupNoteTitle,
+    authorValue,
+    settings,
+    orgPath
+  )
+
+  headerContents <- insert_subnote_link_header(
+    headerContents,
+    subRmd,
+    headerRmd,
+    templates$subNoteContentLinkTmpl,
+    settings,
+    orgPath)
 
 
-  cat( "\nprojectmanagr::create_group_note():\n" )
+  #   (2) The “sub-note” gets its placeholders
+  subContents <- populate_sub_note_rmd_contents(
+    templates$subNoteTemplate,
+    subPrefix,
+    subNoteTitle,
+    authorValue,
+    settings,
+    orgPath
+  )
+
+  subContents <- insert_header_link_subnote(
+    subContents,
+    headerRmd,
+    subRmd,
+    templates$headerNoteContentLinkTmpl,
+    settings,
+    orgPath)
 
 
-  #### CHECK FOR ERRORS IN INPUT ####
+  # Step G: Write them out to disk
+  write_file(headerContents, headerRmd)
+  cat("  Wrote Header Note Rmd: ", headerRmd, "\n")
 
-  # Check groupNoteName contains NO SPACES:
-  if( grepl("\\s+", groupNoteName) ) {
-    stop( paste0("  groupNoteName contains a SPACE: ", groupNoteName) )
+  write_file(subContents, subRmd)
+  cat("  Wrote Sub-Note Rmd: ", subRmd, "\n")
+
+
+
+  # Step H: Link them to the doc (goal/deliverable/task). This may insert lines
+  #         into the project doc and/or the header note or sub-note themselves.
+  link_successful <- link_group_note_in_doc(
+    selection,
+    settings,
+    headerRmd,
+    headerContents,
+    subRmd,
+    subContents,
+    templates,
+    docPath,
+    docContents,
+    orgPath,
+    addObjToHeader
+  )
+
+  # Step I: If linking fails, remove the new files & directories
+  if (!link_successful) {
+    fs::file_delete(c(headerRmd, subRmd))
+    fs::dir_delete(c(subDir, headerDir))
+    stop("  Creating Group Note failed—perhaps the link already exists or an error occurred.")
   }
-
-  # check selection is a project DOC
-  if( selection[["rmdType"]] != "DOC" ) {
-    stop( paste0("  selection is not a Project DOC: ", selection[["filePath"]]) )
-  }
-
-
-  #### Set Instance Variables ####
-
-  # Check groupNotePath is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  orgPath <- dirname( dirname(groupNotePath) ) # this should be the orgPath!
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  groupNotePath is not in a sub-dir of a PROGRAMME Directory: ", groupNotePath) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # get config templates settings yml
-  confPath <- get_config_dir(orgPath)
-  tempPath <- get_template_dir(orgPath)
-  settings <- get_settings_yml(orgPath)
-
-  # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
-  if( nchar(groupNoteTitle)==0 ) {
-    groupNoteTitle <- gsub("-", " ", gsub("_", " ", groupNoteName) )
-  }
-
-  # Check projectTitle, and if blank, fill with projectName, replacing all "_" and "-" with spaces
-  if( nchar(subNoteTitle)==0 ) {
-    subNoteTitle <- gsub("-", " ", gsub("_", " ", subNoteName) )
-  }
-
-  projectDocPath <- selection[["filePath"]]
-  # groupNotePath is the parent directory the headerNoteRmdPath (Rmd file) sits in
-  groupNotePath <- fs::path_expand(groupNotePath)
-
-
-  #### Read Rmds ####
-
-  headerNoteRmdContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteTemplate) )
-  subNoteContents <- read_file( paste0( tempPath, .Platform$file.sep, subNoteTemplate) )
-
-  headerNoteContentLinkContents <- read_file( paste0( tempPath, .Platform$file.sep, headerNoteContentLinkTemplate) )
-  subNoteContentLinkContents <- read_file( paste0( tempPath, .Platform$file.sep, subNoteContentLinkTemplate) )
-
-  headerNoteLinkContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteLinkTemplate) )
-
-  projNoteLinkContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteLinkTemplate) )
-  projNoteLinkSummaryContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteLinkSummaryTemplate) )
-  todoContents <- read_file( paste0( tempPath, .Platform$file.sep, todoTemplate) )
-
-  projNoteSummaryContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteSummaryTemplate) )
-  subNoteSummaryContents <- read_file( paste0( tempPath, .Platform$file.sep, subNoteSummaryTemplate) )
-
-  projDocContents <- read_file(projectDocPath)
-
-
-  #### Create Header Note Dir ####
-
-  headerNotePrefix <- get_next_header_prefix(groupNotePath, settings)
-
-  headerNoteDir <- paste0( groupNotePath, .Platform$file.sep, headerNotePrefix)
-  done <- dir.create( headerNoteDir )
-
-  if(!done) {
-    stop( paste0("  Header Note directory could not be created: ", headerNoteDir) )
-  }
-
-  cat( "  Made Project Header dir: ", headerNoteDir, "\n" )
-
-
-  #### Create Sub Note Dir ####
-
-  subNotePrefix <- get_next_subnote_prefix(headerNoteDir, settings)
-  subNotePath <- headerNoteDir
-  subNoteDir <- paste0( subNotePath, .Platform$file.sep, subNotePrefix)
-  done <- dir.create( subNoteDir )
-
-  if(!done) {
-    file.remove(headerNoteDir) # remove the header note dir
-    stop( paste0("  Sub Note directory could not be created: ", subNoteDir) )
-  }
-
-  cat( "  Made Project Sub Note dir: ", subNoteDir, "\n" )
-
-
-  #### create Header Note Rmd file ####
-
-  headerNoteRmdPath <- paste0( groupNotePath, .Platform$file.sep, headerNotePrefix,
-                               settings[["ProjectPrefixSep"]], groupNoteName, ".Rmd")
-  headerNoteFileName <- basename(headerNoteRmdPath)
-  done <- file.create( headerNoteRmdPath )
-
-  if(!done) {
-    file.remove(headerNoteDir) # remove the header note dir
-    file.remove(subNoteDir) # remove the sub note dir
-    stop( paste0("  Project Header Note could not be created: ", headerNoteRmdPath) )
-  }
-
-
-  #### create Sub Note Rmd file ####
-
-  subNoteRmdPath <- paste0( subNotePath, .Platform$file.sep, subNotePrefix,
-                            settings[["ProjectPrefixSep"]], subNoteName, ".Rmd")
-  subNoteFileName <- basename(subNoteRmdPath)
-  done <- file.create( subNoteRmdPath )
-
-  if(!done) {
-    file.remove(headerNoteDir) # remove the header note dir
-    file.remove(subNoteDir) # remove the sub note dir
-    file.remove(headerNoteRmdPath) # remove the header note file
-    stop( paste0("  Project Sub Note could not be created: ", subNoteRmdPath) )
-  }
-
-
-  #### HEADER : Replace markup  with values ####
-
-  # modify headerNoteRmdContents
-  headerNoteRmdContents <- sub_template_param(headerNoteRmdContents, "{{PREFIX}}",
-                                           headerNotePrefix, orgPath)
-  headerNoteRmdContents <- sub_template_param(headerNoteRmdContents, "{{TITLE}}",
-                                           groupNoteTitle, orgPath)
-  headerNoteRmdContents <- sub_template_param(headerNoteRmdContents, "{{AUTHOR}}",
-                                           authorValue, orgPath)
-
-  headerNoteRmdContents <- sub_template_param(headerNoteRmdContents, "{{OBJECTIVES_HEADER}}",
-                                           settings[["NoteObjectivesHeader"]], orgPath)
-  headerNoteRmdContents <- sub_template_param(headerNoteRmdContents, "{{OBJECTIVES_FOOTER}}",
-                                           settings[["NoteObjectivesFooter"]], orgPath)
-
-  headerNoteRmdContents <- sub_template_param(headerNoteRmdContents, "{{DATA_STORAGE_HEADER}}",
-                                           settings[["NoteStorageHeader"]], orgPath)
-  headerNoteRmdContents <- sub_template_param(headerNoteRmdContents, "{{DATA_STORAGE_FOOTER}}",
-                                           settings[["NoteStorageFooter"]], orgPath)
-
-  headerNoteRmdContents <- sub_template_param(headerNoteRmdContents, "{{HEADER_NOTE_CONTENTS_HEADER}}",
-                                           settings[["HeaderNoteContentsHeader"]], orgPath)
-  headerNoteRmdContents <- sub_template_param(headerNoteRmdContents, "{{HEADER_NOTE_CONTENTS_FOOTER}}",
-                                           settings[["HeaderNoteContentsFooter"]], orgPath)
-
-  # modify headerNoteRmdContents with rmarkdown-html-header content
-  headerNoteRmdContents <- replace_markdown_header(headerNoteRmdContents, orgPath)
-
-  # modify headerNoteRmdContents with SEP values
-  headerNoteRmdContents <- replace_sep_values(headerNoteRmdContents, orgPath)
-
-
-  #### insert sub note content link into header note ####
-
-  subNoteContentLink <- create_hyperlink( subNoteFileName, subNoteRmdPath, headerNoteRmdPath)
-  subNoteContentLinkContents <- sub_template_param(subNoteContentLinkContents,
-                                                   "{{HEADER_NOTE_CONTENT_LINK}}",
-                                                   subNoteContentLink, orgPath)
-
-  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["HeaderNoteContentsHeader"]], orgPath),
-                                           headerNoteRmdContents)
-  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["HeaderNoteContentsFooter"]], orgPath),
-                                                 headerNoteRmdContents, noteContentsHeadIndex, orgPath)
-
-  headerNoteRmdContents <- insert_at_indices(headerNoteRmdContents, noteContentsFootIndex, subNoteContentLinkContents)
-
-
-  #### write Header Note ####
-
-  write_file(headerNoteRmdContents, headerNoteRmdPath)
-
-  cat( "  Made Project Header Note: ", headerNoteRmdPath, "\n" )
-
-
-  #### SUBNOTE : Replace markup with values ####
-
-  # sub subNoteContents with params
-  subNoteContents <-sub_subnote_params(subNoteContents, subNotePrefix,
-                                       subNoteTitle, authorValue,
-                                       settings, orgPath)
-
-
-  #### insert header note content link into sub note ####
-
-  subNoteContents <- insert_header_link_subnote(subNoteContents, headerNoteFileName,
-                                                headerNoteRmdPath, subNoteRmdPath,
-                                                headerNoteContentLinkContents,
-                                                settings, orgPath)
-
-
-  #### write Sub Note ####
-
-  write_file(subNoteContents, subNoteRmdPath)
-
-  cat( "  Made Project Sub Note: ", subNoteRmdPath, "\n" )
-
-
-  #### Link Header/Sub Note and Project Doc GDT ####
-
-  if( addObjToHeader == TRUE ) { # add Doc link to HeaderNote if requested
-
-    subNoteContents <- NULL # recoup memory - will open each subnote in link_group_note_doc()
-
-    linkFormed <- link_group_note_doc(selection, settings, headerNoteRmdPath, headerNoteRmdContents,
-                                      headerNoteLinkContents, projNoteLinkContents, projNoteLinkSummaryContents, todoContents,
-                                      projNoteSummaryContents, subNoteSummaryContents, projDocContents, orgPath)
-    # adds Doc Link to header and all its SubNotes
-
-    if( linkFormed == FALSE ) {
-      # return an error
-      stop( paste0("  Linking Project Note Failed - link already exists."))
-    }
-
-  } else { # add Doc Link to the SubNote ONLY
-
-    linkFormed <- link_project_note_doc(selection, settings, subNoteRmdPath, subNoteContents,
-                                        projNoteLinkContents, projNoteLinkSummaryContents, todoContents,
-                                        projNoteSummaryContents, projDocContents, orgPath)
-
-    if( linkFormed == FALSE ) {
-      # remove the project note and directory
-      file.remove(projDirPath) # remove the project note dir
-      file.remove(projNoteRmdPath) # remove the project note Rmd
-      stop( paste0("  Creating Project Note Failed - link already exists."))
-    }
-  }
-
 }
+
+
+
+read_group_note_templates <- function(
+    tempPath,
+    headerNoteTemplate,
+    subNoteTemplate,
+    headerNoteContentLinkTemplate,
+    subNoteContentLinkTemplate,
+    projNoteLinkTemplate,
+    projNoteLinkSummaryTemplate,
+    projNoteSummaryTemplate,
+    subNoteSummaryTemplate
+) {
+  list(
+    headerNoteTemplate         = read_file(fs::path(tempPath, headerNoteTemplate)),
+    subNoteTemplate            = read_file(fs::path(tempPath, subNoteTemplate)),
+    headerNoteContentLinkTmpl  = read_file(fs::path(tempPath, headerNoteContentLinkTemplate)),
+    subNoteContentLinkTmpl     = read_file(fs::path(tempPath, subNoteContentLinkTemplate)),
+    noteLinkTemplate           = read_file(fs::path(tempPath, projNoteLinkTemplate)),
+    noteLinkSummaryTemplate    = read_file(fs::path(tempPath, projNoteLinkSummaryTemplate)),
+    noteSummaryTemplate        = read_file(fs::path(tempPath, projNoteSummaryTemplate)),
+    subNoteSummaryTemplate     = read_file(fs::path(tempPath, subNoteSummaryTemplate))
+  )
+}
+
+
+populate_header_note_rmd_contents <- function(
+    headerTemplate,
+    headerPrefix,
+    headerTitle,
+    authorValue,
+    settings,
+    orgPath
+) {
+  contents <- headerTemplate
+
+  contents <- populate_note_rmd_contents(contents, headerPrefix, headerTitle,
+                                         authorValue, settings, orgPath)
+
+  # The two the old code specifically calls out:
+  contents <- sub_template_param(contents, "{{HEADER_NOTE_CONTENTS_HEADER}}",
+                                 settings[["HeaderNoteContentsHeader"]], orgPath)
+  contents <- sub_template_param(contents, "{{HEADER_NOTE_CONTENTS_FOOTER}}",
+                                 settings[["HeaderNoteContentsFooter"]], orgPath)
+
+  contents
+}
+
+
+populate_sub_note_rmd_contents <- function(
+    subNoteTemplate,
+    subNotePrefix,
+    subNoteTitle,
+    authorValue,
+    settings,
+    orgPath
+) {
+  contents <- subNoteTemplate
+
+  contents <- populate_note_rmd_contents(contents, subNotePrefix, subNoteTitle,
+                                         authorValue, settings, orgPath)
+
+  # The “sub-note”–specific placeholders
+  contents <- sub_template_param(contents, "{{GROUP_NOTE_CONTENTS_HEADER}}",
+                                 settings[["SubNoteContentsHeader"]], orgPath)
+  contents <- sub_template_param(contents, "{{GROUP_NOTE_CONTENTS_FOOTER}}",
+                                 settings[["SubNoteContentsFooter"]], orgPath)
+
+  contents
+}
+
+
+#' Link a Newly Created Group Note (Header + Sub) into the Project Doc
+#'
+#' This function wraps the old branching logic:
+#'  - If \code{addObjToHeader = TRUE}, we attach the project doc to the *header note*
+#'    (the “header” Rmd). The old code used \code{link_group_note_doc()} for that.
+#'  - Otherwise, we link the doc to the *sub-note* Rmd only
+#'    (the old code used \code{link_project_note_doc()}).
+#'
+#' We assume these two linking functions (\code{link_group_note_doc} and
+#' \code{link_project_note_doc}) already exist in your codebase and return a
+#' boolean: \code{TRUE} if the link was formed successfully, \code{FALSE} if
+#' linking failed (because the link already exists, etc.).
+#'
+#' @param selection A list describing the user’s selection in the doc:
+#'   must include \code{rmdType} = "DOC", \code{filePath}, \code{taskLine}, etc.
+#' @param settings A list of settings from \code{.config/settings.yml}.
+#' @param headerRmdPath Absolute file path to the newly created *header* Rmd.
+#' @param headerRmdContents The lines of that newly created header note.
+#' @param subRmdPath Absolute file path to the newly created *sub-note* Rmd.
+#' @param subRmdContents The lines of that newly created sub-note.
+#' @param templates A list of template strings for linking (e.g.
+#'   \code{headerNoteLinkContents}, \code{subNoteLinkContents}, \code{projNoteLinkContents}, etc.).
+#' @param docPath The absolute file path to the \strong{project doc} (the G/D/T Rmd).
+#' @param docContents The lines of the project doc, already read in.
+#' @param orgPath The root org directory, used if you need to re-read
+#'   or do \code{sub_template_param} calls.
+#' @param addObjToHeader Logical. If \code{TRUE}, link to the header note only;
+#'   otherwise link to the sub-note only.
+#'
+#' @return A logical, \code{TRUE} if linking succeeded, or \code{FALSE} if it failed.
+#'
+link_group_note_in_doc <- function(
+    selection,
+    settings,
+    headerRmdPath,
+    headerRmdContents,
+    subRmdPath,
+    subRmdContents,
+    templates,
+    docPath,
+    docContents,
+    orgPath,
+    addObjToHeader = TRUE
+) {
+
+  # testing
+  # headerRmdPath <- headerRmd
+  # headerRmdContents <- headerContents
+  # subRmdPath <- subRmd
+  # subRmdContents <- subContents
+
+  # For convenience, define any variables your linking code needs:
+  headerNoteLinkContents    <- templates$noteLinkTemplate # NOT headerNoteContentLinkTmpl
+  projNoteLinkContents      <- templates$noteLinkTemplate
+  projNoteLinkSummary       <- templates$noteLinkSummaryTemplate
+  projNoteSummary           <- templates$noteSummaryTemplate
+  subNoteSummary            <- templates$subNoteSummaryTemplate
+
+  # Now branch based on addObjToHeader:
+  if (isTRUE(addObjToHeader)) {
+
+    # 1) Link the project doc to the header and all its SubNotes
+
+    linkFormed <- link_group_note_doc(
+      selection         = selection,
+      settings          = settings,
+      headerNoteRmdPath = headerRmdPath,
+      headerNoteContents = headerRmdContents,
+      headerNoteLinkContents  = headerNoteLinkContents,
+      projNoteLinkContents    = projNoteLinkContents,
+      projNoteLinkSummary     = projNoteLinkSummary,
+      projNoteSummary         = projNoteSummary,
+      subNoteSummary          = subNoteSummary,
+      projDocContents         = docContents,
+      orgPath                 = orgPath
+    )
+
+    if (!linkFormed) {
+      # Return a FALSE => indicates we should do cleanup in create_group_note()
+      return(FALSE)
+    }
+
+  } else {
+
+    # 2) Link the project doc to the sub-note only
+
+    linkFormed <- link_project_note_doc(
+      selection          = selection,
+      settings           = settings,
+      projNoteRmdPath    = subRmdPath,
+      projNoteRmdContents= subRmdContents,
+      projNoteLinkContents       = projNoteLinkContents,
+      projNoteLinkSummaryContents= projNoteLinkSummary,
+      projNoteSummaryContents    = projNoteSummary,
+      projDocContents            = docContents,
+      orgPath                    = orgPath
+    )
+
+    if (!linkFormed) {
+      return(FALSE)
+    }
+  }
+
+  # If we get here, linking must have succeeded:
+  return(TRUE)
+}
+
+
+
+
+
 
 #' Insert Header Link into Subnote
 #'
@@ -2545,7 +2674,6 @@ create_group_note  <- function( groupNoteName, groupNotePath,
 #'
 #' @param subNoteContents Character vector containing the contents of the
 #'        subnote Rmd file.
-#' @param headerNoteFileName A string specifying the header note file name.
 #' @param headerNoteRmdPath A string specifying the full file path of the
 #'        header note Rmd.
 #' @param subNoteRmdPath A string specifying the full file path of the
@@ -2596,334 +2724,39 @@ create_group_note  <- function( groupNoteName, groupNotePath,
 #'
 #' @seealso create_hyperlink, sub_template_param, load_param_vector,
 #'          match_line_index, grep_line_index_from, insert_at_indices
-insert_header_link_subnote <- function(subNoteContents, headerNoteFileName,
+insert_header_link_subnote <- function(subNoteContents,
                                        headerNoteRmdPath, subNoteRmdPath,
                                        headerNoteContentLinkContents,
                                        settings, orgPath) {
 
 
-  #### Insert header link content into subnote ####
+  headerNoteContentLink <- create_hyperlink(
+    fs::path_file(headerNoteRmdPath),
+    headerNoteRmdPath, subNoteRmdPath)
 
-  headerNoteContentLink <- create_hyperlink( headerNoteFileName, headerNoteRmdPath, subNoteRmdPath)
-  headerNoteContentLinkContents <- sub_template_param(headerNoteContentLinkContents,
-                                                      "{{SUB_NOTE_CONTENT_LINK}}",
-                                                      headerNoteContentLink, orgPath)
+  headerNoteContentLinkContents <- sub_template_param(
+    headerNoteContentLinkContents, "{{SUB_NOTE_CONTENT_LINK}}",
+    headerNoteContentLink, orgPath)
 
-  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["SubNoteContentsHeader"]], orgPath),
-                                             subNoteContents)
-  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["SubNoteContentsFooter"]], orgPath),
-                                                 subNoteContents, noteContentsHeadIndex, orgPath)
+  noteContentsHeadIndex <- match_line_index(
+    load_param_vector(settings[["SubNoteContentsHeader"]], orgPath),
+    subNoteContents)
 
-  subNoteContents <- insert_at_indices(subNoteContents, noteContentsFootIndex, headerNoteContentLinkContents)
+  noteContentsFootIndex <- grep_line_index_from(
+    load_param_vector(settings[["SubNoteContentsFooter"]], orgPath),
+    subNoteContents, noteContentsHeadIndex, orgPath)
+
+  subNoteContents <- insert_at_indices(subNoteContents,
+                                       noteContentsFootIndex,
+                                       headerNoteContentLinkContents)
 
   subNoteContents # return
 
-} #### ________________________________ ####
-
-
-#' Add a New Sub Note to a Project Group
-#'
-#' This function creates a new Sub Note within a Project Group. It reads the
-#' necessary template files, creates the required sub-directory and R Markdown
-#' file for the Sub Note, replaces template markup with provided values, and
-#' updates the Project Group Header Note with a link to the new Sub Note. It
-#' then calls link_sub_note_doc() to insert all relevant links and summaries into
-#' the main project document.
-#'
-#' @param subNoteName A string representing the name of the Project Sub Note.
-#' Spaces are replaced with '-' or '_' by default.
-#'
-#' @param subNotePath A character string specifying the absolute directory
-#' where the Sub Note will be stored. It must reside within the Project Group
-#' Note Directory.
-#'
-#' @param selection A list with metadata about the current selection. The list
-#' must include the following keys:
-#'   - rmdType: A string specifying the file type. Valid values are "DOC",
-#'     "HEAD", or "SUB".
-#'   - filePath: The file path of the associated project document.
-#'   - headerNoteLink: A relative link to the header note (used when rmdType is
-#'     "DOC").
-#'   - goal: A string defining the goal associated with the note.
-#'   - deliverable: A string defining the deliverable linked to the note.
-#'   - task: A string defining the task associated with the note.
-#'   - taskLine: An integer indicating the line number in the project document
-#'     where the task is defined.
-#'   - addingSubNote: (Optional) A boolean that must be TRUE if rmdType is "DOC".
-#'
-#' @param authorValue A string representing the author's name for the note.
-#' Defaults to the current system user.
-#'
-#' @param subNoteTitle (Optional) A title for the Sub Note. If blank, the
-#' subNoteName is used with underscores and dashes replaced by spaces.
-#'
-#' @param subNoteTemplate A template file used to generate the Sub Note.
-#' Default is "Project-Sub-Note-Template.Rmd".
-#'
-#' @param headerNoteContentLinkTemplate A template file for creating a content
-#' link from the header note to the Sub Note. Default is
-#' "Project-Header-Note-Content-Link-Template.Rmd".
-#'
-#' @param subNoteContentLinkTemplate A template file for creating a content link
-#' within the Sub Note. Default is
-#' "Project-Sub-Note-Content-Link-Template.Rmd".
-#'
-#' @param projNoteLinkTemplate A template file that defines the structure of the
-#' Project Doc Goal/Del/Task link in the Sub Note. Default is
-#' "Project-Note-Link-Template.Rmd".
-#'
-#' @param projNoteLinkSummaryTemplate A template file that adds a summary and
-#' to-do section beneath the Project Doc link in the Sub Note. Default is
-#' "Project-Note-Link-Summary-Template.Rmd".
-#'
-#' @param todoTemplate A template file for the to-do list section. Default is
-#' "Todo-Template.Rmd".
-#'
-#' @param projNoteSummaryTemplate A template file used to add a Project Note
-#' summary to the Project Doc. Default is
-#' "Project-Note-Summary-Template.Rmd".
-#'
-#' @param subNoteSummaryTemplate A template file used to add a Sub Note summary
-#' to the Project Doc. Default is
-#' "Project-Sub-Note-Summary-Template.Rmd".
-#'
-#' @details
-#' The function performs the following steps:
-#' 1. Validates that subNoteName contains no spaces.
-#' 2. Checks that the selection list is valid. The selection must include
-#'    keys such as rmdType, filePath, headerNoteLink, goal, deliverable, task,
-#'    and taskLine; if rmdType is "DOC", addingSubNote must be TRUE.
-#' 3. Determines the header note Rmd path based on the selection.
-#' 4. Reads the required template files for the Sub Note and for header note
-#'    content links.
-#' 5. Creates a sub-directory for the Sub Note and an associated R Markdown file.
-#' 6. Replaces the markup in the Sub Note with provided parameters.
-#' 7. Inserts a header link into the Sub Note and updates the Header Note with
-#'    the Sub Note link.
-#' 8. Calls link_sub_note_doc() to update the project document with all relevant
-#'    Sub Note links and summaries.
-#'
-#' @return This function does not return a value. It creates and updates files on
-#' disk to integrate the new Sub Note into the project documentation.
-#'
-#' @examples
-#' \dontrun{
-#' create_sub_note(
-#'   subNoteName = "analysis_note",
-#'   subNotePath = "/projects/my_project/notes",
-#'   selection = list(
-#'     rmdType = "DOC",
-#'     filePath = "project_doc.Rmd",
-#'     headerNoteLink = "[Header](header_note.Rmd)",
-#'     goal = "Define hypothesis",
-#'     deliverable = "Experiment setup",
-#'     task = "Run pilot study",
-#'     taskLine = 45,
-#'     addingSubNote = TRUE
-#'   ),
-#'   authorValue = "sjwest",
-#'   subNoteTitle = "Data Analysis",
-#'   subNoteTemplate = "Project-Sub-Note-Template.Rmd"
-#' )
-#' }
-#'
-#' @seealso
-#' - \code{\link{link_sub_note_doc}} for linking Sub Notes to Project Docs.
-#' - \code{\link{find_org_directory}} to locate the organisation directory.
-#' - \code{\link{get_settings_yml}} for retrieving project settings.
-#' - \code{\link{insert_header_link_subnote}} for inserting header links into Sub
-#'   Notes.
-#'
-#' @note
-#' The selection list must include the keys: rmdType, filePath, headerNoteLink,
-#' goal, deliverable, task, and taskLine. If rmdType is "DOC", the key
-#' addingSubNote must also be TRUE. This function modifies files on disk; ensure
-#' you have backups before running it. It relies on a structured project directory
-#' and properly configured template files.
-#'
-#' @export
-
-create_sub_note <- function( subNoteName, subNotePath,
-                             selection, authorValue=get_username(),
-                             subNoteTitle="",
-                             subNoteTemplate="Project-Sub-Note-Template.Rmd",
-                             headerNoteContentLinkTemplate="Project-Header-Note-Content-Link-Template.Rmd",
-                             subNoteContentLinkTemplate="Project-Sub-Note-Content-Link-Template.Rmd",
-                             projNoteLinkTemplate="Project-Note-Link-Template.Rmd",
-                             projNoteLinkSummaryTemplate="Project-Note-Link-Summary-Template.Rmd",
-                             todoTemplate="Todo-Template.Rmd",
-                             projNoteSummaryTemplate="Project-Note-Summary-Template.Rmd",
-                             subNoteSummaryTemplate="Project-Sub-Note-Summary-Template.Rmd" ) {
-
-
-  cat( "\nprojectmanagr::create_sub_note():\n" )
-
-
-  #### CHECK FOR ERRORS IN INPUT ####
-
-  # Check subNoteName contains NO SPACES:
-  if( grepl("\\s+", subNoteName) ) {
-    stop( paste0("  subNoteName contains a SPACE: ", subNoteName) )
-  }
-
-  # Check valid selection - can handle DOC HEAD or SUB Rmd selections
-  if( selection[["rmdType"]] != "DOC" && selection[["rmdType"]] != "HEAD" &&
-      selection[["rmdType"]] != "SUB" ) {
-    stop( paste0("  unsupported Rmd file type selected: ", selection[["rmdType"]],
-                 " - ", selection[["filePath"]]) )
-  }
-
-  # Check valid DOC selection - addingSubNote must be TRUE
-  if( selection[["rmdType"]] == "DOC" ) {
-    if( selection[["addingSubNote"]] != TRUE ) {
-      stop( paste0("  unsupported Project DOC selection - not selecting a project note group.") )
-    }
-  }
-
-
-  #### Set Instance Variables ####
-
-  # Check projectNotePath is a sub-dir in a Programme DIR, which is a sub-dir to the root of an ORGANISATION:
-  orgPath <- dirname( dirname(subNotePath) ) # this should be the orgPath!
-  orgPath <- find_org_directory(orgPath)
-
-  if(orgPath == "" ) { # only if orgPath not identified
-    stop( paste0("  subNotePath is not in a sub-dir of a PROGRAMME Directory: ", subNotePath) )
-  }
-  # now, orgPath should be the root dir of the organisation
-
-  # get config templates settings yml
-  confPath <- get_config_dir(orgPath)
-  tempPath <- get_template_dir(orgPath)
-  settings <- get_settings_yml(orgPath)
-
-  # Check subNoteTitle, and if blank, fill with subNoteName, replacing all "_" and "-" with spaces
-  if( nchar(subNoteTitle) == 0 ) {
-    subNoteTitle <- gsub("-", " ", gsub("_", " ", subNoteName) )
-  }
-
-  # define headerNoteRmdPath & linkNoteRmdPath - depends on selection
-  if( selection[["rmdType"]] == "DOC" ) {
-
-    # extract header note relative path
-    hnrp <- substr(selection[["headerNoteLink"]],
-                   regexpr("](", selection[["headerNoteLink"]], fixed=TRUE)+2,
-                   nchar(selection[["headerNoteLink"]]) )
-    hnrp <- substr(hnrp, 1, regexpr(")", hnrp, fixed=TRUE)-1)
-    # combine with filePath to get the full path
-    headerNoteRmdPath <- R.utils::getAbsolutePath(
-      paste0(dirname(selection[["filePath"]]), .Platform$file.sep, hnrp) )
-    linkNoteRmdPath <- headerNoteRmdPath # add all links from header note
-
-  } else if( selection[["rmdType"]] == "HEAD" ) {
-
-    headerNoteRmdPath <- selection[["filePath"]] # filePath points to header note
-    linkNoteRmdPath <- headerNoteRmdPath # add all links from header note
-
-  } else if( selection[["rmdType"]] == "SUB" ) {
-
-    headerNoteRmdPath <- find_header_Rmd_path(selection[["filePath"]], settings) # get header path from subnote path
-    linkNoteRmdPath <- selection[["filePath"]] # add all links from selected subnote
-  }
-
-  headerNoteFileName <- basename(headerNoteRmdPath)
-  subNotePath <- fs::path_expand(subNotePath)
-  subNotePrefix <- get_next_subnote_prefix(subNotePath, settings)
-
-
-  #### Read Rmds ####
-
-  subNoteContents <- read_file( paste0( tempPath, .Platform$file.sep, subNoteTemplate) )
-
-  headerNoteContentLinkContents <- read_file( paste0( tempPath, .Platform$file.sep, headerNoteContentLinkTemplate) )
-  subNoteContentLinkContents <- read_file( paste0( tempPath, .Platform$file.sep, subNoteContentLinkTemplate) )
-
-  projNoteLinkContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteLinkTemplate) )
-  projNoteLinkSummaryContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteLinkSummaryTemplate) )
-  todoContents <- read_file( paste0( tempPath, .Platform$file.sep, todoTemplate) )
-
-  projNoteSummaryContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteSummaryTemplate) )
-  subNoteSummaryContents <- read_file( paste0( tempPath, .Platform$file.sep, subNoteSummaryTemplate) )
-
-  headerNoteRmdContents <- read_file(headerNoteRmdPath)
-  linkNoteRmdContents <- read_file(linkNoteRmdPath)
-
-
-  #### Create Sub Note Dir ####
-
-  subNoteDir <- paste0( subNotePath, .Platform$file.sep, subNotePrefix)
-  done <- dir.create( subNoteDir )
-
-  if(!done) {
-    stop( paste0("  Sub Note directory could not be created: ", subNoteDir) )
-  }
-
-  cat( "  Made Project Sub Note dir: ", subNoteDir, "\n" )
-
-
-  #### create SubNote Rmd file ####
-
-  # Create blank RMD DOCUMENT:
-  subNoteRmdPath <- paste0( subNotePath, .Platform$file.sep, subNotePrefix,
-                            settings[["ProjectPrefixSep"]], subNoteName, ".Rmd")
-  subNoteFileName <- basename(subNoteRmdPath)
-  done <- file.create( subNoteRmdPath )
-
-  if(!done) {
-    file.remove(subNoteDir) # remove the sub note dir
-    stop( paste0("  Project Sub Note could not be created: ", subNoteRmdPath) )
-  }
-
-
-  #### Replace markup in Sub Note with values ####
-
-  # modify subNoteContents
-  subNoteContents <-sub_subnote_params(subNoteContents, subNotePrefix,
-                                       subNoteTitle, authorValue,
-                                       settings, orgPath)
-
-
-  #### insert header link into sub note ####
-
-  subNoteContents <- insert_header_link_subnote(
-                        subNoteContents, headerNoteFileName,
-                        headerNoteRmdPath, subNoteRmdPath,
-                        headerNoteContentLinkContents, settings, orgPath)
-
-
-  #### write Sub Note Contents ####
-
-  write_file(subNoteContents, subNoteRmdPath)
-
-  cat( "  Made Sub Note: ", subNoteRmdPath, "\n" )
-
-
-  #### insert sub note content link into header note ####
-
-  headerNoteRmdContents <- insert_subnote_link_header(
-                              headerNoteRmdContents, subNoteFileName,
-                              subNoteRmdPath, headerNoteRmdPath,
-                              subNoteContentLinkContents, settings, orgPath)
-
-
-  #### write Header Note ####
-
-  write_file(headerNoteRmdContents, headerNoteRmdPath)
-
-  cat( "  Edited Project Header Note: ", headerNoteRmdPath, "\n" )
-
-
-  #### Link SubNote with all links in linkRmd ####
-
-  link_sub_note_doc(selection, settings, subNoteRmdPath, subNoteContents,
-                    headerNoteRmdPath, headerNoteRmdContents,
-                    projNoteLinkContents, projNoteLinkSummaryContents, todoContents,
-                    projNoteSummaryContents, subNoteSummaryContents,
-                    linkNoteRmdPath, linkNoteRmdContents, orgPath)
-
 }
 
-#' Insert Header Link into Subnote
+
+
+#' Insert Sub-Note Link into a Header Note
 #'
 #' This function inserts a hyperlink to a subnote into the header note
 #' contents. The link is generated from the subnote file name and its file
@@ -2933,7 +2766,6 @@ create_sub_note <- function( subNoteName, subNotePath,
 #'
 #' @param headerNoteRmdContents Character vector containing the contents of the
 #' header note Rmd file.
-#' @param subNoteFileName A string specifying the subnote file name.
 #' @param subNoteRmdPath A string with the full file path of the subnote Rmd.
 #' @param headerNoteRmdPath A string with the full file path of the header note
 #' Rmd.
@@ -2984,26 +2816,351 @@ create_sub_note <- function( subNoteName, subNotePath,
 #'
 #' @seealso create_hyperlink, sub_template_param, load_param_vector,
 #' match_line_index, grep_line_index_from, insert_at_indices
-insert_subnote_link_header <- function(headerNoteRmdContents, subNoteFileName,
+insert_subnote_link_header <- function(headerNoteRmdContents,
                                        subNoteRmdPath, headerNoteRmdPath,
                                        subNoteContentLinkContents,
                                        settings, orgPath) {
 
-  subNoteContentLink <- create_hyperlink( subNoteFileName, subNoteRmdPath, headerNoteRmdPath)
+  # testing
+  #headerNoteRmdContents <- headerContents
+  #subNoteRmdPath <- subRmd
+  #headerNoteRmdPath <- headerRmd
+  #subNoteContentLinkContents <- templates$subNoteContentLinkTmpl
+  #settings,
+  #orgPath
+
+  subNoteContentLink <- create_hyperlink(
+    fs::path_file(subNoteRmdPath),
+    subNoteRmdPath,
+    headerNoteRmdPath)
   subNoteContentLinkContents <- sub_template_param(subNoteContentLinkContents,
                                                    "{{HEADER_NOTE_CONTENT_LINK}}",
                                                    subNoteContentLink, orgPath)
 
-  noteContentsHeadIndex <- match_line_index( load_param_vector(settings[["HeaderNoteContentsHeader"]], orgPath),
-                                             headerNoteRmdContents)
-  noteContentsFootIndex <- grep_line_index_from( load_param_vector(settings[["HeaderNoteContentsFooter"]], orgPath),
-                                                 headerNoteRmdContents, noteContentsHeadIndex, orgPath)
+  noteContentsHeadIndex <- match_line_index(
+    load_param_vector(settings[["HeaderNoteContentsHeader"]],
+                      orgPath),
+    headerNoteRmdContents)
+  noteContentsFootIndex <- grep_line_index_from(
+    load_param_vector(settings[["HeaderNoteContentsFooter"]],
+                      orgPath),
+    headerNoteRmdContents, noteContentsHeadIndex, orgPath)
 
-  headerNoteRmdContents <- insert_at_indices(headerNoteRmdContents, noteContentsFootIndex, subNoteContentLinkContents)
+  headerNoteRmdContents <- insert_at_indices(headerNoteRmdContents,
+                                             noteContentsFootIndex,
+                                             subNoteContentLinkContents)
 
   headerNoteRmdContents # return
 
+} #### ________________________________ ####
+
+
+#' Create a New Sub Note within a Project Group
+#'
+#' This function creates a new Sub Note within a Project Group. It reads the
+#' necessary template files, creates the required sub-directory and R Markdown
+#' file for the Sub Note, replaces template markup with provided values, and
+#' updates the Project Group Header Note with a link to the new Sub Note. It
+#' then calls link_sub_note_doc() to insert all relevant links and summaries into
+#' the main project document.
+#'
+#' @param subNoteName A string representing the name of the Project Sub Note.
+#'   Must not contain spaces.
+#' @param subNotePath A character string specifying the absolute directory
+#'   where the Sub Note will be stored. It must reside within the Project
+#'   Group Note directory.
+#' @param selection A list with metadata about the current selection. The list
+#'   must include the following keys:
+#'   - rmdType: A string specifying the file type. Valid values are "DOC",
+#'     "HEAD", or "SUB".
+#'   - filePath: The file path of the associated project document (or note).
+#'   - headerNoteLink (if rmdType == "DOC"): A relative link to the header note
+#'     from the doc text.
+#'   - goal, deliverable, task, taskLine: GDT info for linking in the doc.
+#'   - addingSubNote (if rmdType == "DOC"): Must be TRUE for a valid sub-note
+#'     insertion.
+#' @param authorValue A string representing the author's name for the note.
+#'   Defaults to the current system user.
+#' @param subNoteTitle (Optional) A title for the Sub Note. If blank, the
+#'   subNoteName is used with underscores and dashes replaced by spaces.
+#' @param subNoteTemplate A template file used to generate the Sub Note.
+#'   Default is "Project-Sub-Note-Template.Rmd".
+#' @param headerNoteContentLinkTemplate A template file for creating a content
+#'   link from the header note to the Sub Note. Default is
+#'   "Project-Header-Note-Content-Link-Template.Rmd".
+#' @param subNoteContentLinkTemplate A template file for creating a content link
+#'   within the Sub Note. Default is "Project-Sub-Note-Content-Link-Template.Rmd".
+#' @param projNoteLinkTemplate A template file that defines the structure of the
+#'   Project Doc Goal/Del/Task link in the Sub Note. Default is
+#'   "Project-Note-Link-Template.Rmd".
+#' @param projNoteLinkSummaryTemplate A template file that adds a summary and
+#'   to-do section beneath the Project Doc link in the Sub Note. Default is
+#'   "Project-Note-Link-Summary-Template.Rmd".
+#' @param todoTemplate A template file for the to-do list section. Default is
+#'   "Todo-Template.Rmd".
+#' @param projNoteSummaryTemplate A template file used to add a Project Note
+#'   summary to the Project Doc. Default is "Project-Note-Summary-Template.Rmd".
+#' @param subNoteSummaryTemplate A template file used to add a Sub Note summary
+#'   to the Project Doc. Default is "Project-Sub-Note-Summary-Template.Rmd".
+#'
+#' @details
+#' This function performs the following steps:
+#' 1. Validates that subNoteName contains no spaces.
+#' 2. Checks that the selection list is valid. The selection must include
+#'    keys such as rmdType, filePath, headerNoteLink, goal, deliverable, task,
+#'    and taskLine; if rmdType is "DOC", addingSubNote must be TRUE.
+#' 3. Determines the header note Rmd path (and link note path) based on the
+#'    selection.
+#' 4. Reads the required template files for the Sub Note and for header note
+#'    content links.
+#' 5. Creates a sub-directory for the Sub Note and an associated R Markdown file.
+#' 6. Replaces the markup in the Sub Note with provided parameters, then inserts
+#'    a link to the header note.
+#' 7. Updates the header note, inserting a link back to the new Sub Note.
+#' 8. Calls link_sub_note_doc() to update the project document with all relevant
+#'    Sub Note links and summaries.
+#'
+#' @seealso link_sub_note_doc, insert_header_link_subnote,
+#'   insert_subnote_link_header, create_note_directory, create_note_rmd_file
+#'
+#' @export
+create_sub_note <- function(
+    subNoteName,
+    subNotePath,
+    selection,
+    authorValue = get_username(),
+    subNoteTitle = "",
+    subNoteTemplate = "Project-Sub-Note-Template.Rmd",
+    headerNoteContentLinkTemplate = "Project-Header-Note-Content-Link-Template.Rmd",
+    subNoteContentLinkTemplate    = "Project-Sub-Note-Content-Link-Template.Rmd",
+    projNoteLinkTemplate          = "Project-Note-Link-Template.Rmd",
+    projNoteLinkSummaryTemplate   = "Project-Note-Link-Summary-Template.Rmd",
+    projNoteSummaryTemplate       = "Project-Note-Summary-Template.Rmd",
+    subNoteSummaryTemplate        = "Project-Sub-Note-Summary-Template.Rmd"
+) {
+  cat("\nprojectmanagr::create_sub_note():\n")
+
+  # 1) Validate the inputs (rmdType in DOC/HEAD/SUB, addingSubNote if DOC, no spaces, etc.)
+  validate_sub_note_args(subNoteName, selection)
+
+  # 2) Confirm we are inside a valid org path
+  orgPath <- find_org_for_subnote_path(subNotePath)
+  settings <- get_settings_yml(orgPath)
+  tempPath <- get_template_dir(orgPath)
+
+  # 3) Derive sub-note title if not supplied
+  if (nchar(subNoteTitle) == 0) {
+    subNoteTitle <- gsub("-", " ", gsub("_", " ", subNoteName))
+  }
+
+  # 4) Figure out the paths for the header note & the link note (depending on rmdType)
+  headerNoteRmdPath <- determine_sub_note_header_path(selection)
+  linkNoteRmdPath   <- determine_sub_note_link_path(selection, headerNoteRmdPath)
+
+  # 5) Read the relevant template files for sub-note creation & linking
+  templates <- read_sub_note_templates(
+    tempPath,
+    subNoteTemplate,
+    headerNoteContentLinkTemplate,
+    subNoteContentLinkTemplate,
+    projNoteLinkTemplate,
+    projNoteLinkSummaryTemplate,
+    projNoteSummaryTemplate,
+    subNoteSummaryTemplate
+  )
+
+  # 6) Create the sub-note directory & Rmd
+  subNotePrefix <- get_next_subnote_prefix(subNotePath, settings)
+  subNoteDir    <- create_note_directory(subNotePath, subNotePrefix)
+
+  subNoteRmdPath <- create_note_rmd_file(
+    subNotePath,
+    subNotePrefix,
+    subNoteName,
+    settings
+  )
+
+  # 7a) Populate the sub-note placeholders
+  subNoteContents <- sub_subnote_params(
+    templates$subNoteTemplate,
+    subNotePrefix,
+    subNoteTitle,
+    authorValue,
+    settings,
+    orgPath
+  )
+  # 7b) Insert a link in the sub-note back to the header note
+  subNoteContents <- insert_header_link_subnote(
+    subNoteContents,
+    headerNoteRmdPath,
+    subNoteRmdPath,
+    templates$headerNoteContentLinkTmpl,
+    settings,
+    orgPath
+  )
+  write_file(subNoteContents, subNoteRmdPath)
+  cat("  Made Sub Note: ", subNoteRmdPath, "\n")
+
+  # 8a) Update the header note by inserting a link to this new sub-note
+  headerNoteContents <- read_file(headerNoteRmdPath)
+  headerNoteContents <- insert_subnote_link_header(
+    headerNoteContents,
+    subNoteRmdPath,
+    headerNoteRmdPath,
+    templates$subNoteContentLinkTmpl,
+    settings,
+    orgPath
+  )
+  write_file(headerNoteContents, headerNoteRmdPath)
+  cat("  Edited Project Header Note: ", headerNoteRmdPath, "\n")
+
+  # 9) Link the sub-note with the doc’s G/D/T lines (or header/sub) using link_sub_note_doc()
+  link_sub_note_doc(
+    selection,
+    settings,
+    subNoteRmdPath,
+    subNoteContents,
+    headerNoteRmdPath,
+    headerNoteContents,
+    templates$noteLinkTemplate,
+    templates$noteLinkSummaryTemplate,
+    templates$noteSummaryTemplate,
+    templates$subNoteSummaryTemplate,
+    linkNoteRmdPath,
+    read_file(linkNoteRmdPath),
+    orgPath
+  )
 }
+
+
+# Validates sub-note arguments, including subNoteName and selection.
+validate_sub_note_args <- function(subNoteName, selection) {
+  # Must not contain spaces
+  if (grepl("\\s+", subNoteName)) {
+    stop(paste0("  subNoteName contains a SPACE: ", subNoteName))
+  }
+
+  # Check valid selection rmdType
+  validTypes <- c("DOC", "HEAD", "SUB")
+  if (!selection[["rmdType"]] %in% validTypes) {
+    stop(paste0("  unsupported Rmd file type selected: ",
+                selection[["rmdType"]], " - ", selection[["filePath"]]))
+  }
+
+  # If doc => addingSubNote must be TRUE
+  if (selection[["rmdType"]] == "DOC" && !isTRUE(selection[["addingSubNote"]])) {
+    stop("  selection$rmdType='DOC' but addingSubNote is not TRUE. Invalid sub-note insertion.")
+  }
+}
+
+# Similar to find_org_for_note_path(), but we explicitly
+# handle "subNotePath" going up two directories to check for org:
+find_org_for_subnote_path <- function(subNotePath) {
+  candidate <- dirname(dirname(subNotePath))
+  orgPath <- find_org_directory(candidate)
+  if (orgPath == "") {
+    stop(paste0("  subNotePath is not in a sub-dir of a PROGRAMME Directory: ",
+                subNotePath))
+  }
+  orgPath
+}
+
+# Determine the absolute path to the header note, depending on rmdType
+determine_sub_note_header_path <- function(selection) {
+  if (selection[["rmdType"]] == "DOC") {
+    # parse the relative link from selection$headerNoteLink
+    hLink <- selection[["headerNoteLink"]]
+    docDir <- dirname(selection[["filePath"]])
+    rel <- sub(".*\\]\\(", "", hLink)   # remove up to "]("
+    rel <- sub("\\).*", "", rel)        # remove trailing ")"
+    return(R.utils::getAbsolutePath(fs::path(docDir, rel)))
+  } else if (selection[["rmdType"]] == "HEAD") {
+    # The file itself is the header note
+    return(selection[["filePath"]])
+  } else if (selection[["rmdType"]] == "SUB") {
+    # We find the header note from this sub-note path
+    return(find_header_Rmd_path(selection[["filePath"]],
+                                get_settings_yml(dirname(dirname(selection[["filePath"]])))))
+  }
+  stop("determine_sub_note_header_path: unexpected rmdType.")
+}
+
+# Determine which note we treat as "the link note file" (header vs sub)
+determine_sub_note_link_path <- function(selection, headerNoteRmdPath) {
+  if (selection[["rmdType"]] == "DOC") {
+    return(headerNoteRmdPath)  # doc references the header note
+  } else if (selection[["rmdType"]] == "HEAD") {
+    return(headerNoteRmdPath)  # we link from the header note
+  } else {
+    # If rmdType==SUB, we link from the sub-note itself
+    return(selection[["filePath"]])
+  }
+}
+
+# Read the template files used for sub-note creation
+# (similar to read_group_note_templates, but specialized)
+read_sub_note_templates <- function(
+    tempPath,
+    subNoteTemplate,
+    headerNoteContentLinkTemplate,
+    subNoteContentLinkTemplate,
+    projNoteLinkTemplate,
+    projNoteLinkSummaryTemplate,
+    projNoteSummaryTemplate,
+    subNoteSummaryTemplate
+) {
+  list(
+    subNoteTemplate             = read_file(fs::path(tempPath, subNoteTemplate)),
+    headerNoteContentLinkTmpl   = read_file(fs::path(tempPath, headerNoteContentLinkTemplate)),
+    subNoteContentLinkTmpl      = read_file(fs::path(tempPath, subNoteContentLinkTemplate)),
+    noteLinkTemplate            = read_file(fs::path(tempPath, projNoteLinkTemplate)),
+    noteLinkSummaryTemplate     = read_file(fs::path(tempPath, projNoteLinkSummaryTemplate)),
+    noteSummaryTemplate         = read_file(fs::path(tempPath, projNoteSummaryTemplate)),
+    subNoteSummaryTemplate      = read_file(fs::path(tempPath, subNoteSummaryTemplate))
+  )
+}
+
+# A specialized version of "populate_sub_note_rmd_contents" from your old code
+# for turning subNoteTemplate into a final subNoteContents.
+# Just rename your old sub_subnote_params() or keep it as is:
+sub_subnote_params <- function(
+    subNoteTemplateString,
+    subNotePrefix,
+    subNoteTitle,
+    authorValue,
+    settings,
+    orgPath
+) {
+  contents <- subNoteTemplateString
+  # Basic placeholders
+  contents <- sub_template_param(contents, "{{PREFIX}}", subNotePrefix, orgPath)
+  contents <- sub_template_param(contents, "{{TITLE}}",  subNoteTitle,  orgPath)
+  contents <- sub_template_param(contents, "{{AUTHOR}}", authorValue,   orgPath)
+
+  # Standard placeholders
+  contents <- sub_template_param(contents, "{{OBJECTIVES_HEADER}}",
+                                 settings[["NoteObjectivesHeader"]], orgPath)
+  contents <- sub_template_param(contents, "{{OBJECTIVES_FOOTER}}",
+                                 settings[["NoteObjectivesFooter"]], orgPath)
+  contents <- sub_template_param(contents, "{{DATA_STORAGE_HEADER}}",
+                                 settings[["NoteStorageHeader"]], orgPath)
+  contents <- sub_template_param(contents, "{{DATA_STORAGE_FOOTER}}",
+                                 settings[["NoteStorageFooter"]], orgPath)
+
+  # Insert sub-note–specific placeholders
+  contents <- sub_template_param(contents, "{{GROUP_NOTE_CONTENTS_HEADER}}",
+                                 settings[["SubNoteContentsHeader"]], orgPath)
+  contents <- sub_template_param(contents, "{{GROUP_NOTE_CONTENTS_FOOTER}}",
+                                 settings[["SubNoteContentsFooter"]], orgPath)
+
+  # Insert doc header + expansions
+  contents <- replace_markdown_header(contents, orgPath)
+  contents <- replace_sep_values(contents, orgPath)
+
+  contents
+}
+
+
 
 #' Link Sub Note to Project Doc GDT
 #'
@@ -3028,7 +3185,6 @@ insert_subnote_link_header <- function(headerNoteRmdContents, subNoteFileName,
 #'   template.
 #' @param projNoteLinkSummaryContents A character vector holding the project note
 #'   link summary template.
-#' @param todoContents A character vector holding the todo template.
 #' @param projNoteSummaryContents A character vector with the project note summary
 #'   template.
 #' @param subNoteSummaryContents A character vector with the sub note summary
@@ -3072,7 +3228,6 @@ insert_subnote_link_header <- function(headerNoteRmdContents, subNoteFileName,
 #' projNoteLinkContents <- read_file("Project-Note-Link-Template.Rmd")
 #' projNoteLinkSummaryContents <- read_file(
 #'   "Project-Note-Link-Summary-Template.Rmd")
-#' todoContents <- read_file("Todo-Template.Rmd")
 #' projNoteSummaryContents <- read_file("Project-Note-Summary-Template.Rmd")
 #' subNoteSummaryContents <- read_file(
 #'   "Project-Sub-Note-Summary-Template.Rmd")
@@ -3084,7 +3239,7 @@ insert_subnote_link_header <- function(headerNoteRmdContents, subNoteFileName,
 #' link_sub_note_doc(selection, settings, subNoteRmdPath, subNoteContents,
 #'                   headerNoteRmdPath, headerNoteRmdContents,
 #'                   projNoteLinkContents, projNoteLinkSummaryContents,
-#'                   todoContents, projNoteSummaryContents,
+#'                   projNoteSummaryContents,
 #'                   subNoteSummaryContents, linkNoteRmdPath,
 #'                   linkNoteRmdContents, orgPath)
 #' }
@@ -3095,7 +3250,7 @@ insert_subnote_link_header <- function(headerNoteRmdContents, subNoteFileName,
 #'   create_hyperlink
 link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteContents,
                               headerNoteRmdPath, headerNoteRmdContents, projNoteLinkContents,
-                              projNoteLinkSummaryContents, todoContents, projNoteSummaryContents,
+                              projNoteLinkSummaryContents, projNoteSummaryContents,
                               subNoteSummaryContents, linkNoteRmdPath, linkNoteRmdContents, orgPath) {
 
 
@@ -3119,8 +3274,8 @@ link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteConten
                                         subNoteContents)
 
   # replace projNoteLinkSummaryContents summary headers
-  projNoteLinkSummaryContents <- note_link_summ_params(projNoteLinkSummaryContents,
-                                                       todoContents, settings, orgPath)
+  #projNoteLinkSummaryContents <- note_link_todo_params(projNoteLinkSummaryContents,
+  #                                                     todoContents, settings, orgPath)
 
   for( dGDT in DocGDTsList ) {
 
@@ -3248,6 +3403,8 @@ link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteConten
     }
   } # end for
 } #### ________________________________ ####
+
+
 
 #' Create Insertable Content in a Project Note
 #'
@@ -3465,17 +3622,16 @@ create_content <- function(selection, contentName, contentDescription,
 
 } #### ________________________________ ####
 
-#' Create Weekly Journal
+#' Create Daily Journal
 #'
-#' This function creates a weekly journal file for an organisation if it does
+#' This function creates a daily journal file for an organisation if it does
 #' not already exist. If the journal file exists, it returns the path to the
 #' existing file. The journal is stored in the directory specified in the
 #' settings under "JournalDir". Optionally, TODOs can be extracted to
 #' this file using the extract_todos() function.
 #'
 #' @param date A string or Date object representing the start date for the
-#'   Weekly Journal. It is converted to the Monday of the current week. The date
-#'   should be in 'YYYY-MM-DD' format.
+#'   Daily Journal. The date should be in 'YYYY-MM-DD' format.
 #'
 #' @param organisationPath A string representing a path within an Organisation
 #'   where the journal is created and saved.
@@ -3491,23 +3647,23 @@ create_content <- function(selection, contentName, contentDescription,
 #'   defines the layout for the weekly journal.
 #'
 #' @details
-#' The function first converts the input date to the Monday of the current week
-#' and extracts the year, month, and day. It then determines the organisation
-#' directory using the given organisationPath. Next, it creates the necessary
-#' directories (the journal root and a year subdirectory) and generates a journal
-#' Rmd file using the provided journal template. If the journal file already exists,
-#' the function does not overwrite it and returns its path instead.
+#' The function extracts the year, month, and day. It then determines the
+#' organisation directory using the given organisationPath. Next, it creates the
+#' necessary directories (the journal root, year & month subdirectories) and
+#' generates a journal Rmd file using the provided journal template. If the
+#' journal file already exists, the function does not overwrite it and returns
+#' its path instead.
 #'
-#' @return A string representing the path to the weekly journal Rmd file.
+#' @return A string representing the path to the daily journal Rmd file.
 #'
 #' @examples
 #' \dontrun{
-#'   create_weekly_journal(
+#'   create_daily_journal(
 #'     date = "2023-04-10",
 #'     organisationPath = "/path/to/organisation",
 #'     authorValue = "John Doe",
 #'     journalFileNameTemplate = "{{YYYY}}-{{MM}}-{{DD}}_{{ORGNAME}}",
-#'     journalTemplate = "Weekly-Work-Journal-Template.Rmd"
+#'     journalTemplate = "Work-Journal-Template.Rmd"
 #'   )
 #' }
 #'
@@ -3534,10 +3690,7 @@ create_daily_journal <- function(date=lubridate::today(),
   if( lubridate::is.Date(date) == FALSE ) {
     date <- lubridate::ymd(date) # parse the date and convert to ymd format
   }
-
-  # convert the date to the Monday of current week if needed
-  #date <- lubridate::floor_date(date, unit="week", week_start=1)
-
+  # extract year month dat
   year <- format(date, "%Y")
   month <- format(date, "%m")
   day <- format(date, "%d")
@@ -3580,15 +3733,12 @@ create_daily_journal <- function(date=lubridate::today(),
 
   #### create Journal Rmd file ####
 
-  # modify journalFileNameTemplate - with any variable syntax
-  journalFileNameTemplate <- gsub('{{YYYY}}', year, journalFileNameTemplate, fixed = TRUE)
-  journalFileNameTemplate <- gsub('{{MM}}', month, journalFileNameTemplate, fixed = TRUE)
-  journalFileNameTemplate <- gsub('{{DD}}', day, journalFileNameTemplate, fixed = TRUE)
+  journalRmdName <- fill_journal_name_template(journalFileNameTemplate,
+                                               year, month, day, orgName)
 
-  journalFileNameTemplate <- gsub('{{ORGNAME}}', orgName, journalFileNameTemplate, fixed = TRUE)
+  # place in journal/year/month dir
+  journalRmdPath <- fs::path(journalMonthPath, paste0(journalRmdName, ".Rmd"))
 
-  # place in journal/year/month
-  journalRmdPath <- fs::path(journalMonthPath, paste0(journalFileNameTemplate, ".Rmd"))
 
   # deal with possibility file may already exists
   if( fs::file_exists(journalRmdPath) ) {
@@ -3602,37 +3752,12 @@ create_daily_journal <- function(date=lubridate::today(),
                 "  Made Journal .Rmd file: ",
                 "  Journal .Rmd file could not be created: ")
 
-    # read journalTemplate:
-    journalContents <- read_file( paste0(tempPath, .Platform$file.sep, journalTemplate) )
+    # open journalTemplate:
+    journalContents <- read_file( fs::path(tempPath, journalTemplate) )
 
-    # fill template
-
-    # modify journalContents to include date YYYY MM DD
-    journalContents <- gsub("{{YYYY}}", year, journalContents, fixed=TRUE)
-    journalContents <- gsub("{{MM}}", month, journalContents, fixed=TRUE)
-    journalContents <- gsub("{{DD}}", day, journalContents, fixed=TRUE)
-
-    # modify journalContents to include authorValue
-    journalContents <- gsub("{{AUTHOR}}", authorValue, journalContents, fixed=TRUE)
-
-    # add plaintext calendar
-    journalContents <- sub_template_param(journalContents,
-                                          "{{DAILY_JOURNAL_TODAY_METADATA}}",
-                                          generate_today_metadata(year, month, day,
-                                                                  orgPath, settings),
-                                          orgPath)
-
-    # add weekly rmarkdown daily journal
-    journalContents <- sub_template_param(journalContents,
-                                          "{{DAILY_JOURNAL_CONTENT}}",
-                                          generate_journal_content(year, month, day, orgPath),
-                                          orgPath)
-
-    # modify journalContents with rmarkdown-html-header content
-    journalContents <- replace_markdown_header(journalContents, orgPath)
-
-    # modify journalContents with SEP values
-    journalContents <- replace_sep_values(journalContents, orgPath)
+    journalContents <- fill_journal_contents_template(journalContents, year,
+                                                      month, day, authorValue,
+                                                      orgPath, settings)
 
     # write to journalFile
     write_file(journalContents, journalRmdPath)
@@ -3646,38 +3771,246 @@ create_daily_journal <- function(date=lubridate::today(),
 }
 
 
+fill_journal_name_template <- function(journalFileNameTemplate,
+                           year, month, day, orgName) {
 
-#### ____ ####
+  journalFileNameTemplate <- fill_vector_ymd(journalFileNameTemplate,
+                                             year, month, day)
+
+  journalFileNameTemplate <- gsub('{{ORGNAME}}', orgName,
+                                  journalFileNameTemplate, fixed = TRUE)
+
+  return(journalFileNameTemplate)
+
+}
+
+
+fill_vector_ymd <- function(vector, year, month, day) {
+  # modify vector YYYY MM DD with date
+  vector <- gsub('{{YYYY}}', year, vector, fixed = TRUE)
+  vector <- gsub('{{MM}}', month, vector, fixed = TRUE)
+  vector <- gsub('{{DD}}', day, vector, fixed = TRUE)
+  return(vector)
+}
+
+
+fill_journal_contents_template <- function(journalContents, year, month, day,
+                                           authorValue, orgPath, settings) {
+
+  journalContents <- fill_vector_ymd(journalContents, year, month, day)
+
+  journalContents <- gsub("{{AUTHOR}}", authorValue, journalContents, fixed=TRUE)
+
+  journalContents <- add_today_metadata(journalContents, year, month, day,
+                                        orgPath, settings)
+
+  journalContents <- add_journal_content(journalContents, year, month, day,
+                                         orgPath, settings)
+
+  # modify journalContents with rmarkdown-html-header content
+  journalContents <- replace_markdown_header(journalContents, orgPath)
+
+  # modify journalContents with SEP values
+  journalContents <- replace_sep_values(journalContents, orgPath)
+
+  return(journalContents)
+
+}
+
+
+
+add_today_metadata <- function(journalContents, year, month, day,
+                               orgPath, settings) {
+  journalContents <- sub_template_param(
+    journalContents, "{{JOURNAL_METADATA}}",
+    generate_today_metadata(year, month, day,
+                            orgPath, settings),
+    orgPath)
+
+  journalContents <- sub_template_param(
+    journalContents, "{{JOURNAL_METADATA_FOOTER}}",
+    settings[["JournalMetadataFooter"]], orgPath)
+
+  return(journalContents)
+}
+
+
+add_journal_content <- function(journalContents, year, month, day,
+                                orgPath, settings) {
+
+  journalContents <- sub_template_param(journalContents, "{{JOURNAL_EVENTS_HEADER}}",
+                                         settings[["JournalEventsHeader"]], orgPath)
+  journalContents <- sub_template_param(journalContents, "{{JOURNAL_EVENTS_INSERTION}}",
+                                        settings[["JournalEventsInsertion"]], orgPath)
+  journalContents <- sub_template_param(journalContents, "{{JOURNAL_EVENTS_FOOTER}}",
+                                         settings[["JournalEventsFooter"]], orgPath)
+
+  journalContents <- sub_template_param(journalContents, "{{JOURNAL_TODOS_HEADER}}",
+                                        settings[["JournalTodosHeader"]], orgPath)
+  journalContents <- sub_template_param(journalContents, "{{JOURNAL_TODOS_INSERTION}}",
+                                        settings[["JournalTodosInsertion"]], orgPath)
+  journalContents <- sub_template_param(journalContents, "{{JOURNAL_TODOS_FOOTER}}",
+                                        settings[["JournalTodosFooter"]], orgPath)
+
+  return(journalContents)
+
+}
+
+
+# Main function: Generate Today's Metadata Dashboard.
+#' Generate Today's Metadata Dashboard
+#'
+#' @description
+#' Generates a markdown-formatted daily log that includes:
+#'   - A header with the date.
+#'   - Two centered header lines showing the current locale (Olson zone) and the effective timezone.
+#'   - A timeline graphic showing moon and sun event positions.
+#'   - An integrated info block with event times.
+#'
+#' @param year A string or numeric year (YYYY).
+#' @param month A string or numeric month (MM).
+#' @param day A string or numeric day (DD).
+#' @param orgPath Path to the organization folder.
+#' @param settings Settings object for status.
+#' @param locale Locale string (default Sys.timezone(location = TRUE)).
+#' @param calendar_header (Optional) Header prefix (default "# DAILY LOG :").
+#'
+#' @return A character string containing the daily log dashboard.
+#'
+#' @examples
+#' \dontrun{
+#'   dashboard <- generate_today_metadata("2025", "04", "12", orgPath, settings,
+#'                              locale = Sys.timezone(location = TRUE))
+#'   cat(dashboard)
+#' }
+#'
+generate_today_metadata <- function(
+    year,
+    month,
+    day,
+    orgPath,
+    settings,
+    locale = get_locale(),
+    calendar_header = "# DAILY LOG :" ) {
+
+  # Retrieve cached status
+  statusFile <- get_status_yml_file(orgPath, settings)
+  status <- get_status_yml(orgPath, settings)
+
+  # Use the locale as is (e.g., "Europe/London")
+  current_locale <- locale
+
+  # Create the date object.
+  date_obj <- as.Date(sprintf("%04d-%02d-%02d", as.numeric(year),
+                              as.numeric(month), as.numeric(day)))
+
+  # Build header_date (the date header).
+  header_date <- sprintf("%s %s", calendar_header, format(date_obj, "%d %B %Y"))
+
+  # Get effective timezone using current_locale and date_obj.
+  #effective_tz <- get_effective_timezone(current_locale, date_obj)
+  effective_tz <- get_tz_info(date_obj, current_locale)
+
+  # Build centered header lines (72-character width).
+  header_locale <- center_string(current_locale, 72)
+  header_tz <- center_string(effective_tz, 72)
+
+  # 1. Geocode using the locale
+  #lat <- 51.00
+  #lon <- -0.14 # testing - check lat and lon is ALWAYS SET
+  tryCatch({
+    geo_res <- get_geo_loc(current_locale)
+    lat <- round(as.numeric(geo_res$lat[1]), 2)
+    lon <- round(as.numeric(geo_res$long[1]), 2)
+    write_loc_to_status(lat, lon, status, statusFile)
+  }, error = function(e) {
+    cat("\ncannot get latitude or longitude from tidygeocoder\n\n")
+    if (!is.na(status[["LOCATION"]][["latitude"]])) {
+      cat("\n  reading cached latitude and longitude from status.yml \n\n")
+      # use super-assignment operator so variables are updated in parent env
+      lat <<- status[["LOCATION"]][["latitude"]]
+      lon <<- status[["LOCATION"]][["longitude"]]
+    } else {
+      cat("\n  using default latitude and longitude (London, UK) \n\n")
+      # use super-assignment operator so variables are updated in parent env
+      lat <<- 51.52
+      lon <<- -0.14
+      # this lat and lon is close to Sainsbury Wellcome Centre
+      # where this code was developed :)
+    }
+  })
+
+
+  # 2. Get Sun Metadata using suncalc.
+  #sun_times <- suncalc::getSunlightTimes(date = date_obj, lat = lat, lon = lon, tz = current_locale)
+  sun_times <- get_sunlight_times(date = date_obj, lat = lat, lon = lon, locale = current_locale)
+  sunrise   <- sun_times$sunrise
+  sunset    <- sun_times$sunset
+  solarNoon <- sun_times$solarNoon
+  civilDawn <- sun_times$dawn
+  civilDusk <- sun_times$dusk
+
+  # 3. Get Moon Metadata using lunar and suncalc.
+  moon_phase <- lunar_phase(date_obj)
+  moon_illum <- lunar_illumination(date_obj)
+  moon_times <- get_moon_times(date = date_obj, lat = lat, lon = lon, locale = current_locale)
+  moonrise <- if (!is.na(moon_times$rise[1])) moon_times$rise[1] else as.POSIXct(NA)
+  moonset  <- if (!is.na(moon_times$set[1])) moon_times$set[1] else as.POSIXct(NA)
+
+  # Determine custom moon symbol based on phase.
+  moon_symbol <- switch(as.character(moon_phase),
+                        "New" = "○",
+                        "Waxing" = "◐",
+                        "Full" = "●",
+                        "Waning" = "◑",
+                        "☾")
+
+  # 4. Build the timeline graphic.
+  timeline_lines <- build_timeline_graphic(solarNoon, sunrise, sunset, moonrise, moonset,
+                                           moon_phase_symbol = moon_symbol)
+  # Add 4-space indent to each timeline line.
+  timeline_graphic <- paste0("    ", timeline_lines)
+
+  # 5. Build integrated info lines.
+  fmt_time <- function(t) ifelse(is.na(t), "N/A", format(t, "%H:%M"))
+  sun_info <- c(
+    paste("Sunrise      :", fmt_time(sunrise)),
+    paste("Solar Noon   :", fmt_time(solarNoon)),
+    paste("Sunset       :", fmt_time(sunset)),
+    paste("Civil Dawn   :", fmt_time(civilDawn)),
+    paste("Civil Dusk   :", fmt_time(civilDusk))
+  )
+  moon_info <- c(
+    paste("Moonrise    :", fmt_time(moonrise)),
+    paste("Moonset     :", fmt_time(moonset)),
+    paste("Phase       :", moon_phase),
+    paste("Illuminated :", paste0(round(moon_illum * 100, 1), "%"))
+  )
+  info_lines <- sapply(1:5, function(i) {
+    format_info_line(sun_info[i], if(i <= length(moon_info)) moon_info[i] else "")
+  })
+
+  # 6. Build delimiter for the info block.
+  info_delim <- paste0("    ", paste(rep("-", 72), collapse = ""))
+
+  # 7. Combine all parts.
+  overall <- paste0(
+    header_date, "\n\n",
+    header_locale, "\n",
+    header_tz, "\n",
+    paste(timeline_graphic, collapse = "\n"), "\n\n",
+    paste(info_lines, collapse = "\n"), "\n\n",
+    info_delim
+  )
+
+  overall
+}
 
 
 # Helper: Center a string in a field of given width.
 center_string <- function(str, width = 72) {
   pad <- floor((width - nchar(str)) / 2)
   paste0(strrep(" ", pad), str)
-}
-
-
-get_tz_info <- function(date, tz = "Europe/London") {
-  # Convert the input date to POSIXct using the specified time zone
-  pos <- as.POSIXct(date, tz = tz)
-
-  # Extract the time zone abbreviation (e.g. "GMT" or "BST")
-  abbr <- format(pos, "%Z")
-
-  # Extract the numeric offset in format +0100 or -0600
-  offset_str <- format(pos, "%z")
-
-  # Get the hour part of the offset (e.g. "01" or "06")
-  hour_offset <- as.integer(substr(offset_str, 2, 3))
-
-  # The first character is the sign (+ or -)
-  sign <- substr(offset_str, 1, 1)
-
-  # Build the GMT offset string (e.g. "GMT+1")
-  offset_formatted <- paste0("GMT", sign, hour_offset)
-
-  # Return the combined string
-  paste0(abbr, " (", offset_formatted, ")")
 }
 
 
@@ -3833,148 +4166,9 @@ format_info_line <- function(sun_text, moon_text = "") {
   paste0(strrep(" ", 12), sun_field, strrep(" ", 16), moon_field)
 }
 
-# Main function: Generate Today's Metadata Dashboard.
-#' Generate Today's Metadata Dashboard
-#'
-#' @description
-#' Generates a markdown-formatted daily log that includes:
-#'   - A header with the date.
-#'   - Two centered header lines showing the current locale (Olson zone) and the effective timezone.
-#'   - A timeline graphic showing moon and sun event positions.
-#'   - An integrated info block with event times.
-#'
-#' @param year A string or numeric year (YYYY).
-#' @param month A string or numeric month (MM).
-#' @param day A string or numeric day (DD).
-#' @param orgPath Path to the organization folder.
-#' @param settings Settings object for status.
-#' @param locale Locale string (default Sys.timezone(location = TRUE)).
-#' @param calendar_header (Optional) Header prefix (default "# DAILY LOG :").
-#'
-#' @return A character string containing the daily log dashboard.
-#'
-#' @examples
-#' \dontrun{
-#'   dashboard <- generate_today_metadata("2025", "04", "12", orgPath, settings,
-#'                              locale = Sys.timezone(location = TRUE))
-#'   cat(dashboard)
-#' }
-#'
-generate_today_metadata <- function(year, month, day, orgPath, settings,
-                                    locale = Sys.timezone(location = TRUE),
-                                    calendar_header = "# DAILY LOG :") {
-  # Retrieve cached status
-  statusFile <- get_status_yml_file(orgPath, settings)
-  status <- get_status_yml(orgPath, settings)
 
-  # Use the locale as is (e.g., "Europe/London")
-  current_locale <- locale
-
-  # Create the date object.
-  date_obj <- as.Date(sprintf("%04d-%02d-%02d", as.numeric(year),
-                              as.numeric(month), as.numeric(day)))
-
-  # Build header_date (the date header).
-  header_date <- sprintf("%s %s", calendar_header, format(date_obj, "%d %B %Y"))
-
-  # Get effective timezone using current_locale and date_obj.
-  #effective_tz <- get_effective_timezone(current_locale, date_obj)
-  effective_tz <- get_tz_info(date_obj, current_locale)
-
-  # Build centered header lines (72-character width).
-  header_locale <- center_string(current_locale, 72)
-  header_tz <- center_string(effective_tz, 72)
-
-  # 1. Geocode using the locale
-  lat <- 51.00
-  lon <- -0.14
-  tryCatch({
-    geo_res <- get_loc(current_locale)
-    lat <- round(as.numeric(geo_res$lat[1]), 2)
-    lon <- round(as.numeric(geo_res$long[1]), 2)
-    write_loc_to_status(lat, lon, status, statusFile)
-  }, error = function(e) {
-    cat("\ncannot get latitude or longitude from tidygeocoder\n\n")
-    if (!is.na(status[["LOCATION"]][["latitude"]])) {
-      cat("\n  reading cached latitude and longitude from status.yml \n\n")
-      # use super-assignment operator so variables are updated in parent env
-      lat <<- status[["LOCATION"]][["latitude"]]
-      lon <<- status[["LOCATION"]][["longitude"]]
-    } else {
-      cat("\n  using default latitude and longitude (London, UK) \n\n")
-      # use super-assignment operator so variables are updated in parent env
-      lat <<- 51.52
-      lon <<- -0.14
-    }
-  })
-
-
-  # 2. Get Sun Metadata using suncalc.
-  sun_times <- suncalc::getSunlightTimes(date = date_obj, lat = lat, lon = lon, tz = current_locale)
-  sunrise   <- sun_times$sunrise
-  sunset    <- sun_times$sunset
-  solarNoon <- sun_times$solarNoon
-  civilDawn <- sun_times$dawn
-  civilDusk <- sun_times$dusk
-
-  # 3. Get Moon Metadata using lunar and suncalc.
-  moon_phase <- lunar::lunar.phase(date_obj, name = TRUE)
-  moon_illum <- lunar::lunar.illumination(date_obj)
-  moon_times <- suncalc::getMoonTimes(date = date_obj, lat = lat, lon = lon, tz = current_locale)
-  moonrise <- if (!is.na(moon_times$rise[1])) moon_times$rise[1] else as.POSIXct(NA)
-  moonset  <- if (!is.na(moon_times$set[1])) moon_times$set[1] else as.POSIXct(NA)
-
-  # Determine custom moon symbol based on phase.
-  moon_symbol <- switch(as.character(moon_phase),
-                        "New" = "○",
-                        "Waxing" = "◐",
-                        "Full" = "●",
-                        "Waning" = "◑",
-                        "☾")
-
-  # 4. Build the timeline graphic.
-  timeline_lines <- build_timeline_graphic(solarNoon, sunrise, sunset, moonrise, moonset,
-                                           moon_phase_symbol = moon_symbol)
-  # Add 4-space indent to each timeline line.
-  timeline_graphic <- paste0("    ", timeline_lines)
-
-  # 5. Build integrated info lines.
-  fmt_time <- function(t) ifelse(is.na(t), "N/A", format(t, "%H:%M"))
-  sun_info <- c(
-    paste("Sunrise      :", fmt_time(sunrise)),
-    paste("Solar Noon   :", fmt_time(solarNoon)),
-    paste("Sunset       :", fmt_time(sunset)),
-    paste("Civil Dawn   :", fmt_time(civilDawn)),
-    paste("Civil Dusk   :", fmt_time(civilDusk))
-  )
-  moon_info <- c(
-    paste("Moonrise    :", fmt_time(moonrise)),
-    paste("Moonset     :", fmt_time(moonset)),
-    paste("Phase       :", moon_phase),
-    paste("Illuminated :", paste0(round(moon_illum * 100, 1), "%"))
-  )
-  info_lines <- sapply(1:5, function(i) {
-    format_info_line(sun_info[i], if(i <= length(moon_info)) moon_info[i] else "")
-  })
-
-  # 6. Build delimiter for the info block.
-  info_delim <- paste0("    ", paste(rep("-", 72), collapse = ""))
-
-  # 7. Combine all parts.
-  overall <- paste0(
-    header_date, "\n\n",
-    header_locale, "\n",
-    header_tz, "\n",
-    paste(timeline_graphic, collapse = "\n"), "\n\n",
-    paste(info_lines, collapse = "\n"), "\n\n",
-    info_delim
-  )
-
-  overall
-}
-
-# Dummy stubs for get_loc, write_loc_to_status, get_status_yml_file, and get_status_yml.
-get_loc <- function(location_str) {
+# Dummy stubs for get_geo_loc, write_loc_to_status, get_status_yml_file, and get_status_yml.
+get_geo_loc <- function(location_str) {
   suppressMessages(tidygeocoder::geo(address = location_str, method = 'osm', full_results = TRUE)
   )
 }
@@ -3992,115 +4186,5 @@ write_loc_to_status <- function(lat, lon, status, statusFile) {
 
 
 
-#' Generate Journal Content for a Daily Log
-#'
-#' This function generates markdown content for a daily journal log. The log is
-#' divided into three sections:
-#' \itemize{
-#'   \item \strong{Programme Strategic Objectives} – extracts objectives from
-#'   programme index R Markdown files.
-#'   \item \strong{Today's Events} – creates a placeholder section for events
-#'   from Google Calendar.
-#'   \item \strong{TODO Items} – adds a section for TODO items.
-#' }
-#'
-#' @param year A character or numeric value representing the year (YYYY) for the
-#'   log date.
-#' @param month A character or numeric value representing the month (MM) for the
-#'   log date.
-#' @param day A character or numeric value representing the day (DD) for the log
-#'   date.
-#' @param separator_lines A character string used to insert separator lines in
-#'   the markdown output. Default is "\{\{SEP01\}\}".
-#'
-#' @return A character vector containing the generated markdown lines for the
-#'   daily journal.
-#'
-#' @details
-#' The function performs the following tasks:
-#' \itemize{
-#'   \item It creates a Date object using the provided year, month, and day.
-#'   \item In \strong{Section 1}, it lists all R Markdown files in the
-#'     "programmes" folder, searches for the "# Strategic Objectives" header,
-#'     and extracts the subsequent lines until the next header is encountered.
-#'     The file name is included as a subheading.
-#'   \item In \strong{Section 2}, a placeholder section for "Today's Events" is
-#'     added. Currently, it outputs a message indicating no events are scheduled.
-#'   \item In \strong{Section 3}, a section for "TODO Items" is appended. The
-#'     function calls an (assumed) `extract_todos()` function (here replaced
-#'     with a placeholder) and outputs its result or a message if none are found.
-#' }
-#'
-#' @examples
-#' \dontrun{
-#' # Generate journal content for March 24, 2025 and print to the console:
-#' journal_lines <- generate_journal_content("2025", "03", "24")
-#' cat(journal_lines, sep = "\n")
-#' }
-#'
-generate_journal_content <- function(year, month, day, orgPath,
-                                     separator_lines = "{{SEP01}}") {
-
-  settings <- get_settings_yml(orgPath)
-
-  # Create a Date object for today's log date
-  todays_date <- as.Date(paste(year, month, day, sep = "-"))
-
-  # Initialize an empty character vector to store the markdown lines
-  markdown_lines <- character(0)
-
-  ## Section 1: Programme Strategic Objectives
-  markdown_lines <- c(markdown_lines, "","","", separator_lines,
-                      "","","", "# Programme Strategic Objectives")
-
-
-  # List all programme index Rmd files (adjust directory and pattern as needed)
-  programme_files <- get_prog_index_files(orgPath, settings)
-
-  for (file in programme_files) {
-    file_lines <- readLines(file, warn = FALSE)
-
-    # Find the line with the header "# Strategic Objectives"
-    header_idx <- grep("^# Strategic Objectives", file_lines)
-    if (length(header_idx) > 0) {
-      # Assume the objectives are the lines after the header until the next header
-      start_line <- header_idx[1] + 1
-
-      # Look for the next header (line starting with '#') after the objectives header
-      subsequent_headers <- grep("^----", file_lines[start_line:length(file_lines)])
-      if (length(subsequent_headers) > 0) {
-        end_line <- start_line + min(subsequent_headers) - 2
-      } else {
-        end_line <- length(file_lines)
-      }
-
-      objectives <- file_lines[start_line:end_line]
-      # Optionally, add the file name as a subheading for clarity
-      markdown_lines <- c(markdown_lines,"","","",
-                          paste("##", basename(file)), objectives, "")
-    }
-  }
-
-  ## Section 2: Today's Events from Google Calendar
-  markdown_lines <- c(markdown_lines, "","","", separator_lines,
-                      "","","", "# Today's Events")
-
-
-  markdown_lines <- c(markdown_lines, "No events scheduled for today.", "")
-
-  ## Section 3: Extracting all TODO items
-  markdown_lines <- c(markdown_lines, "","","", separator_lines,
-                      "","","", "# TODO Items")
-
-  # Call your existing function to extract all TODO items.
-  #todos <- extract_todos()  # Assumes extract_todos() returns a character vector
-  todos <- c("")
-  if (length(todos) > 0) {
-    markdown_lines <- c(markdown_lines, todos)
-  } else {
-    markdown_lines <- c(markdown_lines, "No TODO items found.")
-  }
-
-  return(markdown_lines)
-} #### ________________________________ ####
+ #### ________________________________ ####
 

@@ -13,7 +13,6 @@ link_sub_note_doc(
   headerNoteRmdContents,
   projNoteLinkContents,
   projNoteLinkSummaryContents,
-  todoContents,
   projNoteSummaryContents,
   subNoteSummaryContents,
   linkNoteRmdPath,
@@ -45,8 +44,6 @@ template.}
 
 \item{projNoteLinkSummaryContents}{A character vector holding the project note
 link summary template.}
-
-\item{todoContents}{A character vector holding the todo template.}
 
 \item{projNoteSummaryContents}{A character vector with the project note summary
 template.}
@@ -103,7 +100,6 @@ headerNoteRmdContents <- read_file(headerNoteRmdPath)
 projNoteLinkContents <- read_file("Project-Note-Link-Template.Rmd")
 projNoteLinkSummaryContents <- read_file(
   "Project-Note-Link-Summary-Template.Rmd")
-todoContents <- read_file("Todo-Template.Rmd")
 projNoteSummaryContents <- read_file("Project-Note-Summary-Template.Rmd")
 subNoteSummaryContents <- read_file(
   "Project-Sub-Note-Summary-Template.Rmd")
@@ -115,7 +111,7 @@ orgPath <- "/path/to/org"
 link_sub_note_doc(selection, settings, subNoteRmdPath, subNoteContents,
                   headerNoteRmdPath, headerNoteRmdContents,
                   projNoteLinkContents, projNoteLinkSummaryContents,
-                  todoContents, projNoteSummaryContents,
+                  projNoteSummaryContents,
                   subNoteSummaryContents, linkNoteRmdPath,
                   linkNoteRmdContents, orgPath)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/create-functions.R
 \name{create_sub_note}
 \alias{create_sub_note}
-\title{Add a New Sub Note to a Project Group}
+\title{Create a New Sub Note within a Project Group}
 \usage{
 create_sub_note(
   subNoteName,
@@ -15,33 +15,29 @@ create_sub_note(
   subNoteContentLinkTemplate = "Project-Sub-Note-Content-Link-Template.Rmd",
   projNoteLinkTemplate = "Project-Note-Link-Template.Rmd",
   projNoteLinkSummaryTemplate = "Project-Note-Link-Summary-Template.Rmd",
-  todoTemplate = "Todo-Template.Rmd",
   projNoteSummaryTemplate = "Project-Note-Summary-Template.Rmd",
   subNoteSummaryTemplate = "Project-Sub-Note-Summary-Template.Rmd"
 )
 }
 \arguments{
 \item{subNoteName}{A string representing the name of the Project Sub Note.
-Spaces are replaced with '-' or '_' by default.}
+Must not contain spaces.}
 
 \item{subNotePath}{A character string specifying the absolute directory
-where the Sub Note will be stored. It must reside within the Project Group
-Note Directory.}
+where the Sub Note will be stored. It must reside within the Project
+Group Note directory.}
 
 \item{selection}{A list with metadata about the current selection. The list
 must include the following keys:
 \itemize{
 \item rmdType: A string specifying the file type. Valid values are "DOC",
 "HEAD", or "SUB".
-\item filePath: The file path of the associated project document.
-\item headerNoteLink: A relative link to the header note (used when rmdType is
-"DOC").
-\item goal: A string defining the goal associated with the note.
-\item deliverable: A string defining the deliverable linked to the note.
-\item task: A string defining the task associated with the note.
-\item taskLine: An integer indicating the line number in the project document
-where the task is defined.
-\item addingSubNote: (Optional) A boolean that must be TRUE if rmdType is "DOC".
+\item filePath: The file path of the associated project document (or note).
+\item headerNoteLink (if rmdType == "DOC"): A relative link to the header note
+from the doc text.
+\item goal, deliverable, task, taskLine: GDT info for linking in the doc.
+\item addingSubNote (if rmdType == "DOC"): Must be TRUE for a valid sub-note
+insertion.
 }}
 
 \item{authorValue}{A string representing the author's name for the note.
@@ -58,8 +54,7 @@ link from the header note to the Sub Note. Default is
 "Project-Header-Note-Content-Link-Template.Rmd".}
 
 \item{subNoteContentLinkTemplate}{A template file for creating a content link
-within the Sub Note. Default is
-"Project-Sub-Note-Content-Link-Template.Rmd".}
+within the Sub Note. Default is "Project-Sub-Note-Content-Link-Template.Rmd".}
 
 \item{projNoteLinkTemplate}{A template file that defines the structure of the
 Project Doc Goal/Del/Task link in the Sub Note. Default is
@@ -69,20 +64,14 @@ Project Doc Goal/Del/Task link in the Sub Note. Default is
 to-do section beneath the Project Doc link in the Sub Note. Default is
 "Project-Note-Link-Summary-Template.Rmd".}
 
-\item{todoTemplate}{A template file for the to-do list section. Default is
-"Todo-Template.Rmd".}
-
 \item{projNoteSummaryTemplate}{A template file used to add a Project Note
-summary to the Project Doc. Default is
-"Project-Note-Summary-Template.Rmd".}
+summary to the Project Doc. Default is "Project-Note-Summary-Template.Rmd".}
 
 \item{subNoteSummaryTemplate}{A template file used to add a Sub Note summary
-to the Project Doc. Default is
-"Project-Sub-Note-Summary-Template.Rmd".}
-}
-\value{
-This function does not return a value. It creates and updates files on
-disk to integrate the new Sub Note into the project documentation.
+to the Project Doc. Default is "Project-Sub-Note-Summary-Template.Rmd".}
+
+\item{todoTemplate}{A template file for the to-do list section. Default is
+"Todo-Template.Rmd".}
 }
 \description{
 This function creates a new Sub Note within a Project Group. It reads the
@@ -93,58 +82,25 @@ then calls link_sub_note_doc() to insert all relevant links and summaries into
 the main project document.
 }
 \details{
-The function performs the following steps:
+This function performs the following steps:
 \enumerate{
 \item Validates that subNoteName contains no spaces.
 \item Checks that the selection list is valid. The selection must include
 keys such as rmdType, filePath, headerNoteLink, goal, deliverable, task,
 and taskLine; if rmdType is "DOC", addingSubNote must be TRUE.
-\item Determines the header note Rmd path based on the selection.
+\item Determines the header note Rmd path (and link note path) based on the
+selection.
 \item Reads the required template files for the Sub Note and for header note
 content links.
 \item Creates a sub-directory for the Sub Note and an associated R Markdown file.
-\item Replaces the markup in the Sub Note with provided parameters.
-\item Inserts a header link into the Sub Note and updates the Header Note with
-the Sub Note link.
+\item Replaces the markup in the Sub Note with provided parameters, then inserts
+a link to the header note.
+\item Updates the header note, inserting a link back to the new Sub Note.
 \item Calls link_sub_note_doc() to update the project document with all relevant
 Sub Note links and summaries.
 }
 }
-\note{
-The selection list must include the keys: rmdType, filePath, headerNoteLink,
-goal, deliverable, task, and taskLine. If rmdType is "DOC", the key
-addingSubNote must also be TRUE. This function modifies files on disk; ensure
-you have backups before running it. It relies on a structured project directory
-and properly configured template files.
-}
-\examples{
-\dontrun{
-create_sub_note(
-  subNoteName = "analysis_note",
-  subNotePath = "/projects/my_project/notes",
-  selection = list(
-    rmdType = "DOC",
-    filePath = "project_doc.Rmd",
-    headerNoteLink = "[Header](header_note.Rmd)",
-    goal = "Define hypothesis",
-    deliverable = "Experiment setup",
-    task = "Run pilot study",
-    taskLine = 45,
-    addingSubNote = TRUE
-  ),
-  authorValue = "sjwest",
-  subNoteTitle = "Data Analysis",
-  subNoteTemplate = "Project-Sub-Note-Template.Rmd"
-)
-}
-
-}
 \seealso{
-\itemize{
-\item \code{\link{link_sub_note_doc}} for linking Sub Notes to Project Docs.
-\item \code{\link{find_org_directory}} to locate the organisation directory.
-\item \code{\link{get_settings_yml}} for retrieving project settings.
-\item \code{\link{insert_header_link_subnote}} for inserting header links into Sub
-Notes.
-}
+link_sub_note_doc, insert_header_link_subnote,
+insert_subnote_link_header, create_note_directory, create_note_rmd_file
 }
