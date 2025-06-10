@@ -10,10 +10,15 @@ projectmanagr : A library for organising project documentation in R
 Markdown.
 
 This package facilitates the management of project documentation in R
-Markdown files, including forming Project Documents, creating Project
-Notes to meet Goals, Deliverables and Tasks in Project Documents, and
-allowing the efficient storage and analysis of data within this
-structure.
+Markdown files, including:
+
+- forming Project Documents,
+
+- creating Project Notes to meet Goals, Deliverables and Tasks in
+  Project Documents,
+
+- and allowing the efficient storage and analysis of data within this
+  structure.
 
 It comprises several modules:
 
@@ -113,18 +118,94 @@ silent.
 
 ------------------------------------------------------------------------
 
-### 1 Create / reset a Desktop-app OAuth client in Google Cloud Console
+### 1 Create a Desktop-app OAuth client in Google Cloud Console
 
 | step | what you click | why it matters |
 |----|----|----|
-| **1** | Open **Console → APIs & Services → Credentials** ([Configure a Google API Console Project for the Google Ads API](https://developers.google.com/google-ads/api/docs/oauth/cloud-project)) | The Credentials page lists every OAuth client you have. |
-| **2** | **Choose your existing Desktop-app client** and click the **“Reset secret”** icon (two arrows) – **or** click **➕ Create credentials → OAuth client ID → Desktop app** to make a new one ([Configure a Google API Console Project for the Google Ads API](https://developers.google.com/google-ads/api/docs/oauth/cloud-project)) | Resetting generates a fresh `client_secret`; creating a new client gives you a clean ID/secret pair. |
-| **3** | In the dialog that appears, click **Download JSON** (\[OAuth Desktop and Web Application Flows | Google Ads API\](<https://developers.google.com/google-ads/api/docs/client-libs/java/oauth-web>)) |
-| **4** | *Optional:* under **OAuth consent screen** make sure **Publishing status = In production** so any Google account can authorise your app ([Configure the OAuth consent screen and choose scopes](https://developers.google.com/workspace/guides/configure-oauth-consent)) | Prevents “This app is in testing” warnings for your users. |
+| **1** | Navigate to <https://console.cloud.google.com/> and login with your google account | Google Cloud Console allows you to generate an OAuth Client App. |
+| **2** | Open **Console → APIs & Services → Credentials** ([Configure a Google API Console Project for the Google Ads API](https://developers.google.com/google-ads/api/docs/oauth/cloud-project)) | The Credentials page lists every OAuth client you have. |
+| **3** | **Choose your existing Desktop-app client** and click the **“Reset secret”** icon (two arrows) – **or** click **➕ Create credentials → OAuth client ID → Desktop app** to make a new one ([Configure a Google API Console Project for the Google Ads API](https://developers.google.com/google-ads/api/docs/oauth/cloud-project)) | Resetting generates a fresh `client_secret`; creating a new client gives you a clean ID/secret pair. |
+| **4** | In the dialog that appears, click **Download JSON** (\[OAuth Desktop and Web Application Flows | Google Ads API\](<https://developers.google.com/google-ads/api/docs/client-libs/java/oauth-web>)) |
+| **5** | *Optional:* under **OAuth consent screen** make sure **Publishing status = In production** so any Google account can authorise your app ([Configure the OAuth consent screen and choose scopes](https://developers.google.com/workspace/guides/configure-oauth-consent)) | Prevents “This app is in testing” warnings for your users. |
+
+### Creating your Google Calendar OAuth client (step-by-step)
+
+First you need to generate a fresh Desktop-app OAuth credential that
+projectmanagr will use to read your calendar.
+
+> **What you’ll end up with**  
+> a file named **`gcal_oauth_client.json`** containing a `client_id` +
+> `client_secret`.  
+> Place it in the folder shown by  
+> `rappdirs::user_config_dir("projectmanagr")`  
+> and projectmanagr will pick it up automatically.
 
 ------------------------------------------------------------------------
 
-### 2 Store the JSON in a per-user config folder
+#### Sign in and create (or select) a Cloud project
+
+1.  **Open** <https://console.cloud.google.com/> and sign in with the
+    Google account whose calendars you’ll read.
+
+2.  At the very top, click the **project drop-down ▾ → “New project”**.
+    Give it any name (e.g. *projectmanagr-calendar*) and click
+    **Create**.  
+    *Why?* Every OAuth credential lives inside a Cloud project.
+
+#### Enable the Google Calendar API
+
+3.  In the left sidebar choose **APIs & Services ▸ Library**. In the
+    search box type *Google Calendar API* → click the tile →
+    **Enable**.  
+    *Why?* You must turn on the actual Calendar service before an OAuth
+    token can call it.
+
+#### Configure the OAuth consent screen (one-time)
+
+4.  Still under **APIs & Services**, click **OAuth consent screen**.
+    - Select *Get started*  
+    - Fill : **App name** (e.g. *ProjectManagr GCal Project*),
+      **User-support \[your\] email** → **Next**
+    - Audience : **External** → **Next**
+    - Contact Information : **Developer \[your\] email** → **Next**
+    - Select : **I agree to the Google API services user data policy.**
+      → **Continue** → **Create** *Why?* Creating an initial OAuth
+      Client App in testing mode is sufficient for accessing your own
+      calendar
+
+#### Create the Desktop-app OAuth Client
+
+5.  Go to **APIs & Services ▸ Credentials**.
+
+    - Click **+ Create credentials ▸ OAuth client ID**  
+    - Choose **Application type → Desktop app**.
+    - Give it a name (*ProjectMaangr GCal Client*), click **Create**.  
+      *Why?* Desktop-app clients are what R uses; they are allowed to
+      bundle a public secret.
+
+6.  In the popup dialog that appears click **Download JSON** and save
+    the file. *Why?* This JSON contains the OAuth client metadata
+    required by projectmanagr - including: `client_id`, `client_secret`,
+    token & auth endpoints, redirect URI list.
+
+7.  Rename the downloaded JSON file as: `gcal_oauth_client.json` *Why?*
+    ProjectManagr expects to find the OAuth Client credentials in a file
+    with this name.
+
+#### Add Test User to OAuth Client
+
+8.  In the left sidebar choose **APIs & Services ▸ Credentials**. Under
+    `OAuth 2.0 Client IDs` select the OAuth Client name link
+    (*ProjectMaangr GCal Client*) In the left sidebar, select *Audience*
+    Under **Test Users** → click the button → **Add users**.  
+    Add your email → **Save**.  
+    *Why?* As the App is under Testing it can only be accessed by
+    developer- approved testers, so authentication is only possible to
+    emails added to Test users.
+
+------------------------------------------------------------------------
+
+### 2 Store the JSON in the user config folder
 
 ``` r
 # to show the exact directory on this machine, execute this function:
@@ -133,13 +214,16 @@ rappdirs::user_config_dir("projectmanagr")
 
 Typically the config directory is in these location on:
 
-- macOS `~/Library/Application Support/projectmanagr/`  
+- macOS `~/Library/Application Support/projectmanagr/`
+  - to see the ~/Library directory you will need to view hidden files in
+    Finder
+  - Press `CMD + SHIFT + .` in Finder window to show/hid hideen files.
 - Windows `%APPDATA%\\projectmanagr\\`  
 - Linux `~/.config/projectmanagr/`
 
 1.  **Create that folder if it doesn’t exist.**  
-2.  **Rename the download** to `gcal_oauth_client.json`.  
-3.  **Move the file** into the folder.
+2.  **Move the file** `gcal_oauth_client.json` from Downloads into the
+    folder.
 
 `projectmanagr` looks for **exactly** that path; nothing is stored
 inside the package, so secrets never live in version control.
@@ -147,29 +231,93 @@ inside the package, so secrets never live in version control.
 Why this folder? `rappdirs::user_config_dir()` is the cross-platform
 location recommended for end-user config files.
 
-------------------------------------------------------------------------
-
-### 3 How projectmanagr uses the file at run-time
-
 ``` r
-cfg  <- file.path(rappdirs::user_config_dir("projectmanagr"),
-                  "gcal_oauth_client.json")
-
-googleAuthR::gar_set_client(json = cfg,
-                            scopes = "https://www.googleapis.com/auth/calendar.readonly")
-
-googleAuthR::gar_auth(email = TRUE)           # opens browser once
+# to confirm the file has the correct path, execute this function:
+fs::file_exists(
+  fs::path(rappdirs::user_config_dir("projectmanagr"),
+  "gcal_oauth_client.json"))
+  #> should return: TRUE
 ```
 
-- `gar_set_client()` reads both `client_id` **and** `client_secret` and
-  starts the standard Desktop-app flow that Google expects.
+------------------------------------------------------------------------
 
-- Tokens are cached in `rappdirs::user_cache_dir("projectmanagr")`, so
-  subsequent calls reuse the refresh token automatically.
+### 3 Confirm projectmanagr Google Calendar access
+
+To test that projectmanagr can now access Google Calendar, run the
+following from an R console
+
+``` r
+# attempt to extract google calendar events
+projectmanagr::extract_google_calendar_events()
+ # default args include:
+  # day A date (defaults to today) to fetch events for
+  # settings An optional list, can include `googleCalendars` for calendar filtering
+```
+
+- If setup correctly, when first run:
+
+  - a Google Login screen will open in the Default browser
+
+    - Choose an account: Login with your credentials
+
+    - Google hasn’t verified this app: Continue
+
+      - The app is still in Testing, but you have given your google
+        account permission to use this OAuth Client App
+
+    - Sign in to ProjectManagr Calendar: Continue
+
+      - `By continuing, Google will share your name, email address and`
+        `profile picture with ProjectManagr Calendar`
+
+    - ProjectManagr Calendar wants access to your Google Account:
+
+      - [x] See and download any calendar that you can access using your
+        Google Calendar.
+
+    - `Authentication complete. Please close this page and return to R.`
+
+    - If Gargle “Out-of-Band” authentication fails:
+
+      - Make sure that you trust ProjectManagr Calendar:
+
+      - Copy the authorisation code from the authorisation code section.
+
+      - Paste the authorisation code on the ProjectManagr console:
+
+        - `Enter authorization code:`
+
+    - This browser tab can now be safely closed
+
+  - The R console should return a list of your Google Calendar Events
+    from today
+
+Once complete a cache of this token is stored in the projectmanagr cache
+dir:
+
+``` r
+rappdirs::user_cache_dir("projectmanagr")
+```
+
+- The file typically has a hash prefix then user email suffix:
+
+  - `HASH_CODE_user@email.com`
+
+- This authorisation token typically lasts 1 hour
+
+  - After this time, a refresh token must be generated
+
+  - This is automated by the code within projectmanagr
+
+  - The refresh tokens issued to a Testing app expire after 7 days
+
+    - If this limit expires you’ll be prompted to log in again
 
 ------------------------------------------------------------------------
 
-### 4 What each field in the JSON does
+### 4 What each field in the OAuth Client App JSON does
+
+The `gcal_oauth_client.json` file contains the following contents:
 
 | key | purpose | safe to expose? |
 |----|----|----|
@@ -192,10 +340,11 @@ googleAuthR::gar_auth(email = TRUE)           # opens browser once
 
 ------------------------------------------------------------------------
 
-### 6 Security note — what the *client-secret* really means
+### 6 Security note
 
-Projectmanagr needs an OAuth **client-ID + client-secret** because
-Google still requires both fields for Desktop-app credentials.
+Projectmanagr needs an OAuth *credential* (client-ID + client-secret)
+because Google still requires both fields for Desktop-app
+authentication.
 
 However, Google classifies Desktop secrets as *public*-information: they
 can be embedded in every end-user machine and **cannot be kept
@@ -203,7 +352,7 @@ confidential** . Anyone who gets your JSON could call Google APIs *as
 your application*, but **never as** **your Google account** — end-users
 must still grant consent and tokens are short-lived.
 
-**Why generate your own credential anyway?**
+**Why generate your own credential?**
 
 - Keeps your calendars under your own Google Cloud project and quota.  
 - Prevents other Projectmanagr users from “impersonating” **your**
@@ -229,6 +378,16 @@ working and a new JSON replaces the old one.
     one.  
     *Console path: Credentials ▸ OAuth 2.0 Client IDs ▸
     **〈your-client〉** ▸ Reset Secret*
+
+**— or — Reset an existing client**
+
+- On the **Credentials** page click the name of your Desktop-app
+  client.  
+- On the detail screen click **Reset secret / Add secret** (two-arrow
+  icon). Confirm.
+- Click **Download JSON** to grab the updated file.  
+  *Why?* Rotating the secret immediately invalidates the old one if you
+  ever leaked it.
 
 4.  **Download JSON**  
     After the reset, click **Download JSON**.  
