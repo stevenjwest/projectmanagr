@@ -2,6 +2,10 @@
 
 test_that("test create functions", {
 
+  cat("=====================")
+  cat("test create functions")
+  cat("")
+
   ################ generate test organisation temp directory ###################
 
   tmpdir <- create_tmpdir_rsess()
@@ -9,7 +13,7 @@ test_that("test create functions", {
 
   ################ create_project_org creates Org ##############################
 
-  orgName <- "_T_O"
+  orgName <- "_TOc"
   authorValue="sjwest"
   # mock the function that returns the update datetime
   # and function the generates status yaml content - write fixed org paths

@@ -646,6 +646,7 @@ create_templates_path <- function(projectmanagrPath, orgPath, settings) {
 
   # templates Dir - INSIDE the config DIR (these templates are part of the projectmanagr config!):
   tempPath <- get_template_dir(orgPath)
+  cat("TEMPLATE PATH : ", tempPath, "\n")
   fs::dir_create(tempPath)
   confirm_dir(tempPath, "  Templates directory could not be created: ")
   cat( "  Made templates dir: ",tempPath, "\n" )
@@ -2938,6 +2939,7 @@ create_sub_note <- function(
     projNoteSummaryTemplate       = "Project-Note-Summary-Template.Rmd",
     subNoteSummaryTemplate        = "Project-Sub-Note-Summary-Template.Rmd"
 ) {
+
   cat("\nprojectmanagr::create_sub_note():\n")
 
   # 1) Validate the inputs (rmdType in DOC/HEAD/SUB, addingSubNote if DOC, no spaces, etc.)
@@ -3248,10 +3250,20 @@ sub_subnote_params <- function(
 #'   sub_note_link_params, sub_template_param, insert_at_indices,
 #'   load_param_vector, match_line_index, grep_line_index_from, write_file,
 #'   create_hyperlink
-link_sub_note_doc <- function(selection, settings, subNoteRmdPath, subNoteContents,
-                              headerNoteRmdPath, headerNoteRmdContents, projNoteLinkContents,
-                              projNoteLinkSummaryContents, projNoteSummaryContents,
-                              subNoteSummaryContents, linkNoteRmdPath, linkNoteRmdContents, orgPath) {
+link_sub_note_doc <- function(
+    selection,
+    settings,
+    subNoteRmdPath,
+    subNoteContents,
+    headerNoteRmdPath,
+    headerNoteRmdContents,
+    projNoteLinkContents,
+    projNoteLinkSummaryContents,
+    projNoteSummaryContents,
+    subNoteSummaryContents,
+    linkNoteRmdPath,
+    linkNoteRmdContents,
+    orgPath) {
 
 
   #### Set Instance Variables ####
@@ -3582,25 +3594,14 @@ create_content <- function(selection, contentName, contentDescription,
 
   #### Create Content Dir ####
 
-  done <- dir.create( contentDir )
-
-  if(!done) {
-    stop( paste0("  Content directory could not be created: ", contentDir) )
-  }
-
-  cat( "  Made Content dir: ", contentDir, "\n" )
+  create_directory(contentDir, "  Made Content dir: ",
+                   "  Content directory could not be created: ")
 
 
   #### create Content Rmd file ####
 
-  done <- file.create( contentRmd )
-
-  if(!done) {
-    file.remove(contentDir) # remove the sub note dir
-    stop( paste0("  Content Rmd could not be created: ", contentRmd) )
-  }
-
-  cat( "  Made Content Rmd: ", contentRmd, "\n" )
+  create_file(contentRmd, "  Made Content Rmd: ",
+              "  Content Rmd could not be created: ")
 
 
 
@@ -3621,6 +3622,7 @@ create_content <- function(selection, contentName, contentDescription,
   contentRmd
 
 } #### ________________________________ ####
+
 
 #' Create Daily Journal
 #'
@@ -3863,7 +3865,8 @@ add_journal_content <- function(journalContents, year, month, day,
 #' @description
 #' Generates a markdown-formatted daily log that includes:
 #'   - A header with the date.
-#'   - Two centered header lines showing the current locale (Olson zone) and the effective timezone.
+#'   - Two centered header lines showing the current locale (Olson zone) and the
+#'     effective timezone.
 #'   - A timeline graphic showing moon and sun event positions.
 #'   - An integrated info block with event times.
 #'

@@ -2,6 +2,11 @@
 
 test_that("test link doc functions", {
 
+  cat("=====================")
+  cat("test link doc functions")
+  cat("")
+
+
   #### generate test organisation temp directory ####
 
   tmpdir <- create_tmpdir_rsess()
@@ -9,7 +14,7 @@ test_that("test link doc functions", {
 
   ################ generate test ORG PROG Doc Notes ################
 
-  orgName <- "_T_O"
+  orgName <- "_TOl"
   authorValue="sjwest"
   # mock the function that returns the update datetime
   local_mocked_bindings(

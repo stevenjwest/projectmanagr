@@ -1,4 +1,8 @@
 
+cat("=====================")
+cat("test datatables read rmd functions")
+cat("")
+
 
 test_that("datatables read rmd functions testing", {
 

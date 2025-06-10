@@ -5,8 +5,8 @@
 \title{find organisation root directory from RStudio Editor active doc path}
 \usage{
 find_org_rstudio_editor(
-  isAvailable = rstudioapi::isAvailable(),
-  getSourceEditorContext = rstudioapi::getSourceEditorContext()
+  isAvailable = .is_rstudio_available(),
+  getSourceEditorContext = .get_source_editor_context()
 )
 }
 \arguments{

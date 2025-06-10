@@ -2,7 +2,7 @@
 % Please edit documentation in R/extract-functions.R
 \name{extract_todos}
 \alias{extract_todos}
-\title{Extract HTML-comment-based TODOs from Rmd files with custom ordering}
+\title{Extract TODO items from a project}
 \usage{
 extract_todos(
   location,
@@ -10,81 +10,51 @@ extract_todos(
   fromFilePath = NULL,
   onlyFirstTodoPerFile = FALSE,
   sortByFileModTimeDesc = TRUE,
-  priorities = list(DEADLINE_PASSED = 4, SCHEDULE_PASSED = 3, DUE_TODAY = 2,
+  groupings = list(DEADLINE_PASSED = 4, SCHEDULE_PASSED = 3, DUE_TODAY = 2,
     SCHEDULED_TODAY = 1, OPEN_ITEMS = 0),
   collectionTemplate = "Todo-Collection-Template.Rmd",
   noteTemplate = "Todo-Note-Template.Rmd",
   itemTemplate = "Todo-Item-Template.Rmd",
-  priorityTemplate = "Todo-Priority-Template.Rmd",
-  priorityFirst = FALSE
+  groupingTemplate = "Todo-Grouping-Template.Rmd",
+  groupingFirst = FALSE
 )
 }
 \arguments{
-\item{location}{A path to either a directory containing Rmd files (searched
-recursively), or a single Rmd file.}
+\item{location}{Directory containing the project.}
 
-\item{date}{A string (e.g., "2025-04-01") representing "today." Used to
-interpret deadlines and schedules to see which are overdue or due today.}
+\item{date}{The \emph{reference} date (defaults to \code{get_date()}).}
 
-\item{fromFilePath}{Optional, a path from which to calculate relative links
-back to each Rmd file. If \code{NULL}, defaults to \code{location}.}
+\item{fromFilePath}{Path to the calling file (used for relative links).}
 
-\item{onlyFirstTodoPerFile}{If \code{TRUE}, only the first \code{<!-- {#todo}} block
-per file is extracted (the rest are ignored).}
+\item{onlyFirstTodoPerFile}{Logical; keep just the first todo block in each
+file \strong{regardless} of group.}
 
-\item{sortByFileModTimeDesc}{Logical; if \code{TRUE}, the note-first layout
-sorts files by descending modification time.}
+\item{sortByFileModTimeDesc}{Logical; when \emph{note‑first} layout is used,
+newest‑touched files come first.}
 
-\item{priorities}{A named list of length 5, e.g.
-\code{list(DEADLINE_PASSED=4, SCHEDULE_PASSED=3, DUE_TODAY=2, SCHEDULED_TODAY=1, OPEN_ITEMS=0)}.
-The \strong{order} of these five elements must match:
-\enumerate{
-\item \code{isDeadlinePassed} => \code{DEADLINE_PASSED}
-\item \code{isSchedulePassed} => \code{SCHEDULE_PASSED}
-\item \code{isDueToday} => \code{DUE_TODAY}
-\item \code{isScheduledToday} => \code{SCHEDULED_TODAY}
-\item \code{OPEN_ITEMS} => 0
-}
-A higher numeric priority means it appears first in the list.}
+\item{groupings}{Named integer vector giving the display‑order for the five
+schedule/deadline states.  (Was \code{priorities}; the old arg still works
+for backward compatibility.)}
 
-\item{collectionTemplate}{Name of the Rmd template to be used for the overall
-collection. Should contain placeholders like \code{{ALL_NOTES_SECTION}},
-\code{{DATE}}, \code{{SCOPE}}, etc.}
+\item{collectionTemplate, noteTemplate, itemTemplate}{Template filenames (looked up inside \code{get_template_dir()}).}
 
-\item{noteTemplate}{Name of the template used to render each file's block. It
-should contain \code{{NOTE_BASENAME}}, \code{{NOTE_LINK}}, and
-\code{{NOTE_TODO_ITEMS}} placeholders.}
+\item{groupingTemplate}{Template used when \code{groupingFirst = TRUE}
+(was  \code{priorityTemplate}).}
 
-\item{itemTemplate}{Name of the template used to render each individual TODO
-item. Should contain placeholders like \code{{TODO_ITEM_HEADER}},
-\code{{TODO_ITEM_LINK}}, \code{{TODO_TEXT}}, \code{{TODO_DEADLINE}},
-\code{{TODO_SCHEDULE}}, etc.}
-
-\item{priorityTemplate}{Name of the template used when \code{priorityFirst=TRUE}
-to render each priority section. Should contain placeholders like
-\code{{PRIORITY_HEADER}}, \code{{SEP2}}, and \code{{PRIORITY_ITEMS}}.}
-
-\item{priorityFirst}{Logical; if \code{TRUE}, we use a "priority-first" layout
-grouping items under top-level headers by priority. If \code{FALSE}, we use
-a "note-first" layout, grouping items by file.}
+\item{groupingFirst}{Logical; \code{TRUE} ⇒ headings are the \emph{state/grouping}
+sections first, \code{FALSE} ⇒ headings are the source file names first.}
 }
 \value{
-A character vector of R Markdown lines representing the final doc.
+A character vector of R Markdown lines invisibly.  Internally the
+function writes the same text to the clipboard (\code{clipr}) for easy
+pasting.
 }
 \description{
-This function scans a file or directory of R Markdown documents, looking for
-specially-formatted TODO comments in HTML comment blocks. Each block is
-extracted, given a priority based on deadlines/schedules, and finally
-rendered into a single Rmd output using templates.
-}
-\details{
-A valid TODO block must begin at the very start of a line with
-\code{<!-- {#todo}}, with no leading spaces. For example:
-\preformatted{
-<!-- {#todo}
-  multiline body
-  {#deadline 2025-12-31}
--->
-}
-If there are spaces before \code{<!--}, that block is ignored.
+Reads all \code{.Rmd}/\code{.qmd} files under \emph{location}, extracts the HTML‑comment
+todo blocks, and renders a single R Markdown note that can be pasted into
+your organiser.
+This version recognises \strong{inline priority tags} (\code{P1}, \code{P2}, …) and
+\strong{group tags} (\verb{#planning}, \verb{#release}, …), lets you rename the former
+\emph{priority‑first} layout to \emph{grouping‑first}, and skips repeat todos that
+share any group inside the same source file.
 }

@@ -4,7 +4,22 @@
 \alias{addin_insert_todo}
 \title{Insert Todo Addin}
 \usage{
-addin_insert_todo()
+addin_insert_todo(
+  save_context_fn = .save_context_doc,
+  get_context_fn = .get_source_editor_context,
+  insert_text_fn = .insert_text,
+  get_path_fn = .get_context_path,
+  get_todo_block_fn = get_todo_block
+)
+}
+\arguments{
+\item{get_context_fn}{Function returning the source editor context. Default: \code{.get_source_editor_context}}
+
+\item{insert_text_fn}{Function to insert text in RStudio source. Default: \code{rstudioapi::insertText}}
+
+\item{get_path_fn}{Function to get file path from context. Default: \code{.get_context_path}}
+
+\item{get_todo_block_fn}{Function to create the todo block. Default: \code{get_todo_block}}
 }
 \description{
 Inserts a todo block into the current selection in RStudio Source

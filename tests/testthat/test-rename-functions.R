@@ -1,6 +1,9 @@
 
 test_that("test rename functions", {
 
+  cat("=====================")
+  cat("test rename functions")
+  cat("")
 
   #### generate test organisation temp directory ####
 
@@ -9,7 +12,7 @@ test_that("test rename functions", {
 
   ################ generate test ORG PROG Doc Notes ################
 
-  orgName <- "_T_O"
+  orgName <- "_TOr"
   authorValue="sjwest"
   # mock the function that returns the update datetime
   local_mocked_bindings(
@@ -248,7 +251,7 @@ test_that("test rename functions", {
   rename_project_file_header(selection, headerName)
 
   # on project note
-  selection <- user_selection(renamedNoteRmd, 73)
+  selection <- user_selection(renamedNoteRmd, 58)
   headerName <- "RENAMED Introduction RENAMED"
   rename_project_file_header(selection, headerName)
 

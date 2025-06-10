@@ -2,34 +2,26 @@
 % Please edit documentation in R/extract-functions.R
 \name{parse_one_todo_block}
 \alias{parse_one_todo_block}
-\title{Parse a single HTML todo block}
+\title{Parse a single HTML‑comment todo block}
 \usage{
 parse_one_todo_block(blockLines)
 }
 \arguments{
-\item{blockLines}{A character vector of lines from the start to end of
-the HTML comment block.}
+\item{blockLines}{Character vector – the lines between the opening
+\verb{<!--} and closing \verb{-->}.}
 }
 \value{
-A list with the elements:
+A named list with elements:
 \describe{
-\item{\code{text}}{A character string of the main multiline description.}
-\item{\code{title}}{A character string for the todo block's inline title.}
-\item{\code{deadline}}{A string with the parsed deadline, if any.}
-\item{\code{schedule}}{A string with the parsed schedule, if any.}
+\item{text}{Full body text (no schedule/deadline lines).}
+\item{title}{Inline title after the closing brace.}
+\item{deadline,schedule}{Raw strings, possibly empty.}
+\item{pTagPriority}{\code{NA} or integer priority extracted from \verb{P<n>}.}
+\item{groups}{\code{character()} vector of group names (may be empty).}
 }
-Currently, no \code{heading} is assigned; that may be added later.
 }
 \description{
-This function extracts an optional inline title (the text appearing on
-the same line as \verb{\{#todo\}} in the comment), a multiline description,
-plus any deadlines or schedules from the block content.
-}
-\examples{
-\dontrun{
-blines <- c("<!-- {#todo} My Title", "{#deadline 2025-04-10}", "This is the body", "-->")
-parse_one_todo_block(blines)
-}
-
+Splits out title, body text, schedule/deadline strings, \strong{inline priority}
+(\verb{P<n>}) and an arbitrary number of \emph{group} tags (\verb{#group‑name}).
 }
 \keyword{internal}

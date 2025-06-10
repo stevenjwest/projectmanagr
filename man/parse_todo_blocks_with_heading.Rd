@@ -23,4 +23,23 @@ heading (\code{"## My Heading"}) encountered before the TODO block.
 If an inline title appears on the same line as \code{{#todo}}, it is captured
 (e.g. \verb{<!-- \{#todo\} My Title}).
 }
+\keyword{"{#todo}
+\keyword{#group}
+\keyword{(updated:}
+\keyword{...}"}
+\keyword{HTML}
+\keyword{P<n>}
+\keyword{Parse}
+\keyword{Rmd}
+\keyword{TODO}
+\keyword{an}
+\keyword{as}
+\keyword{blocks,}
+\keyword{capturing}
+\keyword{comment}
+\keyword{file}
+\keyword{for}
+\keyword{headings}
 \keyword{internal}
+\keyword{recognises}
+\keyword{well)}

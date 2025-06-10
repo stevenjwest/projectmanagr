@@ -2,22 +2,15 @@
 % Please edit documentation in R/RStudio-functions.R
 \name{get_rstudio_open_doc_IDs}
 \alias{get_rstudio_open_doc_IDs}
-\title{Get RStudio Open Document IDs}
+\title{Extract IDs and paths of currently open RStudio documents}
 \usage{
 get_rstudio_open_doc_IDs()
 }
-\description{
-Returns an ordered list of all open RStudio Documents.  The list contains a set
-of vectors that contain the RStudio Document ID \link{1} and the RStudio Document absolute
-path \link{2}.
+\value{
+A list of character vectors where each entry contains the file ID and
+its associated path (or "null" if unsaved).
 }
-\details{
-The order of the open RStudio documents in the list generally matches the order they are presented
-in RStudio.
-
-fileList[\link{i}][1] - RStudio i'th Document ID.
-
-fileList[\link{i}][2] - RStudio i'th Document Absolute Path, or null if the file is not saved to disk.
-
-NOTE: This method returns open documents in the BASE RStudio Session, and not in any opened project.
+\description{
+Uses internal RStudio session state files to extract a list of open documents.
+This function is useful for inspecting session metadata for all open files.
 }

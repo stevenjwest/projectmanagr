@@ -39,16 +39,16 @@ addin_datatable_create <- function() {
   #### instance variables ####
 
   # get data from rstudio context
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row()
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row()
 
   # indices of datatable delimiter lines - that begin with "+==="
   indices <- which( startsWith( contents, datatable_get_delimiter()) )
   indices_row <- which( startsWith( contents[1:row], datatable_get_delimiter()) )
 
   # SAVE the document before processing!
-  save_context_doc()
+  .save_context_doc()
 
   # from indices determine if the cursor is sitting IN or OUT of a datatable
   if( (length(indices_row) %% 2) == 1 ) { ##### If Cursor Inside Datatable : TEMPLATE ####
@@ -120,8 +120,8 @@ dt_create_ui <- function(path, row) {
 
 dt_create_server <- function(input, output, session) {
 
-  path <- get_context_path()
-  row <- get_context_row()
+  path <- .get_context_path()
+  row <- .get_context_row()
   settings <- get_settings_yml(find_org_directory(path))
 
   observeEvent(input$done, {
@@ -284,9 +284,9 @@ dt_create_template_server <- function(input, output, session) {
     shinyjs::disable("dt_ids") # initially..
   })
 
-  path <- get_context_path()
-  row <- get_context_row()
-  contents <- get_context_contents()
+  path <- .get_context_path()
+  row <- .get_context_row()
+  contents <- .get_context_contents()
   settings <- get_settings_yml(find_org_directory(path))
 
   # # get the template_dt_vector - not needed as pass the name via UI?
@@ -420,15 +420,15 @@ addin_datatable_create_from_file <- function() {
   #### instance variables ####
 
   # get data from rstudio context
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row()
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row()
 
   # checkbox values for datatable type
   dtT <- get_datatable_types_list()
 
   # SAVE the document before processing!
-  save_context_doc()
+  .save_context_doc()
 
   ad_dt_create_file(path, row, dtT)
 
@@ -501,9 +501,9 @@ dt_create_file_ui <- function(path, row, dtT) {
 dt_create_file_server <- function(input, output, session) {
 
   # get data from rstudio context
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row()
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row()
 
   # checkbox values for datatable type
   dtT <- get_datatable_types_list()
@@ -573,16 +573,16 @@ addin_datatable_add_data <- function() {
   #### instance variables ####
 
   # get data from rstudio context
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row()
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row()
 
   # indices of datatable delimiter lines - that begin with "+==="
   indices <- which( startsWith( contents, datatable_get_delimiter()) )
   indices_row <- which( startsWith( contents[1:row], datatable_get_delimiter()) )
 
   # SAVE the document before processing!
-  save_context_doc()
+  .save_context_doc()
 
   # from indices determine if the cursor is sitting IN or OUT of a datatable
   if( (length(indices_row) %% 2) == 1 ) { ##### If Cursor Inside Datatable : fill ADD_DATA TEMPLATE ####
@@ -707,9 +707,9 @@ dt_add_data_ui <- function(path, row, lt, type, ltid) {
 dt_add_data_server <- function(input, output, session) {
 
   # get initial instance variables
-  path <- get_context_path()
-  row <- get_context_row()
-  contents <- get_context_contents()
+  path <- .get_context_path()
+  row <- .get_context_row()
+  contents <- .get_context_contents()
   settings <- get_settings_yml(find_org_directory(path))
 
   # collect all sample data from the current Rmd up to SELECTED LINE
@@ -1103,9 +1103,9 @@ dt_add_data_template_ui <- function(path, row, lt) {
 dt_add_data_template_server <- function(input, output, session) {
 
   # get initial instance variables
-  path <- get_context_path()
-  row <- get_context_row()
-  contents <- get_context_contents()
+  path <- .get_context_path()
+  row <- .get_context_row()
+  contents <- .get_context_contents()
   settings <- get_settings_yml(find_org_directory(path))
 
   # collect all sample data from the current Rmd up to SELECTED LINE
@@ -1163,17 +1163,17 @@ addin_datatable_add_groups <- function() {
   #### instance variables ####
 
   # get data from rstudio context
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row() # this is rowStart!
-  rowEnd <- get_context_row_end()
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row() # this is rowStart!
+  rowEnd <- .get_context_row_end()
 
   # indices of datatable delimiter lines - that begin with "+==="
   indices <- which( startsWith( contents, datatable_get_delimiter()) )
   indices_row <- which( startsWith( contents[1:row], datatable_get_delimiter()) )
 
   # SAVE the document before processing!
-  save_context_doc()
+  .save_context_doc()
 
   # from indices determine if the cursor is sitting IN or OUT of a datatable
   if( (length(indices_row) %% 2) == 1) {
@@ -1296,10 +1296,10 @@ dt_add_group_ui <- function(path, row, lt, group_declaration) {
 dt_add_group_server <- function(input, output, session) {
 
   # get initial instance variables
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row() # this is rowStart!
-  rowEnd <- get_context_row_end()
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row() # this is rowStart!
+  rowEnd <- .get_context_row_end()
   settings <- get_settings_yml(find_org_directory(path))
 
   # check selected text for group declaration
@@ -1441,9 +1441,9 @@ addin_datatable_resample <- function() {
   #### instance variables ####
 
   # get data from rstudio context
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row() # this is rowStart!
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row() # this is rowStart!
 
   # cat("path: ", path, "\n")
   # cat("row: ", row, "\n")
@@ -1456,7 +1456,7 @@ addin_datatable_resample <- function() {
   # cat("indices_row: ", indices_row, "\n")
 
   # SAVE the document before processing!
-  save_context_doc()
+  .save_context_doc()
 
   # from indices determine if the cursor is sitting IN or OUT of a datatable
 
@@ -1533,9 +1533,9 @@ dt_resample_ui <- function(path, row, lt) {
 dt_resample_server <- function(input, output, session) {
 
   # get initial instance variables
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row() # this is rowStart!
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row() # this is rowStart!
   settings <- get_settings_yml(find_org_directory(path))
 
   # collect all sample data from the current Rmd UP TO TEMPLATE
@@ -1695,9 +1695,9 @@ dt_resample_template_ui <- function(path, row, lt) {
 dt_resample_template_server <- function(input, output, session) {
 
   # get initial instance variables
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row() # this is rowStart!
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row() # this is rowStart!
   settings <- get_settings_yml(find_org_directory(path))
 
   # collect all sample data from the current Rmd UP TO TEMPLATE
@@ -1762,16 +1762,16 @@ addin_datatable_dispose <- function() {
   #### instance variables ####
 
   # get data from rstudio context
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row()
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row()
 
   # indices of datatable delimiter lines - that begin with "+==="
   indices <- which( startsWith( contents, datatable_get_delimiter()) )
   indices_row <- which( startsWith( contents[1:row], datatable_get_delimiter()) )
 
   # SAVE the document before processing!
-  save_context_doc()
+  .save_context_doc()
 
   # from indices determine if the cursor is sitting IN or OUT of a datatable
   if( (length(indices_row) %% 2) == 1 ) { ##### If Cursor Inside Datatable : fill Dispose TEMPLATE Datatable ####
@@ -1846,9 +1846,9 @@ dt_dispose_ui <- function(path, row, lt, cdt) {
 dt_dispose_server <- function(input, output, session) {
 
   # get initial instance variables
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row() # this is rowStart!
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row() # this is rowStart!
   settings <- get_settings_yml(find_org_directory(path))
 
   # collect all sample data from the current Rmd UP TO TEMPLATE
@@ -1985,9 +1985,9 @@ dt_dispose_template_ui <- function(path, row, lt) {
 dt_dispose_template_server <- function(input, output, session) {
 
   # get initial instance variables
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row() # this is rowStart!
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row() # this is rowStart!
   settings <- get_settings_yml(find_org_directory(path))
 
   # collect all sample data from the current Rmd UP TO TEMPLATE
@@ -2059,16 +2059,16 @@ addin_datatable_import_export <- function() {
   #### instance variables ####
 
   # get data from rstudio context
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row()
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row()
 
   # indices of datatable delimiter lines - that begin with "+==="
   indices <- which( startsWith( contents, datatable_get_delimiter()) )
   indices_row <- which( startsWith( contents[1:row], datatable_get_delimiter()) )
 
   # SAVE the document before processing!
-  save_context_doc()
+  .save_context_doc()
 
   # from indices determine if the cursor is sitting IN or OUT of a datatable
   if( (length(indices_row) %% 2) == 1 ) { ##### If Cursor Inside Datatable : TEMPLATE ####
@@ -2136,9 +2136,9 @@ dt_import_export_ui <- function(path, row) {
 dt_import_export_server <- function(input, output, session) {
 
   # get data from rstudio context
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row()
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row()
   orgPath <- find_org_directory(path)
   settings <- get_settings_yml(orgPath)
 
@@ -2453,11 +2453,11 @@ addin_datatable_insert_tibble <- function(tb, dt_name, dt_function = "CREATE",
   #### instance variables ####
 
   # get data from rstudio context
-  path <- get_context_path()
-  row <- get_context_row()
+  path <- .get_context_path()
+  row <- .get_context_row()
 
   # SAVE the document before processing!
-  save_context_doc()
+  .save_context_doc()
 
   datatable_insert_from_tibble(path, row, tb, dt_name, dt_function, dt_length)
 

@@ -36,7 +36,8 @@ A character string containing the daily log dashboard.
 Generates a markdown-formatted daily log that includes:
 \itemize{
 \item A header with the date.
-\item Two centered header lines showing the current locale (Olson zone) and the effective timezone.
+\item Two centered header lines showing the current locale (Olson zone) and the
+effective timezone.
 \item A timeline graphic showing moon and sun event positions.
 \item An integrated info block with event times.
 }

@@ -1,5 +1,8 @@
-<!-- {#todo}
+<!-- {#todo P3} __TODO_TITLE__
+
 __todo_description__
 __todo_progress__
 {#schedule INSERT__DATETIME}
-{#deadline INSERT_DATE} -->
+{#deadline INSERT_DATE}
+
+-->

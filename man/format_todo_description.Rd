@@ -2,18 +2,19 @@
 % Please edit documentation in R/extract-functions.R
 \name{format_todo_description}
 \alias{format_todo_description}
-\title{Format a multi-line TODO description into Markdown bullets}
+\title{Return TODO description verbatim (legacy shim)}
 \usage{
 format_todo_description(txt)
 }
 \arguments{
-\item{txt}{A multiline string from the parsed TODO block.}
+\item{txt}{The raw multiline string from the parsed TODO block.}
 }
 \value{
-A character string with bullet indentation.
+A single character string.
 }
 \description{
-Splits the text by newline. The first line is prefixed with \verb{* },
-subsequent lines each get \verb{   +}, with a blank line after each bullet.
+Older versions converted each line into Markdown bullets.  The extractor
+now leaves the description exactly as written, so this helper simply
+returns the input followed by two line‑breaks.
 }
 \keyword{internal}

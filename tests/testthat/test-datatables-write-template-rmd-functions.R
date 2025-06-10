@@ -1,4 +1,8 @@
 
+cat("=====================")
+cat("test datatables write template rmd functions")
+cat("")
+
 
 test_that("datatable write template Rmd", {
 
@@ -11,7 +15,7 @@ test_that("datatable write template Rmd", {
 
   ############## create test Org with Project Notes for datatable insertion ####
 
-  orgName <- "_T_O_DT"
+  orgName <- "_T_ODwt"
   authorValue="sjwest"
   # mock the function that returns the update datetime
   # and function the generates status yaml content - write fixed org paths

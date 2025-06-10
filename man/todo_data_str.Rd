@@ -2,7 +2,7 @@
 % Please edit documentation in R/extract-functions.R
 \name{todo_data_str}
 \alias{todo_data_str}
-\title{Construct a data frame to store all extracted TODO items}
+\title{Empty TODO data frame with the correct columns}
 \usage{
 todo_data_str(
   file = character(),
@@ -17,37 +17,16 @@ todo_data_str(
   isSchedulePassed = integer(),
   isDueToday = integer(),
   isDeadlinePassed = integer(),
-  itemDateTime = numeric()
+  itemDateTime = numeric(),
+  pTagPriority = integer(),
+  groups = character()
 )
 }
-\arguments{
-\item{file}{A character vector of file paths.}
-
-\item{fileMtime}{Modification times for each file.}
-
-\item{indexInFile}{The index of the TODO within the file (1-based).}
-
-\item{heading}{The nearest markdown heading found in the file.}
-
-\item{title}{The inline title found after the \code{{#todo}} tag, if any.}
-
-\item{text}{The multiline text of the TODO block.}
-
-\item{deadline}{A string for \code{YYYY-MM-DD} if present.}
-
-\item{schedule}{A string for \code{YYYY-MM-DD:HHmm} if present.}
-
-\item{isScheduledToday, isSchedulePassed, isDueToday, isDeadlinePassed}{Integers
-(0 or 1) indicating whether the item is scheduled today, schedule passed,
-due today, or deadline passed.}
-
-\item{itemDateTime}{A numeric or POSIXct used internally to sort items with
-the same priority.}
-}
 \value{
-A data frame with the columns described above.
+Zero‑row data frame.
 }
 \description{
-Construct a data frame to store all extracted TODO items
+Helper that always returns a data.frame with the  \emph{full} schema the
+extractor uses, now including \strong{\code{pTagPriority}} and \strong{\code{groups}}.
 }
 \keyword{internal}

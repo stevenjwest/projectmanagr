@@ -114,28 +114,31 @@ addin_insert_datetime <- function() {
 } #### ________________________________ ####
 
 
-
 #' Insert Todo Addin
 #'
 #' Inserts a todo block into the current selection in RStudio Source
 #' Editor. Uses format specified in `config/templates/todo-block.txt`
 #'
+#' @param get_context_fn Function returning the source editor context. Default: `.get_source_editor_context`
+#' @param insert_text_fn Function to insert text in RStudio source. Default: `rstudioapi::insertText`
+#' @param get_path_fn Function to get file path from context. Default: `.get_context_path`
+#' @param get_todo_block_fn Function to create the todo block. Default: `get_todo_block`
+#'
 #' @export
-addin_insert_todo <- function() {
+addin_insert_todo <- function(
+    save_context_fn =   .save_context_doc,
+    get_context_fn = .get_source_editor_context,
+    insert_text_fn = .insert_text,
+    get_path_fn = .get_context_path,
+    get_todo_block_fn = get_todo_block
+) {
+  cat("\nprojectmanagr::addin_insert_todo():\n")
 
-  cat( "\nprojectmanagr::addin_insert_todo():\n" )
-
-  # get currently active doc in rstudio
-  context <- rstudioapi::getSourceEditorContext()
-
-  # get orgPath
-  orgPath <- confirm_find_org(context$path)
-
-  #### insert todo block ####
-  datetime <- get_todo_block(orgPath)
-
-  rstudioapi::insertText( datetime )
-
+  save_context_fn() # save current file first
+  context <- get_context_fn()
+  orgPath <- confirm_find_org(get_path_fn())
+  todo_block <- get_todo_block_fn(orgPath)
+  insert_text_fn(todo_block)
 } #### ________________________________ ####
 
 
@@ -146,18 +149,21 @@ addin_insert_todo <- function() {
 #' new goal section to the end of this document IF a Project Doc.
 #'
 #' @export
-addin_insert_doc_goal_section <- function() {
+addin_insert_doc_goal_section <- function(
+    save_context_fn =   .save_context_doc,
+    navigate_to_file_fn = .navigate_to_file
+) {
 
+  save_context_fn() # save current file first
   # get a selection object from current rstudio source editor
   selection <- cursor_selection()
-
 
   #### insert goal section ####
 
   insert_doc_goal_section(selection)
 
   # reload file
-  id <- rstudioapi::navigateToFile(selection[["filePath"]])
+  id <- navigate_to_file_fn(selection[["filePath"]])
 
 } #### ________________________________ ####
 
@@ -169,18 +175,21 @@ addin_insert_doc_goal_section <- function() {
 #' Goal Section.
 #'
 #' @export
-addin_insert_doc_deliverable_section <- function() {
+addin_insert_doc_deliverable_section <- function(
+    save_context_fn =   .save_context_doc,
+    navigate_to_file_fn = .navigate_to_file
+) {
 
+  save_context_fn() # save current file first
   # get a selection object from current rstudio source editor
   selection <- cursor_selection()
-
 
   #### insert deliverable section ####
 
   insert_doc_deliverable_section(selection)
 
   # reload file
-  id <- rstudioapi::navigateToFile(selection[["filePath"]])
+  id <- navigate_to_file_fn(selection[["filePath"]])
 
 } #### ________________________________ ####
 
@@ -192,26 +201,24 @@ addin_insert_doc_deliverable_section <- function() {
 #' Goal Section.
 #'
 #' @export
-addin_insert_doc_task_section <- function() {
+addin_insert_doc_task_section <- function(
+    save_context_fn =   .save_context_doc,
+    navigate_to_file_fn = .navigate_to_file
+) {
 
-  rstudioapi::documentSave() # save current file first
-
+  save_context_fn() # save current file first
   # get a selection object from current rstudio source editor
   selection <- cursor_selection()
 
-
   #### insert task section ####
 
-  insert_position <- insert_doc_task_section(selection)
+  insert_doc_task_section(selection)
 
-  # reload file & set cursor position
-  #id <- rstudioapi::documentOpen(selection[["filePath"]])
-  #rstudioapi::setCursorPosition(rstudioapi::document_position(insert_position, 1), id)
-
-  # set files pane
-  #rstudioapi::filesPaneNavigate( dirname(selection[["filePath"]]) )
+  # reload file
+  id <- navigate_to_file_fn(selection[["filePath"]])
 
 } #### ________________________________ ####
+
 
 
 #' Insert a Hyperlink
@@ -220,85 +227,106 @@ addin_insert_doc_task_section <- function() {
 #' Active RStudio file, at the current cursor position.
 #'
 #' @export
-addin_insert_hyperlink <- function() {
+addin_insert_hyperlink <- function(
+    save_context_fn =   .save_context_doc,
+    get_context_fn = .get_source_editor_context
+    ) {
 
   cat( "\nprojectmanagr::addin_insert_hyperlink():\n" )
 
   #### instance variables ####
 
-  # get currently active doc in rstudio
-  context <- rstudioapi::getSourceEditorContext()
+  save_context_fn() # save current file first
 
-  # get contents:
+  context <- get_context_fn()
+
+  path <- context$path
+  filename <- basename(path)
   openDocContents <- context$contents
-
-  cursor <- rstudioapi::primary_selection(context)
-
-  line <- (cursor$range[[1]])[1]
-  column <- (cursor$range[[1]])[2]
+  range <- context$selection[[1]]$range
+  line <- context$selection[[1]]$range$start[1]
+  column <- context$selection[[1]]$range$start[2]
 
   # identify the orgPath from current working directory - to retrieve the settings yaml file
-  orgPath <- find_org_directory( context$path )
+  orgPath <- find_org_directory(path)
 
   # if orgPath not identified present error interface and then stop this function
-  if( orgPath == "" ) { # do nothing
+  if(orgPath=="") { addin_error_org("Insert Hyperlink") }
 
-  } else { # get the settings file
+  settings <- get_settings_yml(orgPath) # for gadget width & height
 
-    # get config templates settings yml
-    confPath <- get_config_dir(orgPath)
-    tempPath <- get_template_dir(orgPath)
-    settings <- get_settings_yml(orgPath)
+  # present all files in shiny gadget
+  numberedFileList <- get_rstudio_docs_list_numbered(path)
 
+
+  #### RUN GADGET ####
+
+  runGadget(addin_insert_hyperlink_ui(filename, line, column, numberedFileList),
+            addin_insert_hyperlink_server, viewer = addin_create_dialog_viewer("Insert Hyperlink", settings))
+
+}
+
+
+#' Reorder open RStudio documents with active path used as a pivot
+#'
+#' Returns the list of file paths in order: right of active doc (L to R), then left.
+#'
+#' @param active_path The full path of the active document
+#' @param get_doc_ids A function that returns the open document IDs/paths (injectable for testing)
+#' @return A character vector of reordered file paths
+get_reordered_rstudio_doc_paths <- function(
+    active_path,
+    get_doc_ids = get_rstudio_open_doc_IDs
+  ) {
+  file_list <- get_doc_ids()
+  file_paths <- vapply(file_list, `[[`, character(1), 2)
+
+  if (!(active_path %in% file_paths)) {
+    warning("Active document not found in open files.")
+    return(file_paths)  # return as-is
   }
 
-  # get all open RStudio Doc PATHS:
-  fileList <- get_rstudio_open_doc_IDs()
+  active_index <- which(file_paths == active_path)
+  right_of_active <- file_paths[(active_index + 1):length(file_paths)]
+  left_of_active  <- if (active_index > 1) file_paths[1:(active_index - 1)] else character(0)
 
-  foundActiveDoc = FALSE
-
-  reorderedFileList = list() # all files to RIGHT of current active doc are stored here in order L>R
-  firstFileList = list() # all files to LEFT of current active doc are stored here in order L>R
-  numberedFileList <- list() # will fill the choices var for selectInput shiny widget
-  # must be a list of numbers, with the names of each item the String that is presented in selectInput
-
-  foundIndex <- 0
-
-  for(i in 1:length(fileList) ) {
-
-    if(foundActiveDoc == TRUE) {
-      foundIndex <- foundIndex + 1
-      reorderedFileList[[foundIndex]] <- fileList[[i]][2]
-      numberedFileList[(i-1)] <- i-1 # AFTER skipped Active Doc, so set list[i-1] to i-1
-
-    } else if (fileList[[i]][2] != context$path) {
-      firstFileList[[i]] <- fileList[[i]][2]
-      numberedFileList[i] <- i # BEFORE skipping Active Doc, so set list[i] to i
-
-    } else if(fileList[[i]][2] == context$path) {
-
-      foundActiveDoc = TRUE
-      # This is the Active Doc - so DO NOT add an index to numberedFileList
-    }
-  }
-
-  # concat the list of file paths, with files to the RIGHT of active doc FIRST:
-  reorderedFileList <- c(reorderedFileList, firstFileList)
-
-  # form the numberedFileList (list of indexes, with names constituting the image file NAMES)
-  names(numberedFileList) <- lapply(reorderedFileList, basename)
-
-  # OR just use a list of file NAMES (indexes are implicitly understood by selectInput):
-  reorderedFileNames <- lapply(reorderedFileList, basename)
-
-  contextName <- basename(context$path)
-
-  # present these files in a combobox in shiny gadget
+  c(right_of_active, left_of_active)
+}
 
 
-  #### user interface ####
+#' Get numbered list of open docs (for selectInput)
+#'
+#' @param active_path Full path of currently active document
+#' @return A named list of integer indices, names are file basenames
+get_rstudio_docs_list_numbered <- function(active_path) {
+  reordered_paths <- get_reordered_rstudio_doc_paths(active_path)
+  numbered_list <- as.list(seq_along(reordered_paths))
+  names(numbered_list) <- basename(reordered_paths)
+  numbered_list
+}
 
-  ui <- miniPage(
+
+#' Get reordered list of open doc paths (excluding active)
+#'
+#' @param active_path Full path of currently active document
+#' @return A character vector of reordered paths (right of active, then left)
+get_rstudio_docs_list_reordered <- function(active_path) {
+  get_reordered_rstudio_doc_paths(active_path)
+}
+
+
+#' User Interface for Insert Hyperlink
+#'
+#' Passes some important instance variables:
+#'
+#' @param filename Name of file where hyperlink will be written to
+#' @param line Line in file where hyperlink will be written
+#' @param column Column in file where hyperlink will be written
+#' @param numberedFileList FileList of open Rmd files in RStudio, numbered.
+#'
+addin_insert_hyperlink_ui <- function(filename, line, column, numberedFileList) {
+
+  miniPage(
 
     gadgetTitleBar("Insert HyperLink"),
 
@@ -309,7 +337,7 @@ addin_insert_hyperlink <- function() {
         fillRow( h5("Insert a new Hyperlink:") ),
 
         fillRow(
-          h5(  paste("TO:", contextName ), align="center"  )
+          h5(  paste("TO:", filename ), align="center"  )
         ),
 
         fillRow(
@@ -325,61 +353,54 @@ addin_insert_hyperlink <- function() {
         ),
 
         fillRow( h5("") ),
-
         fillRow( h5("") ),
-
         fillRow( h5("") ),
-
         fillRow( h5("") )
-
       )
     )
   )
+}
 
 
-  #### server code ####
+#' Insert Hyperlink: Shiny Server
+#'
+#' Insert hyperlink using `create_hyperlink_no_ext()` function.
+#'
+addin_insert_hyperlink_server <- function(input, output, session) {
 
-  server <- function(input, output, session) {
+  context <- .get_source_editor_context()
 
+  id <- context$id
+  path <- context$path
+  filename <- basename(path)
+  openDocContents <- context$contents
+  range <- context$selection[[1]]$range
+  line <- context$selection[[1]]$range$start[1]
+  column <- context$selection[[1]]$range$start[2]
+  reorderedFileList <- get_rstudio_docs_list_reordered(path)
 
-    # perform computations to form new hyperlink
-    observeEvent(input$done, {
+  # perform computations to form new hyperlink
+  observeEvent(input$done, {
 
-      print(input$select)
+    print(input$select)
 
-      print(reorderedFileList[[as.integer(input$select)]])
-
-
-      #### done : insert hyperlink ####
-
-      # form new hyperlink:
-      DocTitleLink <- create_hyperlink_no_ext(
-                              reorderedFileList[[as.integer(input$select)]],
-                              context$path)
-
-      # insert into contents
-      rstudioapi::insertText(cursor$range, DocTitleLink, id = context$id)
-
-      # Close Gadget after computations are complete:
-      stopApp()
-
-    })
-  }
+    print(reorderedFileList[[as.integer(input$select)]])
 
 
-  #### view gadget ####
+    #### DONE : insert hyperlink ####
 
-  if(orgPath == "") { # use default width/height
-    viewer <- dialogViewer("Insert Hyperlink", width = 1000,
-                           height = 800 )
-  } else { # use width/height from settings
-    viewer <- dialogViewer("Insert Hyperlink",
-                           width = settings[["GadgetWidth"]],
-                           height = settings[["GadgetHeight"]])
-  }
+    # form new hyperlink:
+    DocTitleLink <- create_hyperlink_no_ext(
+      reorderedFileList[[as.integer(input$select)]],
+      path)
 
-  runGadget(ui, server, viewer = viewer)
+    # insert into contents
+    .insert_text(range, DocTitleLink, id = id)
 
+    # navigate to org index file & close addin:
+    addin_rstudio_nav(path)
+
+  })
 } #### ________________________________ ####
 
 

@@ -2,27 +2,27 @@
 % Please edit documentation in R/extract-functions.R
 \name{write_todo_data_str}
 \alias{write_todo_data_str}
-\title{Write parsed TODO items to the master data frame}
+\title{Append parsed todos from one file to the master data.frame}
 \usage{
 write_todo_data_str(fl, todos, allTodos, onlyFirstTodoPerFile, today)
 }
 \arguments{
-\item{fl}{The file path from which TODOs were extracted.}
+\item{fl}{Path to the source file being processed.}
 
-\item{todos}{A list of parsed items (each a list with \code{text}, \code{title},
-\code{deadline}, \code{schedule}, etc.).}
+\item{todos}{List of list objects (each from \code{parse_one_todo_block()}).}
 
-\item{allTodos}{The existing data frame of all collected TODO items so far.}
+\item{allTodos}{The cumulative data.frame built so far.}
 
-\item{onlyFirstTodoPerFile}{If \code{TRUE}, we add only the first item from
-each file.}
+\item{onlyFirstTodoPerFile}{Logical flag forwarded from \code{extract_todos()}.}
 
-\item{today}{The "today" date string for schedule/deadline logic.}
+\item{today}{Date object forwarded from \code{extract_todos()}.}
 }
 \value{
-The updated \code{allTodos} data frame with new rows appended.
+Updated data.frame.
 }
 \description{
-Write parsed TODO items to the master data frame
+Applies date‑status flags, \strong{drops any todo whose groups were already seen
+earlier in the same file}, and fills the two new columns (\code{pTagPriority},
+\code{groups}).
 }
 \keyword{internal}

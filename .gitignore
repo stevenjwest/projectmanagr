@@ -3,5 +3,4 @@
 .DS_Store
 
 # Google OAuth secrets
-inst/google-oauth/*.json         # any real credentials
 inst/google-oauth/*.httr-oauth   # cached tokens

@@ -64,10 +64,15 @@ Description: Resample a datatable via addin: select samples to resample, and opt
 Binding: addin_datatable_resample
 Interactive: true
 
+Name: ProjectManagr: Extract Calendar Events
+Description: Extract all Google Calendar Events to the cursor location.  Must setup GCal OAuth Client!
+Binding: addin_extract_google_calendar_events_markdown
+Interactive: true
+
 Name: ProjectManagr: Extract ToDos
 Description: Extract all ToDos to the cursor location.
 Binding: addin_extract_todos
-Interactive: false
+Interactive: true
 
 Name: ProjectManagr: Insert Content Section
 Description: Insert a Content Section into a Project Note.

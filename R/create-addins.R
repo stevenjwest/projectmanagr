@@ -412,7 +412,7 @@ addin_create_programme_section_server <- function(input, output, session) {
     } else {
 
       # FIRST - save all open documents in RStudio:
-      save_all_doc()
+      .save_all_doc()
 
       #### create programme section ####
 
@@ -478,7 +478,7 @@ get_prog_selected <- function(programmeDirPaths) {
   progSelected
 }
 
-#' User Interface for Creat Project Doc shiny gadget
+#' User Interface for Create Project Doc shiny gadget
 #'
 #' Passes some important instance variables:
 #'
@@ -705,7 +705,7 @@ addin_create_project_doc_server <- function(input, output, session) {
     } else {
 
       # FIRST - save all open documents in RStudio:
-      save_all_doc()
+      .save_all_doc()
 
       #### create project doc ####
 

@@ -8,8 +8,8 @@ set_wd_active_doc <- function( ) {
 
   if( rstudioapi::isAvailable() ) {
 
-    save_context_doc()
-    path <- get_context_path()
+    .save_context_doc()
+    path <- .get_context_path()
     dirPath <- dirname(path)
 
     cat( "\nprojectmanagr::set_wd_active_doc():\n" )
@@ -24,7 +24,7 @@ set_wd_active_doc <- function( ) {
   } else {
     cat("\nRStudio context is unavailable")
   }
-}
+} #### ________ ####
 
 
 
@@ -71,7 +71,7 @@ set_selection_next_horizontal_rule <- function( ) {
     cat( "  No selection can be made - current line does not contain a horizontal rule: ---\n" )
   }
 
-}
+} #### ________ ####
 
 
 
@@ -99,10 +99,10 @@ set_selection_next_horizontal_rule <- function( ) {
 navigate_markdown_link <- function() {
 
   WD <- getwd()
-  path <- get_context_path()
-  id <- get_context_id()
-  line <- get_context_row()
-  contents <- get_context_contents()
+  path <- .get_context_path()
+  id <- .get_context_id()
+  line <- .get_context_row()
+  contents <- .get_context_contents()
 
   parsed <- parse_link_in_selected_line(contents, line)
 
@@ -238,7 +238,7 @@ navigate_file_no_anchor <- function(relPath, currentDocPath, contents_current_do
     )
 
     # navigate within current doc
-    id <- get_context_id()
+    id <- .get_context_id()
     # go to end of file first
     rstudioapi::setCursorPosition(
       rstudioapi::document_position(length(contents_current_doc), 1),
@@ -284,5 +284,13 @@ find_anchor_in_headers <- function(anchor, anchorRaw, contentHeaders, contents_o
   stop(
     "No matching header found for anchor: #", anchorRaw
   )
+} #### ________ ####
+
+
+
+check_markdown_header <- function() {
+
 }
+
+
 

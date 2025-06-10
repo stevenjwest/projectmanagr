@@ -2,7 +2,7 @@
 % Please edit documentation in R/extract-functions.R
 \name{extract_google_calendar_events}
 \alias{extract_google_calendar_events}
-\title{Extract Google Calendar events for a specific day}
+\title{Extract events from Google Calendar for one day}
 \usage{
 extract_google_calendar_events(
   day = Sys.Date(),
@@ -13,20 +13,48 @@ extract_google_calendar_events(
 )
 }
 \arguments{
-\item{day}{A date (defaults to today) to fetch events for}
+\item{day}{\code{\link[base:Dates]{Date}} Date to query (default: \code{Sys.Date()}).}
 
-\item{settings}{An optional list, can include \code{googleCalendars} for filtering}
+\item{settings}{\code{list} Named options; currently only
+\code{googleCalendars = c("Calendar A", "Calendar B")}
+to filter the calendar list.}
 
-\item{auth_fn}{Function for handling authentication (used for testing)}
+\item{auth_fn}{Function that performs authentication
+(default: \code{\link[=default_google_auth]{default_google_auth()}}).}
 
-\item{calendar_list_fn}{Function that returns calendar list}
+\item{calendar_list_fn}{Function that returns the calendar list
+as a two-column tibble (\code{id}, \code{summary}).}
 
-\item{events_fn}{Function to fetch events given a calendar ID}
+\item{events_fn}{Function that fetches one calendar’s
+events; must return the parsed JSON list produced by
+googleAuthR/Calendar v3.}
 }
 \value{
-A tibble with calendar events
+A \link[tibble:tibble]{tibble} with the columns\
+\code{calendar}, \code{summary}, \code{start}, \code{end}, \code{description}, \code{htmlLink},
+\code{location}.
 }
 \description{
-Authenticates using a built-in OAuth2 client, retrieves the user's calendars,
-and fetches events for a given day (default: today).
+This convenience wrapper\
+• \strong{authenticates} with Google Calendar via the builtin
+\code{\link[=default_google_auth]{default_google_auth()}} helper;\
+• retrieves the user’s \strong{calendar list} (or a subset supplied in
+\code{settings$googleCalendars});\
+• fetches \strong{all events} that start \emph{or} end on the requested \code{day}
+(UTC, exclusive upper bound) and\
+• returns the result as a tidy tibble with the most commonly used
+columns.
 }
+\details{
+Every heavy-lifting call (auth, calendar list, events) is injected as a
+function argument so the behaviour can be \strong{unit-tested or mocked}
+without hitting the network.
+}
+\section{Time handling}{
+
+Google returns either \code{date} (all-day) \strong{or} \code{dateTime}
+(time-specific) fields.
+The helper collapses those into the single character columns
+\code{start} / \code{end}, preserving the original RFC 3339 string when present.
+}
+

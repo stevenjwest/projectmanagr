@@ -16,28 +16,49 @@ author: '{{AUTHOR}}'
 
 
 
-{{JOURNAL_EVENTS_HEADER}}
+# CORRESPONDENCE
 
 
-
-{{JOURNAL_EVENTS_INSERTION}}
-
+Check & clear correspondence channels
 
 
-
-{{JOURNAL_EVENTS_FOOTER}}
-
+## [] clear emails
 
 
-{{JOURNAL_TODOS_HEADER}}
-
-
-
-{{JOURNAL_TODOS_INSERTION}}
+__emails_notes__
 
 
 
 
-{{SEP01}}
+## [] clear slack
+
+
+__slack_notes__
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
+
+# TODAY'S AGENDA
+
+
+
+__extract_Calendar_Events__
+
+
+
+__extract_TODOs__
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+
 
 

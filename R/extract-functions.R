@@ -1,94 +1,77 @@
 
-#' Extract HTML-comment-based TODOs from Rmd files with custom ordering
-#'
-#' This function scans a file or directory of R Markdown documents, looking for
-#' specially-formatted TODO comments in HTML comment blocks. Each block is
-#' extracted, given a priority based on deadlines/schedules, and finally
-#' rendered into a single Rmd output using templates.
-#'
-#' A valid TODO block must begin at the very start of a line with
-#' \code{<!-- {#todo}}, with no leading spaces. For example:
-#' \preformatted{
-#' <!-- {#todo}
-#'   multiline body
-#'   {#deadline 2025-12-31}
-#' -->
-#' }
-#' If there are spaces before \code{<!--}, that block is ignored.
-#'
-#' @param location A path to either a directory containing Rmd files (searched
-#'   recursively), or a single Rmd file.
-#' @param date A string (e.g., "2025-04-01") representing "today." Used to
-#'   interpret deadlines and schedules to see which are overdue or due today.
-#' @param fromFilePath Optional, a path from which to calculate relative links
-#'   back to each Rmd file. If \code{NULL}, defaults to \code{location}.
-#' @param onlyFirstTodoPerFile If \code{TRUE}, only the first \code{<!-- {#todo}} block
-#'   per file is extracted (the rest are ignored).
-#' @param sortByFileModTimeDesc Logical; if \code{TRUE}, the note-first layout
-#'   sorts files by descending modification time.
-#' @param priorities A named list of length 5, e.g.
-#'   \code{list(DEADLINE_PASSED=4, SCHEDULE_PASSED=3, DUE_TODAY=2, SCHEDULED_TODAY=1, OPEN_ITEMS=0)}.
-#'   The \strong{order} of these five elements must match:
-#'   \enumerate{
-#'     \item \code{isDeadlinePassed} => \code{DEADLINE_PASSED}
-#'     \item \code{isSchedulePassed} => \code{SCHEDULE_PASSED}
-#'     \item \code{isDueToday} => \code{DUE_TODAY}
-#'     \item \code{isScheduledToday} => \code{SCHEDULED_TODAY}
-#'     \item \code{OPEN_ITEMS} => 0
-#'   }
-#'   A higher numeric priority means it appears first in the list.
-#' @param collectionTemplate Name of the Rmd template to be used for the overall
-#'   collection. Should contain placeholders like \code{{ALL_NOTES_SECTION}},
-#'   \code{{DATE}}, \code{{SCOPE}}, etc.
-#' @param noteTemplate Name of the template used to render each file's block. It
-#'   should contain \code{{NOTE_BASENAME}}, \code{{NOTE_LINK}}, and
-#'   \code{{NOTE_TODO_ITEMS}} placeholders.
-#' @param itemTemplate Name of the template used to render each individual TODO
-#'   item. Should contain placeholders like \code{{TODO_ITEM_HEADER}},
-#'   \code{{TODO_ITEM_LINK}}, \code{{TODO_TEXT}}, \code{{TODO_DEADLINE}},
-#'   \code{{TODO_SCHEDULE}}, etc.
-#' @param priorityTemplate Name of the template used when \code{priorityFirst=TRUE}
-#'   to render each priority section. Should contain placeholders like
-#'   \code{{PRIORITY_HEADER}}, \code{{SEP2}}, and \code{{PRIORITY_ITEMS}}.
-#' @param priorityFirst Logical; if \code{TRUE}, we use a "priority-first" layout
-#'   grouping items under top-level headers by priority. If \code{FALSE}, we use
-#'   a "note-first" layout, grouping items by file.
-#'
-#' @return A character vector of R Markdown lines representing the final doc.
-#' @export
-extract_todos <- function(location,
-                          date = get_date(),
-                          fromFilePath = NULL,
-                          onlyFirstTodoPerFile = FALSE,
-                          sortByFileModTimeDesc = TRUE,
-                          priorities = list(
-                            DEADLINE_PASSED = 4,
-                            SCHEDULE_PASSED = 3,
-                            DUE_TODAY       = 2,
-                            SCHEDULED_TODAY = 1,
-                            OPEN_ITEMS      = 0
-                          ),
-                          collectionTemplate = "Todo-Collection-Template.Rmd",
-                          noteTemplate       = "Todo-Note-Template.Rmd",
-                          itemTemplate       = "Todo-Item-Template.Rmd",
-                          priorityTemplate   = "Todo-Priority-Template.Rmd",
-                          priorityFirst      = FALSE) {
 
+
+
+
+#' Extract TODO items from a project
+#'
+#' Reads all `.Rmd`/`.qmd` files under *location*, extracts the HTML‑comment
+#' todo blocks, and renders a single R Markdown note that can be pasted into
+#' your organiser.
+#' This version recognises **inline priority tags** (`P1`, `P2`, …) and
+#' **group tags** (`#planning`, `#release`, …), lets you rename the former
+#' *priority‑first* layout to *grouping‑first*, and skips repeat todos that
+#' share any group inside the same source file.
+#'
+#' @param location Directory containing the project.
+#' @param date     The *reference* date (defaults to `get_date()`).
+#' @param fromFilePath  Path to the calling file (used for relative links).
+#' @param onlyFirstTodoPerFile Logical; keep just the first todo block in each
+#'        file **regardless** of group.
+#' @param sortByFileModTimeDesc Logical; when *note‑first* layout is used,
+#'        newest‑touched files come first.
+#' @param groupings Named integer vector giving the display‑order for the five
+#'        schedule/deadline states.  (Was `priorities`; the old arg still works
+#'        for backward compatibility.)
+#' @param collectionTemplate,noteTemplate,itemTemplate
+#'        Template filenames (looked up inside `get_template_dir()`).
+#' @param groupingTemplate  Template used when `groupingFirst = TRUE`
+#'        (was  `priorityTemplate`).
+#' @param groupingFirst Logical; `TRUE` ⇒ headings are the *state/grouping*
+#'        sections first, `FALSE` ⇒ headings are the source file names first.
+#'
+#' @return A character vector of R Markdown lines invisibly.  Internally the
+#'         function writes the same text to the clipboard (`clipr`) for easy
+#'         pasting.
+#' @export
+extract_todos <- function(
+    location,
+    date = get_date(),
+    fromFilePath = NULL,
+    onlyFirstTodoPerFile = FALSE,
+    sortByFileModTimeDesc = TRUE,
+
+    groupings = list(
+      DEADLINE_PASSED = 4,
+      SCHEDULE_PASSED = 3,
+      DUE_TODAY       = 2,
+      SCHEDULED_TODAY = 1,
+      OPEN_ITEMS      = 0
+    ),
+
+    collectionTemplate = "Todo-Collection-Template.Rmd",
+    noteTemplate       = "Todo-Note-Template.Rmd",
+    itemTemplate       = "Todo-Item-Template.Rmd",
+
+    groupingTemplate   = "Todo-Grouping-Template.Rmd",
+    groupingFirst      = FALSE
+) {
   cat("\nprojectmanagr::extract_todos():\n")
 
-  # Set up environment and read user templates
+  priorities       <- groupings
+  priorityTemplate <- groupingTemplate
+  priorityFirst    <- groupingFirst
+
   orgPath  <- confirm_find_org(location)
   tempPath <- get_template_dir(orgPath)
   settings <- get_settings_yml(orgPath)
 
   files <- get_projectmanagr_files(location, orgPath, settings)
 
-  # Read top-level templates
   collectionLines <- read_file(fs::path(tempPath, collectionTemplate))
   noteLines       <- read_file(fs::path(tempPath, noteTemplate))
   itemLines       <- read_file(fs::path(tempPath, itemTemplate))
 
-  # For priority-first layout, read the priority-section template
   prioritySectionLines <- NULL
   if (priorityFirst) {
     prioritySectionLines <- read_file(fs::path(tempPath, priorityTemplate))
@@ -98,47 +81,45 @@ extract_todos <- function(location,
     fromFilePath <- location
   }
 
-  # Collect TODOs from all files
   allTodos <- todo_data_str()
   for (fl in files) {
-    todos <- parse_todo_blocks_with_heading(fl)
+    todos    <- parse_todo_blocks_with_heading(fl)
     allTodos <- write_todo_data_str(
       fl, todos, allTodos,
       onlyFirstTodoPerFile = onlyFirstTodoPerFile,
-      today = date
+      today                = date
     )
   }
 
   if (nrow(allTodos) == 0) {
-    # If no items, return minimal doc
-    return(no_todo_items_found(allTodos, collectionLines, orgPath, date, location))
+    return(
+      no_todo_items_found(allTodos, collectionLines, orgPath, date, location)
+    )
   }
 
-  # Validate and invert priorities
   if (length(priorities) != 5) {
-    stop("The 'priorities' list must have exactly 5 elements (DEADLINE_PASSED..OPEN_ITEMS).")
+    stop(
+      "The 'groupings' list must contain exactly 5 elements ",
+      "(DEADLINE_PASSED…OPEN_ITEMS)."
+    )
   }
   invMap <- setNames(names(priorities), as.character(priorities))
 
-  # Assign numeric priority & parse itemDateTime
-  allTodos$priority <- 0
+  allTodos$priority     <- 0L
   allTodos$itemDateTime <- NA_real_
-  for (r in seq_len(nrow(allTodos))) {
-    rowPriority <- 0
 
-    if (allTodos$isDeadlinePassed[r] == 1) {
-      rowPriority <- max(rowPriority, priorities[[1]])
-    }
-    if (allTodos$isSchedulePassed[r] == 1) {
-      rowPriority <- max(rowPriority, priorities[[2]])
-    }
-    if (allTodos$isDueToday[r] == 1) {
-      rowPriority <- max(rowPriority, priorities[[3]])
-    }
-    if (allTodos$isScheduledToday[r] == 1) {
-      rowPriority <- max(rowPriority, priorities[[4]])
-    }
-    # else rowPriority => 0 => OPEN_ITEMS
+  for (r in seq_len(nrow(allTodos))) {
+    rowPriority <- priorities[["OPEN_ITEMS"]]
+
+    if (allTodos$isDeadlinePassed[r] == 1)
+      rowPriority <- max(rowPriority, priorities[["DEADLINE_PASSED"]])
+    if (allTodos$isSchedulePassed[r] == 1)
+      rowPriority <- max(rowPriority, priorities[["SCHEDULE_PASSED"]])
+    if (allTodos$isDueToday[r] == 1)
+      rowPriority <- max(rowPriority, priorities[["DUE_TODAY"]])
+    if (allTodos$isScheduledToday[r] == 1)
+      rowPriority <- max(rowPriority, priorities[["SCHEDULED_TODAY"]])
+
     allTodos$priority[r] <- rowPriority
 
     dtSch  <- parse_schedule_datetime(allTodos$schedule[r])
@@ -152,57 +133,31 @@ extract_todos <- function(location,
     }
   }
 
-  # Build the final doc using either note-first or priority-first layout
-  if (priorityFirst) {
-    finalDoc <- build_priority_first_layout(
-      allTodos             = allTodos,
-      invMap               = invMap,
-      itemLines            = itemLines,
-      noteLines            = noteLines,
-      prioritySectionLines = prioritySectionLines,
-      fromFilePath         = fromFilePath,
-      orgPath              = orgPath,
-      date                 = date,
-      location             = location,
-      collectionLines      = collectionLines
+  finalDoc <- if (priorityFirst) {
+    build_priority_first_layout(
+      allTodos, invMap,
+      itemLines, noteLines, prioritySectionLines,
+      fromFilePath, orgPath, date, location, collectionLines
     )
   } else {
-    finalDoc <- build_note_first_layout(
-      allTodos             = allTodos,
-      sortByFileModTimeDesc= sortByFileModTimeDesc,
-      itemLines            = itemLines,
-      noteLines            = noteLines,
-      fromFilePath         = fromFilePath,
-      orgPath              = orgPath,
-      date                 = date,
-      location             = location,
-      collectionLines      = collectionLines
+    build_note_first_layout(
+      allTodos, sortByFileModTimeDesc,
+      itemLines, noteLines,
+      fromFilePath, orgPath, date, location, collectionLines
     )
   }
 
-  finalDoc <- replace_sep_values(finalDoc, orgPath)
-
-  finalDoc
+  replace_sep_values(finalDoc, orgPath)
 }
 
 
-#' Construct a data frame to store all extracted TODO items
+#' Empty TODO data frame with the correct columns
 #'
-#' @param file A character vector of file paths.
-#' @param fileMtime Modification times for each file.
-#' @param indexInFile The index of the TODO within the file (1-based).
-#' @param heading The nearest markdown heading found in the file.
-#' @param title The inline title found after the \code{{#todo}} tag, if any.
-#' @param text The multiline text of the TODO block.
-#' @param deadline A string for \code{YYYY-MM-DD} if present.
-#' @param schedule A string for \code{YYYY-MM-DD:HHmm} if present.
-#' @param isScheduledToday,isSchedulePassed,isDueToday,isDeadlinePassed Integers
-#'   (0 or 1) indicating whether the item is scheduled today, schedule passed,
-#'   due today, or deadline passed.
-#' @param itemDateTime A numeric or POSIXct used internally to sort items with
-#'   the same priority.
+#' Helper that always returns a data.frame with the  *full* schema the
+#' extractor uses, now including **`pTagPriority`** and **`groups`**.
 #'
-#' @return A data frame with the columns described above.
+#' @inheritParams todo_data_str
+#' @return Zero‑row data frame.
 #' @keywords internal
 todo_data_str <- function(
     file             = character(),
@@ -217,16 +172,165 @@ todo_data_str <- function(
     isSchedulePassed = integer(),
     isDueToday       = integer(),
     isDeadlinePassed = integer(),
-    itemDateTime     = numeric()
+    itemDateTime     = numeric(),
+    pTagPriority     = integer(),
+    groups           = character()
 ) {
   data.frame(
     file, fileMtime, indexInFile, heading, title, text,
     deadline, schedule,
     isScheduledToday, isSchedulePassed, isDueToday, isDeadlinePassed,
     itemDateTime,
+    pTagPriority,
+    groups,
     stringsAsFactors = FALSE
   )
 }
+
+
+#' Parse a single HTML‑comment todo block
+#'
+#' Splits out title, body text, schedule/deadline strings, **inline priority**
+#' (`P<n>`) and an arbitrary number of *group* tags (`#group‑name`).
+#'
+#' @param blockLines Character vector – the lines between the opening
+#'        `<!--` and closing `-->`.
+#' @return A named list with elements:
+#'   \describe{
+#'     \item{text}{Full body text (no schedule/deadline lines).}
+#'     \item{title}{Inline title after the closing brace.}
+#'     \item{deadline,schedule}{Raw strings, possibly empty.}
+#'     \item{pTagPriority}{`NA` or integer priority extracted from `P<n>`.}
+#'     \item{groups}{`character()` vector of group names (may be empty).}
+#'   }
+#' @keywords internal
+parse_one_todo_block <- function(blockLines) {
+  if (!length(blockLines)) return(NULL)
+
+  # Strip any trailing "-->"
+  lastLineIdx <- length(blockLines)
+  if (grepl("-->", blockLines[lastLineIdx])) {
+    blockLines[lastLineIdx] <- sub("-->.*$", "", blockLines[lastLineIdx])
+  }
+
+  firstLine <- blockLines[1]
+  if (grepl("<!--", firstLine)) firstLine <- sub("<!--", "", firstLine)
+
+  # Inside the braces: priority tag(s) + group tag(s)
+  inside <- sub("^.*\\{#todo\\s*", "", firstLine)
+  inside <- sub("\\}.*$", "", inside)
+  insideParts <- strsplit(trimws(inside), "\\s+")[[1]]
+
+  pTagPriority <- NA_integer_
+  groups       <- character()
+
+  if (length(insideParts)) {
+    for (pt in insideParts) {
+      if (grepl("^P\\d+$", pt)) {
+        pTagPriority <- as.integer(sub("^P", "", pt))
+      } else if (grepl("^#.+", pt)) {
+        groups <- c(groups, sub("^#", "", pt))
+      }
+    }
+  }
+
+  # Everything after the closing brace → inline title (optional)
+  firstLine <- sub("^.*\\}\\s*", "", firstLine)
+  firstLine <- trimws(firstLine)
+  todoTitle <- if (nzchar(firstLine)) firstLine else ""
+
+  deadlineVal <- ""
+  scheduleVal <- ""
+  textLines   <- character()
+
+  for (ln in seq_along(blockLines)[-1]) {
+    ltxt <- blockLines[ln]
+    if (grepl("\\{#deadline", ltxt)) {
+      val <- sub(".*\\{#deadline\\s+", "", ltxt)
+      val <- sub("\\}.*", "", val)
+      deadlineVal <- val
+    } else if (grepl("\\{#schedule", ltxt)) {
+      val <- sub(".*\\{#schedule\\s+", "", ltxt)
+      val <- sub("\\}.*", "", val)
+      scheduleVal <- val
+    } else {
+      textLines <- c(textLines, ltxt)
+    }
+  }
+
+  list(
+    text         = paste(textLines, collapse = "\n"),
+    title        = todoTitle,
+    deadline     = deadlineVal,
+    schedule     = scheduleVal,
+    pTagPriority = pTagPriority,
+    groups       = groups
+  )
+}
+
+
+
+
+
+
+#' Append parsed todos from one file to the master data.frame
+#'
+#' Applies date‑status flags, **drops any todo whose groups were already seen
+#' earlier in the same file**, and fills the two new columns (`pTagPriority`,
+#' `groups`).
+#'
+#' @param fl Path to the source file being processed.
+#' @param todos List of list objects (each from `parse_one_todo_block()`).
+#' @param allTodos The cumulative data.frame built so far.
+#' @param onlyFirstTodoPerFile Logical flag forwarded from `extract_todos()`.
+#' @param today  Date object forwarded from `extract_todos()`.
+#' @return Updated data.frame.
+#' @keywords internal
+write_todo_data_str <- function(fl, todos, allTodos,
+                                onlyFirstTodoPerFile, today) {
+
+  if (length(todos) == 0) return(allTodos)
+  modTime   <- file.info(fl)$mtime
+  itemIndex <- 1
+  seenGroups <- character()
+
+  for (tdi in seq_along(todos)) {
+    if (onlyFirstTodoPerFile && tdi > 1) break
+    td <- todos[[tdi]]
+
+    # Skip if any of this item's groups were already encountered in this file
+    if (length(td$groups) &&
+        length(intersect(td$groups, seenGroups)) > 0) next
+    seenGroups <- union(seenGroups, td$groups)
+
+    flags <- interpret_todo_flags(td$schedule, td$deadline, today)
+
+    allTodos <- rbind(
+      allTodos,
+      todo_data_str(
+        file             = fs::path_expand(fl),
+        fileMtime        = modTime,
+        indexInFile      = itemIndex,
+        heading          = td$heading,
+        title            = td$title,
+        text             = td$text,
+        deadline         = td$deadline,
+        schedule         = td$schedule,
+        isScheduledToday = flags$isScheduledToday,
+        isSchedulePassed = flags$isSchedulePassed,
+        isDueToday       = flags$isDueToday,
+        isDeadlinePassed = flags$isDeadlinePassed,
+        itemDateTime     = NA_real_,
+        pTagPriority     = ifelse(is.na(td$pTagPriority), 99L, td$pTagPriority),
+        groups           = paste(td$groups, collapse = ";")
+      )
+    )
+    itemIndex <- itemIndex + 1
+  }
+
+  allTodos
+}
+
 
 
 #' Parse an Rmd file for HTML comment TODO blocks, capturing headings
@@ -244,136 +348,51 @@ todo_data_str <- function(
 #' @return A list of lists, each containing \code{text}, \code{deadline},
 #'   \code{schedule}, \code{title}, and \code{heading}.
 #' @keywords internal
+#' Parse an Rmd file for HTML comment TODO blocks, capturing headings
+#' (updated: recognises "{#todo P<n> #group ...}" as well)
+#' @keywords internal
 parse_todo_blocks_with_heading <- function(filePath) {
   contents <- read_file(filePath)
-  inBlock <- FALSE
-  blockLines <- character()
-  results <- list()
+  inBlock      <- FALSE
+  blockLines   <- character()
+  results      <- list()
   currentHeading <- ""
 
   for (ln in seq_along(contents)) {
     line <- contents[ln]
-    # If we see a markdown heading, store it
+
+    # record the most recent markdown heading
     if (!inBlock && grepl("^#+\\s+", line)) {
-      currentHeading <- trimws(gsub("^#+", "", line))
+      currentHeading <- trimws(sub("^#+", "", line))
     }
 
-    # If not in a block, look for the start \strong{exactly} at the line start
-    # (no leading spaces).
+    # ── detect start of a TODO block (allow extra text inside {#todo …}) ──
     if (!inBlock) {
-      # Changed to require line to begin with `<!-- ...`
-      if (grepl("^<!--\\s*\\{#todo\\}", line)) {
-        inBlock <- TRUE
+      if (grepl("^<!--\\s*\\{#todo\\b", line)) {   # ← relaxed pattern
+        inBlock    <- TRUE
         blockLines <- c(line)
       }
-    } else {
-      # Already in a block, keep collecting lines
-      blockLines <- c(blockLines, line)
-      if (grepl("-->", line)) {
-        # Reached end of block
-        parsed <- parse_one_todo_block(blockLines)
-        if (!is.null(parsed)) {
-          parsed$heading <- currentHeading
-          results[[length(results) + 1]] <- parsed
-        }
-        inBlock <- FALSE
-        blockLines <- character()
+      next
+    }
+
+    # already inside a block – collect lines until closing comment
+    blockLines <- c(blockLines, line)
+    if (grepl("-->", line)) {
+      parsed <- parse_one_todo_block(blockLines)
+      if (!is.null(parsed)) {
+        parsed$heading <- currentHeading
+        results[[length(results) + 1]] <- parsed
       }
+      inBlock    <- FALSE
+      blockLines <- character()
     }
   }
+
   results
 }
 
 
-#' Parse a single HTML todo block
-#'
-#' This function extracts an optional inline title (the text appearing on
-#' the same line as `{#todo}` in the comment), a multiline description,
-#' plus any deadlines or schedules from the block content.
-#'
-#' @param blockLines A character vector of lines from the start to end of
-#'   the HTML comment block.
-#'
-#' @return A list with the elements:
-#'   \describe{
-#'     \item{\code{text}}{A character string of the main multiline description.}
-#'     \item{\code{title}}{A character string for the todo block's inline title.}
-#'     \item{\code{deadline}}{A string with the parsed deadline, if any.}
-#'     \item{\code{schedule}}{A string with the parsed schedule, if any.}
-#'   }
-#'   Currently, no \code{heading} is assigned; that may be added later.
-#' @keywords internal
-#'
-#' @examples
-#' \dontrun{
-#' blines <- c("<!-- {#todo} My Title", "{#deadline 2025-04-10}", "This is the body", "-->")
-#' parse_one_todo_block(blines)
-#' }
-#'
-#' @keywords internal
-parse_one_todo_block <- function(blockLines) {
-  if (!length(blockLines)) return(NULL)
 
-  # Remove trailing --> if present
-  lastLineIdx <- length(blockLines)
-  if (grepl("-->", blockLines[lastLineIdx])) {
-    blockLines[lastLineIdx] <- sub("-->.*$", "", blockLines[lastLineIdx])
-  }
-
-  # The first line typically has <!-- {#todo} maybeTitle
-  firstLine <- blockLines[1]
-  if (grepl("<!--", firstLine)) {
-    firstLine <- sub("<!--", "", firstLine)
-  }
-  # remove {#todo} but preserve anything after that => inline title
-  # e.g. " {#todo} My Title" => "My Title"
-  firstLine <- sub("\\{#todo\\}", "", firstLine)
-
-  # Trim leading/trailing whitespace
-  firstLine <- trimws(firstLine)
-
-  # If there's anything left in firstLine, that's our 'title'
-  todoTitle <- ""
-  if (nzchar(firstLine)) {
-    todoTitle <- firstLine
-  }
-
-  deadlineVal  <- ""
-  scheduleVal  <- ""
-  textLines    <- character()
-
-  # Start collecting lines after the first line (since the first line might
-  # have included a title). We'll store the multiline description in textLines.
-  for (ln in seq_along(blockLines)) {
-    if (ln == 1) {
-      # skip the first line, we've partially parsed it for the title
-      next
-    }
-    ltxt <- trimws(blockLines[ln])
-
-    # if there's a {#deadline ...} or {#schedule ...}, parse them
-    if (grepl("\\{#deadline\\s+", ltxt)) {
-      val <- sub(".*\\{#deadline\\s+", "", ltxt)
-      val <- sub("\\}.*", "", val)
-      deadlineVal <- val
-    } else if (grepl("\\{#schedule\\s+", ltxt)) {
-      val <- sub(".*\\{#schedule\\s+", "", ltxt)
-      val <- sub("\\}.*", "", val)
-      scheduleVal <- val
-    } else {
-      textLines <- c(textLines, ltxt)
-    }
-  }
-
-  mainText <- paste(textLines, collapse="\n")
-
-  list(
-    text     = mainText,
-    title    = todoTitle,
-    deadline = deadlineVal,
-    schedule = scheduleVal
-  )
-}
 
 
 #' Interpret schedule/deadline => set flags (passed, due, etc.)
@@ -423,57 +442,6 @@ interpret_todo_flags <- function(schedule, deadline, today) {
   )
 }
 
-
-#' Write parsed TODO items to the master data frame
-#'
-#' @param fl The file path from which TODOs were extracted.
-#' @param todos A list of parsed items (each a list with \code{text}, \code{title},
-#'   \code{deadline}, \code{schedule}, etc.).
-#' @param allTodos The existing data frame of all collected TODO items so far.
-#' @param onlyFirstTodoPerFile If \code{TRUE}, we add only the first item from
-#'   each file.
-#' @param today The "today" date string for schedule/deadline logic.
-#'
-#' @return The updated \code{allTodos} data frame with new rows appended.
-#' @keywords internal
-write_todo_data_str <- function(fl, todos, allTodos,
-                                onlyFirstTodoPerFile, today) {
-
-  if (length(todos) == 0) return(allTodos)
-  modTime <- file.info(fl)$mtime
-  itemIndex <- 1
-
-  for (tdi in seq_along(todos)) {
-    if (onlyFirstTodoPerFile && tdi > 1) {
-      break
-    }
-    td <- todos[[tdi]]
-    flags <- interpret_todo_flags(td$schedule, td$deadline, today)
-
-    # Insert a row for this item
-    allTodos <- rbind(
-      allTodos,
-      todo_data_str(
-        file             = fs::path_expand(fl),
-        fileMtime        = modTime,
-        indexInFile      = itemIndex,
-        heading          = td$heading,
-        title            = td$title,
-        text             = td$text,
-        deadline         = td$deadline,
-        schedule         = td$schedule,
-        isScheduledToday = flags$isScheduledToday,
-        isSchedulePassed = flags$isSchedulePassed,
-        isDueToday       = flags$isDueToday,
-        isDeadlinePassed = flags$isDeadlinePassed,
-        itemDateTime     = NA_real_
-      )
-    )
-    itemIndex <- itemIndex + 1
-  }
-
-  allTodos
-}
 
 
 #' Construct minimal doc if no TODO items found
@@ -540,48 +508,39 @@ derive_scope_string <- function(location) {
   nm
 }
 
-
-#' Format a multi-line TODO description into Markdown bullets
+#' Return TODO description verbatim (legacy shim)
 #'
-#' Splits the text by newline. The first line is prefixed with `* `,
-#' subsequent lines each get `    + `, with a blank line after each bullet.
+#' Older versions converted each line into Markdown bullets.  The extractor
+#' now leaves the description exactly as written, so this helper simply
+#' returns the input followed by two line‑breaks.
 #'
-#' @param txt A multiline string from the parsed TODO block.
-#'
-#' @return A character string with bullet indentation.
+#' @param txt The raw multiline string from the parsed TODO block.
+#' @return A single character string.
 #' @keywords internal
 format_todo_description <- function(txt) {
-  lines <- strsplit(txt, "\n", fixed = TRUE)[[1]]
-  # Remove empty lines if you prefer:
-  lines <- lines[lines != ""]
-
-  if (length(lines) == 0) {
-    return("* \n\n")  # at least a single bullet
-  }
-  # First line => "* first line\n\n"
-  out <- c(paste0("* ", lines[1], "\n\n"))
-  # Subsequent => "    + line\n\n"
-  if (length(lines) > 1) {
-    for (ln in lines[-1]) {
-      out <- c(out, paste0("    + ", ln, "\n\n"))
-    }
-  }
-  paste(out, collapse = "")
+  paste0(txt, "\n\n")
 }
+
+
 
 
 #' Build text/deadline/schedule fields for a single TODO
 #'
-#' Indents the schedule and deadline lines, if present, each followed by a blank line.
+#' Copies the description exactly as written in the Rmd and appends blank
+#' lines so the next template chunk starts on a new paragraph.  Schedule and
+#' deadline strings are still indented for clarity.
 #'
 #' @param row One row of the allTodos data frame (i.e. one TODO).
 #'
-#' @return A list with \code{$TODO_TEXT}, \code{$TODO_DEADLINE}, \code{$TODO_SCHEDULE}.
+#' @return A list with \code{$TODO_TEXT}, \code{$TODO_DEADLINE},
+#'   \code{$TODO_SCHEDULE}.
 #' @keywords internal
 build_item_fields <- function(row) {
-  textStr <- format_todo_description(row$text)
 
-  # Indent schedule & deadline with two spaces and a blank line if present
+  ## --- verbatim description -------------------------------------------------
+  textStr <- paste0(row$text, "\n\n")   # keep line breaks as‑is
+
+  ## --- optional deadline / schedule lines ----------------------------------
   deadlineStr <- ""
   if (nzchar(row$deadline)) {
     deadlineStr <- paste0("  (DEADLINE: ", row$deadline, ")\n\n")
@@ -600,24 +559,6 @@ build_item_fields <- function(row) {
 }
 
 
-#' Build the final output with note-first layout
-#'
-#' In "note-first" mode, we group items by file, sorted by newest file first
-#' (if \code{sortByFileModTimeDesc=TRUE}), then within the file we sort items by
-#' descending priority, ascending date/time, and ascending index in file.
-#'
-#' @param allTodos The data frame of all collected TODO items.
-#' @param sortByFileModTimeDesc Boolean indicating whether to sort files by newest first.
-#' @param itemLines The lines from \code{itemTemplate}.
-#' @param noteLines The lines from \code{noteTemplate}.
-#' @param fromFilePath Path from which links are computed.
-#' @param orgPath Path to the project root for relative references.
-#' @param date The user's "today" date string.
-#' @param location The original location passed to \code{extract_todos()}.
-#' @param collectionLines The lines from \code{collectionTemplate}.
-#'
-#' @return A character vector of the final doc in Rmd form.
-#' @keywords internal
 build_note_first_layout <- function(allTodos,
                                     sortByFileModTimeDesc,
                                     itemLines,
@@ -628,22 +569,22 @@ build_note_first_layout <- function(allTodos,
                                     location,
                                     collectionLines) {
 
-  # Sort files by mod time if needed
-  fileModTime   <- sapply(unique(allTodos$file), function(ff) file.info(ff)$mtime)
-  distinctFiles <- names(sort(fileModTime, decreasing = sortByFileModTimeDesc))
+  fileModTime   <- sapply(unique(allTodos$file),
+                          function(ff) file.info(ff)$mtime)
+  distinctFiles <- names(sort(fileModTime,
+                              decreasing = sortByFileModTimeDesc))
 
   finalNoteChunks <- character()
 
   for (fl in distinctFiles) {
-    subdf <- allTodos[allTodos$file == fl, , drop=FALSE]
+    subdf <- allTodos[allTodos$file == fl, , drop = FALSE]
     if (nrow(subdf) == 0) next
 
-    # Sort items by priority desc, date/time asc, index asc
     subdf <- subdf[order(
-      -subdf$priority,
-      subdf$itemDateTime,
-      subdf$indexInFile
-    ), , drop=FALSE]
+      -subdf$priority,                     # “grouping” first
+      as.integer(subdf$pTagPriority),      # then P‑tag
+      subdf$indexInFile                    # then appearance order
+    ), , drop = FALSE]
 
     baseName <- fs::path_file(fl)
     noteLink <- create_hyperlink_section(
@@ -654,89 +595,65 @@ build_note_first_layout <- function(allTodos,
     )
 
     noteBlock <- noteLines
-    noteBlock <- sub_template_param(noteBlock, "{{NOTE_BASENAME}}", baseName, orgPath)
-    noteBlock <- sub_template_param(noteBlock, "{{NOTE_LINK}}",     noteLink, orgPath)
+    noteBlock <- sub_template_param(noteBlock, "{{NOTE_BASENAME}}",
+                                    baseName, orgPath)
+    noteBlock <- sub_template_param(noteBlock, "{{NOTE_LINK}}",
+                                    noteLink, orgPath)
 
     itemExpansions <- character()
-
     for (rowi in seq_len(nrow(subdf))) {
-      row <- subdf[rowi, ]
+      row  <- subdf[rowi, ]
       line <- itemLines
 
-      # If there's an inline title for this TODO, use that; otherwise use the heading
-      if (nzchar(row$title)) {
-        itemHeader <- row$title
-      } else {
-        itemHeader <- row$heading
-        if (!nzchar(itemHeader)) itemHeader <- "top"
-      }
+      itemHeader <- if (nzchar(row$title)) row$title else
+        if (nzchar(row$heading)) row$heading else "top"
 
-      # The item link is based on the file heading, to preserve the anchor references
       itemLink <- create_hyperlink_section(
         toFileName    = baseName,
         toFileSection = row$heading,
         toFilePath    = row$file,
         fromFilePath  = fromFilePath
       )
-      line <- sub_template_param(line, "{{TODO_ITEM_LINK}}", itemLink, orgPath)
 
-      # In note-first layout, we show the flags + heading
+      line <- sub_template_param(line, "{{TODO_ITEM_LINK}}",
+                                 itemLink,   orgPath)
+
       prefixParts <- character()
-      if (row$isDeadlinePassed == 1) prefixParts <- c(prefixParts, "DEADLINE_PASSED")
-      if (row$isSchedulePassed == 1) prefixParts <- c(prefixParts, "SCHEDULE_PASSED")
-      if (row$isDueToday       == 1) prefixParts <- c(prefixParts, "DUE_TODAY")
-      if (row$isScheduledToday == 1) prefixParts <- c(prefixParts, "SCHEDULED_TODAY")
-      if (length(prefixParts) == 0) prefixParts <- c("OPEN_ITEMS")
+      if (row$isDeadlinePassed == 1) prefixParts <- c(prefixParts,"DEADLINE_PASSED")
+      if (row$isSchedulePassed == 1) prefixParts <- c(prefixParts,"SCHEDULE_PASSED")
+      if (row$isDueToday       == 1) prefixParts <- c(prefixParts,"DUE_TODAY")
+      if (row$isScheduledToday == 1) prefixParts <- c(prefixParts,"SCHEDULED_TODAY")
+      if (length(prefixParts)  == 0) prefixParts <- "OPEN_ITEMS"
 
-      # Combine flags with whichever heading we decided above
-      todoItemHeader <- paste(c(prefixParts, itemHeader), collapse=" ")
-      line <- sub_template_param(line, "{{TODO_ITEM_HEADER}}", todoItemHeader, orgPath)
+      line <- sub_template_param(line, "{{TODO_ITEM_HEADER}}",
+                                 paste(c(prefixParts,itemHeader), collapse=" "),
+                                 orgPath)
 
-      # Expand text, deadline, schedule
-      fields <- build_item_fields(row)
-      line <- sub_template_param(line, "{{TODO_TEXT}}",     fields$TODO_TEXT,     orgPath)
-      line <- sub_template_param(line, "{{TODO_DEADLINE}}", fields$TODO_DEADLINE, orgPath)
-      line <- sub_template_param(line, "{{TODO_SCHEDULE}}", fields$TODO_SCHEDULE, orgPath)
+      flds <- build_item_fields(row)
+      line <- sub_template_param(line, "{{TODO_TEXT}}",
+                                 flds$TODO_TEXT,     orgPath)
+      line <- sub_template_param(line, "{{TODO_DEADLINE}}",
+                                 flds$TODO_DEADLINE, orgPath)
+      line <- sub_template_param(line, "{{TODO_SCHEDULE}}",
+                                 flds$TODO_SCHEDULE, orgPath)
 
       itemExpansions <- c(itemExpansions, line)
     }
 
-    noteBlock <- sub_template_param(noteBlock, "{{NOTE_TODO_ITEMS}}", itemExpansions, orgPath)
+    noteBlock <- sub_template_param(noteBlock, "{{NOTE_TODO_ITEMS}}",
+                                    itemExpansions, orgPath)
     finalNoteChunks <- c(finalNoteChunks, noteBlock)
   }
 
-  # Fill the top-level template
-  collectionLines <- sub_template_param(collectionLines, "{{ALL_NOTES_SECTION}}", finalNoteChunks, orgPath)
-  collectionLines <- sub_template_param(collectionLines, "{{DATE}}", date, orgPath)
-
-  scope <- derive_scope_string(location)
-  collectionLines <- sub_template_param(collectionLines, "{{SCOPE}}", scope, orgPath)
-
+  collectionLines <- sub_template_param(collectionLines,"{{ALL_NOTES_SECTION}}",
+                                        finalNoteChunks, orgPath)
+  collectionLines <- sub_template_param(collectionLines,"{{DATE}}",
+                                        date,            orgPath)
+  collectionLines <- sub_template_param(collectionLines,"{{SCOPE}}",
+                                        derive_scope_string(location), orgPath)
   collectionLines
 }
 
-
-#' Build the final output with priority-first layout
-#'
-#' In "priority-first" mode, we group items by priority level (descending).
-#' Each priority becomes a top-level heading (expanded in the
-#' \code{prioritySectionLines}), and under it we list files (in descending mod
-#' time), and under each file, the items that match that priority.
-#'
-#' @param allTodos The data frame of all collected TODO items.
-#' @param invMap A named character vector inverting numeric -> priority name,
-#'   e.g. \code{c("4"="DEADLINE_PASSED", "3"="SCHEDULE_PASSED", ...)}.
-#' @param itemLines The lines from \code{itemTemplate}.
-#' @param noteLines The lines from \code{noteTemplate}.
-#' @param prioritySectionLines The lines from \code{priorityTemplate}.
-#' @param fromFilePath Path from which links are computed.
-#' @param orgPath Path to the project root for relative references.
-#' @param date The user's "today" date string.
-#' @param location The original location passed to \code{extract_todos()}.
-#' @param collectionLines The lines from \code{collectionTemplate}.
-#'
-#' @return A character vector of the final doc in Rmd form.
-#' @keywords internal
 build_priority_first_layout <- function(allTodos,
                                         invMap,
                                         itemLines,
@@ -748,116 +665,275 @@ build_priority_first_layout <- function(allTodos,
                                         location,
                                         collectionLines) {
 
-  usedPriorities <- unique(allTodos$priority)
-  usedPriorities <- sort(usedPriorities, decreasing=TRUE)
+  usedStates  <- sort(unique(allTodos$priority), decreasing = TRUE)
+  finalBlocks <- character()
 
-  finalPriorityChunks <- character()
+  fileInfo      <- file.info(unique(allTodos$file))
+  distinctFiles <- rownames(fileInfo)[order(fileInfo$mtime, decreasing = TRUE)]
 
-  # Sort files by descending mod time
-  fileModTime   <- sapply(unique(allTodos$file), function(ff) file.info(ff)$mtime)
-  distinctFiles <- names(sort(fileModTime, decreasing = TRUE))
+  for (st in usedStates) {
+    stateDF <- allTodos[allTodos$priority == st, , drop = FALSE]
+    if (nrow(stateDF) == 0) next
 
-  for (prio in usedPriorities) {
-    subdfPrio <- allTodos[allTodos$priority == prio, , drop=FALSE]
-    if (nrow(subdfPrio) == 0) next
+    stateName   <- invMap[as.character(st)]
+    stateChunks <- character()
 
-    # numeric priority -> named key
-    priorityName <- if (!is.null(invMap[as.character(prio)])) {
-      invMap[as.character(prio)]
-    } else {
-      paste("PRIORITY", prio)
-    }
-
-    priorityFileChunks <- character()
     for (fl in distinctFiles) {
-      subdfFile <- subdfPrio[subdfPrio$file == fl, , drop=FALSE]
-      if (nrow(subdfFile) == 0) next
+      subdf <- stateDF[stateDF$file == fl, , drop = FALSE]
+      if (nrow(subdf) == 0) next
 
-      # sort items by date/time asc, index asc
-      subdfFile <- subdfFile[order(subdfFile$itemDateTime, subdfFile$indexInFile), , drop=FALSE]
+      subdf <- subdf[order(
+        as.integer(subdf$pTagPriority),
+        subdf$indexInFile
+      ), , drop = FALSE]
 
       baseName <- fs::path_file(fl)
       noteLink <- create_hyperlink(
-        toFileName    = baseName,
-        toFilePath    = fl,
-        fromFilePath  = fromFilePath
+        toFileName   = baseName,
+        toFilePath   = fl,
+        fromFilePath = fromFilePath
       )
 
       noteBlock <- noteLines
-      noteBlock <- sub_template_param(noteBlock, "{{NOTE_BASENAME}}", baseName, orgPath)
-      noteBlock <- sub_template_param(noteBlock, "{{NOTE_LINK}}",     noteLink, orgPath)
+      noteBlock <- sub_template_param(noteBlock, "{{NOTE_BASENAME}}",
+                                      baseName, orgPath)
+      noteBlock <- sub_template_param(noteBlock, "{{NOTE_LINK}}",
+                                      noteLink, orgPath)
 
-      itemExpansions <- character()
-      for (rowi in seq_len(nrow(subdfFile))) {
-        row <- subdfFile[rowi, ]
-        line <- itemLines
+      itemChunks <- character()
+      for (i in seq_len(nrow(subdf))) {
+        row   <- subdf[i, ]
+        chunk <- itemLines
 
-        # If there's an inline title, use it; else use the heading
-        if (nzchar(row$title)) {
-          itemHeader <- row$title
-        } else {
-          itemHeader <- row$heading
-          if (!nzchar(itemHeader)) itemHeader <- "top"
-        }
+        hdr <- if (nzchar(row$title)) row$title else
+          if (nzchar(row$heading)) row$heading else "top"
 
-        # The link anchor uses the heading
         itemLink <- create_hyperlink_section(
           toFileName    = baseName,
           toFileSection = row$heading,
           toFilePath    = row$file,
           fromFilePath  = fromFilePath
         )
-        line <- sub_template_param(line, "{{TODO_ITEM_LINK}}", itemLink, orgPath)
 
-        # priority-first => no flags in the item header
-        line <- sub_template_param(line, "{{TODO_ITEM_HEADER}}", itemHeader, orgPath)
+        chunk <- sub_template_param(chunk, "{{TODO_ITEM_LINK}}",
+                                    itemLink, orgPath)
+        chunk <- sub_template_param(chunk, "{{TODO_ITEM_HEADER}}",
+                                    hdr,      orgPath)
 
-        # expand multiline text, schedule, deadline
-        fields <- build_item_fields(row)
-        line <- sub_template_param(line, "{{TODO_TEXT}}",     fields$TODO_TEXT,     orgPath)
-        line <- sub_template_param(line, "{{TODO_DEADLINE}}", fields$TODO_DEADLINE, orgPath)
-        line <- sub_template_param(line, "{{TODO_SCHEDULE}}", fields$TODO_SCHEDULE, orgPath)
+        flds  <- build_item_fields(row)
+        chunk <- sub_template_param(chunk, "{{TODO_TEXT}}",
+                                    flds$TODO_TEXT,     orgPath)
+        chunk <- sub_template_param(chunk, "{{TODO_DEADLINE}}",
+                                    flds$TODO_DEADLINE, orgPath)
+        chunk <- sub_template_param(chunk, "{{TODO_SCHEDULE}}",
+                                    flds$TODO_SCHEDULE, orgPath)
 
-        itemExpansions <- c(itemExpansions, line)
+        itemChunks <- c(itemChunks, chunk)
       }
 
-      noteBlock <- sub_template_param(noteBlock, "{{NOTE_TODO_ITEMS}}", itemExpansions, orgPath)
-      priorityFileChunks <- c(priorityFileChunks, noteBlock, "")
+      noteBlock   <- sub_template_param(noteBlock, "{{NOTE_TODO_ITEMS}}",
+                                        itemChunks, orgPath)
+      stateChunks <- c(stateChunks, noteBlock, "")
     }
 
-    # Fill the priority-section template
-    prioBlock <- prioritySectionLines
-    prioBlock <- sub_template_param(prioBlock, "{{PRIORITY_HEADER}}", priorityName, orgPath)
-    prioBlock <- sub_template_param(prioBlock, "{{SEP2}}", "", orgPath)
-    prioBlock <- sub_template_param(prioBlock, "{{PRIORITY_ITEMS}}", priorityFileChunks, orgPath)
+    sec <- prioritySectionLines
+    sec <- sub_template_param(sec, "{{PRIORITY_HEADER}}", stateName,     orgPath)
+    sec <- sub_template_param(sec, "{{SEP2}}",            "",            orgPath)
+    sec <- sub_template_param(sec, "{{PRIORITY_ITEMS}}",  stateChunks,   orgPath)
 
-    finalPriorityChunks <- c(finalPriorityChunks, prioBlock)
+    finalBlocks <- c(finalBlocks, sec)
   }
 
-  # fill the top-level
-  collectionLines <- sub_template_param(collectionLines, "{{ALL_NOTES_SECTION}}", finalPriorityChunks, orgPath)
-  collectionLines <- sub_template_param(collectionLines, "{{DATE}}", date, orgPath)
-
-  scope <- derive_scope_string(location)
-  collectionLines <- sub_template_param(collectionLines, "{{SCOPE}}", scope, orgPath)
-
-  collectionLines
-
-} #### ____ ####
+  out <- sub_template_param(collectionLines, "{{ALL_NOTES_SECTION}}",
+                            finalBlocks, orgPath)
+  out <- sub_template_param(out, "{{DATE}}",  date, orgPath)
+  out <- sub_template_param(out, "{{SCOPE}}",
+                            derive_scope_string(location), orgPath)
+  out
+}
 
 
-#' Extract Google Calendar events for a specific day
+
+ #### ____________ ####
+
+
+#' Extract events from Google Calendar for one day
 #'
-#' Authenticates using a built-in OAuth2 client, retrieves the user's calendars,
-#' and fetches events for a given day (default: today).
+#' This convenience wrapper\
+#' • Returns extracted google calendar events from `extract_google_calendar_events()`
+#'   as a block of markdown text, for direct insertion into a Rmd file
 #'
-#' @param day A date (defaults to today) to fetch events for
-#' @param settings An optional list, can include `googleCalendars` for filtering
-#' @param auth_fn Function for handling authentication (used for testing)
-#' @param calendar_list_fn Function that returns calendar list
-#' @param events_fn Function to fetch events given a calendar ID
+#' @param day [`Date`][base::Date] Date to query (default: `Sys.Date()`).
+#' @param settings `list` Named options; currently only
+#'        `googleCalendars = c("Calendar A", "Calendar B")`
+#'        to filter the calendar list.
 #'
-#' @return A tibble with calendar events
+#' @return A [tibble][tibble::tibble] with the columns\
+#'   `calendar`, `summary`, `start`, `end`, `description`, `htmlLink`,
+#'   `location`.
+#' @export
+extract_google_calendar_events_markdown <- function(
+    day = Sys.Date(),
+    location = getwd(),
+    settings = list(),
+    calEventsTemplate = "Calendar-Events-Template.Rmd",
+    extract_google_calendar_events_fun = extract_google_calendar_events
+) {
+
+  cat("\nprojectmanagr::extract_google_calendar_events_markdown():\n")
+
+  # Set up environment and read user templates
+  orgPath  <- confirm_find_org(location)
+  tempPath <- get_template_dir(orgPath)
+  if( is.list(settings) && length(settings) == 0 ) { # fetch only if settings is blank list
+    settings <- get_settings_yml(orgPath)
+  }
+
+  # Read top-level template
+  calEventsLines <- read_file(fs::path(tempPath, calEventsTemplate))
+
+  # get events
+  events_table <- extract_google_calendar_events_fun(day = day, settings = settings)
+  # testing:
+  #events_table <- extract_google_calendar_events_fun(day = lubridate::as_date("2025/04/30"))
+
+  message("  forming markdown text block")
+
+  tpl <- calEventsLines
+  events <- events_table
+
+  # Sort events: all-day events first, then by start time ascending
+  events <- events |>
+    dplyr::mutate(
+      is_all_day = !grepl("T", start),
+      start_time = ifelse(
+        is_all_day,
+        NA,
+        as.character(lubridate::ymd_hms(start, quiet = TRUE))
+      )
+    ) |>
+    dplyr::arrange(dplyr::desc(is_all_day), start_time)
+
+  message("  forming markdown text block")
+
+  replace_brace <- function(text, key, value) {
+    gsub(sprintf("\\{\\{%s\\}\\}", key), value, text, fixed = FALSE)
+  }
+
+  out <- unlist(lapply(seq_len(nrow(events)), function(i) {
+
+    ev  <- events[i, ]
+    blk <- tpl                      # fresh copy for each event
+
+    blk <- replace_brace(blk, "EVENT_TITLE",  ev$summary)
+    blk <- replace_brace(blk, "EVENT_CALENDAR", ev$calendar)
+
+    pretty_time <- function(x) {
+      sub(".*T(\\d{2}:\\d{2}).*", "\\1", x)
+    }
+    blk <- replace_brace(blk, "EVENT_START_TIME", pretty_time(ev$start))
+    blk <- replace_brace(blk, "EVENT_END_TIME",   pretty_time(ev$end))
+
+    link <- ifelse(is.na(ev$htmlLink), "", ev$htmlLink)
+    blk  <- replace_brace(blk, "EVENT_HTML_LINK", link)
+
+    loc  <- ifelse(is.na(ev$location), "", paste0(" : ", ev$location))
+    blk  <- replace_brace(blk, "EVENT_LOCATION_BLOCK", loc)
+
+    desc <- clean_zoom_description(ev$description)
+    blk  <- replace_brace(blk, "EVENT_DESCRIPTION_BLOCK", desc)
+
+    blk[!grepl("\\{\\{[^}]*\\}\\}", blk)]
+  }))
+
+  c(out, "")        # ensure trailing line-break for a nice paste
+
+}
+
+
+clean_zoom_description <- function(desc) {
+  if (is.na(desc) || !nzchar(desc)) return("")
+
+  # 1. Extract Zoom link from <a href="..."> *before* removing tags
+  zoom_pat <- "(?i)https?://[^\\s\"'>]*zoom\\.us[^\\s\"'>]*"
+  url <- stringr::str_extract(desc, zoom_pat)
+  if (!is.na(url) && nzchar(url)) {
+    return(sprintf("[Zoom link](%s)", trimws(url)))
+  }
+
+  # 2. Replace <br> tags with newlines
+  desc <- gsub("(?i)<br\\s*/?>", "\n", desc, perl = TRUE)
+
+  # 3. Strip remaining HTML tags
+  desc <- gsub("<[^>]+>", " ", desc, perl = TRUE)
+
+  # 4. Normalize whitespace but preserve newlines
+  desc <- gsub("\n", "___NEWLINE___", desc, fixed = TRUE)
+  desc <- gsub("[ \t]+", " ", desc)
+  desc <- gsub("___NEWLINE___", "\n", desc, fixed = TRUE)
+
+  # 5. Split by lines and wrap each
+  paragraphs <- unlist(strsplit(desc, "\n"))
+  wrapped <- lapply(paragraphs, function(line) {
+    line <- trimws(line)
+    if (nchar(line) == 0) return("")
+    words <- strsplit(line, " ")[[1]]
+    out <- ""
+    current_line <- ""
+    for (word in words) {
+      test_line <- paste0(current_line, if (nzchar(current_line)) " ", word)
+      if (nchar(test_line) > 80) {
+        out <- paste0(out, current_line, "\n")
+        current_line <- word
+      } else {
+        current_line <- test_line
+      }
+    }
+    paste0(out, current_line)
+  })
+
+  paste(unlist(wrapped), collapse = "\n")
+}
+
+
+
+#' Extract events from Google Calendar for one day
+#'
+#' This convenience wrapper\
+#' • **authenticates** with Google Calendar via the builtin
+#'   [default_google_auth()] helper;\
+#' • retrieves the user’s **calendar list** (or a subset supplied in
+#'   `settings$googleCalendars`);\
+#' • fetches **all events** that start _or_ end on the requested `day`
+#'   (UTC, exclusive upper bound) and\
+#' • returns the result as a tidy tibble with the most commonly used
+#'   columns.
+#'
+#' Every heavy-lifting call (auth, calendar list, events) is injected as a
+#' function argument so the behaviour can be **unit-tested or mocked**
+#' without hitting the network.
+#'
+#' @section Time handling:
+#' Google returns either `date` (all-day) **or** `dateTime`
+#' (time-specific) fields.
+#' The helper collapses those into the single character columns
+#' `start` / `end`, preserving the original RFC 3339 string when present.
+#'
+#' @param day [`Date`][base::Date] Date to query (default: `Sys.Date()`).
+#' @param settings `list` Named options; currently only
+#'        `googleCalendars = c("Calendar A", "Calendar B")`
+#'        to filter the calendar list.
+#' @param auth_fn            Function that performs authentication
+#'        (default: [default_google_auth()]).
+#' @param calendar_list_fn   Function that returns the calendar list
+#'        as a two-column tibble (`id`, `summary`).
+#' @param events_fn          Function that fetches one calendar’s
+#'        events; must return the parsed JSON list produced by
+#'        googleAuthR/Calendar v3.
+#'
+#' @return A [tibble][tibble::tibble] with the columns\
+#'   `calendar`, `summary`, `start`, `end`, `description`, `htmlLink`,
+#'   `location`.
 #' @export
 extract_google_calendar_events <- function(
     day = Sys.Date(),
@@ -868,6 +944,11 @@ extract_google_calendar_events <- function(
 ) {
 
   cat("\nprojectmanagr::extract_google_calendar_events():\n")
+
+  options(
+    gargle_oauth_cache    = rappdirs::user_cache_dir("projectmanagr"),
+    gargle_oob_default    = FALSE # allow token to be passed via local web server
+  )
 
   # Authenticate
   auth_fn()
@@ -941,43 +1022,56 @@ extract_google_calendar_events <- function(
 }
 
 
-
-
-#' Authenticate with Google Calendar using projectmanagr's built-in OAuth client
+#' Authenticate once and cache the Google Calendar token
 #'
-#' This function configures `googleAuthR` using a pre-bundled OAuth 2.0 client
-#' JSON, and sets the token cache to a user-specific location using `rappdirs`.
+#' The helper expects a *desktop-app* OAuth client file called
+#' `gcal_oauth_client.json` inside the user-level `rappdirs`
+#' **config** directory for the package:
 #'
-#' It then attempts to authenticate the user by selecting an existing cached
-#' token automatically (using `googleAuthR::gar_auth(email = TRUE)`), or
-#' prompting browser sign-in if no token exists yet.
+#' ```
+#' rappdirs::user_config_dir("projectmanagr")/
+#'   gcal_oauth_client.json
+#' ```
 #'
-#' @details
-#' This function sets a global R option:
-#' \itemize{
-#'   \item \code{options(gargle_oauth_cache = rappdirs::user_cache_dir("projectmanagr"))}
-#' }
-#' to store refreshable tokens in a consistent location across sessions.
+#' It performs a minimal structural check, registers the client with
+#' **googleAuthR**, then calls `googleAuthR::gar_auth()` ─ the token is
+#' cached under `rappdirs::user_cache_dir("projectmanagr")`.
 #'
-#' @return Invisibly returns the result of `googleAuthR::gar_auth()`
+#' @inheritParams extract_google_calendar_events
+#' @param gar_set_client,gar_auth  Dependency-injected versions of
+#'        [googleAuthR::gar_set_client()] / [googleAuthR::gar_auth()]
+#'        (facilitates test stubs).
+#'
+#' @return (Invisibly) the object returned by `gar_auth()`.
+#' @family authentication helpers
 #' @export
 default_google_auth <- function(
+    scopes      = "https://www.googleapis.com/auth/calendar.readonly",
+    cfg_name    = "gcal_oauth_client.json",
     gar_set_client = googleAuthR::gar_set_client,
-    gar_auth = googleAuthR::gar_auth
+    gar_auth      = googleAuthR::gar_auth
 ) {
-  gar_set_client(
-    json = system.file("google-oauth", "projectmanagr_gcal_oauth_client.json",
-                       package = "projectmanagr"),
-    scopes = "https://www.googleapis.com/auth/calendar.readonly"
-  )
 
-  options(gargle_oauth_cache = rappdirs::user_cache_dir("projectmanagr"))
+  cfg_dir  <- rappdirs::user_config_dir("projectmanagr")
+  json_path <- file.path(cfg_dir, cfg_name)
 
-  invisible(gar_auth(email = TRUE))
+  if (!file.exists(json_path))
+    stop(
+      "No OAuth client JSON found at:\n  ", json_path,
+      "\n\nCreate a Desktop-App credential in Google Cloud Console, ",
+      "download the JSON, and place it there."
+    )
+
+  # quick structural check
+  j <- jsonlite::fromJSON(json_path)
+  must <- c("client_id", "client_secret", "redirect_uris")
+  if (!all(must %in% names(j$installed)))
+    stop("JSON is missing one of: ", paste(must, collapse = ", "))
+
+  gar_set_client(json = json_path, scopes = scopes)
+
+  invisible(gar_auth(email = TRUE, use_oob = FALSE))
 }
-
-
-
 
 
 #' Retrieve Google Calendar List
@@ -1060,10 +1154,6 @@ default_events_list_fn <- function(
 }
 
 
-
-
-
-
-
+#### _________________ ####
 
 

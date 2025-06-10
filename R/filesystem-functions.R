@@ -1346,7 +1346,7 @@ get_todo_block  <- function(orgPath, TodoBlockFilename="todo-block.txt") {
   confPath <- get_config_dir(orgPath)
   tempPath <- get_template_dir(orgPath)
 
-  # get all SEP files form tempPath
+  # get todo block file from tempPath
   TodoBlock <- read_file( fs::path(tempPath, TodoBlockFilename) )
 
   TodoBlock

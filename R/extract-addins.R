@@ -22,24 +22,24 @@ addin_extract_todos <- function() {
   cat("\nprojectmanagr::addin_extract_todos():\n")
 
   # SAVE the document before processing!
-  save_context_doc()
+  .save_context_doc()
 
-  # 1) Identify active doc path and ensure it's valid
-  context <- rstudioapi::getSourceEditorContext()
+  # Identify active doc path and ensure it's valid
+  context <- .get_source_editor_context()
   if (is.null(context$path) || !nzchar(context$path)) {
     stop("No active document found. Please open a file in RStudio and try again.")
   }
 
-  # 2) Ensure the working directory is set to the active doc's directory
+  # Ensure the working directory is set to the active doc's directory
   set_wd_active_doc()
 
-  # 3) Identify the ORG path from the current working directory
+  # Identify the ORG path from the current working directory
   orgPath <- find_org_directory(getwd())
   if (orgPath == "") {
     addin_error_org("Extract TODOs")
   }
 
-  # 4) Retrieve settings if needed
+  # Retrieve settings
   settings <- get_settings_yml(orgPath)
 
   # 5) Launch the Shiny gadget
@@ -69,7 +69,7 @@ addin_extract_todos <- function() {
 #' @keywords internal
 addin_extract_todos_ui <- function(orgPath, fromFilePath, settings) {
 
-  # We'll set a single named root for the directory chooser
+  # set a single named root for the directory chooser
   roots <- c("ORG Directory" = orgPath)
 
   miniUI::miniPage(
@@ -80,6 +80,15 @@ addin_extract_todos_ui <- function(orgPath, fromFilePath, settings) {
 
     miniUI::miniContentPanel(
       fillCol(
+
+        fillRow(
+          checkboxInput("onlyFirst", "Only first TODO per file?", FALSE),
+          checkboxInput("sortMod",   "Sort by file mod time desc?", TRUE)
+        ),
+        fillRow(
+          checkboxInput("prioFirst", "Group-first layout?", FALSE)
+        ),
+        br(),
 
         fillRow(
           h4("Active Document Path:")
@@ -99,16 +108,8 @@ addin_extract_todos_ui <- function(orgPath, fromFilePath, settings) {
         fillRow(
           dateInput("date", "Select 'Today':", value = Sys.Date(), width = "50%")
         ),
-        br(),
-
-        fillRow(
-          checkboxInput("onlyFirst", "Only first TODO per file?", FALSE),
-          checkboxInput("sortMod",   "Sort by file mod time desc?", TRUE)
-        ),
-        fillRow(
-          checkboxInput("prioFirst", "Priority-first layout?", FALSE)
-        ),
         br()
+
       )
     )
   )
@@ -125,22 +126,19 @@ addin_extract_todos_ui <- function(orgPath, fromFilePath, settings) {
 #' @keywords internal
 addin_extract_todos_server <- function(input, output, session) {
 
-  #### 1) Identify environment and RStudio context ####
+  #### Identify environment and RStudio context ####
 
   orgPath <- find_org_directory(getwd())
-  context <- rstudioapi::getSourceEditorContext()
-  fromFile <- context$path
-
   # get data from rstudio context
-  path <- get_context_path()
-  contents <- get_context_contents()
-  row <- get_context_row()
+  path <- .get_context_path()
+  contents <- .get_context_contents()
+  row <- .get_context_row()
 
   output$fromFilePathDisplay <- renderText({
-    fromFile
+    path
   })
 
-  # We'll store the user-chosen directory as location in a reactive
+  # store user-chosen directory as location in a reactive
   # Initialize with orgPath as a default
   shinyFiles::shinyDirChoose(input, "dir",
                              roots = c("ORG Directory" = orgPath),
@@ -164,7 +162,7 @@ addin_extract_todos_server <- function(input, output, session) {
   })
 
 
-  #### 2) On "Done," call extract_todos & write to the file on disk ####
+  #### On "Done" call extract_todos & write to the file on disk ####
 
   observeEvent(input$done, {
 
@@ -179,10 +177,10 @@ addin_extract_todos_server <- function(input, output, session) {
     todos_vector <- extract_todos(
       location             = loc,
       date                 = dt,
-      fromFilePath         = fromFile,  # link references
+      fromFilePath         = path,  # link references
       onlyFirstTodoPerFile = onlyF,
       sortByFileModTimeDesc= sortMod,
-      priorityFirst        = prioF
+      groupingFirst        = prioF
     )
 
     # insert into current document
@@ -196,6 +194,109 @@ addin_extract_todos_server <- function(input, output, session) {
   observeEvent(input$cancel, {
     stopApp()
   })
+} #### ____ ####
+
+
+
+#' Extract Google-calendar events (markdown) – Shiny gadget
+#'
+#' Opens a miniUI gadget where the user
+#' * chooses a **date** (defaults = today) and
+#' * optionally selects which **calendars** to include.
+#'
+#' On *Done* the gadget
+#' 1. calls \code{\link{extract_google_calendar_events_markdown}()};
+#' 2. inserts the returned lines into the active document at the
+#'    current cursor row; and
+#' 3. reloads the document in the editor.
+#'
+#' @export
+addin_extract_google_calendar_events_markdown <- function() {
+
+  cat("\nprojectmanagr::addin_extract_google_calendar_events_markdown():\n")
+
+  .save_context_doc()
+
+  ctx <- .get_source_editor_context()
+  if (is.null(ctx$path) || !nzchar(ctx$path))
+    stop("Open a document in RStudio and try again.")
+
+  set_wd_active_doc()
+  orgPath <- find_org_directory(getwd())
+  if (orgPath == "") addin_error_org("Extract Google events")
+
+  settings <- get_settings_yml(orgPath)
+
+  shiny::runGadget(
+    app    = addin_extract_gcal_md_ui(orgPath, ctx$path, settings),
+    server = addin_extract_gcal_md_server,
+    viewer = addin_create_dialog_viewer("Extract Google events", settings)
+  )
 }
+
+addin_extract_gcal_md_ui <- function(orgPath, fromFilePath, settings) {
+
+  miniUI::miniPage(
+
+    tags$style(HTML(get_css_theme() %||% "")),
+
+    miniUI::gadgetTitleBar("Extract Google-calendar events"),
+
+    miniUI::miniContentPanel(
+      fillCol(
+
+        fillRow(h4("Active document:"), br()),
+        verbatimTextOutput("docPath"), br(),
+
+        fillRow(dateInput("date", "Day to import:",
+                          value = Sys.Date(), width = "50%")), br(),
+
+        fillRow(selectInput("calendars",
+                            "Calendars (empty = all):",
+                            choices  = character(0),  # filled server-side
+                            multiple = TRUE,
+                            width    = "100%")), br()
+      )
+    )
+  )
+}
+
+addin_extract_gcal_md_server <- function(input, output, session) {
+
+  ## ---- context & helper values ---------------------------------------
+  path     <- .get_context_path()
+  contents <- .get_context_contents()
+  row      <- .get_context_row()
+
+  output$docPath <- renderText(path)
+
+  ## ---- populate calendar selector ------------------------------------
+  # one live API call – fast and silent
+  try({
+    cal_df <- default_calendar_list_fn()
+    updateSelectInput(session, "calendars",
+                      choices = cal_df$summary,
+                      selected = character(0))
+  }, silent = TRUE)
+
+  ## ---- Done: build markdown & insert ---------------------------------
+  observeEvent(input$done, {
+
+    ev_txt <- extract_google_calendar_events_markdown(
+      day      = input$date,
+      settings = list(
+        googleCalendars = if (length(input$calendars))
+          input$calendars else NULL
+      )
+    )
+
+    write_file(insert_at_indices(contents, row, ev_txt), path)
+    addin_rstudio_nav(path)      # reload & place cursor
+  })
+
+  observeEvent(input$cancel, stopApp())
+}
+
+
 
 

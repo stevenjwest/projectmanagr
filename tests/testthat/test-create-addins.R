@@ -3,6 +3,10 @@
 
 test_that("create addins testing", {
 
+  cat("=====================")
+  cat("test create addins")
+  cat("")
+
 
   #### ________________ ####
 

@@ -96,13 +96,10 @@ addin_create_dialog_viewer <- function(title, settings) {
 #'
 addin_rstudio_nav <- function(filePath) {
 
-  if( rstudioapi::isAvailable() ) {
-    rstudioapi::navigateToFile(filePath)
-    rstudioapi::filesPaneNavigate(dirname(filePath))
-  }
-
+  .navigate_to_file(filePath)
+  .navigate_pane_to_file(filePath)
+  .save_context_doc()
   setwd(dirname(filePath))
-
   # Close Gadget after 'done' is clicked.
   stopApp()
 

@@ -472,7 +472,6 @@ __TASK_OVERVIEW__
 >>>>
 
 
-
 ------------
 
 
@@ -492,7 +491,6 @@ __TASK_OVERVIEW__
 >>>>
 >>>> Summarise key insights from work in this note that fulfil the Task
 >>>>
-
 
 
 ----------------------------------------------------------------

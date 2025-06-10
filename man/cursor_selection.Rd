@@ -4,7 +4,10 @@
 \alias{cursor_selection}
 \title{Document Cursor Selection}
 \usage{
-cursor_selection()
+cursor_selection(
+  save_context_fn = .save_context_doc,
+  get_context_fn = .get_source_editor_context
+)
 }
 \description{
 Identify the selection from the Active Cursor position in current R Studio file.

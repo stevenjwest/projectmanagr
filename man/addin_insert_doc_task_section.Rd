@@ -4,7 +4,10 @@
 \alias{addin_insert_doc_task_section}
 \title{Insert Task Section to end of Project Doc GDT}
 \usage{
-addin_insert_doc_task_section()
+addin_insert_doc_task_section(
+  save_context_fn = .save_context_doc,
+  navigate_to_file_fn = .navigate_to_file
+)
 }
 \description{
 Collects selection object from active document and attempts to insert a

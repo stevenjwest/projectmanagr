@@ -1,5 +1,10 @@
+context("Test insert functions")
 
 test_that("test insert functions", {
+
+  message("=====================")
+  message("test insert functions")
+  message("")
 
   #### generate test organisation temp directory ####
 
@@ -8,7 +13,7 @@ test_that("test insert functions", {
 
   ################ generate test ORG PROG Doc Notes ################
 
-  orgName <- "_T_O"
+  orgName <- "_TOi"
   authorValue="sjwest"
   # mock the function that returns the update datetime
   local_mocked_bindings(
@@ -73,7 +78,9 @@ test_that("test insert functions", {
 
   groupNoteDir <- get_project_note_dir_path(groupNoteRmd, settings)
 
-  subNoteRmd <- fs::path(groupNoteDir, paste0(basename(groupNotePath), "___002-001", "_--_", subNoteName, ".Rmd") )
+  subNoteRmd <- fs::path(groupNoteDir,
+                         paste0(basename(groupNotePath), "___002-001",
+                                "_--_", subNoteName, ".Rmd") )
   subNoteDir <- get_project_note_dir_path(subNoteRmd, settings)
 
 
@@ -82,21 +89,18 @@ test_that("test insert functions", {
   insert_doc_goal_section(
     selection = user_selection(projectDocRmd, 329) ) # 329 is selecting last GOAL
 
+
   ################ insert_doc_deliverable_section() works ######################
 
   insert_doc_deliverable_section(
     selection = user_selection(projectDocRmd, 329) ) # 329 is selecting last GOAL
+
 
   ################ insert_doc_task_section() works #############################
 
   insert_doc_task_section(
     selection = user_selection(projectDocRmd, 329) ) # 329 is selecting last GOAL
 
-  ### TESTS
-
-  # confirm Goal Deliverable Task Sections are written to projectDocRmd
-  expect_snapshot_file( projectDocRmd )
-  # [x] PASS
 
   ################ insert_content() works ######################################
 
@@ -104,11 +108,62 @@ test_that("test insert functions", {
   contentName <- "ex-con"
   contentDescription <- "Example Content Description"
   contentSourcePath <- projectNoteDir
-  noteLine <- 90 # set to a line below the Introduction default header but within Rmd lines
+  noteLine <- 80 # set to a line below the Introduction default header but within Rmd lines
   contentTitle <- "Example Content"
 
   contentRmd <- local_create_content(contentName, contentDescription, contentSourcePath,
                                      projectNoteRmd, noteLine, contentTitle)
+
+  # add some content to contentRmd!
+  exampleContent <- c(
+    "",
+    "",
+    "",
+    "# Example Content",
+    "",
+    "",
+    "-------------------------------------------------------------------------------",
+    "-------------------------------------------------------------------------------",
+    "",
+    "",
+    "",
+    "# Example Content SOP",
+    "",
+    "",
+    "-----------------------------------------------------------------------",
+    "-----------------------------------------------------------------------",
+    "",
+    "",
+    "",
+    "# Example Content LOG",
+    "",
+    "",
+    "-----------------------------------------------------------------------",
+    "-----------------------------------------------------------------------",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "" )
+
+  write_file(exampleContent, contentRmd)
+
+  # insert this content into a second project note
+  # performed AFTER running insert_template_section_content()
+  # to test this functionality at same time
+
+
+  ################ insert_template_section_content() works #####################
+
+  # create template section in Content
+  templateSectionName <- "t-s"
+  templateSectionDir <- "."
+  contentLine <- 27 # set to a line below LOG Section
+
+  templateSectionRmd <- local_create_template_section(
+                                templateSectionName, templateSectionDir,
+                                contentRmd, contentLine)
 
   # add some content to contentRmd!
   exampleContent <- c(
@@ -151,11 +206,16 @@ test_that("test insert functions", {
     selectionDestination = user_selection(subNoteRmd, noteLine)
   )
 
-  ### TESTS
+  ################ TESTS #######################################################
+
+  # confirm Goal Deliverable Task Sections are written to projectDocRmd
+  expect_snapshot_file( projectDocRmd )
+  # [x] PASS
 
   # confirm content is written to subNoteRmd
   expect_snapshot_file( subNoteRmd )
    # [x] PASS
+
 
 })
 

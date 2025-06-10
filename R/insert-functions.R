@@ -429,3 +429,93 @@ insert_content <- function(selectionSource, selectionDestination) {
 } #### ________________________________ ####
 
 
+
+
+#' Insert a Template Section Placeholder in an Insertable Content Rmd
+#'
+#' This function inserts a Template Section block into a static Insertable
+#' Content Rmd file and creates the corresponding `.Rmd` file to hold the mutable
+#' template content.
+#'
+#' The inserted section consists of:
+#' - A markdown header with the `{}.template}` class (visible in RStudio outline,
+#'   hidden in HTML)
+#' - An HTML comment indicating the relative path to the associated `.Rmd` file
+#'
+#' @param selectionInsertableContent Selection object for the Insertable Content
+#'   Rmd file
+#' @param templateSectionFileName File name of the mutable section template
+#'   (e.g., "log_section_01.Rmd"); must be specified
+#' @param templateSectionDir Directory relative to the Insertable Content Rmd
+#'   where the new .Rmd file will live (default = ".")
+#'
+#' @export
+insert_template_section_content <- function(selectionInsertableContent,
+                                            templateSectionFileName,
+                                            templateSectionDir = ".",
+                                            tempSectDeclTemplate="Template-Section-Declaration-Template.Rmd",
+                                            tempSectSrcTemplate="Template-Section-Source-Template.Rmd") {
+
+  cat("\nprojectmanagr::insert_template_section_content()\n")
+
+  #### Validate Inputs ####
+
+  if (missing(templateSectionFileName) || nchar(templateSectionFileName) == 0) {
+    stop("  You must provide a templateSectionFileName (e.g. 'log_entry.Rmd').")
+  }
+
+  contentRmdPath <- selectionInsertableContent[["filePath"]]
+  insertionLine <- selectionInsertableContent[["originalLineNumber"]]
+
+  contentDir <- dirname(contentRmdPath)
+  contentFile <- basename(contentRmdPath)
+  expectedFile <- paste0(basename(contentDir), ".Rmd")
+
+  if (contentFile != expectedFile) {
+    stop("  This function must be used on the canonical Insertable Content Rmd (e.g., contentName/contentName.Rmd).")
+  }
+
+  #### Construct Full Mutable Template Path ####
+
+  relTemplatePath <- fs::path(templateSectionDir, templateSectionFileName)
+  fullTemplatePath <- fs::path(contentDir, relTemplatePath)
+
+  # Ensure directory exists
+  fs::dir_create(dirname(fullTemplatePath))
+
+  # Create file if doesn't already exist
+  if (fs::file_exists(fullTemplatePath)) {
+    message("  Mutable Rmd already exists: ", fullTemplatePath)
+  } else {
+    # Write initial scaffold with example variables
+    templateContents <- c(
+      "<!-- Template Section Content -->",
+      "",
+      "* Sample ID: {{SAMPLE_ID}}",
+      "* Date: {{DATE}}"
+    )
+    writeLines(templateContents, con = fullTemplatePath)
+    message("  Created new mutable template: ", fullTemplatePath)
+  }
+
+  #### Insert Template Placeholder in Content Rmd ####
+
+  # Compute relative path as stored in the comment
+  relTemplatePathStr <- fs::path_as_posix(relTemplatePath)
+
+  placeholderBlock <- c(
+    "## Template Section {.template}",
+    paste0("<!-- {{MUTABLE_SECTION: ", relTemplatePathStr, "}} -->")
+  )
+
+  # Read, insert, and write updated content Rmd
+  contentLines <- read_file(contentRmdPath)
+  updatedContent <- insert_at_indices(contentLines, insertionLine, placeholderBlock)
+  write_file(updatedContent, contentRmdPath)
+
+  message("  Inserted Template Section at line ", insertionLine, " in ", contentRmdPath)
+  invisible(fullTemplatePath)
+}
+#### ________________________________ ####
+
+

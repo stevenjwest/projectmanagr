@@ -4,7 +4,10 @@
 \alias{addin_insert_hyperlink}
 \title{Insert a Hyperlink}
 \usage{
-addin_insert_hyperlink()
+addin_insert_hyperlink(
+  save_context_fn = .save_context_doc,
+  get_context_fn = .get_source_editor_context
+)
 }
 \description{
 Insert a RELATIVE Hyperlink from an Open RStudio File to the currently

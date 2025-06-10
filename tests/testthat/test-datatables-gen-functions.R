@@ -1,4 +1,9 @@
 
+cat("=====================")
+cat("test datatables gen functions")
+cat("")
+
+
 test_that("datatable_create()", {
 
   # test default dt generation

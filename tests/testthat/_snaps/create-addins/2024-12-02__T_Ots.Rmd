@@ -39,11 +39,24 @@ output:
 
 
 
-# TODAY'S EVENTS
+# CORRESPONDENCE
+
+
+Check & clear correspondence channels
+
+
+## [] clear emails
+
+
+__emails_notes__
 
 
 
-__insert_events_scheduled_for_today__
+
+## [] clear slack
+
+
+__slack_notes__
 
 
 
@@ -57,12 +70,18 @@ __insert_events_scheduled_for_today__
 
 
 
-__insert_TODO_items__
+__extract_Calendar_Events__
+
+
+
+__extract_TODOs__
 
 
 
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+
+
 
 

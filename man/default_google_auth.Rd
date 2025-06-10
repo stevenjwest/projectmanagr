@@ -2,28 +2,35 @@
 % Please edit documentation in R/extract-functions.R
 \name{default_google_auth}
 \alias{default_google_auth}
-\title{Authenticate with Google Calendar using projectmanagr's built-in OAuth client}
+\title{Authenticate once and cache the Google Calendar token}
 \usage{
 default_google_auth(
+  scopes = "https://www.googleapis.com/auth/calendar.readonly",
+  cfg_name = "gcal_oauth_client.json",
   gar_set_client = googleAuthR::gar_set_client,
   gar_auth = googleAuthR::gar_auth
 )
 }
+\arguments{
+\item{gar_set_client, gar_auth}{Dependency-injected versions of
+\code{\link[googleAuthR:gar_set_client]{googleAuthR::gar_set_client()}} / \code{\link[googleAuthR:gar_auth]{googleAuthR::gar_auth()}}
+(facilitates test stubs).}
+}
 \value{
-Invisibly returns the result of \code{googleAuthR::gar_auth()}
+(Invisibly) the object returned by \code{gar_auth()}.
 }
 \description{
-This function configures \code{googleAuthR} using a pre-bundled OAuth 2.0 client
-JSON, and sets the token cache to a user-specific location using \code{rappdirs}.
+The helper expects a \emph{desktop-app} OAuth client file called
+\code{gcal_oauth_client.json} inside the user-level \code{rappdirs}
+\strong{config} directory for the package:
 }
 \details{
-It then attempts to authenticate the user by selecting an existing cached
-token automatically (using \code{googleAuthR::gar_auth(email = TRUE)}), or
-prompting browser sign-in if no token exists yet.
+\if{html}{\out{<div class="sourceCode">}}\preformatted{rappdirs::user_config_dir("projectmanagr")/
+  gcal_oauth_client.json
+}\if{html}{\out{</div>}}
 
-This function sets a global R option:
-\itemize{
-\item \code{options(gargle_oauth_cache = rappdirs::user_cache_dir("projectmanagr"))}
+It performs a minimal structural check, registers the client with
+\strong{googleAuthR}, then calls \code{googleAuthR::gar_auth()} ─ the token is
+cached under \code{rappdirs::user_cache_dir("projectmanagr")}.
 }
-to store refreshable tokens in a consistent location across sessions.
-}
+\concept{authentication helpers}

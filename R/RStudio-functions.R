@@ -8,8 +8,8 @@
 #' @param getSourceEditorContext pointer to rstudioapi function - override for
 #'   testing
 find_org_rstudio_editor <- function(
-    isAvailable = rstudioapi::isAvailable(),
-    getSourceEditorContext = rstudioapi::getSourceEditorContext()
+    isAvailable = .is_rstudio_available(),
+    getSourceEditorContext = .get_source_editor_context()
     ) {
     if( isAvailable() ) {
       # try to find orgPath from active document path
@@ -26,202 +26,324 @@ find_org_rstudio_editor <- function(
         confPath <- get_config_dir(path)
         tempPath <- get_template_dir(path)
       }
+    } else {
+      path <- "" # assign path to blank string
     }
   return(fs::path(path))
 }
 
-#' Get RStudio Internal State Dir
+
+#' Get RStudio Internal State Directory
 #'
-#' Returns this from the settings or the default depending on OS.type (unix or Windows)
+#' Returns the path to RStudio Desktop's internal session state directory,
+#' taking into account RStudio version and operating system.
 #'
-#' https://support.posit.co/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State
-#' 'Resetting RStudio Desktop's State'
+#' - RStudio ≥ 1.4:
+#'   - macOS/Linux: `~/.local/share/rstudio`
+#'   - Windows: `%LOCALAPPDATA%/RStudio`
+#' - RStudio ≤ 1.3:
+#'   - macOS/Linux: `~/.rstudio-desktop`
+#'   - Windows: `%LOCALAPPDATA%/RStudio-Desktop`
 #'
-#' Accessing the RStudio-Desktop Directory (Internal State)
+#' RStudio Server is not supported.
 #'
-#' RStudio Desktop stores its internal state in a hidden directory: includes
-#' information about open documents, log files, and other state information
+#' see: https://support.posit.co/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State
 #'
+#' @return A filesystem path to the RStudio session state directory (as an
+#'   `fs::path`), or `NULL` if unavailable.
+#' @keywords internal
 #' @export
 get_rstudio_internal_state_dir <- function() {
+  # Detect if running on RStudio Server
+  is_server <- Sys.getenv("RSTUDIO", unset = "") == "1" &&
+    !nzchar(Sys.getenv("DISPLAY")) &&
+    nzchar(Sys.getenv("USER"))
 
-  if( .Platform$OS.type == "unix") {
-    rstudioInternalStateDir <- fs::path("~/.local/share/rstudio") # path on LINUX/MAC OS
-  } else {
-    rstudioInternalStateDir <- fs::path("%localappdata%", "RStudio") # path on WINDOWS ???
+  if (is_server) {
+    warning("RStudio Server detected: internal state directory is not accessible.")
+    return(NULL)
   }
-  # return
-  rstudioInternalStateDir
-}
 
+  # Try to get RStudio version
+  rstudio_version <- tryCatch({
+    vi <- rstudioapi::versionInfo()
+    vi$version
+  }, error = function(e) NULL)
 
-#' Get RStudio Open Document IDs
-#'
-#' Returns an ordered list of all open RStudio Documents.  The list contains a set
-#' of vectors that contain the RStudio Document ID [1] and the RStudio Document absolute
-#' path [2].
-#'
-#' The order of the open RStudio documents in the list generally matches the order they are presented
-#' in RStudio.
-#'
-#' fileList[[i]][1] - RStudio i'th Document ID.
-#'
-#' fileList[[i]][2] - RStudio i'th Document Absolute Path, or null if the file is not saved to disk.
-#'
-#' NOTE: This method returns open documents in the BASE RStudio Session, and not in any opened project.
-#'
-#'@export
-get_rstudio_open_doc_IDs <- function() {
+  is_new_version <- TRUE
+  if (is.null(rstudio_version)) {
+    message("Could not detect RStudio version; assuming RStudio ≥ 1.4 internal state layout.")
+  } else {
+    is_new_version <- utils::compareVersion(as.character(rstudio_version), "1.3.999") > 0
+  }
 
-  #cat( "\nprojectmanagr::get_rstudio_open_doc_IDs():\n" )
-
-  rstudioInternalStateDir <- get_rstudio_internal_state_dir()
-
-  # first, check if ~/.local/share/rstudio/sources exists
-  if( file.exists( fs::path(rstudioInternalStateDir, "sources") ) ) {
-
-    # check if a DIR exists which STARTS WITH "session-" (remainder is unique RStudio session ID)
-    # first handle NEW rstudio session directory layout
-    if( !identical(character(0),
-                  Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  ) )) {
-
-
-      # allow files across sessions to be returned
-      if( length(Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )) > 1 ) {
-        stop( "cannot determine rstudio files with more than one session open - close inactive session(s).")
-      }
-
-      if ( all(file.exists(
-        Sys.glob(paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*"))  ))  ) {
-
-        # get file list
-        fileIDs <- list.files(  Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  )  )
-        # look in the "session-*" DIR for every file that does NOT end in "-contents"
-        fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("-contents",x,value=FALSE))) == 0]
-        # nor have name "lock_file"
-        fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("lock_file",x,value=FALSE))) == 0]
-
-        # convert to full path:
-        filePath <- paste0(Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")  ), .Platform$file.sep, fileIDs)
-
-        # inside remaining files, if saved to disk, will be a line starting 'path" : "[path_to_file]",'
-        # if not saved to disk, will contain the line '"path" : null,'
-        # Extract the value of path for each entry in filePath:
-        fileList <- list()
-        relVector <- vector()
-        for (i in 1:length(filePath) ) {
-
-          # put ID into fileList
-          fileList[[i]] <- fileIDs[i]
-
-          # open file
-          FileConn <- file( filePath[i] )
-          lines <- readLines( FileConn, warn = FALSE )
-          close(FileConn)
-
-          # extract path string:
-          pathLine <- lines[grepl("    \"path\"*", lines)]
-
-          if( grepl("\"path\" : null,", pathLine) || grepl("\"path\": null,", pathLine) ) {
-            # path is null - file has not been saved - store "null" in fileList:
-            fileList[[i]][2] <- "null"
-          }
-          else {
-            # copy path into fileList - second index
-            fileList[[i]][2] <- substring(pathLine, regexpr(": \"", pathLine)+3, nchar(pathLine)-2)
-          }
-
-          # extract relative order string:
-          relOrderLine <- lines[grepl("    \"relative_order\"*", lines)]
-          # copy order into relVector:
-          relVector[i] <- as.integer( substring(relOrderLine, regexpr("order", relOrderLine)+8, nchar(relOrderLine)-1) )
-
-        }
-
-      }
-      else {
-
-        # no files match pattern : paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "session-*")
-        stop( paste0("No Active RStudio Session") )
-
-      }
-
-
-    } else if( !identical(character(0),
-                          Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  ) ) ) {
-
-      # next handle OLD rstudio session directory layout
-      if ( file.exists(  Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  )  )  ) {
-
-        # get file list
-        fileIDs <- list.files(  Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  )  )
-        # look in the "s-*" DIR for every file that does NOT end in "-contents"
-        fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("-contents",x,value=FALSE))) == 0]
-        # nor have name "lock_file"
-        fileIDs <- fileIDs[lapply(fileIDs,function(x) length(grep("lock_file",x,value=FALSE))) == 0]
-
-        # convert to full path:
-        filePath <- paste0(Sys.glob( paste0(rstudioInternalStateDir, .Platform$file.sep, "sources", .Platform$file.sep, "s-*")  ), .Platform$file.sep, fileIDs)
-
-        # inside remaining files, if saved to disk, will be a line starting 'path" : "[path_to_file]",'
-        # if not saved to disk, will contain the line '"path" : null,'
-        # Extract the value of path for each entry in filePath:
-        fileList <- list()
-        relVector <- vector()
-        for (i in 1:length(filePath) ) {
-
-          # put ID into fileList
-          fileList[[i]] <- fileIDs[i]
-
-          # open file
-          FileConn <- file( filePath[i] )
-          lines <- readLines( FileConn, warn = FALSE )
-          close(FileConn)
-
-          # extract path string:
-          pathLine <- lines[grepl("    \"path\"*", lines)]
-
-          if( grepl("\"path\" : null,", pathLine) || grepl("\"path\": null,", pathLine) ) {
-            # path is null - file has not been saved - store "null" in fileList:
-            fileList[[i]][2] <- "null"
-          }
-          else {
-            # copy path into fileList - second index
-            fileList[[i]][2] <- substring(pathLine, regexpr(": \"", pathLine)+3, nchar(pathLine)-2)
-          }
-
-          # extract relative order string:
-          relOrderLine <- lines[grepl("    \"relative_order\"*", lines)]
-          # copy order into relVector:
-          relVector[i] <- as.integer( substring(relOrderLine, regexpr("order", relOrderLine)+8, nchar(relOrderLine)-1) )
-
-        }
-
-      } else {
-        # no files match pattern : fs::path(rstudioInternalStateDir, "sources", "s-*")
-        stop( paste0("No Active RStudio Session") )
-
-      }
+  # Determine correct path
+  if (.Platform$OS.type == "windows") {
+    if (is_new_version) {
+      state_dir <- rappdirs::user_data_dir("RStudio", appauthor = NULL)
     } else {
-      stop( paste0("No RStudio Session identified in : ",
-                   paste0(rstudioInternalStateDir, .Platform$file.sep, "sources"),
-                   " update ORG/config/settings.yml rstudioInternalStateDir parameter \n  see https://support.rstudio.com/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State" ) )
+      # Older RStudio (≤1.3) used RStudio-Desktop
+      state_dir <- fs::path(Sys.getenv("LOCALAPPDATA"), "RStudio-Desktop")
     }
   } else {
-    # no dir : paste0(rstudioInternalStateDir, .Platform$file.sep, "sources")
-    stop( paste0("RStudio Internal State Directory not found :",
-                 " update ORG/.config/settings.yml rstudioInternalStateDir ",
-                 "parameter \n  see https://support.rstudio.com/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State") )
+    if (is_new_version) {
+      state_dir <- "~/.local/share/rstudio"
+    } else {
+      state_dir <- "~/.rstudio-desktop"
+    }
   }
 
-  # finally, re-order list based on relVector:
-  fileList <- fileList[ order( relVector ) ]
+  fs::path_expand(fs::path(state_dir))
+} #### ____ ####
 
-  # return fileList:
+
+#' List the open documents as a tibble
+#'
+#' *Assumes* you already have (or can write) `get_rstudio_open_doc_IDs()`
+#' returning `list(list(id, path), …)`.
+#' @keywords internal
+list_open_documents <- function(get_open = get_rstudio_open_doc_IDs) {
+  raw <- get_open()
+  tibble::tibble(
+    id   = vapply(raw, `[[`, "", 1),
+    path = vapply(raw, `[[`, "", 2),
+    name = basename(path)
+  )
+}
+
+
+#' Extract IDs and paths of currently open RStudio documents
+#'
+#' Uses internal RStudio session state files to extract a list of open documents.
+#' This function is useful for inspecting session metadata for all open files.
+#'
+#' @return A list of character vectors where each entry contains the file ID and
+#'   its associated path (or "null" if unsaved).
+#' @export
+get_rstudio_open_doc_IDs <- function() {
+  # Identify the active session directory
+  session_dir <- get_active_rstudio_session_dir()
+
+  if (is.null(session_dir) || !fs::dir_exists(session_dir)) {
+    stop("No valid active RStudio session directory found.")
+  }
+
+  # List all metadata files (excluding -contents and lock_file)
+  all_files <- fs::dir_ls(session_dir, type = "file")
+  id_files <- all_files[
+    !grepl("-contents$", fs::path_file(all_files)) &
+      !grepl("lock_file$", fs::path_file(all_files))
+  ]
+
+  # Extract file metadata from each file
+  fileList <- list()
+  relVector <- integer()
+
+  for (i in seq_along(id_files)) {
+    file <- id_files[i]
+    lines <- readLines(file, warn = FALSE)
+
+    # Extract file ID
+    file_id <- fs::path_file(file)
+
+    # Extract path
+    path_line <- grep('"path"', lines, value = TRUE)
+    file_path <- if (any(grepl("null", path_line))) {
+      "null"
+    } else {
+      sub('.*"path"\\s*:\\s*"(.*?)".*', "\\1", path_line)
+    }
+
+    # Extract relative order
+    rel_line <- grep('"relative_order"', lines, value = TRUE)
+    rel_order <- if (length(rel_line) > 0) {
+      as.integer(sub('.*"relative_order"\\s*:\\s*([0-9]+).*', "\\1", rel_line))
+    } else {
+      NA_integer_
+    }
+
+    fileList[[i]] <- c(file_id, file_path)
+    relVector[i] <- rel_order
+  }
+
+  # Order by relative_order if available
+  fileList <- fileList[order(relVector, na.last = TRUE)]
+
   fileList
 
-
 }
+
+
+
+#' Identify the active RStudio session directory
+#'
+#' Main function to detect the currently active RStudio session directory.
+#' Internally calls several helper functions to match document paths and session metadata.
+#'
+#' @param verbose Logical. If `TRUE`, prints messages about stale session cleanup. Default is `TRUE`.
+#'
+#' @return A string path to the active `session-*` directory, or `NULL` if none could be identified.
+#' @keywords internal
+#' @export
+get_active_rstudio_session_dir <- function(verbose = TRUE) {
+
+  doc_paths <- .get_open_doc_paths()
+
+  sources_dirs <- .get_candidate_sources_dirs()
+
+  session_dirs <- unlist(lapply(sources_dirs, function(sdir) {
+    fs::dir_ls(sdir, type = "directory", regexp = "/session-[^/]+$")
+  }), use.names = FALSE)
+
+  all_matches <- .find_matching_sessions(session_dirs, doc_paths)
+
+  if (length(all_matches) == 0) {
+    warning("Could not determine active RStudio session directory (no matches found).")
+    return(NULL)
+  }
+
+  matching_session <- .select_most_recent_session(all_matches)
+
+  .cleanup_stale_sessions(session_dirs, matching_session, verbose = verbose)
+
+  return(matching_session)
+}
+
+
+#' Get open document paths from RStudio source editor
+#'
+#' Attempts to safely retrieve the full paths of all open documents in the RStudio source editor.
+#'
+#' @return A character vector of absolute file paths.
+#' @keywords internal
+.get_open_doc_paths <- function() {
+  contexts <- .get_source_editor_context()
+  if (!is.list(contexts) || !is.null(contexts$path)) {
+    contexts <- list(contexts)
+  }
+  paths <- unique(vapply(contexts, function(x) x$path, character(1)))
+  fs::path_abs(fs::path_expand(paths))
+}
+
+
+#' Find candidate RStudio sources directories
+#'
+#' Determines whether the current session is project-based or global,
+#' and returns the appropriate "sources" directories to inspect.
+#'
+#' @return A character vector of "sources" directory paths.
+#' @keywords internal
+.get_candidate_sources_dirs <- function() {
+  project_path <- .get_active_project_path()
+  sources_dirs <- character()
+
+  if (is.null(project_path)) {
+    global_sources <- fs::path_expand(
+      fs::path(projectmanagr::get_rstudio_internal_state_dir(), "sources")
+    )
+    if (fs::dir_exists(global_sources)) {
+      sources_dirs <- global_sources
+    }
+  } else {
+    rproj_user_dir <- fs::path(project_path, ".Rproj.user")
+    if (fs::dir_exists(rproj_user_dir)) {
+      candidate_sources <- fs::dir_ls(
+        path = rproj_user_dir,
+        recurse = TRUE,
+        type = "directory",
+        regexp = "/sources$"
+      )
+      sources_dirs <- candidate_sources
+    }
+  }
+
+  sources_dirs
+}
+
+
+#' Find sessions matching open document paths
+#'
+#' Searches through session metadata files to find sessions that have open documents matching the current session.
+#'
+#' @param session_dirs A character vector of session directory paths.
+#' @param doc_paths A character vector of open document paths.
+#'
+#' @return A list of matches, each containing `session_dir` and `file` elements.
+#' @keywords internal
+.find_matching_sessions <- function(session_dirs, doc_paths) {
+  matches <- list()
+
+  for (session_dir in session_dirs) {
+    files <- fs::dir_ls(session_dir, type = "file")
+    id_files <- files[!grepl("-contents$", fs::path_file(files))]
+
+    for (file in id_files) {
+      json <- tryCatch(
+        jsonlite::fromJSON(readLines(file, warn = FALSE), simplifyVector = TRUE),
+        error = function(e) NULL
+      )
+      if (!is.null(json) && "path" %in% names(json)) {
+        json_path <- fs::path_abs(fs::path_expand(json$path))
+        if (json_path %in% doc_paths) {
+          matches[[length(matches) + 1]] <- list(
+            session_dir = session_dir,
+            file = file
+          )
+        }
+      }
+    }
+  }
+
+  matches
+}
+
+#' Select the most recent matching session
+#'
+#' If multiple sessions match, selects the session with the most recently modified metadata file.
+#'
+#' @param matches A list of matched sessions.
+#'
+#' @return A string path to the selected session directory.
+#' @keywords internal
+.select_most_recent_session <- function(matches) {
+  if (length(matches) == 1) {
+    return(matches[[1]]$session_dir)
+  }
+
+  mod_times <- vapply(matches, function(match) {
+    fs::file_info(match$file)$modification_time
+  }, as.POSIXct(NA))
+
+  newest_idx <- which.max(mod_times)
+  matches[[newest_idx]]$session_dir
+}
+
+#' Clean up stale RStudio sessions
+#'
+#' Deletes session directories that were not identified as the active session.
+#'
+#' @param session_dirs A character vector of all session directories.
+#' @param matching_session A character string path to the active session directory.
+#' @param verbose Logical. If `TRUE`, print message when deleting stale sessions.
+#' @keywords internal
+.cleanup_stale_sessions <- function(session_dirs, matching_session, verbose = TRUE) {
+  stale_sessions <- setdiff(session_dirs, matching_session)
+
+  if (length(stale_sessions) > 0 && isTRUE(verbose)) {
+    message("Removing ", length(stale_sessions), " stale RStudio session director",
+            if (length(stale_sessions) > 1) "ies:" else "y:", "\n",
+            paste("  -", stale_sessions, collapse = "\n"))
+  }
+
+  for (dir in stale_sessions) {
+    tryCatch(
+      fs::dir_delete(dir),
+      error = function(e) warning("Could not delete stale session dir: ", dir)
+    )
+  }
+} #### ____ ####
+
+
 
 
 #' RStudio Docs filtered and Reordered
@@ -302,89 +424,123 @@ get_rstudio_doc_list_filtered_reordered <- function(filePath, settings) {
 
   numFileList
 
+} #### ____ ####
+
+#' Get Source Editor Context (safe wrapper)
+#'
+#' Returns the active source‑editor context, or `list()` when there is none
+#' (e.g. the user is on the console or running tests in a non‑RStudio
+#' session).  The `tryCatch()` makes **unit‑testing** and **headless CI**
+#' runs safer: instead of crashing with an RStudio API error you get an
+#' empty sentinel the calling code can handle gracefully.
+#' @keywords internal
+.get_source_editor_context <- function() {
+  tryCatch(rstudioapi::getSourceEditorContext(), error = function(e) list())
 }
 
 
-#' Get RStudio Config Dir
-#'
-#' Returns config directory depending on OS.type (unix or Windows) & rstudio
-#' version (1.2 and prior OR 1.3+)
-#'
-#' See :
-#'
-#' https://support.posit.co/hc/en-us/articles/206382178
-#' 'Customizing Keyboard Shortcuts in the RStudio IDE'
-#'
-#' https://support.posit.co/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State
-#' 'Resetting RStudio Desktop's State'
-#'
-#'@export
-get_rstudio_config_dir <- function() {
-
-  # get config dir
-  if( .Platform$OS.type == "unix") {
-
-    # check latest rstudio version placement of config first
-    if( file.exists( path.expand("~/.config/rstudio") ) ) {
-      rstudioConfigDir <- path.expand("~/.config/rstudio")
-
-    } else if( file.exists( path.expand("~/.R/rstudio/") ) ) {
-      rstudioConfigDir <- path.expand("~/.R/rstudio/")
-
-    } else if( file.exists( path.expand("~/AppData/Roaming/RStudio") ) ) {
-      rstudioConfigDir <- path.expand("~/AppData/Roaming/RStudio")
-
-    }
-  } else { # windows
-
-    # check latest rstudio version placement of config first
-    if( file.exists( path.expand("~/AppData/Roaming/RStudio") ) ) {
-      rstudioConfigDir <- path.expand("~/AppData/Roaming/RStudio")
-
-    } else if( file.exists( path.expand( "%appdata%\\RStudio") ) ) {
-      rstudioConfigDir <- path.expand("%appdata%\\RStudio")
-    }
+# A helper that enriches the raw context with cursor info we need later.
+fetch_active_context <- function(get_context = .get_source_editor_context) {
+  ctx <- get_context()
+  if (length(ctx) == 0L) {      # empty list → no active editor
+    stop("No active source editor – can’t insert a hyperlink.", call. = FALSE)
   }
 
-  # return
-  rstudioConfigDir
+  cursor <- rstudioapi::primary_selection(ctx)
+
+  list(
+    id           = ctx$id,
+    path         = ctx$path,
+    cursor_range = cursor$range,
+    line         = cursor$range[[1]][1],
+    column       = cursor$range[[1]][2]
+  )
 }
 
 
-get_context_path <- function() {
-  context <- rstudioapi::getSourceEditorContext()
-  context$path
+
+#' Get Active Project Path (wrapper)
+#'
+#' Thin wrapper around rstudioapi::getActiveProject().
+#' Returns the project path or NULL if not in a project.
+#' @keywords internal
+.get_active_project_path <- function() {
+  tryCatch(rstudioapi::getActiveProject(), error = function(e) NULL)
 }
 
 
-get_context_contents <- function() {
-  context <- rstudioapi::getSourceEditorContext()
-  context$contents
+.get_context_path <- function() {
+  .get_source_editor_context()$path
 }
 
-get_context_id <- function() {
-  context <- rstudioapi::getSourceEditorContext()
-  context$id
+
+.get_context_contents <- function() {
+  .get_source_editor_context()$contents
 }
 
-get_context_row <- function() {
-  context <- rstudioapi::getSourceEditorContext()
-  row <- context$selection[[1]]$range$start[1]
-  row
+.get_context_id <- function() {
+  .get_source_editor_context()$id
 }
 
-get_context_row_end <- function() {
-  context <- rstudioapi::getSourceEditorContext()
-  context$selection[[1]]$range$end[1]
+.get_context_row <- function() {
+  .get_source_editor_context()$selection[[1]]$range$start[1]
 }
 
-save_context_doc <- function() {
-  if( rstudioapi::isAvailable() ) { rstudioapi::documentSave(id = get_context_id()) }
+.get_context_col <- function() {
+  .get_source_editor_context()$selection[[1]]$range$start[2]
 }
 
-save_all_doc <- function() {
-  if( rstudioapi::isAvailable() ) { rstudioapi::documentSaveAll() }
+.get_context_cursor_range <- function() {
+  rstudioapi::primary_selection(.get_source_editor_context())$range
 }
+
+.get_context_row_end <- function() {
+  .get_source_editor_context()$selection[[1]]$range$end[1]
+}
+
+#' Check if RStudio API is available
+#' @keywords internal
+.is_rstudio_available <- function() {
+  rstudioapi::isAvailable()
+}
+
+#' Set document contents in RStudio
+#' @keywords internal
+.set_document_contents <- function(text, id) {
+  rstudioapi::setDocumentContents(text = text, id = id)
+}
+
+.save_context_doc <- function() {
+  if( .is_rstudio_available() ) { rstudioapi::documentSave(id = .get_context_id()) }
+}
+
+.save_all_doc <- function() {
+  if( .is_rstudio_available() ) { rstudioapi::documentSaveAll() }
+}
+
+#' Insert Text at Cursor (wrapper)
+#'
+#' Thin wrapper around rstudioapi::insertText.
+#' @keywords internal
+.insert_text <- function(...) {
+  if( .is_rstudio_available() ) { rstudioapi::insertText(...) }
+}
+
+#' Navigate to File (wrapper)
+#'
+#' Thin wrapper around rstudioapi::insertText.
+#' @keywords internal
+.navigate_to_file <- function(path) {
+  if( .is_rstudio_available() ) { rstudioapi::navigateToFile(path) }
+}
+
+#' Navigate Pane to File (wrapper)
+#'
+#' Thin wrapper around rstudioapi::insertText.
+#' @keywords internal
+.navigate_pane_to_file <- function(path) {
+  if( .is_rstudio_available() ) { rstudioapi::filesPaneNavigate(dirname(path)) }
+}#### ____ ####
 
 
 #' Set RStudio Keybindings to Addins
@@ -399,8 +555,7 @@ save_all_doc <- function() {
 #' This file can be modified for a different default set of projectmanagr
 #' functions, and different keyboard shortcuts.
 #'
-#'
-#'
+#' @export
 set_rstudio_keybindings_addins <- function(path=getwd()) {
 
   # Can edit via rstudio.prefs package : https://www.danieldsjoberg.com/rstudio.prefs/
@@ -475,32 +630,6 @@ get_rstudio_config_dir <- function() {
 
 
 
-#' Get RStudio Internal State Dir
-#'
-#' Returns this from the settings or the default depending on OS.type (unix or Windows)
-#'
-get_rstudio_internal_state_dir2 <- function(path) {
-
-  # get rstudioInternalStateDir from config OR use default
-  orgPath <- find_org_directory(path)
-  if(orgPath == "" ) {
-    if( .Platform$OS.type == "unix") {
-      rstudioInternalStateDir <- "~/.local/share/rstudio" # path on LINUX/MAC OS
-    } else {
-      rstudioInternalStateDir <- paste0("%localappdata%", .Platform$file.sep, "RStudio") # path on WINDOWS ???
-    }
-  } else {
-
-    # get config templates settings yml
-    confPath <- get_config_dir(orgPath)
-    tempPath <- get_template_dir(orgPath)
-    settings <- get_settings_yml(orgPath)
-    rstudioInternalStateDir <- settings$rstudioInternalStateDir
-  }
-
-  # return
-  rstudioInternalStateDir
-}
 
 
 #' Convert plain text colour to ANSI code

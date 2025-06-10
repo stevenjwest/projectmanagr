@@ -727,7 +727,7 @@ link_doc_sub_note <- function(selection, subNoteRmdPath,
 
   projNoteLinkContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteLinkTemplate) )
   projNoteLinkSummaryContents <- read_file( paste0(tempPath, .Platform$file.sep, projNoteLinkSummaryTemplate) )
-  todoContents <- read_file( paste0(tempPath, .Platform$file.sep, todoTemplate) )
+  #todoContents <- read_file( paste0(tempPath, .Platform$file.sep, todoTemplate) )
 
   projNoteSummaryContents <- read_file( paste0( tempPath, .Platform$file.sep, projNoteSummaryTemplate) )
 

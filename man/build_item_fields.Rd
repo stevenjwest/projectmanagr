@@ -10,9 +10,12 @@ build_item_fields(row)
 \item{row}{One row of the allTodos data frame (i.e. one TODO).}
 }
 \value{
-A list with \code{$TODO_TEXT}, \code{$TODO_DEADLINE}, \code{$TODO_SCHEDULE}.
+A list with \code{$TODO_TEXT}, \code{$TODO_DEADLINE},
+\code{$TODO_SCHEDULE}.
 }
 \description{
-Indents the schedule and deadline lines, if present, each followed by a blank line.
+Copies the description exactly as written in the Rmd and appends blank
+lines so the next template chunk starts on a new paragraph.  Schedule and
+deadline strings are still indented for clarity.
 }
 \keyword{internal}

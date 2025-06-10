@@ -2,7 +2,7 @@
 % Please edit documentation in R/create-addins.R
 \name{addin_create_project_doc_ui}
 \alias{addin_create_project_doc_ui}
-\title{User Interface for Creat Project Doc shiny gadget}
+\title{User Interface for Create Project Doc shiny gadget}
 \usage{
 addin_create_project_doc_ui(orgPath, settings)
 }

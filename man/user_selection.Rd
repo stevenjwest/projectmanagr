@@ -10,8 +10,8 @@ user_selection(filePath, line)
 Create a selection list from a projectDocPath and line number.
 }
 \details{
-projectDocPath - must be an ABSOLUTE PATH if using the output for addProjectNote() or similar
-methods.
+projectDocPath - must be an ABSOLUTE PATH if using the output for
+addProjectNote() or similar methods.
 
 line - the line number to generate the selection list from.
 

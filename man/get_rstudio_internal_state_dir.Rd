@@ -2,19 +2,34 @@
 % Please edit documentation in R/RStudio-functions.R
 \name{get_rstudio_internal_state_dir}
 \alias{get_rstudio_internal_state_dir}
-\title{Get RStudio Internal State Dir}
+\title{Get RStudio Internal State Directory}
 \usage{
 get_rstudio_internal_state_dir()
 }
+\value{
+A filesystem path to the RStudio session state directory (as an
+\code{fs::path}), or \code{NULL} if unavailable.
+}
 \description{
-Returns this from the settings or the default depending on OS.type (unix or Windows)
+Returns the path to RStudio Desktop's internal session state directory,
+taking into account RStudio version and operating system.
 }
 \details{
-https://support.posit.co/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State
-'Resetting RStudio Desktop's State'
-
-Accessing the RStudio-Desktop Directory (Internal State)
-
-RStudio Desktop stores its internal state in a hidden directory: includes
-information about open documents, log files, and other state information
+\itemize{
+\item RStudio ≥ 1.4:
+\itemize{
+\item macOS/Linux: \verb{~/.local/share/rstudio}
+\item Windows: \verb{\%LOCALAPPDATA\%/RStudio}
 }
+\item RStudio ≤ 1.3:
+\itemize{
+\item macOS/Linux: \verb{~/.rstudio-desktop}
+\item Windows: \verb{\%LOCALAPPDATA\%/RStudio-Desktop}
+}
+}
+
+RStudio Server is not supported.
+
+see: https://support.posit.co/hc/en-us/articles/200534577-Resetting-RStudio-Desktop-s-State
+}
+\keyword{internal}
